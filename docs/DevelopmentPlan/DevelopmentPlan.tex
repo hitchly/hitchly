@@ -104,9 +104,33 @@ for deadlines.}
 
 \section{Proof of Concept Demonstration Plan}
 
-What is the main risk, or risks, for the success of your project?  What will you
-demonstrate during your proof of concept demonstration to convince yourself that
-you will be able to overcome this risk?
+% What is the main risk, or risks, for the success of your project?  What will you
+% demonstrate during your proof of concept demonstration to convince yourself that
+% you will be able to overcome this risk?
+
+The primary risks for this project are user trust and safety and the reliability of the ride-matching system.
+Without a secure verification process tied to McMaster email accounts, users may hesitate to adopt the platform.
+Similarly, if the matching algorithm fails to correctly pair riders and drivers based on schedules and locations, the application will not provide value.
+The proof of concept will focus on validating these two core capabilities:
+
+\begin{itemize}
+  \item \textbf{McMaster Email Verification}
+  \begin{itemize}
+      \item Users must sign up using a McMaster-affiliated email.
+      \item Verification ensures that only students, staff, and faculty can access the platform.
+      \item Demonstrates credibility and mitigates safety concerns for early users.
+  \end{itemize}
+
+  \item \textbf{Ride Matching Prototype}
+  \begin{itemize}
+      \item A minimal matching engine takes sample schedules and trip data from riders and drivers.
+      \item Produces correct pairings with cost-sharing estimates.
+      \item Confirms feasibility of integrating timetable and location-based logic.
+  \end{itemize}
+\end{itemize}
+
+By validating these areas first, the team ensures the platform addresses its two biggest risks of safety and usability before expanding into additional features such as live tracking, queuing, or ratings.
+
 
 \section{Expected Technology}
 
