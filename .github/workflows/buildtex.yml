@@ -54,6 +54,7 @@ jobs:
           commit_message: 'Add/Update PDF${{ env.PLURAL_S }} for changed LaTeX file${{ env.PLURAL_S }}: ${{ env.CHANGED_FILENAMES }}'
           file_pattern: 'docs/*.pdf'
           branch: auto-update-pdf
+          create_branch: true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
