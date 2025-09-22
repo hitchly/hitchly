@@ -15,10 +15,13 @@ jobs:
   compile-latex:
     runs-on: ubuntu-latest
     steps:
+      # Checkout main branch to ensure we are not in detached HEAD
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
-          
+
+      # Detect changed LaTeX files
       - name: Get changed LaTeX files
         id: latex-files
         run: |
@@ -34,7 +37,8 @@ jobs:
             PLURAL_S=''
           fi
           echo "PLURAL_S=$PLURAL_S" >> $GITHUB_ENV
-          
+
+      # Compile LaTeX files to PDFs
       - uses: xu-cheng/texlive-action@v2
         name: Compile LaTeX Files
         with:
@@ -47,7 +51,8 @@ jobs:
               dir=$(dirname "$file" | cut -d'/' -f2-)
               make -B "$dir/$(basename "$file" .tex).pdf" 
             done
-            
+
+      # Commit PDFs to a separate branch (auto-create if missing)
       - name: Commit PDFs to auto-update branch
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
@@ -56,7 +61,9 @@ jobs:
           branch: auto-update-pdf
           create_branch: true
 
+      # Create or update pull request to main
       - name: Create Pull Request
+        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -66,9 +73,11 @@ jobs:
           body: "Automated PDF update from LaTeX compilation"
           draft: false
 
+      # Auto-merge the PR
       - name: Auto merge PR
+        if: steps.create-pr.outputs.pull-request-number != ''
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
           merge-method: squash
