@@ -1,0 +1,51 @@
+name: Auto-Update PDFs
+
+on:
+  push:
+    branches: [main]
+    paths: [docs/**/*.tex]
+
+permissions:
+  contents: write
+
+jobs:
+  auto-update:
+    runs-on: ubuntu-latest
+    steps:
+      # Call reusable LaTeX build workflow
+      - name: Build LaTeX
+        uses: ./.github/workflows/build-latex.yml
+        with:
+          ref: main
+
+      # Commit PDFs to auto-update branch
+      - name: Commit PDFs
+        id: commit-pdfs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'Auto-update PDFs for changed LaTeX files'
+          file_pattern: 'docs/**/*.pdf'
+          branch: auto-update-pdf
+          create_branch: true
+
+      # Only create PR if PDFs were committed
+      - name: Create Pull Request
+        if: steps.commit-pdfs.outputs.committed == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          head: auto-update-pdf
+          title: "Auto-update PDFs"
+          body: "Automated PDF update from LaTeX compilation"
+          draft: false
+
+      # Auto-merge PR
+      - name: Auto Merge PR
+        if: steps.commit-pdfs.outputs.committed == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          merge-method: squash
