@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
     paths: [docs/**/*.tex]
+  workflow_dispatch:
+    inputs:
+      test-branch:
+        description: 'Branch to test auto PDF update'
+        required: false
+        default: 'main'
 
 permissions:
   contents: write
@@ -12,7 +18,7 @@ jobs:
   build-latex-job:
     uses: ./.github/workflows/build-latex.yml
     with:
-      ref: main
+      ref: ${{ github.event.inputs.test-branch || 'main' }}
 
   commit-and-pr:
     runs-on: ubuntu-latest
@@ -20,6 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.test-branch || 'main' }}
           fetch-depth: 0
 
       # Commit PDFs to auto-update branch
@@ -39,7 +46,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
+          base: ${{ github.event.inputs.test-branch || 'main' }}
           branch: auto-update-pdf
           title: "Auto-update PDFs"
           body: "Automated PDF update from LaTeX compilation"
