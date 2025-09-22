@@ -84,13 +84,17 @@ likely change throughout the year.}
 
 \section{Workflow Plan}
 
-\begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
-\end{itemize}
+{\bf Git:} The main branch in the repository is where code and documentation that has been reviewed and approved will be stored. Team members will create branches for any given task while working
+on a deliverable to keep work organized and separated.  The branches that are created will have a descriptive name that mentions the task for clarity. Once the changes have been made on a branch, 
+a pull request will be made explaning the changes, and the change must be reviewed by the team member who is the Reviewer at the time at the bare minimum. Once reviewed, if it is approved then the changes will be merged into the main branch. \\
 
+\noindent {\bf Issues:} For each deliverable, the team will break it down into individual tasks, which will then have a corresponding issue created for them on Github, which will be assigned to the team member who will complete the task.
+Each issue will be given a label based on what it is for (e.g: documentation), and a Type label to further clarify its purpose (e.g: Task, Bug, Feature). 
+The issue will also be given a descriptive title which clearly shows what task it is related to. When a team member completes the work for a given task, their work will
+be committed on Git and will be linked to the corresponding issue. Each issue will be added to a Board on git to keep track of progress. Issues will also be created to keep track of team meetings and lectures. \\
+
+\noindent {\bf CI/CD:} We will use Github Actions to set up a CI/CD pipeline for our project. This helps ensire that every team member's code integrates smoothly. Actions that will be included will be
+automated generation of documentation from the source code, running unit tests, and code style checks. These must pass in order for a Pull Request to be merged.
 \section{Project Decomposition and Scheduling}
 
 \begin{itemize}
