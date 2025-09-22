@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
-          head: auto-update-pdf
+          branch: auto-update-pdf
           title: "Auto-update PDFs"
           body: "Automated PDF update from LaTeX compilation"
           draft: false
