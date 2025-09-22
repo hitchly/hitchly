@@ -1,0 +1,60 @@
+name: Auto-Update PDFs
+
+on:
+  push:
+    branches: [main]
+    paths: [docs/**/*.tex]
+  workflow_dispatch:
+    inputs:
+      test-branch:
+        description: 'Branch to test auto PDF update'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: write
+
+jobs:
+  build-latex-job:
+    uses: ./.github/workflows/build-latex.yml
+    with:
+      ref: ${{ github.event.inputs.test-branch || 'main' }}
+
+  commit-and-pr:
+    runs-on: ubuntu-latest
+    needs: build-latex-job
+    if: needs.build-latex-job.outputs.has-changes == 'true'   # <-- conditional
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.test-branch || 'main' }}
+          fetch-depth: 0
+
+      - name: Commit PDFs
+        id: commit-pdfs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'Auto-update PDFs for changed LaTeX files'
+          file_pattern: 'docs/**/*.pdf'
+          branch: auto-update-pdf
+          create_branch: true
+
+      - name: Create Pull Request
+        if: steps.commit-pdfs.outputs.committed == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.inputs.test-branch || 'main' }}
+          branch: auto-update-pdf
+          title: "Auto-update PDFs"
+          body: "Automated PDF update from LaTeX compilation"
+          draft: false
+
+      - name: Auto Merge PR
+        if: steps.commit-pdfs.outputs.committed == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          merge-method: squash
