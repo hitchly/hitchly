@@ -1,0 +1,50 @@
+name: Build LaTeX
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+      commit_sha:
+        type: string
+        default: ''
+
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-files: ${{ steps.set-env.outputs.changed-files }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Detect changed LaTeX files
+        id: set-env
+        run: |
+          if [ -n "${{ inputs.commit_sha }}" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ inputs.commit_sha }} HEAD -- docs/**/*.tex | xargs)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- docs/**/*.tex | xargs)
+          fi
+          echo "Changed files: $CHANGED_FILES"
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
+          echo "changed-files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          FILE_COUNT=$(echo $CHANGED_FILES | wc -w)
+          if [ $FILE_COUNT -eq 0 ]; then
+            echo "No LaTeX changes, exiting workflow."
+            exit 0
+          fi
+
+      - name: Compile LaTeX files
+        uses: xu-cheng/texlive-action@v2
+        with:
+          scheme: full
+          texlive_version: 2024
+          run: |
+            apk add make
+            cd docs
+            for file in ${{ env.CHANGED_FILES }}; do
+              dir=$(dirname "$file" | cut -d'/' -f2-)
+              make -B "$dir/$(basename "$file" .tex).pdf"
+            done
