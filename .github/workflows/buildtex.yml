@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
       - name: Get changed LaTeX files
         id: latex-files
         run: |
@@ -33,6 +34,7 @@ jobs:
             PLURAL_S=''
           fi
           echo "PLURAL_S=$PLURAL_S" >> $GITHUB_ENV
+          
       - uses: xu-cheng/texlive-action@v2
         name: Compile LaTeX Files
         with:
@@ -45,9 +47,27 @@ jobs:
               dir=$(dirname "$file" | cut -d'/' -f2-)
               make -B "$dir/$(basename "$file" .tex).pdf" 
             done
-      - name: Commit and push PDFs
+            
+      - name: Commit PDFs to auto-update branch
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: 'Add/Update PDF${{ env.PLURAL_S }} for changed LaTeX file${{ env.PLURAL_S }}: ${{ env.CHANGED_FILENAMES }}'
           file_pattern: 'docs/*.pdf'
-          branch: main
+          branch: auto-update-pdf
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          head: auto-update-pdf
+          title: "Auto-update PDFs"
+          body: "Automated PDF update from LaTeX compilation"
+          draft: false
+
+      - name: Auto merge PR
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+          merge-method: squash
