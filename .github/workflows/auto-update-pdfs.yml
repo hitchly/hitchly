@@ -9,14 +9,18 @@ permissions:
   contents: write
 
 jobs:
-  auto-update:
+  build-latex-job:
+    uses: ./.github/workflows/build-latex.yml
+    with:
+      ref: main
+
+  commit-and-pr:
     runs-on: ubuntu-latest
+    needs: build-latex-job
     steps:
-      # Call reusable LaTeX build workflow
-      - name: Build LaTeX
-        uses: ./.github/workflows/build-latex.yml
+      - uses: actions/checkout@v4
         with:
-          ref: main
+          fetch-depth: 0
 
       # Commit PDFs to auto-update branch
       - name: Commit PDFs
