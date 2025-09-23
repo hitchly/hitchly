@@ -277,3 +277,32 @@ TSWLatexianTemp*
 
 # DS_Store file from Mac computers
 .DS_Store
+
+# Node.js
+**/node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+**/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
+**/.env.*.local
+
+# Build output
+**/dist/
+**/build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Drizzle
+**/drizzle/

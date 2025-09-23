@@ -1,0 +1,17 @@
+{
+  "name": "hitchly",
+  "private": true,
+  "workspaces": [
+    "src/*"
+  ],
+  "scripts": {
+    "install:all": "pnpm install",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:mobile": "pnpm --filter mobile dev",
+    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter mobile dev\"",
+    "lint": "pnpm -w run -r lint"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}
