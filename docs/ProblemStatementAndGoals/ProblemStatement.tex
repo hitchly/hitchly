@@ -1,6 +1,7 @@
 \documentclass{article}
-
+\usepackage[round]{natbib}
 \usepackage{tabularx}
+\usepackage[utf8]{inputenc}
 \usepackage{booktabs}
 
 \title{Problem Statement and Goals\\\progname}
@@ -22,68 +23,149 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date1 & Name(s) & Description of changes\\
-Date2 & Name(s) & Description of changes\\
-... & ... & ...\\
+September 21st, 2025 & Burhanuddin Kharodawala & Added information for Section 1\\
+September 21st, 2025 & Burhanuddin Kharodawala & Added information for Section 2\\
+September 21st, 2025 & Burhanuddin Kharodawala & Added information for Section 3\\
+September 21st, 2025 & Sarim Zia & Added information for Section 4 and Appendix\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Problem Statement}
 
-\wss{You should check your problem statement with the
-\href{https://github.com/smiths/capTemplate/blob/main/docs/Checklists/ProbState-Checklist.pdf}
-{problem statement checklist}.} 
-
-\wss{You can change the section headings, as long as you include the required
-information.}
-
 \subsection{Problem}
+
+The process of commuting to and from university presents numerous 
+challenges. The major challenges include the 
+increasing cost of fuel, GO bus fares, and the high 
+cost of parking near the university premises. 
+An average student and university staff/faculty 
+member ends up paying more than 
+\$150/month to \$250/month just on transportation ~\citep{ChandaAndSo2025}.
+These not only put a financial strain on them but also 
+add an emotional burden. This money could be well spent somewhere else. 
+An example could be their home loans or their housing rent. 
+They usually have to be very conservative on their leisure spending to save for these high transportation costs.
+Moreover, the impact 
+of commuters commuting to universities with their 
+personal vehicles leave a significant impact on 
+the environment. Universities Canada`s 2024 
+footprint report states that \textbf{single occupancy} vehicle commuting contributed to around 
+36\% of overall GHG emissions ~\citep{Kebirungi2024}
+The air quality significantly drops due to the pollusion caused by these emmisions, which negatively affects people`s health.
+To tackle these problems, commuters choose 
+to carpool. However, even these bring new 
+challenges. Applications like Kijiji, 
+Facebook Marketplace, Poparide provide a 
+solution to this problem; however, they come 
+with minimal safety measures. These applications 
+have drivers coming from all sorts of backgrounds 
+with minimal verifications. They lack a centralized 
+verification system to track driver`s details and background. 
+\textbf{Hitchly} is an application that aims to make the process of commuting to McMaster 
+University and back home, streamlined, affordable and safe for its users, and 
+sustainable for the environment. 
 
 \subsection{Inputs and Outputs}
 
-\wss{Characterize the problem in terms of ``high level'' inputs and outputs.  
-Use abstraction so that you can avoid details.}
+\subsubsection{Inputs}
+\begin{enumerate}
+\item \textbf{User data:} The user adds their personal information, commute details, university email, timetable and their location.
+\item \textbf{Driver Data:} The drivers specifically add their vehicle and license details in the app. They also add their cost estimation of fuel and parking into the app.
+\end{enumerate}
+
+\subsubsection{Outputs}
+\begin{enumerate}
+\item \textbf{User data:} Hitchly will match users (drivers and riders) based on their schedule and location. The app will also output a summary of the trip upon completion.
+\item \textbf{Driver Data:} Hitchly will generate a price estimate for the driver to decide the price per rider for a trip.  
+\end{enumerate}
 
 \subsection{Stakeholders}
 
-\subsection{Environment}
+\subsubsection{Direct Stakeholders}
+The main direct stakeholders are \textbf{McMaster students} and \textbf{McMaster staff} and \textbf{faculty members}. They commute to the university and home frequently for studies and work and often look for opportunities to save and earn extra money. They can use this application to either provide a rideshare service as drivers or use those services as riders.  
 
-\wss{Hardware and Software Environment}
+\subsubsection{Indirect Stakeholders}
+\begin{enumerate}
+\item \textbf{McMaster University:} The university will see a reduction in the congestion of traffic near its premises because of the application`s carpooling services.
+\item \textbf{Hamilton Community and McMaster University Neighborhood:} The area will see a lot less congestion due to the reduction of cars. Moreover, it will also see a significant reduction in GHG emissions.  
+\item \textbf{Student and Staff Families:} They will have a sense of relief and peace of mind for their carpooling family members due to the increased reliability and credibility of the ride sharing app. 
+\end{enumerate}
+
+\subsection{Environment}
+This application will be compatible on all mobile devices. It will also be supported by the two major operating systems, Android and IOS. GitHub will be used for version controlling and VS Code will be used for coding and developing the application.
 
 \section{Goals}
+\begin{enumerate}
+\item \textbf{Incentive for Drivers}\\ 
+Students always have a tight budget incurring costs coming from tuition fees, internet bills, food expenses etc. A lot of students and faculty/staff members often drive to university for work or studies. This application gives them an opportunity to generate an extra source of income by providing carpooling services. This goal can be measured by how much profit a user generates per trip.  
+
+\item \textbf{Reliable Platform to Match Riders} \\
+Users often find it difficult to find a safe and reliable platform that connects drivers with users to carpool based on their location and timetable. Each user will input their timetable information, and the system will automatically recommend users with matching timetables. This will reduce the time required to search for riders with a similar schedule. This goal can be measured by the number of riders matched in a given period. It can also be measured by the number of trips users make in a given period. Lastly, the reliability of the application could be measured by the success of the McMaster affiliated email verification step during account registration.
+
+\item \textbf{Increase Affordability} \\
+Carpooling creates an opportunity for users to share the cost of commuting to and from university. This can significantly help users to manage their finances and help them save their money. This goal can be measured by comparing the monthly cost of carpooling with the average monthly cost of commuting.
+
+\item \textbf{Improve Sustainability and Reduce Traffic Congestion} \\
+This app allows users to commute in one vehicle which reduces the overall number of vehicles used to commute to and from university. A reduction of cars would also result in a significantly lower contribution towards GHG emissions. This will also result in less congestion near the university premises and thus reduce commuting delays due to traffic congestion.  This goal can be measured by estimating the emissions contributed per trip in a given period.  
+
+\item \textbf{Ratings and Reviews System} \\
+As an extension to the application, riders will be able to rate their drivers and add reviews to their profile. This will help riders make informed decisions when choosing their drivers. Additionally, this will give riders an incentive to interact more with the riders and act appropriately to receive good reviews and ratings. This will help them build their credibility within the application. This goal can be measured by checking the number of reviews and ratings for a given driver. 
+\end{enumerate}
 
 \section{Stretch Goals}
+\begin{enumerate}
+\item \textbf{Queuing for Rider Availability}\\
+Most applications don`t provide a feature to select a preferred driver and queue for a spot if seats fill up. As an extension of the main project goals, users can queue for riders if the spots fill up. They can set up notifications for when the rider becomes available. This goal can be measured by checking the frequency of notifications sent to queuing riders in a given period. 
 
-\section{Extras}
+\section{Extras} 
 
-\wss{For CAS 741: State whether the project is a research project. This
-designation, with the approval (or request) of the instructor, can be modified
-over the course of the term.}
+To enhance the scope of the project, we would like to implement the following extra
+activities:
+\begin{itemize}
+\item User Manual: This extra will allow for user-friendly documentation guiding them 
+through our application.
+\item Usability Testing: This extra will allow us to test the application in the environment
+it was designed for, allowing us to observe the true usability/safety/sustainability of the application.
+\end{itemize}
 
-\wss{For SE Capstone: List your extras.  Potential extras include usability
-testing, code walkthroughs, user documentation, formal proof, GenderMag
-personas, Design Thinking, etc.  (The full list is on the course outline and in
-Lecture 02.) Normally the number of extras will be two.  Approval of the extras
-will be part of the discussion with the instructor for approving the project.
-The extras, with the approval (or request) of the instructor, can be modified
-over the course of the term.}
 
 \newpage{}
 
 \section*{Appendix --- Reflection}
 
-\wss{Not required for CAS 741}
 
 \input{../Reflection.tex}
 
 \begin{enumerate}
-    \item What went well while writing this deliverable? 
+    \item What went well while writing this deliverable? \\
+    Our team chose a project that was well suited for all of our background skills 
+    through a brief period of discovery. We all were able to connect rather early before
+    the group formation deadline, and this was a major factor in our success. Another important
+    factor for our success was our ability to align our interests. In a group of five people, it
+    can be difficult to pick a project that aligns with our interests, however we followed a voting 
+    structure and ensured everyone had a chance to voice their opinions. The discovery phase for our 
+    project allowed for a swift transition to our deliverable as we were able to finalize details early 
+    on and focus more time on our research phase.
     \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
+    did you resolve them?\\
+    Since our project was an idea that we came up with on our own, we did not have the benefit of having a supervisor 
+    who can relay critical information to us during the research phase. However, this just meant we had the oppurtunity
+    to dive deeper into the project through speaking to stakeholders around campus. Alongside that, we ensured to utilize our time 
+    with the TA to ask as many questions as possible thus ensuring success in this deliverable.
     \item How did you and your team adjust the scope of your goals to ensure
     they are suitable for a Capstone project (not overly ambitious but also of
-    appropriate complexity for a senior design project)?
+    appropriate complexity for a senior design project)?\\
+    Adjusting the scope of our goals to ensure they were suitable for a Capstone project was supported by the help of our professor. During 
+    the approval phase, we had a continous communication line with the professor to ensure we could incorporate his feedback. Through this, 
+    and discussions within the team about technical skillset, we were able to come up with appropriate goals for the project.
+    
 \end{enumerate}  
 
+\bibliographystyle {plainnat}
+\bibliography{../../refs/References}
+
+
 \end{document}
+
+
