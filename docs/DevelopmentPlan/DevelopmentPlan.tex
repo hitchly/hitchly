@@ -40,71 +40,124 @@ what is contained in the report.}
 
 \section{Confidential Information?}
 
-\wss{State whether your project has confidential information from industry, or
-not.  If there is confidential information, point to the agreement you have in
-place.}
+This project does not contain any confidental information from industry partners.
 
-\wss{For most teams this section will just state that there is no confidential
-information to protect.}
-\section{IP to Protect}
+\section{IP to Protect} 
 
-<<<<<<< Updated upstream
-\wss{State whether there is IP to protect.  If there is, point to the agreement.
-All students who are working on a project that requires an IP agreement are also
-required to sign the ``Intellectual Property Guide Acknowledgement.''}
-=======
 This project does not require any IP.
->>>>>>> Stashed changes
 
 \section{Copyright License}
 
-\wss{What copyright license is your team adopting.  Point to the license in your
-repo.}
+See LICENSE file in root of repository. It can be accessed at this
+\href{https://github.com/hitchly/hitchly/blob/main/LICENSE}{link}.
 
 \section{Team Meeting Plan}
 
-\wss{How often will you meet? where?}
-
-\wss{If the meeting is a physical location (not virtual), out of an abundance of
-caution for safety reasons you shouldn't put the location online}
-
-\wss{How often will you meet with your industry advisor?  when?  where?}
-
-\wss{Will meetings be virtual?  At least some meetings should likely be
-in-person.}
-
-\wss{How will the meetings be structured?  There should be a chair for all meetings.  There should be an agenda for all meetings.}
+The team will meet multiple times a week. The meetings will consist of atleast
+one meeting with the TA on Wednesdays, a weekly team review meeting, and any 
+further meetings as needed. The meetings will primarly be virtual through a Discorc
+meeting, however the team may occasionally meet in-person.
+Meeting Structure:
+\begin{enumerate}
+  \item The team will select a chair for the meeting to take meeting minutes. (This positiion will be on a rotational basis) 
+  \item Each member will take turns discussing tasks they accomplished throughout the week alongside any outstanding tasks.
+  \item Team members will discuss any challenges/hurdles they are facing.
+  \item Team will assign tasks for each member for the following week.
+  \item Any remaining discussion points/questions will be documented for the next TA meeting.
+\end{enumerate}
 
 \section{Team Communication Plan}
 
-\wss{Issues on GitHub should be part of your communication plan.}
+Our team will use several platforms for communication to stay as organized and connected as possible.
+\begin{itemize}
+	\item {\bf Github:} This will be the central platform for code collaboration and project task management. 
+	\begin{itemize}
+    \item The team will use Issues to log tasks and meetings, and to assign responsibilities.
+    \item Project boards will be used to help track the team's progress throughout the project.
+  \end{itemize}
+  \item {\bf Discord:} This will be used as the primary communication platform for the team. 
+        Meetings will take place in the Discord server, as well as any other quick communication, updates, and questions.
+  \item {\bf Microsoft Teams:} Teams will also be used to share files and documents to stay organized.
+  \item {\bf Outlook:} Email will be used to communicate with the Professor, TA, and any other external inquiries related to the project.
+\end{itemize}
 
 \section{Team Member Roles}
 
-\wss{You should identify the types of roles you anticipate, like notetaker,
-leader, meeting chair, reviewer.  Assigning specific people to those roles is
-not necessary at this stage.  In a student team the role of the individuals will
-likely change throughout the year.}
+The roles outlined below will guide the workflow of the team and ensure key responsibilities are covered, but remain flexible to allow all members to rotate respinsibilities
+and step in for each other as we progress through the project, allowing each member to get experience in a number of areas. While all members of the team
+will be required to contribute to development, doocumentation, and other general tasks of the project, certain criticial aspects of the project that require 
+domain expertise and consistent oversight will have designated leads. The leads ensure that these areas are managed properly and provides direction and accountability for all team members.
+This approach to team member roles helps balance shared learning with the need for leadership.
+\begin{itemize}
+  \item {\bf Meeting Chair:} This person will be responsible for taking lead of any group meetings by setting an agenda and ensuring
+        everybody is on the same page by taking notes of what was discussed. They will also be responsible for taking notes during TA meetings
+        and coordinating any other meetings that need to take place.
+  \item {\bf Reviewer:} Reviews any pull requests and commits for documentation to ensure that the content aligns with the rest of the group's work, 
+        and also fits the Exceeds criteria on the rubric. Feedback will be provided as appropriate to improve the quality of work submitted.
+  \item {\bf Testing lead:} In charge of overseeing the creation and execution of test plans, which can include unit testing, integration testing, and user acceptance testing, to ensure features meet the requirements and functionality is stable. 
+  \item {\bf UI/UX Lead:} Specializes in understanding user needs and designing and refining the interface of the application. Conducts usability tests
+        and gathers feedback to ensure the design is user-friendly. 
+  \item {\bf Data Management and Insights Lead:} Responsible for overseeing how data which is required for the application is being stored and managed
+        in the app's database and schemas, and how it is integrated into the application. Also responsible for tracking key metrics such as the number of rides,
+        estimated carbon footprint reduction, etc.
+\end{itemize} 
 
 \section{Workflow Plan}
 
-\begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
-\end{itemize}
+{\bf Git:} The main branch in the repository is where code and documentation that has been reviewed and approved will be stored. Team members will create branches for any given task while working
+on a deliverable to keep work organized and separated.  The branches that are created will have a descriptive name that mentions the task for clarity. Once the changes have been made on a branch, 
+a pull request will be made explaning the changes, and the change must be reviewed by the team member who is the Reviewer at the time at the bare minimum. Once reviewed, if it is approved then the changes will be merged into the main branch. \\
 
+\noindent {\bf Issues:} For each deliverable, the team will break it down into individual tasks, which will then have a corresponding issue created for them on Github, which will be assigned to the team member who will complete the task.
+Each issue will be given a label based on what it is for (e.g: documentation), and a Type label to further clarify its purpose (e.g: Task, Bug, Feature). 
+The issue will also be given a descriptive title which clearly shows what task it is related to. When a team member completes the work for a given task, their work will
+be committed on Git and will be linked to the corresponding issue. Each issue will be added to a Board on git to keep track of progress. Issues will also be created to keep track of team meetings and lectures. \\
+
+\noindent {\bf CI/CD:} We will use Github Actions to set up a CI/CD pipeline for our project. This helps ensire that every team member's code integrates smoothly. Actions that will be included will be
+automated generation of documentation from the source code, running unit tests, and code style checks. These must pass in order for a Pull Request to be merged.
 \section{Project Decomposition and Scheduling}
 
-\begin{itemize}
-  \item How will you be using GitHub projects?
-  \item Include a link to your GitHub project
-\end{itemize}
+The team will be using Github projects as a central tool for organizing tasks, tracking progress, and scheduling work throughout the capstone project. As mentioned in Section 7,
+the team will use issues for each task of the project, whether it be a section of documentation, delivering a feature, or a bug fix. These issues will be grouped by the milestone it
+is a part of, and will be organized into columns that represent the status of the task: To do, In Progress, or Done. The team member that is assigned the task/issue is responsible
+for updating the status of their task as it is worked on.\newline
 
-\wss{How will the project be scheduled?  This is the big picture schedule, not
-details. You will need to reproduce information that is in the course outline
-for deadlines.}
+\noindent The Github Project can be accessed \href{https://github.com/orgs/hitchly/projects/2/views/1}{\bf here}.\\
+
+\noindent {\bf The project will be scheduled as follows:}
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{|l|l|}
+  \hline
+  \textbf{Task/Deliverable} & \textbf{Deadline} \\
+  \hline
+  Problem Statement, POC Plan, Development Plan & Sept 22, 2025 \\
+  \hline
+  Requirements Document and Hazard Analysis Revision 0 & Oct 6, 2025 \\
+  \hline
+  V\&V Plan Revision 0  & Oct 27, 2025 \\
+  \hline
+  Design Document Revision -1  & Nov 10, 2025 \\
+  \hline
+  Proof of Concept Demonstration & Nov 17-27, 2025 \\
+  \hline
+  Design Document Revision 0           & Jan 19, 2026 \\
+  \hline
+  Revision 0 Demonstration & Feb 2-12, 2026 \\
+  \hline
+  V\&V Report and Extras Revision 0 & Mar 9, 2026 \\
+  \hline
+  Final Demonstration (Revision 1) & Mar 23-29, 2026 \\
+  \hline
+  EXPO Demonstration & TBD \\
+  \hline
+  Final Documentation (Revision 1) & Apr 6, 2026 \\
+  \hline
+  \end{tabular}
+  \caption{Project Schedule with Deadlines}
+  \label{tab:schedule}
+  \end{table}
 
 \section{Proof of Concept Demonstration Plan}
 
