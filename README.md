@@ -1,8 +1,7 @@
-# Project Name
+# Hitchly
+Developer Names: Burhanuddin Kharodawala, Sarim Zia, Hamzah Rawasia, Aidan Froggatt, Swesan Pathmanathan
 
-Developer Names:
-
-Date of project start:
+Date of project start: September 6th, 2024
 
 This project is ...
 
