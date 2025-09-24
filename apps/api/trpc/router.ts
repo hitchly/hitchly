@@ -1,10 +1,11 @@
+import type { User } from "@hitchly/types";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { users } from "../db/schema";
 import { publicProcedure, router } from "./context";
 
 export const appRouter = router({
-  getUsers: publicProcedure.query(async ({ ctx }) => {
+  getUsers: publicProcedure.query(async ({ ctx }): Promise<User[]> => {
     return await ctx.db.select().from(users);
   }),
 
@@ -15,13 +16,13 @@ export const appRouter = router({
         name: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }): Promise<User[]> => {
       return await ctx.db.insert(users).values(input).returning();
     }),
 
   getUserById: publicProcedure
     .input(z.number())
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }): Promise<User | undefined> => {
       return await ctx.db
         .select()
         .from(users)
@@ -29,5 +30,3 @@ export const appRouter = router({
         .then((res) => res[0]);
     }),
 });
-
-export type AppRouter = typeof appRouter;
