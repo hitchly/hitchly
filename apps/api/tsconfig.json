@@ -12,6 +12,6 @@
     "rootDir": "./",
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

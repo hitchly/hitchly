@@ -18,6 +18,35 @@
 *-converted-to.*
 # these rules might exclude image files for figures etc.
 # *.ps
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Turbo
+.turbo
+
+# Drizzle
+drizzle/
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
 # *.eps
 # *.pdf
 
@@ -304,5 +333,6 @@ pnpm-debug.log*
 # Testing
 coverage/
 
-# Drizzle
-**/drizzle/
+# Turbo
+.turbo
+**/.turbo

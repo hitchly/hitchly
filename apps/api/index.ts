@@ -6,7 +6,7 @@ import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/router";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.API_PORT;
 
 app.use(cors());
 app.use(express.json());

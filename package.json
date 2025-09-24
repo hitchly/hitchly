@@ -1,17 +1,15 @@
 {
   "name": "hitchly",
   "private": true,
-  "workspaces": [
-    "src/*"
-  ],
   "scripts": {
-    "install:all": "pnpm install",
-    "dev:backend": "pnpm --filter backend dev",
-    "dev:mobile": "pnpm --filter mobile dev",
-    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter mobile dev\"",
-    "lint": "pnpm -w run -r lint"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "concurrently": "^7.6.0"
+    "@turbo/gen": "^1.10.14",
+    "prettier": "^3.0.3",
+    "turbo": "^1.10.14"
   }
 }
