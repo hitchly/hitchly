@@ -9,6 +9,9 @@
   },
   "devDependencies": {
     "@turbo/gen": "^1.10.14",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.23",
+    "@types/node": "^20.19.17",
     "prettier": "^3.0.3",
     "turbo": "^1.10.14"
   }
