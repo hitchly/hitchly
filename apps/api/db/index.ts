@@ -1,7 +1,7 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import path from "path";
 import { config } from "dotenv";
+import { drizzle } from "drizzle-orm/node-postgres";
+import path from "path";
+import { Pool } from "pg";
 
 config({ path: path.resolve(__dirname, "../../../.env") });
 
