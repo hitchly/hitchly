@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@trpc/client':
+        specifier: ^11.6.0
+        version: 11.6.0(@trpc/server@11.6.0(typescript@5.9.2))(typescript@5.9.2)
     devDependencies:
       '@turbo/gen':
         specifier: ^2.5.8

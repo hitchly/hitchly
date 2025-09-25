@@ -15,5 +15,8 @@
     "@types/node": "^24.5.2",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8"
+  },
+  "dependencies": {
+    "@trpc/client": "^11.6.0"
   }
 }

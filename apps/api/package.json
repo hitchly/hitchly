@@ -2,7 +2,7 @@
   "name": "@hitchly/api",
   "private": true,
   "version": "1.0.0",
-  "description": "Hitchly backend server with Express, tRPC, and Drizzle ORM",
+  "description": "Hitchly api server with Express, tRPC, and Drizzle ORM",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
