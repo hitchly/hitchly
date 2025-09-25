@@ -2,17 +2,37 @@ import { config } from "dotenv";
 import type { Config } from "drizzle-kit";
 import path from "path";
 
-config({ path: path.resolve(__dirname, "../../.env") });
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.development";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set in root .env file");
+config({ path: path.resolve(__dirname, "../../", envFile) });
+
+if (
+  !process.env.POSTGRES_USER ||
+  !process.env.POSTGRES_PASSWORD ||
+  !process.env.POSTGRES_DB ||
+  !process.env.POSTGRES_HOST ||
+  !process.env.POSTGRES_PORT
+) {
+  throw new Error("Postgres environment variables are not fully set");
 }
 
-export default {
+const isProduction = process.env.NODE_ENV === "production";
+
+const drizzleConfig: Config = {
   schema: "./db/schema.ts",
   out: path.resolve(__dirname, "../../drizzle"),
-  driver: "pg",
+  dialect: "postgresql",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL,
+    host: process.env.POSTGRES_HOST,
+    port: parseInt(process.env.POSTGRES_PORT, 10),
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    ssl: isProduction ? { rejectUnauthorized: true } : false,
   },
-} satisfies Config;
+};
+
+export default drizzleConfig;
