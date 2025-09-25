@@ -1,8 +1,13 @@
 {
-  "name": "hitchly-backend",
+  "name": "@hitchly/api",
+  "private": true,
   "version": "1.0.0",
   "description": "Hitchly backend server with Express, tRPC, and Drizzle ORM",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./router": "./router.ts"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only index.ts",
