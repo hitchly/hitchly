@@ -2,12 +2,7 @@ import { config } from "dotenv";
 import type { Config } from "drizzle-kit";
 import path from "path";
 
-const envFile =
-  process.env.NODE_ENV === "production"
-    ? ".env.production"
-    : ".env.development";
-
-config({ path: path.resolve(__dirname, "../../", envFile) });
+config({ path: path.resolve(__dirname, "../../.env") });
 
 if (
   !process.env.POSTGRES_USER ||
@@ -19,8 +14,6 @@ if (
   throw new Error("Postgres environment variables are not fully set");
 }
 
-const isProduction = process.env.NODE_ENV === "production";
-
 const drizzleConfig: Config = {
   schema: "./db/schema.ts",
   out: path.resolve(__dirname, "../../drizzle"),
@@ -31,7 +24,8 @@ const drizzleConfig: Config = {
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
-    ssl: isProduction ? { rejectUnauthorized: true } : false,
+    // Set to true if using SSL for production databases
+    ssl: false,
   },
 };
 
