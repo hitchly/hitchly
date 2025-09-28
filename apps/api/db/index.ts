@@ -1,16 +1,13 @@
-import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
-import path from "path";
 import { Pool } from "pg";
-
-config({ path: path.resolve(__dirname, "../../../.env") });
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set in root .env file");
-}
+import * as schema from "./schema";
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 5432),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });

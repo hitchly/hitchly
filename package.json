@@ -1,22 +1,23 @@
 {
   "name": "hitchly",
+  "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.17.1",
   "scripts": {
     "build": "turbo run build",
+    "clean": "turbo run clean",
     "dev": "turbo run dev",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "test": "turbo run test"
   },
+  "dependencies": {},
   "devDependencies": {
-    "@turbo/gen": "^2.5.8",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.5.2",
-    "prettier": "^3.6.2",
+    "prettier": "^3.2.5",
     "turbo": "^2.5.8"
   },
-  "dependencies": {
-    "@trpc/client": "^11.6.0"
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=7.0.0"
   }
 }

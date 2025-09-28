@@ -1,13 +1,44 @@
-version: "3.8"
+version: "3"
+
 services:
-  db:
-    image: postgres:15
-    restart: unless-stopped
-    env_file:
-      - .env
+  api:
+    container_name: api
+    environment:
+      - DB_HOST=my-turborepo-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=mydb
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    restart: always
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - 3001:3001
+    networks:
+      - app_network
+
+  db:
+    image: postgres:15-alpine
+    container_name: my-turborepo-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+# Define a network, which allows containers to communicate
+# with each other, by using their container name as a hostname
+networks:
+  app_network:
+    external: true
+
 volumes:
-  db-data: {}
+  db-data:
