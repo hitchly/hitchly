@@ -1,9 +1,12 @@
-import { log } from "@repo/logger";
+import { config } from "dotenv";
 import { createServer } from "./server";
 
-const port = process.env.PORT || 3001;
-const server = createServer();
+config({ path: "../../.env" });
 
-server.listen(port, () => {
-  log(`api running on ${port}`);
+const PORT = Number(process.env.API_PORT ?? 3001);
+
+const app = createServer();
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
