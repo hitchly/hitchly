@@ -4,7 +4,7 @@ services:
   api:
     container_name: api
     environment:
-      - DB_HOST=my-turborepo-db
+      - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
@@ -22,7 +22,7 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: my-turborepo-db
+    container_name: db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
