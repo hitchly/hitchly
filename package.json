@@ -9,15 +9,26 @@
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "prepare": "husky"
   },
-  "dependencies": {},
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
     "prettier": "^3.2.5",
     "turbo": "^2.5.8"
   },
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=7.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{md,json,css}": [
+      "prettier --write"
+    ]
   }
 }
