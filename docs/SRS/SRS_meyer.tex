@@ -167,7 +167,7 @@ New processes, or improvements to existing processes, made possible by the proje
 Hitchly is a campus-focused ride sharing service for the McMaster community.
 It verifies users by McMaster email, collects commute and vehicle data, matches riders and drivers by schedule and location, estimates cost sharing, and supports post-trip ratings.
 
-\subsubsection*{Functional requirements (two sentences each)}
+\subsubsection*{Functional requirements}
 \begin{enumerate}
   \item \textbf{User verification.}
   At sign-up, users must verify a McMaster-affiliated email address before any ridesharing features become available.
@@ -190,11 +190,11 @@ It verifies users by McMaster email, collects commute and vehicle data, matches 
   These signals improve decision-making over time while remaining out of scope for the initial PoC.
 \end{enumerate}
 
-\subsubsection*{Most important two (business value)}
+\subsubsection*{Most important two}
 \textbf{User verification} and \textbf{Ride matching} are most important.
 Verification directly addresses safety/trust, a primary adoption risk; matching is the core value creation that reduces search time and enables cost sharing. Together they validate the product’s viability and de-risk the project early.
 
-\subsubsection*{Non-functional requirements (two sentences each)}
+\subsubsection*{Non-functional requirements}
 \begin{enumerate}
   \item \textbf{Reliability (matching correctness).}
   Under typical peak usage, the matching function should consistently produce correct, reproducible pairings for the same inputs.
@@ -207,9 +207,9 @@ Verification directly addresses safety/trust, a primary adoption risk; matching 
 
 \subsubsection*{RACI for requirements}
 \begin{center}
-\begin{tabular}{lcccc}
+\begin{tabularx}{\textwidth}{@{}l c c c >{\raggedright\arraybackslash}X@{}}
 \hline
-\textbf{Requirement} & \textbf{Dev Team} & \textbf{Drivers} & \textbf{Riders} & \textbf{McMaster Univ. /\newline Hamilton Community} \\
+\textbf{Requirement} & \textbf{Dev Team} & \textbf{Drivers} & \textbf{Riders} & \textbf{McMaster Univ. / Hamilton Community} \\
 \hline
 User verification & \textbf{R/A} & C & C & I \\
 Profile \& schedule input & \textbf{R/A} & C & C & I \\
@@ -219,10 +219,10 @@ Ratings \& reviews (extension) & \textbf{R/A} & C & C & I \\
 Reliability (NFR) & \textbf{R/A} & C & C & I \\
 Usability (NFR) & \textbf{R/A} & C & C & I \\
 \hline
-\end{tabular}
+\end{tabularx}
 \end{center}
 
-\noindent\emph{Legend:} R = Responsible (executes the work); A = Accountable (final sign-off); C = Consulted (provides input); I = Informed (kept up to date).
+\noindent{\textbf{Legend:}} R = Responsible (executes the work); A = Accountable (final sign-off); C = Consulted (provides input); I = Informed (kept up to date).
 
 \subsection{(G.5) High-level Usage Scenarios}
 Fundamental usage paths through the system, stated in user terms and independent of the system’s structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
