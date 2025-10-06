@@ -147,17 +147,21 @@ G.7 & & & & & \\
 \end{table}
 
 \subsection{(G.1) Context and Overall Objectives}
-High-level view of the project: organizational context and reason for building a system. It explains why the project is needed, recalls the business context, and presents the general business objectives \cite{meyer2022}.
-
-New university students trying to make connections with each other can often find it difficult due to the limited interactions they have outside of their program. \textit{HammerCorp Inc.} will address this by developing a web and mobile app called \textbf{ACME Connect}, which connects students based on similar interests or experiences, as well as student clubs or institutional activities. It aims to improve the overall university experience by creating a tightly-knit student community where integration of official activities happens at the student level. With safety as a primary goal, this project plans to be available to universities across North America, with a pilot program starting at McMaster University.
+Commuting to McMaster University presents significant financial and environmental challenges. Students, staff, and faculty spend between 150 and 250 dollars monthly on fuel, parking, or transit, which places an economic burden on them. At the same time, single-occupancy vehicles contribute to 36 percent of greenhouse gas emissions for Canadian universities, harming both local air quality and broader sustainability goals. Existing ridesharing solutions such as Facebook Marketplace, Kijiji, or Poparide do not provide sufficient verification or security, leaving users at risk of riding with unaffiliated strangers. The objective of Hitchly is to provide a safe, affordable, and reliable ridesharing platform tailored for the McMaster community. By verifying users through McMaster email accounts, Hitchly ensures trust, reduces costs, supports sustainability, and helps the university meet its long-term community and environmental goals. 
 
 \subsection{(G.2) Current Situation}
-Current state of processes to be addressed by the project and the resulting system. It describes the current situation upon which the system is expected to improve \cite{meyer2022}.
-
-At the moment, students are limited to in-person connections within their program or at Welcome Week events, which are often not sufficient for engagement and networking. Residence and international students may feel disconnected in a new place. Student clubs and associations also find it difficult to engage potential members. Although there are in-person events for new students and club booths around campus, those are temporary pop-ups and may not reach everyone. There is no central place for everyone to connect outside those events. Discord servers exist; however, they are often not institutionally based, which can compromise safety and allow complete strangers not affiliated with the school. Looking at these challenges, \textbf{ACME Connect} plans to address them and create a safe environment for students and institutions to foster lasting relationships throughout the university journey.
+Currently, McMaster commuters lack a centralized, trusted platform to connect drivers and riders within the university community. Those who rely on driving face steep monthly costs for gas and parking, while those taking transit encounter expensive or unreliable services. Informal ridesharing options exist, but they provide limited safety features and lack institutional alignment, making them unsuitable for building long-term trust. Students and staff often feel that available solutions are unsafe, inefficient, or financially burdensome. Hitchly seeks to fill this gap by providing a McMaster-specific application that facilitates secure ridesharing, reduces commuting costs, and lowers emissions. 
 
 \subsection{(G.3) Expected Benefits}
-New processes, or improvements to existing processes, made possible by the project’s results. It presents the business benefits expected from successful execution of the project. This chapter is the core of the Goals book, describing what the organization expects from the system \cite{meyer2022}.
+The pilot delivers clear, stakeholder-visible outcomes. Riders should see more affordable commutes (targeting approximately 20\% savings) while drivers receive meaningful cost offsets (around 40\%). We aim for reliable availability ($\geq$70\% ride-fill and $\geq$95\% on-time) so trips feel predictable from day one, with most new users completing a first ride within a week. The pilot targets a reduction in single-occupancy trips on campus and nearby (aiming for at least 10\%), easing parking pressure and congestion and reducing emissions. The service will be inclusive by default (targeting about 90\% match on stated accessibility preferences) and trusted through university-verified identities with a goal of very low incident rates. The university benefits from higher student satisfaction and sense of belonging, improved commuter equity, and better alignment with sustainability reporting---while maintaining privacy safeguards (goal: zero critical incidents). Broader community outcomes include cleaner air, calmer peak traffic, and greater participation in transit and shared mobility.
+
+\begin{figure}[htbp]
+  \centering
+  % path is relative to the .tex file; create docs/SRS/images/ and put your file there
+  \includegraphics[width=0.75\textwidth]{goal_model.png}
+  \caption{Hitchly Goal Modelling Diagram.}
+  \label{fig:ride-matching}
+\end{figure}
 
 \textit{Nothing available at this point.}
 
@@ -167,23 +171,101 @@ Overview of the functions (behavior) of the system. Principal properties only (d
 \textit{Nothing available at this point.}
 
 \subsection{(G.5) High-level Usage Scenarios}
-Fundamental usage paths through the system, stated in user terms and independent of the system’s structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
 
-\begin{center}
-\fbox{\parbox{0.7\linewidth}{\centering \emph{(High level use case diagram placeholder)}}}
-\end{center}
+\subsubsection*{Use Case 1: Driver Offers Ride}
+\begin{enumerate}
+    \item A driver registers with their McMaster email.
+    \item They input their schedule and vehicle details.
+    \item Hitchly suggests potential riders with overlapping times.
+    \item The driver confirms the riders they want to take.
+    \item The system calculates cost-sharing estimates.
+    \item After the trip, the driver receives ratings and reviews.
+\end{enumerate}
 
-\textit{Nothing available at this point.}
+\subsubsection*{Use Case 2: Rider Finds Ride}
+\begin{enumerate}
+    \item A rider signs up with a McMaster email.
+    \item They enter their daily commute times and location.
+    \item Hitchly presents a list of verified drivers with compatible schedules.
+    \item The rider selects a driver and confirms.
+    \item The system provides trip details, including cost share.
+    \item After the ride, the rider leaves a review.
+\end{enumerate}
+
+\subsubsection*{Use Case 3: Report Safety Issue}
+\begin{enumerate}
+    \item A rider feels unsafe during a trip.
+    \item They submit a report through the in-app reporting tool.
+    \item Hitchly forwards the report to moderators.
+    \item The moderators review and investigate the case.
+    \item The driver’s or rider’s account is flagged if necessary.
+    \item The system tracks the resolution and stores it for accountability.
+\end{enumerate}
+
+\subsubsection*{Use Case 4: Sustainability Tracking}
+\begin{enumerate}
+    \item Hitchly logs each completed trip.
+    \item The system calculates estimated emissions avoided.
+    \item Data is aggregated in dashboards.
+    \item McMaster administration reviews statistics to measure impact.
+    \item The results inform sustainability planning.
+    \item Reports can be shared with the broader community.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  % path is relative to the .tex file; create docs/SRS/images/ and put your file there
+  \includegraphics[width=0.75\textwidth]{use-case.png}
+  \caption{Hitchly Use Case Diagram.}
+  \label{fig:ride-matching}
+\end{figure}
 
 \subsection{(G.6) Limitations and Exclusions}
-Aspects that the system need not address; scoping the requirements. (Risks and obstacles belong to P.6.) \cite{meyer2022}.
+\begin{itemize}
+  \item McMaster-Only Access: Hitchly will only be available to McMaster students, staff, and faculty during the pilot phase. Users must verify their identity through a McMaster email. This restriction ensures trust and control but limits the platform’s reach to a single institution. 
 
-\textit{Nothing available at this point.}
+  \item Background and Insurance Checks: For the pilot phase, Hitchly will not perform in-depth background checks or validate driver insurance. Verification is limited to McMaster email authentication. This keeps onboarding simple but places responsibility on users to ensure their own compliance with driving regulations. 
+
+  \item Limited Route Flexibility: Hitchly will not provide dynamic routing or live GPS tracking during the pilot. Riders and drivers must coordinate based on general pickup and drop-off locations. This simplifies the system but may limit convenience compared to fully featured ridesharing platforms. 
+\end{itemize}
+
 
 \subsection{(G.7) Stakeholders and Requirements Sources}
-Stakeholder categories that can affect or be affected by the project, and other sources of requirements information \cite{meyer2022}.
 
-\textit{Nothing available at this point.}
+\subsubsection*{Direct Stakeholders}
+
+\paragraph{Students}
+They are frequent commuters with tight budgets who will use Hitchly to save money and connect with peers. 
+Relevant because they face high monthly commuting costs.\\
+\textbf{Persona:} ``Sarah, a second-year student living off-campus, spends over \$200 monthly on commuting. She uses Hitchly to reduce expenses and meet fellow students traveling the same route.''
+
+\paragraph{Staff}
+Staff members travel daily to campus and benefit from both cost savings and reduced parking stress. 
+Relevant because they often drive alone and bear significant expenses.\\
+\textbf{Persona:} ``James, a staff member living in Burlington, drives to McMaster five days a week. Hitchly allows him to share costs and avoid the hassle of finding parking.''
+
+\paragraph{Faculty}
+Professors and teaching assistants need reliable commuting options. 
+Relevant because faculty members often have predictable schedules that align well with ridesharing.\\
+\textbf{Persona:} ``Dr.~Patel, a professor commuting from Toronto twice a week, finds Hitchly helpful to split costs and reduce environmental impact.''
+
+\paragraph{Drivers}
+Any McMaster-affiliated individual who owns a car and can offer rides. 
+Relevant because they reduce their commuting costs by sharing expenses.\\
+\textbf{Persona:} ``Ali, a graduate student with a car, uses Hitchly to cover his parking and gas by picking up two riders daily.''
+
+\paragraph{Riders}
+Any McMaster-affiliated individual who does not own a vehicle. 
+Relevant because they rely on others to get to campus affordably.\\
+\textbf{Persona:} ``Maria, an international student living in residence, relies on Hitchly to find rides for weekend trips to Hamilton downtown.''
+
+\subsubsection*{Indirect Stakeholders}
+
+\paragraph{McMaster University Administration}
+Gains reduced congestion and measurable sustainability improvements, aligning with institutional goals.
+
+\paragraph{Hamilton Community}
+Benefits from fewer cars on the road, reduced emissions, and improved air quality.
 
 \clearpage
 
