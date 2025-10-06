@@ -162,9 +162,67 @@ New processes, or improvements to existing processes, made possible by the proje
 \textit{Nothing available at this point.}
 
 \subsection{(G.4) Functionality Overview}
-Overview of the functions (behavior) of the system. Principal properties only (details are in the System book). A capsule version of book S that enables readers to get a quick grasp of what the system will do \cite{meyer2022}.
 
-\textit{Nothing available at this point.}
+\paragraph{Overview.}
+Hitchly is a campus-focused ride sharing service for the McMaster community.
+It verifies users by McMaster email, collects commute and vehicle data, matches riders and drivers by schedule and location, estimates cost sharing, and supports post-trip ratings.
+
+\subsubsection*{Functional requirements (two sentences each)}
+\begin{enumerate}
+  \item \textbf{User verification.}
+  At sign-up, users must verify a McMaster-affiliated email address before any ridesharing features become available.
+  This ensures only students, staff, and faculty access the platform and underpins trust and safety.
+
+  \item \textbf{Profile \& schedule input.}
+  Riders and drivers provide basic profile details plus commute timetable, typical routes/areas, and preferences.
+  Drivers additionally record vehicle and license information to enable appropriate matching and accountability.
+
+  \item \textbf{Ride matching.}
+  The system proposes compatible rider–driver pairings based on timetable overlap and approximate location.
+  A match only becomes a trip after both sides confirm.
+
+  \item \textbf{Cost estimate.}
+  For each proposed trip, Hitchly computes a per-rider cost share that helps drivers offset expenses and helps riders save compared to solo travel.
+  Estimates use driver-provided cost inputs at a simple, transparent level.
+
+  \item \textbf{Ratings \& reviews (extension).}
+  After trips, users can leave ratings and short reviews to inform future choices and encourage good behavior.
+  These signals improve decision-making over time while remaining out of scope for the initial PoC.
+\end{enumerate}
+
+\subsubsection*{Most important two (business value)}
+\textbf{User verification} and \textbf{Ride matching} are most important.
+Verification directly addresses safety/trust, a primary adoption risk; matching is the core value creation that reduces search time and enables cost sharing. Together they validate the product’s viability and de-risk the project early.
+
+\subsubsection*{Non-functional requirements (two sentences each)}
+\begin{enumerate}
+  \item \textbf{Reliability (matching correctness).}
+  Under typical peak usage, the matching function should consistently produce correct, reproducible pairings for the same inputs.
+  Incorrect or inconsistent matches are treated as defects and prioritized in testing.
+
+  \item \textbf{Usability (low-friction flows).}
+  Common tasks (sign-up/verification, offering a ride, requesting a ride, confirming a match) should be understandable without training and completable in a small number of obvious steps.
+  Clear labels and uncluttered presentation minimize onboarding time for first-time users.
+\end{enumerate}
+
+\subsubsection*{RACI for requirements}
+\begin{center}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Requirement} & \textbf{Dev Team} & \textbf{Drivers} & \textbf{Riders} & \textbf{McMaster Univ. /\newline Hamilton Community} \\
+\hline
+User verification & \textbf{R/A} & C & C & I \\
+Profile \& schedule input & \textbf{R/A} & C & C & I \\
+Ride matching & \textbf{R/A} & C & C & I \\
+Cost estimate & \textbf{R/A} & C & C & I \\
+Ratings \& reviews (extension) & \textbf{R/A} & C & C & I \\
+Reliability (NFR) & \textbf{R/A} & C & C & I \\
+Usability (NFR) & \textbf{R/A} & C & C & I \\
+\hline
+\end{tabular}
+\end{center}
+
+\noindent\emph{Legend:} R = Responsible (executes the work); A = Accountable (final sign-off); C = Consulted (provides input); I = Informed (kept up to date).
 
 \subsection{(G.5) High-level Usage Scenarios}
 Fundamental usage paths through the system, stated in user terms and independent of the system’s structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
