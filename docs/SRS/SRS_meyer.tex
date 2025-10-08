@@ -249,9 +249,19 @@ Environment properties that the system’s operation must preserve \cite{meyer20
 The System book refines the Goals book by focusing on more detailed requirements.
 
 \subsection{(S.1) Components}
-Overall structure expressed by the list of major software and, if applicable, hardware parts \cite{meyer2022}.
+Hitchly is composed of 5 main components that collectively provide the necessary functionality required for the application. \\
 
-\textit{Nothing available at this point.}
+\noindent \textbf{Matchmaking Engine:} The matchmaking engine is responsible for matching riders with drivers based on schedules/timetables, departure times, routes and locations, and other user preferences. 
+It interfaces with the scheduling system to ensure rides can be matched, whether it be one-time or recurring. It will optimize for cost, convenience, and schedule alignment. \\
+
+\noindent \textbf{Scheduling and Booking manager:} Allows users to upload their schedules to inform about their availability to facilitate matchmaking. It also ensures booked rides are stored, updated, or cancelled as per defined policies.  \\
+
+\noindent \textbf{Safety and Verification Module:} This module provides secure login through McMaster email authentication. This ensures that only verified students and staff at McMaster may use the system, providing reassurance and safety for users and a sense of community. \\
+
+\noindent \textbf{Payment and cost sharing system:} This system automatically calculates the cost of the ride for each rider based on the distance, number of passengers, gas, and parking costs. It manages in-app payment transactions and a transparent fee breakdown. \\
+
+\noindent \textbf{User profile manager:} Stores user details such as a profile picture, bio, ratings, preferences, and more. Allows other users to view a profile when matching with each other to see information about them, as well as reliability metrics such as completed rides, any strikes, and more.
+
 
 \subsection{(S.2) Functionality}
 The bulk of the System book: functional and non-functional behaviors \cite{meyer2022}.
