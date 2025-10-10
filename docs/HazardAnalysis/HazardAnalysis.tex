@@ -62,11 +62,32 @@ The purpose of this document is to highlight potential hazards within components
 
 \section{System Boundaries and Components}
 
-\wss{Dividing the system into components will help you brainstorm the hazards.
-You shouldn't do a full design of the components, just get a feel for the major
-ones.  For projects that involve hardware, the components will typically include
-each individual piece of hardware.  If your software will have a database, or an
-important library, these are also potential components.}
+The system can be divided into the following components:
+
+\subsection{Authentication System}
+This component allows users to verify themselves as McMaster students and
+ to log in to the system in order to access the application features.
+
+\subsection{Profile System}
+This component allows users to input relevant personal information such 
+as their schedule, GPS location, and role (Driver or Passenger).
+
+\subsection{Matching System}
+This component uses backend logic to pair users based on their schedule, location, 
+and preferences.
+
+\subsection{Cost Calculation System}
+This component calculates the total trip cost for the driver and creates 
+a per-rider estimate that factors in gas, parking, and other related expenses.
+
+\subsection{Database}
+This component stores user details, ride requests, matches, historical 
+data, and any other relevant information required by the system.
+
+\subsection{Ratings and Review System}
+This component allows users to rate each other after completing their 
+trips and to add reviews to their profiles.
+
 
 \section{Critical Assumptions}
 
