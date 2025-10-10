@@ -308,8 +308,51 @@ Through these interfaces, Hitchly ensures safety (via controlled access), usabil
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.4) Detailed Usage Scenarios}
-User stories and examples of interaction between users/environment and the system \cite{meyer2022}.
+\subsection{(S.4) Detailed Usage Scenarios} % S.4
+
+This section provides example interactions between users and Hitchly. Scenarios are written as user stories and include normal, special, and erroneous cases.
+
+\subsubsection{(S.4.1) Rider Requests a Ride} % S.4.1
+\begin{enumerate}
+    \item Sarah, a second-year student, opens the Hitchly app and logs in with her McMaster email.
+    \item She inputs her class timetable and home address.
+    \item Hitchly suggests matching drivers commuting at similar times.
+    \item Sarah requests a ride with a compatible driver.
+    \item The driver accepts, and both receive a confirmation notification.
+    \item After the ride, Hitchly records the trip and generates a summary.
+\end{enumerate}
+
+\subsubsection{(S.4.2) Driver Posts Availability} % S.4.2
+\begin{enumerate}
+    \item Omar, a graduate student, registers as a driver by submitting his license and car details.
+    \item He enters his weekly commute schedule and estimated fuel/parking costs.
+    \item Hitchly calculates a per-rider cost and displays suggested prices.
+    \item Riders with compatible schedules can now request seats in Omar’s car.
+    \item Omar accepts two riders and confirms the trip.
+\end{enumerate}
+
+\subsubsection{(S.4.3) Error Case — Invalid Email} % S.4.3
+\begin{enumerate}
+    \item A user attempts to register using a non-McMaster email.
+    \item The system rejects the signup and prompts them to use a valid @mcmaster.ca email.
+    \item The attempt is logged for auditing.
+\end{enumerate}
+
+\subsubsection{(S.4.4) Safety Case — Mismatched Data} % S.4.4
+\begin{enumerate}
+    \item A rider reports a driver whose profile information does not match their car/license.
+    \item Hitchly flags the account and prevents further matches until the issue is resolved.
+    \item Admins can review and verify the documentation.
+\end{enumerate}
+
+\subsubsection{(S.4.5) Ratings and Reviews} % S.4.5
+\begin{enumerate}
+    \item After a successful trip, riders are prompted to rate their driver on punctuality and safety.
+    \item Omar receives a 5-star rating and positive feedback.
+    \item His credibility score increases, making him more likely to be selected in the future.
+\end{enumerate}
+
+These scenarios highlight both standard use and exception handling, supporting the goals of affordability, safety, and sustainability.
 
 \textit{Nothing available at this point.}
 
