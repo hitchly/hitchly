@@ -3,6 +3,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{longtable}
 
 \hypersetup{
     colorlinks=true,       % false: boxed links; true: colored links
@@ -76,14 +77,66 @@ this potential failure mode.}
 
 \section{Failure Mode and Effect Analysis}
 
-\wss{Include your FMEA table here. This is the most important part of this document.}
-\wss{The safety requirements in the table do not have to have the prefix SR.
-The most important thing is to show traceability to your SRS. You might trace to
-requirements you have already written, or you might need to add new
-requirements.}
-\wss{If no safety requirement can be devised, other mitigation strategies can be
-entered in the table, including strategies involving providing additional
-documentation, and/or test cases.}
+% \wss{Include your FMEA table here. This is the most important part of this document.}
+% \wss{The safety requirements in the table do not have to have the prefix SR.
+% The most important thing is to show traceability to your SRS. You might trace to
+% requirements you have already written, or you might need to add new
+% requirements.}
+% \wss{If no safety requirement can be devised, other mitigation strategies can be
+% entered in the table, including strategies involving providing additional
+% documentation, and/or test cases.}
+
+The following FMEA worksheet identifies possible hazards associated with Hitchly, their causes,
+effects, detection methods, and recommended mitigation actions. Traceability to the System
+Requirements Specification (SRS) is included where relevant.
+
+\subsection{FMEA Worksheet}
+\begingroup
+\footnotesize
+\begin{longtable}{|p{0.5cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|}
+\caption{Failure Modes and Effects Analysis for Hitchly} \label{tbl:FMEA} \\ 
+\hline
+\textbf{Ref.} & \textbf{Component} & \textbf{Failure Mode} & \textbf{Causes of Failure} & \textbf{Effects of Failure} & \textbf{Detection Controls} & \textbf{Recommended Action / SRS Ref.} \\ \hline
+\endfirsthead
+\hline
+\textbf{Ref.} & \textbf{Component} & \textbf{Failure Mode} & \textbf{Causes of Failure} & \textbf{Effects of Failure} & \textbf{Detection Controls} & \textbf{Recommended Action / SRS Ref.} \\ \hline
+\endhead
+\hline
+\endfoot
+
+5.1 & Authentication \& Access Control & Unauthorized user gains access & Weak verification of McMaster email; credential theft & Privacy/safety risk, personal commute data exposed & Domain restriction; failed login logging & Enforce 2FA; lockouts after failed attempts (SRS S.3.2 Auth API) \\ \hline
+
+5.2 & Driver Verification & Unverified driver offers rides & Failure to validate license/vehicle data & Rider safety compromised & Admin checks; incomplete profile flags & Require license approval before matching (SRS S.3.1 Driver Registration) \\ \hline
+
+5.3 & Matching Engine & Incorrect ride matches & Algorithm error; timetable parsing bug; corrupted location input & Riders matched incorrectly; missed/unsafe rides & Backend logs; user feedback reports & Unit/integration testing; fallback to safe “no match” state (SRS S.6 Matching Engine) \\ \hline
+
+5.4 & Notifications & Missed or delayed notifications & Push service outage; API failure & Users unaware of confirmations/cancellations & Health checks; delivery logs & Retry queue; allow in-app refresh (SRS S.3.1 Notifications) \\ \hline
+
+5.5 & Trip Data \& History & Trip not recorded or lost & DB outage; sync failure & Loss of audit trail; disputes over costs or safety & DB integrity checks; monitoring & Regular backups; retries on failure; notify user (SRS S.3.2 Trip API) \\ \hline
+
+5.6 & Ratings \& Reviews & Malicious/fake reviews & Collusion or spamming & Misleading trust scores; reduced credibility & Anomaly detection; user reporting & Rate limit submissions; only allow after confirmed trips (SRS S.3.2 Ratings API) \\ \hline
+
+5.7 & Location Services & Incorrect geolocation & API failure; GPS drift; spoofing & Unsafe pickups; delays; privacy risks & Compare expected vs. actual location & Allow manual override; enforce geofence on campus (SRS S.3.2 Mapping API) \\ \hline
+
+5.8 & Data Security & Personal data leak & Server breach; weak encryption & Severe privacy violation; reputational harm & Static analysis; penetration tests & Encrypt at rest \& in transit; GDPR/PIPEDA compliance (SRS S.6.5 Code Quality) \\ \hline
+
+5.9 & Payment (future) & Incorrect cost calculation & Bug in cost-sharing logic & Disputes between riders and drivers & Automated tests; manual audits & Provide breakdown in summary; add dispute mechanism (SRS S.3.2 Trip Summary) \\ \hline
+
+5.10 & System Availability & App/API downtime & Server crash; container failure; network outage & Users stranded; loss of trust & Monitoring dashboards; downtime alerts & Deploy redundancy; user-facing error messaging (SRS S.6.3 System Testing) \\ \hline
+
+
+\end{longtable}
+\endgroup
+
+
+
+\subsection{Conclusion}
+This FMEA highlights Hitchly’s most critical hazards in authentication, ride matching,
+driver verification, and data security. Some risks are mitigated directly through
+\textbf{safety requirements} in the SRS (e.g., verified drivers only), while others are addressed
+through \textbf{operational safeguards} such as monitoring, backups, or user documentation.
+By implementing these mitigations, Hitchly can meet its goals of safety, affordability,
+and sustainability for the McMaster community.
 
 \section{Safety and Security Requirements}
 
