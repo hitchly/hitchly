@@ -811,9 +811,31 @@ Details of individual tasks and expected outcomes, associated with milestone dat
 \textit{Nothing available at this point.}
 
 \subsection{(P.5) Required Technology Elements}
-External systems, hardware and software expected to be necessary for building the system \cite{meyer2022}.
+\begin{itemize}
+  \item \textbf{Compliance with Payment API:}
+  \begin{itemize}
+      \item The application requires a secure payment gateway API that will be integrated with Hitchly to allow passengers to pay drivers for their carpool sessions. 
+      \item This technology will enable the secure processing of payments, transactions, and the generation of billing information.
+  \end{itemize}
 
-\textit{Nothing available at this point.}
+  \item \textbf{Compliance with Maps API:}
+  \begin{itemize}
+      \item The application relies on navigation and location data to match users for carpooling based on their current location and routes to the university. 
+      \item This will require full integration with a Maps API that allows precise user tracking, location comparison, and real-time route navigation across the campus area.
+  \end{itemize}
+
+  \item \textbf{Authentication API:}
+  \begin{itemize}
+      \item The application requires a secure authentication system that can reliably handle user login details. 
+      \item This API will be integrated with Hitchly to manage user access, verification, and login sessions.
+  \end{itemize}
+
+  \item \textbf{Database Management System:}
+  \begin{itemize}
+      \item A reliable DBMS is essential for storing and managing user accounts, trip history, and audit logs for safety purposes. 
+      \item This system will comply with the Hitchly application requirements and will be responsible for secure data storage and retrieval.
+  \end{itemize}
+\end{itemize}
 
 \subsection{(P.6) Risk and Mitigation Analysis}
 Some of the risks present during development are listed below:
