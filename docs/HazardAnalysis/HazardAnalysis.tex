@@ -140,8 +140,35 @@ and sustainability for the McMaster community.
 
 \section{Safety and Security Requirements}
 
-\wss{Newly discovered requirements.  These should also be added to the SRS.  (A
-rationale design process how and why to fake it.)}
+\noindent \textbf{SR-1:} The system shall enforce multi-factor authentication using McMaster email verification. \\
+
+\noindent \textbf{SR-2:} The system shall automatically lock an account after 5 consecutive failed login attempts within 10 minutes. \\
+
+\noindent \textbf{SR-3:} The system shall verify each driver's status by validating credentials and license before enabling them to offer rides. \\
+
+\noindent \textbf{SR-4:} The system shall record all failed matchmaking attempts and their causes for backend review and debugging. \\
+
+\noindent \textbf{SR-5:} The system shall retry failed notication deliveries up to three times at 30-second intervals. \\
+
+\noindent \textbf{SR-6:} The system shall include in-app refresh mechanism to allow users to manually retrieve notifications. \\
+
+\noindent \textbf{SR-7:} The system shall perform periodic backups of all trip and booking data at intervals of 15 minutes or less. \\
+
+\noindent \textbf{SR-8:} The system shall only allow users to submit ratings and reviews after a confirmed ride completion. \\
+
+\noindent \textbf{SR-9:} The system shall automatically flag abnormal rating behavior for admin review. \\
+
+\noindent \textbf{SR-10:} The system shall compare expected route location against live GPS data to detect abnomral activities, unless manually overrided by users. \\
+
+\noindent \textbf{SR-11:} The system shall encrypt all personal and sensitive data both at rest and in transit.\\
+
+\noindent \textbf{SR-12:} The system shall provide a dispute resolution interface for users to contest fare calculations. \\
+
+\noindent \textbf{SR-13:} The system shall display user-facing error messages in case of system unavailability, including retry options. \\
+
+\noindent \textbf{SR-14:} The system shall deploy redundancy to ensure 99.9\% uptime. \\
+
+\noindent \textbf{SR-15:} The system shall comply with GDPR and PIPEDA standards for user data protection. \\
 
 \section{Roadmap}
 
