@@ -273,7 +273,8 @@ User stories and examples of interaction between users/environment and the syste
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \noindent \textbf{Priority Table for Matchmaking Engine}
-\centering
+\vspace{0.5em}
+\begin{center}
 \small
 \begin{tabularx}{\textwidth}{|l|X|c|Y|}
 \hline
@@ -285,10 +286,12 @@ F214 & Multi-passenger Support & Must Have & Having multiple passengers per driv
 NF211 & Matching Performance & Should Have & Efficient algorithm and system is important for attracting users. \\ \hline
 NF212 & Location Security & Must Have & It is essential that the user’s location information is kept secure. \\ \hline
 \end{tabularx}
+\end{center}
+\vspace{2em}
 
-\vspace{2em} 
 \noindent \textbf{Priority Table for Scheduling and Booking Manager}
-  \centering
+\vspace{0.5em}
+  \begin{center}
   \small
   \begin{tabularx}{\textwidth}{|l|X|c|Y|}
   \hline
@@ -300,10 +303,12 @@ NF212 & Location Security & Must Have & It is essential that the user’s locati
   NF221 & Data Integrity & Must Have & Needed for user trust and safety. \\ \hline
   NF222 & Confirmation Speed & Should Have & Users will rely on quick confirmation to assess functionality. \\ \hline
   \end{tabularx}
+\end{center}
+  \vspace{2em}
 
-  \vspace{2em} 
   \noindent \textbf{Priority Table for Safety and Verification Module}
-  \centering
+  \vspace{0.5em}
+  \begin{center}
   \small
   \begin{tabularx}{\textwidth}{|l|X|c|Y|}
   \hline
@@ -315,10 +320,12 @@ NF212 & Location Security & Must Have & It is essential that the user’s locati
   NF231 & Data Security & Must Have & Ensures that personal information is encrypted and securely stored. \\ \hline
   NF232 & Auditability & Nice to Have & Important for keeping track of user activity over time. \\ \hline
   \end{tabularx}
-
+\end{center}
   \vspace{2em}
+  
   \noindent \textbf{Priority Table for Payment and Cost Sharing System}
-  \centering
+  \vspace{0.5em}
+  \begin{center}  
   \small
   \begin{tabularx}{\textwidth}{|l|X|c|Y|}
   \hline
@@ -330,10 +337,12 @@ NF212 & Location Security & Must Have & It is essential that the user’s locati
   NF241 & Transaction Security & Must Have & All payments must be handled securely for safety and legality. \\ \hline
   NF242 & Processing Speed & Should Have & Users will want a smooth process when completing payments. \\ \hline
   \end{tabularx}
-
+\end{center}
   \vspace{2em}
+
   \noindent \textbf{Priority Table for User Profile Manager}
-  \centering
+  \vspace{0.5em}
+  \begin{center}
   \small
   \begin{tabularx}{\textwidth}{|l|X|c|Y|}
   \hline
@@ -345,6 +354,31 @@ NF212 & Location Security & Must Have & It is essential that the user’s locati
   NF251 & Privacy & Must Have & Protecting personal information is necessary for user confidence. \\ \hline
   NF252 & Performance & Nice to Have & Users will want fast navigation through information. \\ \hline
   \end{tabularx}
+\end{center}
+  \vspace{2em}
+
+  \noindent \textbf{Priority Table for Rating and Reputation System}
+  \vspace{0.5em}
+  \begin{center}
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F261 & Ride Ratings & Must Have & Critical component of the rating system. \\ \hline
+  F262 & Issue Reporting & Must Have & Important for evaluating and ensuring the safety of all users. \\ \hline
+  F263 & Minimum Reputation Thresholds & Should Have & Enforces repurcussions for behaviour that goes against set rules, but not critical for functionality. \\ \hline
+  F264 & Positive Reinforcement & Nice to Have & Provides benefits to users who consistently use the app as intended, but also not essential. \\ \hline
+  NF261 & Rating Integrity & Should Have & Important to protect users reputations when possible. \\ \hline
+  \end{tabularx}
+\end{center}
+\vspace{2em}
+
+\par\raggedright
+  The prioritization of requirements mainly focused on their importance to the app's core functionality, along with the safety and security of users and their data. 
+  The core functionality refers to features that directly affect how users engage with Hitchly on a regular basis, such as finding and booking rides,
+  managing payments, creating an account, etc. Requirements that are central to these experience are classified as "Must Have". Other features that provide
+  significant improvements to convenience, trust, or improved user experience are categotized as "Should Have". Finally, features that offer additional ease of use
+  or extra value but are not critical to the app's purpose are placed in the "Nice to Have" category.
 
 \subsection{(S.6) Verification and Acceptance Criteria}
 Conditions under which an implementation will be deemed satisfactory; V\&V levels \cite{meyer2022}.
