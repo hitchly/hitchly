@@ -71,7 +71,7 @@
 % ---------- Academic Integrity Disclaimer ----------
 \section*{Academic Integrity Disclaimer}
 \addcontentsline{toc}{section}{Academic Integrity Disclaimer}
-We would like to acknowledge that as dedicated students of McMaster University, we have thoroughly read and comprehended the Academic Integrity Policy published by the university. We are committed to upholding the principles of academic honesty and integrity in all aspects of our educational journey. We understand the importance of acknowledging the work and ideas of others, and we pledge to ensure that all our academic endeavors are conducted with the utmost originality and compliance with the university’s policy.
+We would like to acknowledge that as dedicated students of McMaster University, we have thoroughly read and comprehended the Academic Integrity Policy published by the university. We are committed to upholding the principles of academic honesty and integrity in all aspects of our educational journey. We understand the importance of acknowledging the work and ideas of others, and we pledge to ensure that all our academic endeavors are conducted with the utmost originality and compliance with the university's policy.
 
 We affirm that the content presented in this document is entirely our own, and any external sources used have been appropriately cited and referenced.
 
@@ -125,7 +125,7 @@ Here is a quick biography of Author 3. You can contact them at \href{mailto:a3@m
 % ---------- (G) Goals ----------
 \section{(G) Goals}
 \subsection*{Reading Guide}
-Goals are ``needs of the target organization, which the system will address''. While the development team is the principal user of the other books, the Goals book addresses a wider audience: essentially, all stakeholders \cite{meyer2022}. It must contain enough information to provide---if read just by itself---a general sketch of the entire project. To this effect, chapter G.3 presents a short overview of the system and G.1 will typically include some key properties of the environment. As it addresses a wide readership, it should be clear and minimize the use of specialized technical terms. Together, G.1, G.2 and G.3 describe the rationale for the project. It is important to state these justifications explicitly. Typically, they are well understood at the start of the project, but management and priorities can change \cite{meyer2022}.
+Goals are ``needs of the target organization, which the system will address. While the development team is the principal user of the other books, the Goals book addresses a wider audience: essentially, all stakeholders \cite{meyer2022}. It must contain enough information to provide---if read just by itself---a general sketch of the entire project. To this effect, chapter G.3 presents a short overview of the system and G.1 will typically include some key properties of the environment. As it addresses a wide readership, it should be clear and minimize the use of specialized technical terms. Together, G.1, G.2 and G.3 describe the rationale for the project. It is important to state these justifications explicitly. Typically, they are well understood at the start of the project, but management and priorities can change \cite{meyer2022}.
 
 \subsection*{Control Information}
 \begin{table}[h!]\centering
@@ -153,6 +153,7 @@ Commuting to McMaster University presents significant financial and environmenta
 Currently, McMaster commuters lack a centralized, trusted platform to connect drivers and riders within the university community. Those who rely on driving face steep monthly costs for gas and parking, while those taking transit encounter expensive or unreliable services. Informal ridesharing options exist, but they provide limited safety features and lack institutional alignment, making them unsuitable for building long-term trust. Students and staff often feel that available solutions are unsafe, inefficient, or financially burdensome. Hitchly seeks to fill this gap by providing a McMaster-specific application that facilitates secure ridesharing, reduces commuting costs, and lowers emissions. 
 
 \subsection{(G.3) Expected Benefits}
+New processes, or improvements to existing processes, made possible by the project's results. It presents the business benefits expected from successful execution of the project. This chapter is the core of the Goals book, describing what the organization expects from the system \cite{meyer2022}.
 The pilot delivers clear, stakeholder-visible outcomes. Riders should see more affordable commutes (targeting approximately 20\% savings) while drivers receive meaningful cost offsets (around 40\%). We aim for reliable availability ($\geq$70\% ride-fill and $\geq$95\% on-time) so trips feel predictable from day one, with most new users completing a first ride within a week. The pilot targets a reduction in single-occupancy trips on campus and nearby (aiming for at least 10\%), easing parking pressure and congestion and reducing emissions. The service will be inclusive by default (targeting about 90\% match on stated accessibility preferences) and trusted through university-verified identities with a goal of very low incident rates. The university benefits from higher student satisfaction and sense of belonging, improved commuter equity, and better alignment with sustainability reporting---while maintaining privacy safeguards (goal: zero critical incidents). Broader community outcomes include cleaner air, calmer peak traffic, and greater participation in transit and shared mobility.
 
 \begin{figure}[htbp]
@@ -171,6 +172,8 @@ The pilot delivers clear, stakeholder-visible outcomes. Riders should see more a
 Hitchly is a campus-focused ride sharing service for the McMaster community.
 It verifies users by McMaster email, collects commute and vehicle data, matches riders and drivers by schedule and location, estimates cost sharing, and supports post-trip ratings.
 
+\subsection{(G.5) High-level Usage Scenarios}
+Fundamental usage paths through the system, stated in user terms and independent of the system's structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
 \subsubsection*{Functional requirements}
 \begin{enumerate}
   \item \textbf{User verification.}
@@ -328,58 +331,64 @@ Benefits from fewer cars on the road, reduced emissions, and improved air qualit
 
 % ---------- (E) Environment ----------
 \section{(E) Environment}
-The Environment book describes the application domain and external context (physical or virtual) in which the system will operate \cite{meyer2022}.
-
-\subsection*{Control Information}
-\begin{table}[h!]\centering
-\caption*{Table 2. Our Awesome Project --- Versioning Information --- Environment Book}
-\renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{\textwidth}{@{}l l l l l@{}}
-\toprule
-\textbf{Section} & \textbf{Version} & \textbf{Lead} & \textbf{Delivered} & \textbf{Reviewer / Approved} \\
-\midrule
-E.1 & & & & \\
-E.2 & & & & \\
-E.3 & & & & \\
-E.4 & & & & \\
-E.5 & & & & \\
-E.6 & & & & \\
-\bottomrule
-\end{tabularx}
-\end{table}
 
 \subsection{(E.1) Glossary}
-Clear and precise definitions of all vocabulary specific to the application domain \cite{meyer2022}.
+\begin{itemize}
+\item \textbf{Rideshare:} A service that allows riders to carpool with a single driver to reach a common destination.
+\item \textbf{Drivers:} They are users that will provide rideshare services with their personal vehicles.  
+\item \textbf{Riders:} They are users that will carpool to and from McMaster University.
+\item \textbf{Working Condition:} A vehicle is in working condition if it has all necessary functions in the vehicle working. For instance, it must have functional head/tail lights, tires, engine, brakes, brake lights etc.
+\end{itemize}
 
-\textit{Nothing available at this point.}
+\begin{figure}[h] 
+    \centering
+    \includegraphics[width=0.8\linewidth]{Domain Model.png}
+    \caption{Domain Model}
+    \label{fig:domain-model}
+\end{figure}
 
 \subsection{(E.2) Components}
-List of environment elements that may affect or be affected by the system and project, including other systems for interfacing \cite{meyer2022}.
-
-\textit{Nothing available at this point.}
+\begin{enumerate}
+\item \textbf{MFA (Multi-Factored Authentication) Services:} The application will be interacting with components that will allow the application to verify users with their McMaster University emails with SMS/Phone verification. This is to ensure reliability and user trust.
+\item \textbf{Payments Interface (i.e, Credit Cards, PayPal, Apple Pay etc.):} The application will also interact with a payment interface to allow for a smooth and streamlined payment process with Stripe. 
+\item \textbf{Location API:} Google Maps will be used in several components of the application. This API will be used for location tracking, distance calculations, and for routing.
+\end{enumerate}
 
 \subsection{(E.3) Constraints}
-Obligations and limits imposed by the environment (business rules, physical laws, engineering decisions) \cite{meyer2022}.
+These are a few limitations and restrictions coming from the environment onto the system: 
+\begin{enumerate}
+\item \textbf{Usage Constraint:} The project is currently limited and available to the McMaster community only. This would only include users that are currently students, staff members, or faculty members of the university. This application is currently limited to the Android and IOS operation systems. They will be compatible with any device with this operating system.
+\item \textbf{Regulatory Constraint:} The project is constrained to comply with the PIPEDA laws and standards. This ensures that the user's data is handled carefully and with significant attention to maintaining data integrity and security. Each driver must have a Candian issued G2/G license, and the vehicle must be registered and insured. Each driver must comply with Ontario traffic rules and regulations. They must also not exceed the maximum passenger limit for their vehicle.
+\item \textbf{Technical Constraints and Limitations:} A limitation of the Google Maps API is that it will be limited to providing minimal data for locations in rural areas. All functionalities in the applications must be completed in a limited time. For instance, the processing time for payments must be minimal. 
+\end{enumerate}
 
-\textit{Nothing available at this point.}
 
 \subsection{(E.4) Assumptions}
-Environment properties assumed to hold to facilitate the system’s construction \cite{meyer2022}.
-
-\textit{Nothing available at this point.}
+There are a few important assumptions that will be made to simplify the system. These will be assumed to be held, however, are not explicit constraints in the system.  
+\begin{enumerate}
+\item \textbf{User Behavior:} All users of the rideshare application will not intentionally cause any harm to each other during a trip. They will not misbehave or litter in the car. This is an important assumption as it ensures the safety of users and simplifies the process of carpooling.  
+\item \textbf{Vehicle Condition:} Each driver has a vehicle that is in proper working condition. They are assumed to keep their vehicles clean. It will also be assumed that drivers will regularly maintain their vehicles.
+\item \textbf{Language:} All users of the rideshare application must have a basic understanding of the English language, and they are able to communicate their thoughts with each other.
+\item \textbf{User Base Demographic:} The application will assume a user base consisting of members of the McMaster University community. This may include students, staff, and faculty. This user group encompasses a diverse range of ages, genders, and ethnicities.
+\item \textbf{Technical Compatibility and Reliability:} All third-party applications and API are assumed to be reliable. For instance, the Maps API will provide accurate data for all users in the GTA region. The API's rate limits will not exceed the expected user load. They are also assumed to have minimal downtime. 
+\end{enumerate}
 
 \subsection{(E.5) Effects}
 Elements and properties of the environment that the system will affect \cite{meyer2022}. Effects of the application include:
-\begin{itemize}
-  \item \textbf{Improved student belonging and wellbeing:} The application fosters safe and supportive environments that help students feel less isolated and more connected during the transition to university.
-  \item \textbf{Increased participation in campus life:} By lowering barriers to joining clubs, events, and residence activities, the app encourages higher engagement with student associations and university-led initiatives.
-  \item \textbf{Enhanced student retention and success:} With better access to support networks and resources, students are less likely to drop out due to isolation or lack of integration.
-\end{itemize}
+\begin{enumerate}
+\item \textbf{Improved sustainability and Reduced Traffic Congestion:} The system will positively affect the environment by lowering the GHG emissions caused by vehicles of individuals commuting to and from McMaster University. Secondly, as a result of carpooling, there will be a reduction in the use of single-occupancy vehicles which will cause a reduction in traffic congestion on roads and highways. 
+\item \textbf{Usage of Public Transit:} There will be a significant reduction in the usage of buses and trains to commute to McMaster University because of the transition of people moving towards using the rideshare application, Hitchly. It may become convenient and affordable for commuters to use the rideshare services. Thus, resulting in a potential reduction in the usage of public transit.  
+\item \textbf{UIncrease in Parking Spaces:} There can be an increase in available parking spaces due to the overall reduction of vehicles arriving at McMaster University. As a result of using the rideshare platform Hitchly, the number of single-occupancy vehicles will decrease. This would mean that fewer cars would arrive at McMaster University, reducing the overall demand for parking spaces.
+\item \textbf{Increased Savings:} There can be an overall increase in the amount each commuter saves as a result of shifting to carpooling from other modes of transportation. Carpooling enables users to divide and share their cost, resulting in leaving them with more money in hand. 
+\end{enumerate}
 
 \subsection{(E.6) Invariants}
-Environment properties that the system’s operation must preserve \cite{meyer2022}.
-
-\textit{Nothing available at this point.}
+\begin{itemize}
+\item Regular traffic will continue to move in Hamilton and surrounding areas where riders and drivers live. There can be traffic congestion on the roads due to car crashes and unusual weather conditions. There will also be times when an emergency vehicle may be on the roads occasionally, causing traffic congestion. These conditions will be present and will not change after the implementation of the application.  
+\item The city of Hamilton will have and maintain their city infrastructure. There will be traffic lights, roads highways, pedestrian sidewalks, that will function normally.  The traffic rules and signs will be followed and maintained regardless of the implantation of the application. 
+\item McMaster Parking systems will function as usual. There will not be any changes made to the parking rules or guidelines to specifically cater to the rideshare application users. 
+\item Wi-Fi networks will operate independently and can become slow due to torrential weather conditions. Users may be affected by this as it can affect their accessibility to a Wi-Fi network during their ride. Lastly, the Wi-Fi networks function independently of the implementation of the application.  
+\end{itemize}
 
 \clearpage
 
