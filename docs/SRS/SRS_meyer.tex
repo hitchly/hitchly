@@ -424,9 +424,88 @@ It interfaces with the scheduling system to ensure rides can be matched, whether
 \clearpage
 
 \subsection{(S.2) Functionality}
-The bulk of the System book: functional and non-functional behaviors \cite{meyer2022}.
+\textbf{Matchmaking engine} \\
+\noindent Functional Requirements:
+\begin{enumerate}
+  \item Route and Schedule matching: The system shall compare driver routes and passenger locations to provide optimal ride matches.
+  \item Availability Updates: The engine shall update available rides in real time as users create, edit, or cancel rides.
+  \item Preference filtering: The engine shall allow users to filter matches by preferences, such as gender, music, vehicle type, etc.
+  \item Multi-passenger support: The system shall allow for multiple passengers to match to the same driver, based on driver preference and vehicle capacity.
+\end{enumerate}
+Non-functional requirements:
+\begin{enumerate}
+  \item Matching performance: The engine shall generate ride matches within 10 seconds of a request.
+  \item Location security: The engine shall ensure that user’s information used for matchmaking is not accessible outside of the development environment.
+\end{enumerate}
+\vspace{1em}
+\noindent \textbf{Scheduling and Booking Manager} \\ 
+Functional Requirements:
+\begin{enumerate}
+  \item Ride scheduling: Users shall be able to schedule rides in advance based on the results of the matchmaking engine.
+  \item Booking confirmation: The system shall generate confirmations for bookings in the applications, and notify passenger(s) and the driver.
+  \item Cancellation and Rescheduling: Users shall be able to cancel or reschedule rides within the specified timeframe and rules.
+  \item Reminder notifications: The system shall send reminders to all passengers and the driver before any scheduled rides.
+\end{enumerate} 
+Non-functional requirements:
+\begin{enumerate}
+  \item Data Integrity: All booking data shall be securely stored and updated as required.
+  \item Confirmation speed: Booking confirmations and changes shall be finalized and delivered to users within 5 seconds.
+\end{enumerate}
+\vspace{1em}
+\noindent \textbf{Safety and Verification Module} \\
+Functional Requirements:
+\begin{enumerate}
+  \item User Identity Verification: The system shall validate users through university email authentication in order to use the application.
+  \item Driver Verification: The system shall store and verify driver license and vehicle registration information.
+  \item Ride Check-in: The system shall prompt passengers and drivers to check in at the start and end of the ride.
+  \item Safety check: The system shall keep track of any misconduct reported by users or any strikes on a user’s account.
+\end{enumerate}
+Non-functional Requirements:
+\begin{enumerate}
+  \item Data Security: Data used for verification shall be encrypted to ensure security.
+  \item Auditability: The system shall maintain a log of all verification actions for at least 1 year.
+\end{enumerate}
+\vspace{1em}
+\noindent \textbf{Payment and Cost Sharing System} \\
+Functional Requirements:
+\begin{enumerate}
+  \item Fare Calculation: The system shall automatically calculate the costs for the ride for each passenger based on distance, number of passengers, parking costs, etc.
+  \item Secure Transactions: The system shall support payment in the form of credit card, debit card, and other mobile wallet payment methods.
+  \item Hold on Funds: The system shall put funds on hold until after a ride has been completed, in order to deal with cancellations or refunds.
+  \item Expense Summaries: The system shall provide ride expense summaries and earnings reports for drivers.
+\end{enumerate}
+Non-functional Requirements:
+\begin{enumerate}
+  \item Transaction Security: Payments must be processed following security standards.
+  \item Processing Speed: Transactions shall complete within 10 seconds of initiation.
+\end{enumerate}
+\vspace{1em}
+\noindent \textbf{User Profile Manager} \\
+Functional Requirements:
+\begin{enumerate}
+  \item Profile Creation: The system shall allow users to create profiles when signing up, including personal details and ride preferences.
+  \item Profile Updates: The system shall allow users to update their profile information at any time.
+  \item Ride History: The system shall store and display ride history and ratings for drivers and passengers.
+  \item View Profiles: The system shall allow users to view profiles of other users when matched with them.
+\end{enumerate}
+Non-functional Requirements:
+\begin{enumerate}
+  \item Privacy: Any personal information used when signing up shall not be visible to other users.
+  \item Performance: Profile data shall load within 2 seconds.
+\end{enumerate}
 
-\textit{Nothing available at this point.}
+\noindent \textbf{Rating and Reputation System} \\
+Functional Requirements:
+\begin{enumerate}
+  \item Ride Ratings: The system shall allow users to rate each other after each ride.
+  \item Issue Reporting: The system shall allow users to report any issues or misconduct that occurs during a ride.
+  \item Minimum Reputation Thresholds: The system shall enforce a minimum rating for certain actions (e.g: Offering rides, hosting multiple passengers, joining scheduled rides, etc.).
+  \item Positive Reinforcement: The system shall reward users who consistently obtain high ratings by giving out badges, titles, and more.
+\end{enumerate}
+Non-functional Requirements:
+\begin{enumerate}
+  \item Rating Integrity: The system shall detect and flag fradulent and spam reviews. 
+\end{enumerate}
 
 
 \subsection{(S.3) Interfaces} % S.3
