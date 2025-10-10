@@ -361,9 +361,72 @@ Classification of behaviors, interfaces, and scenarios by criticality \cite{meye
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.6) Verification and Acceptance Criteria}
-Conditions under which an implementation will be deemed satisfactory; V\&V levels \cite{meyer2022}.
+\subsection{(S.6) Verification and Acceptance Criteria} % S.6
 
+Verification and validation (V\&V) ensure Hitchly meets stakeholder expectations for usability, safety, and functionality. The following criteria define when the system will be considered satisfactory.
+
+\subsubsection{(S.6.1) Module Testing} % S.6.1
+
+\paragraph{(S.6.1.1) Authentication Module} % S.6.1.1
+\begin{itemize}
+    \item Accepts only @mcmaster.ca emails.
+    \item Issues secure JWT tokens for valid accounts.
+    \item Rejects invalid domains with appropriate error messages.
+\end{itemize}
+
+\paragraph{(S.6.1.2) Matching Engine} % S.6.1.2
+\begin{itemize}
+    \item Correctly pairs riders and drivers based on timetable and location inputs.
+    \item Handles edge cases (no matches, multiple matches) gracefully.
+\end{itemize}
+
+\paragraph{(S.6.1.3) Trip Summary} % S.6.1.3
+\begin{itemize}
+    \item Generates accurate summaries with cost estimates.
+    \item Stores records in PostgreSQL without data loss.
+\end{itemize}
+
+\subsubsection{(S.6.2) Integration Testing} % S.6.2
+\begin{itemize}
+    \item End-to-end tests ensure the mobile frontend communicates correctly with backend APIs.
+    \item McMaster email verification integrates seamlessly with signup flow.
+    \item Map/location services provide accurate routing data.
+\end{itemize}
+
+\subsubsection{(S.6.3) System Testing} % S.6.3
+\begin{itemize}
+    \item Hitchly runs on iOS and Android devices without critical crashes.
+    \item UI components are accessible (WCAG AA compliance).
+    \item Notification services deliver timely alerts for matches and trip updates.
+\end{itemize}
+
+\subsubsection{(S.6.4) User Acceptance Testing (UAT)} % S.6.4
+\begin{itemize}
+    \item Conducted with a group of McMaster students and staff.
+    \item Success criteria:
+    \begin{itemize}
+        \item Users can sign up, request rides, and complete a trip without assistance.
+        \item At least 80\% of participants report satisfaction with ease of use and reliability.
+        \item No major safety concerns raised during trial.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{(S.6.5) Static Analysis and Code Quality} % S.6.5
+\begin{itemize}
+    \item ESLint and Prettier pass on all commits.
+    \item TypeScript compiler passes with no errors.
+    \item Code coverage of unit tests $>$ 70\%.
+\end{itemize}
+
+\subsubsection{(S.6.6) Acceptance Criteria Summary} % S.6.6
+Hitchly will be deemed acceptable if:
+
+\begin{itemize}
+    \item All core modules pass automated and manual tests.
+    \item Integration tests confirm reliable operation across components.
+    \item UAT demonstrates usability and trustworthiness.
+    \item The system supports the project’s goals of affordability, safety, and sustainability.
+\end{itemize}
 \textit{Nothing available at this point.}
 
 \clearpage
