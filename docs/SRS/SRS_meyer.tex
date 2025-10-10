@@ -816,9 +816,15 @@ External systems, hardware and software expected to be necessary for building th
 \textit{Nothing available at this point.}
 
 \subsection{(P.6) Risk and Mitigation Analysis}
-Potential obstacles to meeting the schedule and measures for adapting the plan \cite{meyer2022}.
+Some of the risks present during development are listed below:
 
-\textit{Nothing available at this point.}
+\begin{itemize}
+    \item \textbf{Low User Adoption:} The concept of carpooling with other students may not initially be popular, as many students may prefer driving alone or using public transportation. This could lead to low user adoption, especially during the testing phase when beta testers are needed to identify bugs and provide feedback. Since Hitchly relies on a large user base to strengthen its matchmaking algorithm, a limited number of users could reduce match quality. One mitigation strategy for this risk is to begin recruiting beta testers early and develop promotional material highlighting the benefits of carpooling. Starting outreach early would help increase awareness and build a stronger user base to test the application effectively.
+
+    \item \textbf{Inaccurate Campus Data:} The application utilizes on-campus information such as parking costs and parking lot locations. Any changes to this information during the course of development could lead to inconsistencies or inaccurate data within the application. A mitigation strategy for this risk is to periodically check in with McMaster Parking Services to ensure that all campus-related data remains accurate and up to date.
+
+    \item \textbf{Lack of User Trust with Data:} Some users may hesitate to trust a student-developed application with their personal and payment information. This lack of trust could negatively affect user adoption and engagement. A mitigation strategy for this risk is to integrate reliable third-party payment APIs, such as Stripe, to handle transactions securely. Additionally, maintaining transparency with users about which API services and security measures are implemented will help build trust and confidence in the system.
+\end{itemize}
 
 \subsection{(P.7) Requirements Process and Report}
 The requirements process will involve interaction with direct stakeholders identified in Section G.7.  
