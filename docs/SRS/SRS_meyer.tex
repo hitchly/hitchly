@@ -258,8 +258,53 @@ The bulk of the System book: functional and non-functional behaviors \cite{meyer
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.3) Interfaces}
-How the system makes S.2 functionality available to the rest of the world (UIs and APIs) \cite{meyer2022}.
+
+\subsection{(S.3) Interfaces} % S.3
+
+Hitchly exposes its functionality through both user-facing interfaces and programmatic interfaces (APIs). These define how students, staff, and faculty interact with the application and how Hitchly integrates with external systems.
+
+\subsubsection{(S.3.1) User Interfaces} % S.3.1
+
+\paragraph{(S.3.1.1) Mobile App (Primary Interface)} % S.3.1.1
+Hitchly is delivered as a cross-platform mobile app (iOS and Android via React Native/Expo). Users can:
+
+\begin{itemize}
+    \item Sign up and log in using McMaster email verification.
+    \item Input personal data, commuting details, timetable, and location.
+    \item Drivers can register their vehicles, upload license details, and set estimated trip costs.
+    \item Riders can browse and request available rides that match their timetable and location.
+    \item Both roles can view trip summaries, receive notifications, and use ratings/reviews.
+    \item A clean, accessible UI built with NativeWind + shadcn/ui ensures usability.
+\end{itemize}
+
+\paragraph{(S.3.1.2) Notifications} % S.3.1.2
+Push notifications (Expo notifications service) alert users when:
+
+\begin{itemize}
+    \item A match is found.
+    \item A ride is confirmed or updated.
+    \item A trip is completed with a generated summary.
+\end{itemize}
+
+\subsubsection{(S.3.2) Program Interfaces (APIs)} % S.3.2
+
+\paragraph{(S.3.2.1) Hitchly Public API} % S.3.2.1
+\begin{itemize}
+    \item Authentication API: Validates McMaster-affiliated emails and issues JWT tokens.
+    \item User API: Manages user accounts, profiles, schedules, and roles (driver/rider).
+    \item Matching API: Exposes endpoints for submitting commute data, retrieving matches, and confirming trips.
+    \item Trip API: Provides trip summaries, cost breakdowns, and trip history.
+    \item Ratings API: Allows posting and retrieving ratings/reviews.
+\end{itemize}
+
+\paragraph{(S.3.2.2) Third-Party Integrations} % S.3.2.2
+\begin{itemize}
+    \item Email Verification: Integrates with McMaster’s email domain for signup restrictions.
+    \item Mapping/Location Services: Uses a mapping provider (e.g., Mapbox or Google Maps API) to process geolocation and routing.
+    \item Payment (future stretch): Possible integration with Stripe/PayPal for cost-sharing transactions.
+\end{itemize}
+
+Through these interfaces, Hitchly ensures safety (via controlled access), usability (via a student-focused app), and extensibility (via type-safe APIs).
 
 \textit{Nothing available at this point.}
 
