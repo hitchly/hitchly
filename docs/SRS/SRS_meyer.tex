@@ -147,43 +147,185 @@ G.7 & & & & & \\
 \end{table}
 
 \subsection{(G.1) Context and Overall Objectives}
-High-level view of the project: organizational context and reason for building a system. It explains why the project is needed, recalls the business context, and presents the general business objectives \cite{meyer2022}.
-
-New university students trying to make connections with each other can often find it difficult due to the limited interactions they have outside of their program. \textit{HammerCorp Inc.} will address this by developing a web and mobile app called \textbf{ACME Connect}, which connects students based on similar interests or experiences, as well as student clubs or institutional activities. It aims to improve the overall university experience by creating a tightly-knit student community where integration of official activities happens at the student level. With safety as a primary goal, this project plans to be available to universities across North America, with a pilot program starting at McMaster University.
+Commuting to McMaster University presents significant financial and environmental challenges. Students, staff, and faculty spend between 150 and 250 dollars monthly on fuel, parking, or transit, which places an economic burden on them. At the same time, single-occupancy vehicles contribute to 36 percent of greenhouse gas emissions for Canadian universities, harming both local air quality and broader sustainability goals. Existing ridesharing solutions such as Facebook Marketplace, Kijiji, or Poparide do not provide sufficient verification or security, leaving users at risk of riding with unaffiliated strangers. The objective of Hitchly is to provide a safe, affordable, and reliable ridesharing platform tailored for the McMaster community. By verifying users through McMaster email accounts, Hitchly ensures trust, reduces costs, supports sustainability, and helps the university meet its long-term community and environmental goals. 
 
 \subsection{(G.2) Current Situation}
-Current state of processes to be addressed by the project and the resulting system. It describes the current situation upon which the system is expected to improve \cite{meyer2022}.
-
-At the moment, students are limited to in-person connections within their program or at Welcome Week events, which are often not sufficient for engagement and networking. Residence and international students may feel disconnected in a new place. Student clubs and associations also find it difficult to engage potential members. Although there are in-person events for new students and club booths around campus, those are temporary pop-ups and may not reach everyone. There is no central place for everyone to connect outside those events. Discord servers exist; however, they are often not institutionally based, which can compromise safety and allow complete strangers not affiliated with the school. Looking at these challenges, \textbf{ACME Connect} plans to address them and create a safe environment for students and institutions to foster lasting relationships throughout the university journey.
+Currently, McMaster commuters lack a centralized, trusted platform to connect drivers and riders within the university community. Those who rely on driving face steep monthly costs for gas and parking, while those taking transit encounter expensive or unreliable services. Informal ridesharing options exist, but they provide limited safety features and lack institutional alignment, making them unsuitable for building long-term trust. Students and staff often feel that available solutions are unsafe, inefficient, or financially burdensome. Hitchly seeks to fill this gap by providing a McMaster-specific application that facilitates secure ridesharing, reduces commuting costs, and lowers emissions. 
 
 \subsection{(G.3) Expected Benefits}
 New processes, or improvements to existing processes, made possible by the project's results. It presents the business benefits expected from successful execution of the project. This chapter is the core of the Goals book, describing what the organization expects from the system \cite{meyer2022}.
+The pilot delivers clear, stakeholder-visible outcomes. Riders should see more affordable commutes (targeting approximately 20\% savings) while drivers receive meaningful cost offsets (around 40\%). We aim for reliable availability ($\geq$70\% ride-fill and $\geq$95\% on-time) so trips feel predictable from day one, with most new users completing a first ride within a week. The pilot targets a reduction in single-occupancy trips on campus and nearby (aiming for at least 10\%), easing parking pressure and congestion and reducing emissions. The service will be inclusive by default (targeting about 90\% match on stated accessibility preferences) and trusted through university-verified identities with a goal of very low incident rates. The university benefits from higher student satisfaction and sense of belonging, improved commuter equity, and better alignment with sustainability reporting---while maintaining privacy safeguards (goal: zero critical incidents). Broader community outcomes include cleaner air, calmer peak traffic, and greater participation in transit and shared mobility.
+
+\begin{figure}[htbp]
+  \centering
+  % path is relative to the .tex file; create docs/SRS/images/ and put your file there
+  \includegraphics[width=0.75\textwidth]{goal_model.png}
+  \caption{Hitchly Goal Modelling Diagram.}
+  \label{fig:ride-matching}
+\end{figure}
 
 \textit{Nothing available at this point.}
 
 \subsection{(G.4) Functionality Overview}
-Overview of the functions (behavior) of the system. Principal properties only (details are in the System book). A capsule version of book S that enables readers to get a quick grasp of what the system will do \cite{meyer2022}.
 
-\textit{Nothing available at this point.}
+\paragraph{Overview.}
+Hitchly is a campus-focused ride sharing service for the McMaster community.
+It verifies users by McMaster email, collects commute and vehicle data, matches riders and drivers by schedule and location, estimates cost sharing, and supports post-trip ratings.
 
 \subsection{(G.5) High-level Usage Scenarios}
 Fundamental usage paths through the system, stated in user terms and independent of the system's structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
+\subsubsection*{Functional requirements}
+\begin{enumerate}
+  \item \textbf{User verification.}
+  At sign-up, users must verify a McMaster-affiliated email address. Drivers additionally upload a valid driver's license for verification before being allowed to post rides.This two-level process ensures that all users are affiliated with McMaster and that drivers are properly credentialed.
 
+  \item \textbf{Profile \& schedule input.}
+  Riders and drivers provide basic profile details plus commute timetable, typical routes/areas, and preferences.
+  Drivers additionally record vehicle and license information to enable appropriate matching and accountability.
+
+  \item \textbf{Ride matching.}
+  The system proposes compatible rider–driver pairings based on timetable overlap and approximate location.
+  A match only becomes a trip after both sides confirm.
+
+  \item \textbf{Cost estimate.}
+  For each proposed trip, Hitchly computes a per-rider cost share that helps drivers offset expenses and helps riders save compared to solo travel.
+  Estimates use driver-provided cost inputs at a simple, transparent level.
+
+  \item \textbf{Ratings \& reviews (extension).}
+  After trips, users can leave ratings and short reviews to inform future choices and encourage good behavior.
+  These signals improve decision-making over time while remaining out of scope for the initial PoC.
+\end{enumerate}
+
+\subsubsection*{Most important two}
+\textbf{User verification} and \textbf{Ride matching} are most important.
+Verification directly addresses safety/trust, a primary adoption risk; matching is the core value creation that reduces search time and enables cost sharing. Together they validate the product’s viability and de-risk the project early.
+
+\subsubsection*{Non-functional requirements}
+\begin{enumerate}
+  \item \textbf{Reliability (matching correctness).}
+  Under typical peak usage, the matching function should consistently produce correct, reproducible pairings for the same inputs.
+  Incorrect or inconsistent matches are treated as defects and prioritized in testing.
+
+  \item \textbf{Usability (low-friction flows).}
+  Common tasks (sign-up/verification, offering a ride, requesting a ride, confirming a match) should be understandable without training and completable in a small number of obvious steps.
+  Clear labels and uncluttered presentation minimize onboarding time for first-time users.
+\end{enumerate}
+
+\subsubsection*{RACI for requirements}
 \begin{center}
-\fbox{\parbox{0.7\linewidth}{\centering \emph{(High level use case diagram placeholder)}}}
+\begin{tabularx}{\textwidth}{@{}l c c c >{\raggedright\arraybackslash}X@{}}
+\hline
+\textbf{Requirement} & \textbf{Dev Team} & \textbf{Drivers} & \textbf{Riders} & \textbf{McMaster Univ. / Hamilton Community} \\
+\hline
+User verification & \textbf{R/A} & C & C & I \\
+Profile \& schedule input & \textbf{R/A} & C & C & I \\
+Ride matching & \textbf{R/A} & C & C & I \\
+Cost estimate & \textbf{R/A} & C & C & I \\
+Ratings \& reviews (extension) & \textbf{R/A} & C & C & I \\
+Reliability (NFR) & \textbf{R/A} & C & C & I \\
+Usability (NFR) & \textbf{R/A} & C & C & I \\
+\hline
+\end{tabularx}
 \end{center}
 
-\textit{Nothing available at this point.}
+\noindent{\textbf{Legend:}} R = Responsible (executes the work); A = Accountable (final sign-off); C = Consulted (provides input); I = Informed (kept up to date).
+
+\subsection{(G.5) High-level Usage Scenarios}
+
+\subsubsection*{Use Case 1: Driver Offers Ride}
+\begin{enumerate}
+    \item A driver registers with their McMaster email and drivers license.
+    \item They input their schedule and vehicle details.
+    \item Hitchly suggests potential riders with overlapping times.
+    \item The driver confirms the riders they want to take.
+    \item The system calculates cost-sharing estimates.
+    \item After the trip, the driver receives ratings and reviews.
+\end{enumerate}
+
+\subsubsection*{Use Case 2: Rider Finds Ride}
+\begin{enumerate}
+    \item A rider signs up with a McMaster email.
+    \item They enter their daily commute times and location.
+    \item Hitchly presents a list of verified drivers with compatible schedules.
+    \item The rider selects a driver and confirms.
+    \item The system provides trip details, including cost share.
+    \item After the ride, the rider leaves a review.
+\end{enumerate}
+
+\subsubsection*{Use Case 3: Report Safety Issue}
+\begin{enumerate}
+    \item A rider feels unsafe during a trip.
+    \item They submit a report through the in-app reporting tool.
+    \item Hitchly forwards the report to moderators.
+    \item The moderators review and investigate the case.
+    \item The driver’s or rider’s account is flagged if necessary.
+    \item The system tracks the resolution and stores it for accountability.
+\end{enumerate}
+
+\subsubsection*{Use Case 4: Sustainability Tracking}
+\begin{enumerate}
+    \item Hitchly logs each completed trip.
+    \item The system calculates estimated emissions avoided.
+    \item Data is aggregated in dashboards.
+    \item McMaster administration reviews statistics to measure impact.
+    \item The results inform sustainability planning.
+    \item Reports can be shared with the broader community.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  % path is relative to the .tex file; create docs/SRS/images/ and put your file there
+  \includegraphics[width=0.75\textwidth]{use-case.png}
+  \caption{Hitchly Use Case Diagram.}
+  \label{fig:ride-matching}
+\end{figure}
 
 \subsection{(G.6) Limitations and Exclusions}
-Aspects that the system need not address; scoping the requirements. (Risks and obstacles belong to P.6.) \cite{meyer2022}.
+\begin{itemize}
+  \item McMaster-Only Access: Hitchly will only be available to McMaster students, staff, and faculty during the pilot phase. Users must verify their identity through a McMaster email. This restriction ensures trust and control but limits the platform’s reach to a single institution. 
 
-\textit{Nothing available at this point.}
+  \item Background and Insurance Checks: For the pilot phase, Hitchly will not perform in-depth background checks or validate driver insurance. Verification is limited to McMaster email zn d driver license authentication. This keeps onboarding simple but places responsibility on users to ensure their own compliance with driving regulations.
+
+  \item Limited Route Flexibility: Hitchly will not provide dynamic routing or live GPS tracking during the pilot. Riders and drivers must coordinate based on general pickup and drop-off locations. This simplifies the system but may limit convenience compared to fully featured ridesharing platforms. 
+\end{itemize}
+
 
 \subsection{(G.7) Stakeholders and Requirements Sources}
-Stakeholder categories that can affect or be affected by the project, and other sources of requirements information \cite{meyer2022}.
 
-\textit{Nothing available at this point.}
+\subsubsection*{Direct Stakeholders}
+
+\paragraph{Students}
+They are frequent commuters with tight budgets who will use Hitchly to save money and connect with peers. 
+Relevant because they face high monthly commuting costs.\\
+\textbf{Persona:} ``Sarah, a second-year student living off-campus, spends over \$200 monthly on commuting. She uses Hitchly to reduce expenses and meet fellow students traveling the same route.''
+
+\paragraph{Staff}
+Staff members travel daily to campus and benefit from both cost savings and reduced parking stress. 
+Relevant because they often drive alone and bear significant expenses.\\
+\textbf{Persona:} ``James, a staff member living in Burlington, drives to McMaster five days a week. Hitchly allows him to share costs and avoid the hassle of finding parking.''
+
+\paragraph{Faculty}
+Professors and teaching assistants need reliable commuting options. 
+Relevant because faculty members often have predictable schedules that align well with ridesharing.\\
+\textbf{Persona:} ``Dr.~Patel, a professor commuting from Toronto twice a week, finds Hitchly helpful to split costs and reduce environmental impact.''
+
+\paragraph{Drivers}
+Any McMaster-affiliated individual who owns a car and can offer rides. 
+Relevant because they reduce their commuting costs by sharing expenses.Drivers must verify their identity by uploading a valid license before offering rides.\\
+\textbf{Persona:} ``Ali, a graduate student with a car, uses Hitchly to cover his parking and gas by picking up two riders daily.''
+
+\paragraph{Riders}
+Any McMaster-affiliated individual who does not own a vehicle. 
+Relevant because they rely on others to get to campus affordably.\\
+\textbf{Persona:} ``Maria, an international student living in residence, relies on Hitchly to find rides for weekend trips to Hamilton downtown.''
+
+\subsubsection*{Indirect Stakeholders}
+
+\paragraph{McMaster University Administration}
+Gains reduced congestion and measurable sustainability improvements, aligning with institutional goals.
+
+\paragraph{Hamilton Community}
+Benefits from fewer cars on the road, reduced emissions, and improved air quality.
 
 \clearpage
 
@@ -264,13 +406,101 @@ The bulk of the System book: functional and non-functional behaviors \cite{meyer
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.3) Interfaces}
-How the system makes S.2 functionality available to the rest of the world (UIs and APIs) \cite{meyer2022}.
+
+\subsection{(S.3) Interfaces} % S.3
+
+Hitchly exposes its functionality through both user-facing interfaces and programmatic interfaces (APIs). These define how students, staff, and faculty interact with the application and how Hitchly integrates with external systems.
+
+\subsubsection{(S.3.1) User Interfaces} % S.3.1
+
+\paragraph{(S.3.1.1) Mobile App (Primary Interface)} % S.3.1.1
+Hitchly is delivered as a cross-platform mobile app (iOS and Android via React Native/Expo). Users can:
+
+\begin{itemize}
+    \item Sign up and log in using McMaster email verification.
+    \item Input personal data, commuting details, timetable, and location.
+    \item Drivers can register their vehicles, upload license details, and set estimated trip costs.
+    \item Riders can browse and request available rides that match their timetable and location.
+    \item Both roles can view trip summaries, receive notifications, and use ratings/reviews.
+    \item A clean, accessible UI built with NativeWind + shadcn/ui ensures usability.
+\end{itemize}
+
+\paragraph{(S.3.1.2) Notifications} % S.3.1.2
+Push notifications (Expo notifications service) alert users when:
+
+\begin{itemize}
+    \item A match is found.
+    \item A ride is confirmed or updated.
+    \item A trip is completed with a generated summary.
+\end{itemize}
+
+\subsubsection{(S.3.2) Program Interfaces (APIs)} % S.3.2
+
+\paragraph{(S.3.2.1) Hitchly Public API} % S.3.2.1
+\begin{itemize}
+    \item Authentication API: Validates McMaster-affiliated emails and issues JWT tokens.
+    \item User API: Manages user accounts, profiles, schedules, and roles (driver/rider).
+    \item Matching API: Exposes endpoints for submitting commute data, retrieving matches, and confirming trips.
+    \item Trip API: Provides trip summaries, cost breakdowns, and trip history.
+    \item Ratings API: Allows posting and retrieving ratings/reviews.
+\end{itemize}
+
+\paragraph{(S.3.2.2) Third-Party Integrations} % S.3.2.2
+\begin{itemize}
+    \item Email Verification: Integrates with McMaster’s email domain for signup restrictions.
+    \item Mapping/Location Services: Uses a mapping provider (e.g., Mapbox or Google Maps API) to process geolocation and routing.
+    \item Payment (future stretch): Possible integration with Stripe/PayPal for cost-sharing transactions.
+\end{itemize}
+
+Through these interfaces, Hitchly ensures safety (via controlled access), usability (via a student-focused app), and extensibility (via type-safe APIs).
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.4) Detailed Usage Scenarios}
-User stories and examples of interaction between users/environment and the system \cite{meyer2022}.
+\subsection{(S.4) Detailed Usage Scenarios} % S.4
+
+This section provides example interactions between users and Hitchly. Scenarios are written as user stories and include normal, special, and erroneous cases.
+
+\subsubsection{(S.4.1) Rider Requests a Ride} % S.4.1
+\begin{enumerate}
+    \item Sarah, a second-year student, opens the Hitchly app and logs in with her McMaster email.
+    \item She inputs her class timetable and home address.
+    \item Hitchly suggests matching drivers commuting at similar times.
+    \item Sarah requests a ride with a compatible driver.
+    \item The driver accepts, and both receive a confirmation notification.
+    \item After the ride, Hitchly records the trip and generates a summary.
+\end{enumerate}
+
+\subsubsection{(S.4.2) Driver Posts Availability} % S.4.2
+\begin{enumerate}
+    \item Omar, a graduate student, registers as a driver by submitting his license and car details.
+    \item He enters his weekly commute schedule and estimated fuel/parking costs.
+    \item Hitchly calculates a per-rider cost and displays suggested prices.
+    \item Riders with compatible schedules can now request seats in Omar’s car.
+    \item Omar accepts two riders and confirms the trip.
+\end{enumerate}
+
+\subsubsection{(S.4.3) Error Case — Invalid Email} % S.4.3
+\begin{enumerate}
+    \item A user attempts to register using a non-McMaster email.
+    \item The system rejects the signup and prompts them to use a valid @mcmaster.ca email.
+    \item The attempt is logged for auditing.
+\end{enumerate}
+
+\subsubsection{(S.4.4) Safety Case — Mismatched Data} % S.4.4
+\begin{enumerate}
+    \item A rider reports a driver whose profile information does not match their car/license.
+    \item Hitchly flags the account and prevents further matches until the issue is resolved.
+    \item Admins can review and verify the documentation.
+\end{enumerate}
+
+\subsubsection{(S.4.5) Ratings and Reviews} % S.4.5
+\begin{enumerate}
+    \item After a successful trip, riders are prompted to rate their driver on punctuality and safety.
+    \item Omar receives a 5-star rating and positive feedback.
+    \item His credibility score increases, making him more likely to be selected in the future.
+\end{enumerate}
+
+These scenarios highlight both standard use and exception handling, supporting the goals of affordability, safety, and sustainability.
 
 \textit{Nothing available at this point.}
 
@@ -279,9 +509,72 @@ Classification of behaviors, interfaces, and scenarios by criticality \cite{meye
 
 \textit{Nothing available at this point.}
 
-\subsection{(S.6) Verification and Acceptance Criteria}
-Conditions under which an implementation will be deemed satisfactory; V\&V levels \cite{meyer2022}.
+\subsection{(S.6) Verification and Acceptance Criteria} % S.6
 
+Verification and validation (V\&V) ensure Hitchly meets stakeholder expectations for usability, safety, and functionality. The following criteria define when the system will be considered satisfactory.
+
+\subsubsection{(S.6.1) Module Testing} % S.6.1
+
+\paragraph{(S.6.1.1) Authentication Module} % S.6.1.1
+\begin{itemize}
+    \item Accepts only @mcmaster.ca emails.
+    \item Issues secure JWT tokens for valid accounts.
+    \item Rejects invalid domains with appropriate error messages.
+\end{itemize}
+
+\paragraph{(S.6.1.2) Matching Engine} % S.6.1.2
+\begin{itemize}
+    \item Correctly pairs riders and drivers based on timetable and location inputs.
+    \item Handles edge cases (no matches, multiple matches) gracefully.
+\end{itemize}
+
+\paragraph{(S.6.1.3) Trip Summary} % S.6.1.3
+\begin{itemize}
+    \item Generates accurate summaries with cost estimates.
+    \item Stores records in PostgreSQL without data loss.
+\end{itemize}
+
+\subsubsection{(S.6.2) Integration Testing} % S.6.2
+\begin{itemize}
+    \item End-to-end tests ensure the mobile frontend communicates correctly with backend APIs.
+    \item McMaster email verification integrates seamlessly with signup flow.
+    \item Map/location services provide accurate routing data.
+\end{itemize}
+
+\subsubsection{(S.6.3) System Testing} % S.6.3
+\begin{itemize}
+    \item Hitchly runs on iOS and Android devices without critical crashes.
+    \item UI components are accessible (WCAG AA compliance).
+    \item Notification services deliver timely alerts for matches and trip updates.
+\end{itemize}
+
+\subsubsection{(S.6.4) User Acceptance Testing (UAT)} % S.6.4
+\begin{itemize}
+    \item Conducted with a group of McMaster students and staff.
+    \item Success criteria:
+    \begin{itemize}
+        \item Users can sign up, request rides, and complete a trip without assistance.
+        \item At least 80\% of participants report satisfaction with ease of use and reliability.
+        \item No major safety concerns raised during trial.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{(S.6.5) Static Analysis and Code Quality} % S.6.5
+\begin{itemize}
+    \item ESLint and Prettier pass on all commits.
+    \item TypeScript compiler passes with no errors.
+    \item Code coverage of unit tests $>$ 70\%.
+\end{itemize}
+
+\subsubsection{(S.6.6) Acceptance Criteria Summary} % S.6.6
+Hitchly will be deemed acceptable if:
+
+\begin{itemize}
+    \item All core modules pass automated and manual tests.
+    \item Integration tests confirm reliable operation across components.
+    \item UAT demonstrates usability and trustworthiness.
+    \item The system supports the project’s goals of affordability, safety, and sustainability.
+\end{itemize}
 \textit{Nothing available at this point.}
 
 \clearpage

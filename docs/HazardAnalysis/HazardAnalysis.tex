@@ -3,6 +3,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{longtable}
 
 \hypersetup{
     colorlinks=true,       % false: boxed links; true: colored links
@@ -76,14 +77,66 @@ this potential failure mode.}
 
 \section{Failure Mode and Effect Analysis}
 
-\wss{Include your FMEA table here. This is the most important part of this document.}
-\wss{The safety requirements in the table do not have to have the prefix SR.
-The most important thing is to show traceability to your SRS. You might trace to
-requirements you have already written, or you might need to add new
-requirements.}
-\wss{If no safety requirement can be devised, other mitigation strategies can be
-entered in the table, including strategies involving providing additional
-documentation, and/or test cases.}
+% \wss{Include your FMEA table here. This is the most important part of this document.}
+% \wss{The safety requirements in the table do not have to have the prefix SR.
+% The most important thing is to show traceability to your SRS. You might trace to
+% requirements you have already written, or you might need to add new
+% requirements.}
+% \wss{If no safety requirement can be devised, other mitigation strategies can be
+% entered in the table, including strategies involving providing additional
+% documentation, and/or test cases.}
+
+The following FMEA worksheet identifies possible hazards associated with Hitchly, their causes,
+effects, detection methods, and recommended mitigation actions. Traceability to the System
+Requirements Specification (SRS) is included where relevant.
+
+\subsection{FMEA Worksheet}
+\begingroup
+\footnotesize
+\begin{longtable}{|p{0.5cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|}
+\caption{Failure Modes and Effects Analysis for Hitchly} \label{tbl:FMEA} \\ 
+\hline
+\textbf{Ref.} & \textbf{Component} & \textbf{Failure Mode} & \textbf{Causes of Failure} & \textbf{Effects of Failure} & \textbf{Detection Controls} & \textbf{Recommended Action / SRS Ref.} \\ \hline
+\endfirsthead
+\hline
+\textbf{Ref.} & \textbf{Component} & \textbf{Failure Mode} & \textbf{Causes of Failure} & \textbf{Effects of Failure} & \textbf{Detection Controls} & \textbf{Recommended Action / SRS Ref.} \\ \hline
+\endhead
+\hline
+\endfoot
+
+5.1 & Authentication \& Access Control & Unauthorized user gains access & Weak verification of McMaster email; credential theft & Privacy/safety risk, personal commute data exposed & Domain restriction; failed login logging & Enforce 2FA; lockouts after failed attempts (SRS S.3.2 Auth API) \\ \hline
+
+5.2 & Driver Verification & Unverified driver offers rides & Failure to validate license/vehicle data & Rider safety compromised & Admin checks; incomplete profile flags & Require license approval before matching (SRS S.3.1 Driver Registration) \\ \hline
+
+5.3 & Matching Engine & Incorrect ride matches & Algorithm error; timetable parsing bug; corrupted location input & Riders matched incorrectly; missed/unsafe rides & Backend logs; user feedback reports & Unit/integration testing; fallback to safe “no match” state (SRS S.6 Matching Engine) \\ \hline
+
+5.4 & Notifications & Missed or delayed notifications & Push service outage; API failure & Users unaware of confirmations/cancellations & Health checks; delivery logs & Retry queue; allow in-app refresh (SRS S.3.1 Notifications) \\ \hline
+
+5.5 & Trip Data \& History & Trip not recorded or lost & DB outage; sync failure & Loss of audit trail; disputes over costs or safety & DB integrity checks; monitoring & Regular backups; retries on failure; notify user (SRS S.3.2 Trip API) \\ \hline
+
+5.6 & Ratings \& Reviews & Malicious/fake reviews & Collusion or spamming & Misleading trust scores; reduced credibility & Anomaly detection; user reporting & Rate limit submissions; only allow after confirmed trips (SRS S.3.2 Ratings API) \\ \hline
+
+5.7 & Location Services & Incorrect geolocation & API failure; GPS drift; spoofing & Unsafe pickups; delays; privacy risks & Compare expected vs. actual location & Allow manual override; enforce geofence on campus (SRS S.3.2 Mapping API) \\ \hline
+
+5.8 & Data Security & Personal data leak & Server breach; weak encryption & Severe privacy violation; reputational harm & Static analysis; penetration tests & Encrypt at rest \& in transit; GDPR/PIPEDA compliance (SRS S.6.5 Code Quality) \\ \hline
+
+5.9 & Payment (future) & Incorrect cost calculation & Bug in cost-sharing logic & Disputes between riders and drivers & Automated tests; manual audits & Provide breakdown in summary; add dispute mechanism (SRS S.3.2 Trip Summary) \\ \hline
+
+5.10 & System Availability & App/API downtime & Server crash; container failure; network outage & Users stranded; loss of trust & Monitoring dashboards; downtime alerts & Deploy redundancy; user-facing error messaging (SRS S.6.3 System Testing) \\ \hline
+
+
+\end{longtable}
+\endgroup
+
+
+
+\subsection{Conclusion}
+This FMEA highlights Hitchly’s most critical hazards in authentication, ride matching,
+driver verification, and data security. Some risks are mitigated directly through
+\textbf{safety requirements} in the SRS (e.g., verified drivers only), while others are addressed
+through \textbf{operational safeguards} such as monitoring, backups, or user documentation.
+By implementing these mitigations, Hitchly can meet its goals of safety, affordability,
+and sustainability for the McMaster community.
 
 \section{Safety and Security Requirements}
 
@@ -104,16 +157,29 @@ Which requirements will be implemented in the future?}
 \input{../Reflection.tex}
 
 \begin{enumerate}
-    \item What went well while writing this deliverable? 
+    \item What went well while writing this deliverable? \\
+    This document was very helpful as it provided a template to identify potential risks associated with the system and the users. The brainstorming session allowed for a diverse set of ideas to be shared. This was very helpful in setting the basis for this document. We were able to not only come up with hazards that directly affect the users, but we also identified hazards related to the system that would indirectly affect the users, too. This helped us understand the importance of system failures and their effects on users.
+    
     \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
+    did you resolve them?\\
+    Initially, we weren't able to decide on how deeply we wanted to discuss each hazard. We had discussed a lot of hazards initially, but it became difficult to decide which ones to keep and which ones to remove. We came up with the strategy to prioritize the hazards and then check for similarities to avoid redundancy. This helped us ensure that all of the critical hazards were covered and that there were no redundancies.
+    
     \item Which of your listed risks had your team thought of before this
     deliverable, and which did you think of while doing this deliverable? For
     the latter ones (ones you thought of while doing the Hazard Analysis), how
-    did they come about?
+    did they come about?\\
+    One of the obvious ones that arises with platforms like these includes user safety and security. These ideas came from the past experiences of the teammates. The risk of having an unverified driver, breach of data, incorrect ride matches, and fake ratings and reviews, were listed before this deliverable. The rest came up while working on this deliverable. We did some research on similar applications and brainstormed ideas focusing on Hazards that could indirectly affect the user. This deliverable set the basis for considering all of the components of the application. That is when we came up with some of the system failure hazards like notification delays, loss of trip history data, location api failure, and system unavailability.   
+    
     \item Other than the risk of physical harm (some projects may not have any
     appreciable risks of this form), list at least 2 other types of risk in
-    software products. Why are they important to consider?
+    software products. Why are they important to consider?\\
+    \begin{enumerate}
+    \item \textbf{Risk of Data Breach:} Software platforms in general hold a lot of user data. In some cases, that can be very confidential. This harms a brand's reputation and can cause heavy penalties in some cases.  
+    \item \textbf{Server Crashes and Unusual Downtime:} This is another critical hazard associated with software platforms which can leave a user stranded for hours and harm the brand's image. This can cause users to move to the platforms, and cause the platform to lose users permanently.
+    \end{enumerate}
+
+
+
 \end{enumerate}
 
 \end{document}
