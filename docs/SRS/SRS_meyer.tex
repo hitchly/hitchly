@@ -249,7 +249,7 @@ Environment properties that the system’s operation must preserve \cite{meyer20
 The System book refines the Goals book by focusing on more detailed requirements.
 
 \subsection{(S.1) Components}
-Hitchly is composed of 5 main components that collectively provide the necessary functionality required for the application. \\
+Hitchly is composed of 6 main components that collectively provide the necessary functionality required for the application. \\
 
 \noindent \textbf{Matchmaking Engine:} The matchmaking engine is responsible for matching riders with drivers based on schedules/timetables, departure times, routes and locations, and other user preferences. 
 It interfaces with the scheduling system to ensure rides can be matched, whether it be one-time or recurring. It will optimize for cost, convenience, and schedule alignment. \\
@@ -262,7 +262,18 @@ It interfaces with the scheduling system to ensure rides can be matched, whether
 
 \noindent \textbf{User Profile Manager:} Stores user details such as a profile picture, bio, ratings, preferences, and more. Allows other users to view a profile when matching with each other to see information about them, as well as reliability metrics such as completed rides, any strikes, and more. \\
 
-\noindent \textbf{Rating and Reputation System:} Tracks the attendance, punctuality, and safety rekated behaviour of drivers and riders. Issues strikes and penalties as needed, and integrates with the user profile manager to display user ratings and history.
+\noindent \textbf{Rating and Reputation System:} Tracks the attendance, punctuality, and safety related behaviour of drivers and riders. Issues strikes and penalties as needed, and integrates with the user profile manager to display user ratings and history. \\
+\vspace{1em}
+
+\begin{samepage}
+\noindent The following diagram shows how these components interact and communicate when the application is being used.
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{component_diagram.png}
+  \caption{Hitchly Component Diagram.}
+\end{figure}
+\end{samepage}
+\clearpage
 
 \subsection{(S.2) Functionality}
 The bulk of the System book: functional and non-functional behaviors \cite{meyer2022}.
