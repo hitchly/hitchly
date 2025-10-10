@@ -606,9 +606,116 @@ These scenarios highlight both standard use and exception handling, supporting t
 \textit{Nothing available at this point.}
 
 \subsection{(S.5) Prioritization}
-Classification of behaviors, interfaces, and scenarios by criticality \cite{meyer2022}.
 
-\textit{Nothing available at this point.}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\noindent \textbf{Priority Table for Matchmaking Engine}
+\vspace{0.5em}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{|l|X|c|Y|}
+\hline
+\textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+F211 & Route and Schedule Matching & Must Have & Core feature of the app’s functionality. \\ \hline
+F212 & Availability Updates & Must Have & Essential for reliability and real-time operation. \\ \hline
+F213 & Preference Filtering & Should Have & Improves the user experience but not essential to core functionality. \\ \hline
+F214 & Multi-passenger Support & Must Have & Having multiple passengers per driver is essential. \\ \hline
+NF211 & Matching Performance & Should Have & Efficient algorithm and system is important for attracting users. \\ \hline
+NF212 & Location Security & Must Have & It is essential that the user’s location information is kept secure. \\ \hline
+\end{tabularx}
+\end{center}
+\vspace{2em}
+
+\noindent \textbf{Priority Table for Scheduling and Booking Manager}
+\vspace{0.5em}
+  \begin{center}
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F221 & Ride Scheduling & Must Have & Core functionality of the app. \\ \hline
+  F222 & Booking Confirmation & Must Have & Required for user trust. \\ \hline
+  F223 & Cancellation and Rescheduling & Must Have & Essential for smooth operation for all users. \\ \hline
+  F224 & Reminder Notifications & Nice to Have & Improves reliability but not critical for functionality. \\ \hline
+  NF221 & Data Integrity & Must Have & Needed for user trust and safety. \\ \hline
+  NF222 & Confirmation Speed & Should Have & Users will rely on quick confirmation to assess functionality. \\ \hline
+  \end{tabularx}
+\end{center}
+  \vspace{2em}
+
+  \noindent \textbf{Priority Table for Safety and Verification Module}
+  \vspace{0.5em}
+  \begin{center}
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F231 & User Identity Verification & Must Have & Required for the functionality and access of the app. \\ \hline
+  F232 & Driver Verification & Must Have & Mandatory for trust and liability. \\ \hline
+  F233 & Ride Check-in & Should Have & Ensures rides run smoothly but not essential. \\ \hline
+  F234 & Safety Check & Nice to Have & Improves user safety and trust, but not critical for functionality. \\ \hline
+  NF231 & Data Security & Must Have & Ensures that personal information is encrypted and securely stored. \\ \hline
+  NF232 & Auditability & Nice to Have & Important for keeping track of user activity over time. \\ \hline
+  \end{tabularx}
+\end{center}
+  \vspace{2em}
+  
+  \noindent \textbf{Priority Table for Payment and Cost Sharing System}
+  \vspace{0.5em}
+  \begin{center}  
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F241 & Fare Calculation & Must Have & Core functionality of cost-sharing. \\ \hline
+  F242 & Secure Transactions & Must Have & Essential for user trust and legal compliance. \\ \hline
+  F243 & Hold on Funds & Must Have & Needed for smooth functionality for all users. \\ \hline
+  F244 & Expense Summaries & Nice to Have & Helpful for users to track budgets but not core functionality. \\ \hline
+  NF241 & Transaction Security & Must Have & All payments must be handled securely for safety and legality. \\ \hline
+  NF242 & Processing Speed & Should Have & Users will want a smooth process when completing payments. \\ \hline
+  \end{tabularx}
+\end{center}
+  \vspace{2em}
+
+  \noindent \textbf{Priority Table for User Profile Manager}
+  \vspace{0.5em}
+  \begin{center}
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F251 & Profile Creation & Must Have & Needed when signing up to use the application. \\ \hline
+  F252 & Profile Updates & Must Have & Important for accuracy of information and preferences. \\ \hline
+  F253 & Ride History & Should Have & Builds trust and data availability but does not directly improve functionality. \\ \hline
+  F254 & View Profiles & Should Have & Important for user safety and trust when booking rides. \\ \hline
+  NF251 & Privacy & Must Have & Protecting personal information is necessary for user confidence. \\ \hline
+  NF252 & Performance & Nice to Have & Users will want fast navigation through information. \\ \hline
+  \end{tabularx}
+\end{center}
+  \vspace{2em}
+
+  \noindent \textbf{Priority Table for Rating and Reputation System}
+  \vspace{0.5em}
+  \begin{center}
+  \small
+  \begin{tabularx}{\textwidth}{|l|X|c|Y|}
+  \hline
+  \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
+  F261 & Ride Ratings & Must Have & Critical component of the rating system. \\ \hline
+  F262 & Issue Reporting & Must Have & Important for evaluating and ensuring the safety of all users. \\ \hline
+  F263 & Minimum Reputation Thresholds & Should Have & Enforces repurcussions for behaviour that goes against set rules, but not critical for functionality. \\ \hline
+  F264 & Positive Reinforcement & Nice to Have & Provides benefits to users who consistently use the app as intended, but also not essential. \\ \hline
+  NF261 & Rating Integrity & Should Have & Important to protect users reputations when possible. \\ \hline
+  \end{tabularx}
+\end{center}
+\vspace{2em}
+
+\par\raggedright
+  The prioritization of requirements mainly focused on their importance to the app's core functionality, along with the safety and security of users and their data. 
+  The core functionality refers to features that directly affect how users engage with Hitchly on a regular basis, such as finding and booking rides,
+  managing payments, creating an account, etc. Requirements that are central to these experience are classified as "Must Have". Other features that provide
+  significant improvements to convenience, trust, or improved user experience are categotized as "Should Have". Finally, features that offer additional ease of use
+  or extra value but are not critical to the app's purpose are placed in the "Nice to Have" category.
 
 \subsection{(S.6) Verification and Acceptance Criteria} % S.6
 
