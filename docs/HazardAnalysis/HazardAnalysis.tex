@@ -93,13 +93,15 @@ trips and to add reviews to their profiles.
 
 The system follows these critical assumptions about the software and system:
 
-\subsection{The Maps API provides up-to-date navigation for all users in the surrounding GTA region.}
+\vspace{1em}
 
-\subsection{The application will only target McMaster students for the initial build.}
+\noindent \textbf{CA-1:} The Maps API provides up-to-date navigation for all users in the surrounding GTA region.\\
 
-\subsection{The expected user base of the application will be within the planned demographic (students and university faculty).}
+\noindent \textbf{CA-2:} The application will only target McMaster students for the initial build.\\
 
-\subsection{API rate limits will not be exceeded under the expected user load.}
+\noindent \textbf{CA-3:} The expected user base of the application will be within the planned demographic (students and university faculty).\\
+
+\noindent \textbf{CA-4:} API rate limits will not be exceeded under the expected user load.\\
 
 \section{Failure Mode and Effect Analysis}
 
@@ -265,7 +267,7 @@ The main challenge I faced was distinguishing between what belonged in the SRS v
     deliverable, and which did you think of while doing this deliverable? For
     the latter ones (ones you thought of while doing the Hazard Analysis), how
     did they come about?\\
-    
+
    One of the obvious ones that arises with platforms like these includes user safety and security. These ideas came from the past experiences of my teammates. The risk of having an unverified driver, breach of data, incorrect ride matches, and fake ratings and reviews, were listed before this deliverable. The rest came up while working on this deliverable. We did some research on similar applications and brainstormed ideas focusing on Hazards that could indirectly affect the user. This deliverable sets the basis for considering all of the components of the application. That is when we came up with some of the system failure hazards like notification delays, loss of trip history data, location API failure, and system unavailability. 
 
     \item Other than the risk of physical harm (some projects may not have any
