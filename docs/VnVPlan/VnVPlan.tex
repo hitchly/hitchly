@@ -2,6 +2,7 @@
 
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{float} % Add this for [H] table positioning
 \usepackage{hyperref}
 \hypersetup{
     colorlinks,
@@ -70,6 +71,18 @@ in.}
   \textbf{symbol} & \textbf{description}\\
   \midrule 
   T & Test\\
+  FR & Functional Requirement\\
+  NFR & Non-Functional Requirement\\
+  V\&V & Verification and Validation\\
+  SRS & Software Requirements Specification\\
+  MG & Module Guide\\
+  MIS & Module Interface Specification\\
+  UI & User Interface\\
+  DB & Database\\
+  API & Application Programming Interface\\
+  PoC & Proof of Concept\\
+  QA & Quality Assurance\\
+  CSV & Comma-Separated Values (data format)\\
   \bottomrule
 \end{tabular}\\
 
@@ -234,128 +247,142 @@ as a Rev 0 demo for the supervisor.}
 
 \section{System Tests}
 
-\wss{There should be text between all headings, even if it is just a roadmap of
-the contents of the subsections.}
+Purpose: Verify that Hitchly meets its defined functional and non-functional requirements.
+
+Structure: 
+\begin{itemize}
+    \item Section 4.1 tests core functional requirements (verification and matching).
+    \item Section 4.2 tests key non-functional qualities (reliability and usability).
+    \item Section 4.3 maps each test to its source requirement for traceability.
+\end{itemize}
+
+Reference: Section 1.4 (G.4) \textit{Functionality Overview} defines the functional and non-functional requirements.
 
 \subsection{Tests for Functional Requirements}
 
-\wss{Subsets of the tests may be in related, so this section is divided into
-  different areas.  If there are no identifiable subsets for the tests, this
-  level of document structure can be removed.}
+Objective: Confirm correct operation of primary system functions—user verification and ride matching.
 
-\wss{Include a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.}
+Justification: These address Hitchly’s two most critical risks trust and core value creation.
 
-\subsubsection{Area of Testing1}
+Sub-areas:
+\begin{itemize}
+    \item 4.1.1 User Verification Tests
+    \item 4.1.2 Ride Matching Tests
+\end{itemize}
 
-\wss{It would be nice to have a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.  If a section
-  covers tests for input constraints, you should reference the data constraints
-  table in the SRS.}
-		
-\paragraph{Title for Test}
+\subsubsection{Area of Testing 1 – User Verification}
+
+Purpose: Ensure only McMaster-affiliated users and verified drivers access the system.  
+Covers: FR-1 (User verification) from Section 1.4 (G.4).
 
 \begin{enumerate}
+\item \textbf{Test Case 1 – Valid Sign-Up}\\
+Control: Automatic\\
+Initial State: No existing account.\\
+Input: Valid McMaster email + password + driver license (upload for drivers).\\
+Expected Output: Verification email sent → account activated after confirmation.\\
+Test Case Derivation: Based on credential and email-domain constraints defined in Section 1.4 (G.4).\\
+How test will be performed: Simulate sign-up, check database entry and email receipt.\\[5pt]
 
-\item{test-id1\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs.  Output is not how you
-are going to return the results of the test.  The output is the expected
-result.}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
+\item \textbf{Test Case 2 – Invalid Verification}\\
+Control: Automatic\\
+Initial State: No existing account.\\
+Input: Non-McMaster email or invalid license format.\\
+Expected Output: Account creation rejected with error message.\\
+Test Case Derivation: Derived from input constraints and driver-license validation rules in Section 1.4 (G.4).\\
+How test will be performed: Input invalid data, verify system blocks progress.\\
 \end{enumerate}
 
-\subsubsection{Area of Testing2}
+\subsubsection{Area of Testing 2 – Ride Matching}
 
-...
+Purpose: Confirm that the matching algorithm correctly proposes compatible rider–driver pairs.  
+Covers: FR-3 (Ride matching) and FR-4 (Cost estimate) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 – Successful Match}\\
+Control: Automatic\\
+Initial State: Verified users with valid profiles and schedules.\\
+Input: Rider and driver with overlapping routes/times.\\
+Expected Output: Match proposal generated with computed cost share.\\
+Test Case Derivation: Based on matching criteria and cost-sharing logic specified in Section 1.4 (G.4).\\
+How test will be performed: Run matching routine, check match records and cost calculation.\\[5pt]
+
+\item \textbf{Test Case 2 – No Compatible Match}\\
+Control: Automatic\\
+Input: Rider and driver with non-overlapping schedules.\\
+Expected Output: “No match found” message.\\
+Test Case Derivation: From matching constraints outlined in Section 1.4 (G.4).\\
+How test will be performed: Submit non-overlapping profiles and observe system response.\\
+\end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
 
-\wss{The nonfunctional requirements for accuracy will likely just reference the
-  appropriate functional tests from above.  The test cases should mention
-  reporting the relative error for these tests.  Not all projects will
-  necessarily have nonfunctional requirements related to accuracy.}
+Objective: Evaluate system quality beyond correctness—reliability and usability.  
+Approach: Use performance measurement and user feedback methods rather than simple pass/fail criteria.
 
-\wss{For some nonfunctional tests, you won't be setting a target threshold for
-passing the test, but rather describing the experiment you will do to measure
-the quality for different inputs.  For instance, you could measure speed versus
-the problem size.  The output of the test isn't pass/fail, but rather a summary
-table or graph.}
+Sub-areas:
+\begin{itemize}
+    \item 4.2.1 Reliability (Matching Correctness)
+    \item 4.2.2 Usability (Low-Friction Flows)
+\end{itemize}
 
-\wss{Tests related to usability could include conducting a usability test and
-  survey.  The survey will be in the Appendix.}
+\subsubsection{Area of Testing 1 – Reliability (Matching Correctness)}
 
-\wss{Static tests, review, inspections, and walkthroughs, will not follow the
-format for the tests given below.}
-
-\wss{If you introduce static tests in your plan, you need to provide details.
-How will they be done?  In cases like code (or document) walkthroughs, who will
-be involved? Be specific.}
-
-\subsubsection{Area of Testing1}
-		
-\paragraph{Title for Test}
+Purpose: Ensure consistent and repeatable ride matching results.  
+Covers: NFR-1 (Reliability) from Section 1.4 (G.4).
 
 \begin{enumerate}
+\item \textbf{Test Case 1 – Repeatability Check}\\
+Type: Automatic / Dynamic\\
+Initial State: Stable dataset for verified users.\\
+Input: Run matching inputs multiple times.\\
+Expected Result: Identical pairings each run.\\
+How test will be performed: Automated script logs output and compares hash results.\\[5pt]
 
-\item{test-id1\\}
-
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
-
+\item \textbf{Test Case 2 – Stress Test}\\
+Type: Dynamic Performance Test\\
+Input: Simulated peak load ($\geq$ 1000 simultaneous match requests).\\
+Expected Result: $\geq$ 95\% successful matches within response-time threshold.\\
+How test will be performed: Load-testing tool records failures and latency for reliability assessment.\\
 \end{enumerate}
 
-\subsubsection{Area of Testing2}
+\subsubsection{Area of Testing 2 – Usability (Low-Friction Flows)}
 
-...
+Purpose: Validate ease of use for key flows (sign-up, ride offer/request, confirmation).  
+Covers: NFR-2 (Usability) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 – First-Time User Scenario}\\
+Type: Manual / Survey-Based\\
+Initial State: New participants with no training.\\
+Input: Observe users completing sign-up and ride requests.\\
+Expected Result: $\geq$ 90\% complete tasks without help in $\leq$ 3 minutes.\\
+How test will be performed: Usability study plus survey metrics (Appendix).\\[5pt]
+
+\item \textbf{Test Case 2 – Interface Clarity}\\
+Type: Static Inspection / Heuristic Evaluation\\
+Input: UI screens and labels.\\
+Expected Result: No ambiguous labels or layout clutter violations.\\
+How test will be performed: Walkthrough by UX reviewers using standard heuristics.\\
+\end{enumerate}
 
 \subsection{Traceability Between Test Cases and Requirements}
 
-\wss{Provide a table that shows which test cases are supporting which
-  requirements.}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Requirement ID} & \textbf{Requirement Description (from 1.4 G.4)} & \textbf{Test Case ID(s)} \\ \hline
+FR-1 & User Verification & 4.1.1-1, 4.1.1-2 \\ \hline
+FR-3 & Ride Matching & 4.1.2-1, 4.1.2-2 \\ \hline
+FR-4 & Cost Estimate & 4.1.2-1 \\ \hline
+NFR-1 & Reliability (Matching Correctness) & 4.2.1-1, 4.2.1-2 \\ \hline
+NFR-2 & Usability (Low-Friction Flows) & 4.2.2-1, 4.2.2-2 \\ \hline
+\end{tabular}
+\caption{Traceability between test cases and requirements as defined in Section 1.4 (G.4) Functionality Overview.}
+\end{table}
+
+
 
 \section{Unit Test Description}
 
@@ -512,18 +539,23 @@ graduate attribute of Lifelong Learning.
 \input{../Reflection.tex}
 
 \begin{enumerate}
-  \item What went well while writing this deliverable? 
-  \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-  \item What knowledge and skills will the team collectively need to acquire to
-  successfully complete the verification and validation of your project?
-  Examples of possible knowledge and skills include dynamic testing knowledge,
-  static testing knowledge, specific tool usage, Valgrind etc.  You should look to
-  identify at least one item for each team member.
-  \item For each of the knowledge areas and skills identified in the previous
-  question, what are at least two approaches to acquiring the knowledge or
-  mastering the skill?  Of the identified approaches, which will each team
-  member pursue, and why did they make this choice?
+
+\item \textbf{What went well while writing this deliverable?}\\
+(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I’m happy with how cohesive the final document feels.
+
+\item \textbf{What pain points did you experience during this deliverable, and how did you resolve them?}\\
+(Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.
+
+\item \textbf{What knowledge and skills will you need to acquire to successfully complete the verification and validation of your project?}\\
+(Swesan) I need to deepen my understanding of dynamic testing and automation. Specifically, I want to improve at writing reproducible automated test scripts for functional verification and gain familiarity with load testing tools to assess performance under peak usage conditions. These skills will help ensure Hitchly’s matching and verification features are both reliable and scalable.
+
+\item \textbf{For each of the knowledge areas and skills identified in the previous question, what are at least two approaches to acquiring the knowledge or mastering the skill? Which will you pursue, and why?}\\
+(Swesan) To build my dynamic testing and automation skills, I can:  
+(1) Review documentation and tutorials for testing frameworks and testing utilities.  
+(2) Develop small-scale automated test cases directly within the Hitchly repository to gain hands-on experience.  
+
+I will prioritize the second approach since applying testing concepts directly in code helps uncover integration issues early and strengthens confidence in both the testing process and implementation reliability.
+
 \end{enumerate}
 
 \end{document}
