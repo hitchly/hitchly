@@ -4,8 +4,7 @@
 \usepackage[letterpaper,margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{times}
-\usepackage{mathptmx}
+\usepackage{newtxtext,newtxmath} % Times-like font
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -14,10 +13,8 @@
 \usepackage{enumitem}
 \usepackage{titlesec}
 \usepackage{xcolor}
-\usepackage{fancyhdr}
-\usepackage[round]{natbib}
-
 \usepackage{hyperref}
+\usepackage{fancyhdr}
 
 % ---------- Colors (from Aspose export) ----------
 \definecolor{brand}{rgb}{0.478431,0,0.235294}   % color_147093
@@ -31,6 +28,7 @@
 \fancyhf{}
 \lhead{}
 \rhead{}
+\lfoot{SE/CS 3RA3 — Fall}
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -43,77 +41,140 @@
 \setlist[enumerate]{topsep=4pt,itemsep=2pt,parsep=0pt}
 
 % ---------- Title page ----------
-\title{Software Requirements Specification Document\\\progname}
+\makeatletter
+\def\@maketitle{%
+  \begin{center}
+    \vspace*{1.5cm}
+    {\Huge\bfseries\color{brand} Our Awesome Project\par}
+    \vspace{0.35cm}
+    {\Large\itshape\color{accent} Requirements Standard Plan\par}
+    \vspace{0.9cm}
+    {\large Saad Salman, Author 2, Author 3\par}
+    \vspace{0.25cm}
+    {\normalsize Version 1, 2025-09-22\par}
+    \vspace{1.5cm}
+  \end{center}
+}
 
-\author{\authname}
-
+\makeatother
+\title{}
+\author{}
 \date{}
 
-\input{../Comments}
-\input{../Common}
-
-\setcounter{tocdepth}{3}
-\makeatletter
-\@starttoc{toc}
-\makeatother
 \begin{document}
 \maketitle
-\begin{table}[hp]
-  \caption{Revision History} \label{TblRevisionHistory}
-  \begin{tabularx}{\textwidth}{llX}
-  \toprule
-  \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
-  \midrule
-  October 9th & Swesan Pathmanathan & Added content for Goals section (G.1-G.7)\\
-  October 9th & Aidan Froggatt & Completed sections S.3, S.4, S.6\\
-  October 10th & Burhanuddin Kharodawala & Added Environment Sections (E.1 - E.6)\\
-  October 10th & Sarim Zia & Completed Project section (P.1 - P.7)\\
-  October 10th & Hamzah Rawasia & Added sections S.1, S.2, S.5\\
-  October 10th & All & Added Reflections, Finalized Document\\
-  
-  \bottomrule
-  \end{tabularx}
-  \end{table}
+\thispagestyle{empty}
+\clearpage
 
-  \clearpage
+\tableofcontents
+\clearpage
+
+% ---------- Academic Integrity Disclaimer ----------
+\section*{Academic Integrity Disclaimer}
+\addcontentsline{toc}{section}{Academic Integrity Disclaimer}
+We would like to acknowledge that as dedicated students of McMaster University, we have thoroughly read and comprehended the Academic Integrity Policy published by the university. We are committed to upholding the principles of academic honesty and integrity in all aspects of our educational journey. We understand the importance of acknowledging the work and ideas of others, and we pledge to ensure that all our academic endeavors are conducted with the utmost originality and compliance with the university's policy.
+
+We affirm that the content presented in this document is entirely our own, and any external sources used have been appropriately cited and referenced.
+
+\medskip
+\noindent\textbf{Saad Salman} \\
+As I submit my work, I, Saad Salman, take full responsibility for the integrity of my work and promise to avoid any form of plagiarism, cheating, or dishonest behavior. This acknowledgment serves as a testament to my dedication to academic excellence and the fostering of a trustworthy academic community at McMaster University.
+
+\medskip
+\noindent\textbf{Author 2} \\
+As I submit my work, I, Author 2, take full responsibility for the integrity of my work and promise to avoid any form of plagiarism, cheating, or dishonest behavior. This acknowledgment serves as a testament to my dedication to academic excellence and the fostering of a trustworthy academic community at McMaster University.
+
+\medskip
+\noindent\textbf{Author 3} \\
+As I submit my work, I, Author 3, take full responsibility for the integrity of my work and promise to avoid any form of plagiarism, cheating, or dishonest behavior. This acknowledgment serves as a testament to my dedication to academic excellence and the fostering of a trustworthy academic community at McMaster University.
+
+\medskip
+\noindent\textit{Policy:} \url{https://secretariat.mcmaster.ca/app/uploads/Academic-Integrity-Policy-1-1.pdf}
+
+\clearpage
+
+% ---------- Control Information ----------
+\section{Control Information}
+\begin{table}[h!]\centering
+\caption*{Versioning and Delivery}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{@{}l l l l l l@{}}
+\toprule
+\textbf{Version} & \textbf{Delivery Deadline} & \textbf{Delivered} & \textbf{Feedback Received} & \textbf{Integrated} & \textbf{Notes} \\
+\midrule
+V1 & & & & & \\
+V2 & & & & & \\
+V3 & & & & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\medskip
+\noindent\textbf{Saad Salman} \\
+Here is a quick biography of Saad Salman. You can contact them at \href{mailto:salmam12@mcmaster.ca}{salmam12@mcmaster.ca}.
+
+\medskip
+\noindent\textbf{Author 2} \\
+Here is a quick biography of Author 2. You can contact them at \href{mailto:a2@mcmaster.ca}{a2@mcmaster.ca}.
+
+\medskip
+\noindent\textbf{Author 3} \\
+Here is a quick biography of Author 3. You can contact them at \href{mailto:a3@mcmaster.ca}{a3@mcmaster.ca}.
+
+\clearpage
 
 % ---------- (G) Goals ----------
 \section{(G) Goals}
-\label{sec:goals}
+\subsection*{Reading Guide}
+Goals are ``needs of the target organization, which the system will address. While the development team is the principal user of the other books, the Goals book addresses a wider audience: essentially, all stakeholders \cite{meyer2022}. It must contain enough information to provide---if read just by itself---a general sketch of the entire project. To this effect, chapter G.3 presents a short overview of the system and G.1 will typically include some key properties of the environment. As it addresses a wide readership, it should be clear and minimize the use of specialized technical terms. Together, G.1, G.2 and G.3 describe the rationale for the project. It is important to state these justifications explicitly. Typically, they are well understood at the start of the project, but management and priorities can change \cite{meyer2022}.
+
+\subsection*{Control Information}
+\begin{table}[h!]\centering
+\caption*{Table 1. Our Awesome Project --- Versioning Information --- Goal Book}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{@{}l l l l l l@{}}
+\toprule
+\textbf{Section} & \textbf{Version} & \textbf{Lead} & \textbf{Delivered on} & \textbf{Reviewer} & \textbf{Approved on} \\
+\midrule
+G.1 & M1 & SS & Sept-21-2025 & SP & Sept-22-2025 \\
+G.2 & M1 & SS & Sept-21-2025 & SP & Sept-22-2025 \\
+G.3 & & & & & \\
+G.4 & & & & & \\
+G.5 & & & & & \\
+G.6 & & & & & \\
+G.7 & & & & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{(G.1) Context and Overall Objectives}
-\label{sec:goals1}
-
 Commuting to McMaster University presents significant financial and environmental challenges. Students, staff, and faculty spend between 150 and 250 dollars monthly on fuel, parking, or transit, which places an economic burden on them. At the same time, single-occupancy vehicles contribute to 36 percent of greenhouse gas emissions for Canadian universities, harming both local air quality and broader sustainability goals. Existing ridesharing solutions such as Facebook Marketplace, Kijiji, or Poparide do not provide sufficient verification or security, leaving users at risk of riding with unaffiliated strangers. The objective of Hitchly is to provide a safe, affordable, and reliable ridesharing platform tailored for the McMaster community. By verifying users through McMaster email accounts, Hitchly ensures trust, reduces costs, supports sustainability, and helps the university meet its long-term community and environmental goals. 
 
 \subsection{(G.2) Current Situation}
-\label{sec:goals2}
-
 Currently, McMaster commuters lack a centralized, trusted platform to connect drivers and riders within the university community. Those who rely on driving face steep monthly costs for gas and parking, while those taking transit encounter expensive or unreliable services. Informal ridesharing options exist, but they provide limited safety features and lack institutional alignment, making them unsuitable for building long-term trust. Students and staff often feel that available solutions are unsafe, inefficient, or financially burdensome. Hitchly seeks to fill this gap by providing a McMaster-specific application that facilitates secure ridesharing, reduces commuting costs, and lowers emissions. 
 
 \subsection{(G.3) Expected Benefits}
-\label{sec:goals3}
-
-New processes, or improvements to existing processes, made possible by the project's results. It presents the business benefits expected from successful execution of the project. This chapter is the core of the Goals book, describing what the organization expects from the system [Meyer, 2022].
+New processes, or improvements to existing processes, made possible by the project's results. It presents the business benefits expected from successful execution of the project. This chapter is the core of the Goals book, describing what the organization expects from the system \cite{meyer2022}.
 The pilot delivers clear, stakeholder-visible outcomes. Riders should see more affordable commutes (targeting approximately 20\% savings) while drivers receive meaningful cost offsets (around 40\%). We aim for reliable availability ($\geq$70\% ride-fill and $\geq$95\% on-time) so trips feel predictable from day one, with most new users completing a first ride within a week. The pilot targets a reduction in single-occupancy trips on campus and nearby (aiming for at least 10\%), easing parking pressure and congestion and reducing emissions. The service will be inclusive by default (targeting about 90\% match on stated accessibility preferences) and trusted through university-verified identities with a goal of very low incident rates. The university benefits from higher student satisfaction and sense of belonging, improved commuter equity, and better alignment with sustainability reporting---while maintaining privacy safeguards (goal: zero critical incidents). Broader community outcomes include cleaner air, calmer peak traffic, and greater participation in transit and shared mobility.
 
 \begin{figure}[htbp]
   \centering
   % path is relative to the .tex file; create docs/SRS/images/ and put your file there
-  \includegraphics[width=0.95\textwidth]{goal_model.png}
+  \includegraphics[width=0.75\textwidth]{goal_model.png}
   \caption{Hitchly Goal Modelling Diagram.}
   \label{fig:ride-matching}
 \end{figure}
 
-\subsection{(G.4) Functionality Overview}
-\label{sec:goals4}
+\textit{Nothing available at this point.}
 
+\subsection{(G.4) Functionality Overview}
 
 \paragraph{Overview.}
 Hitchly is a campus-focused ride sharing service for the McMaster community.
 It verifies users by McMaster email, collects commute and vehicle data, matches riders and drivers by schedule and location, estimates cost sharing, and supports post-trip ratings.
 
-Fundamental usage paths through the system, stated in user terms and independent of the system's structure. Detailed usage scenarios appear in the System book (S.4) [Meyer, 2022].
+\subsection{(G.5) High-level Usage Scenarios}
+Fundamental usage paths through the system, stated in user terms and independent of the system's structure. Detailed usage scenarios appear in the System book (S.4) \cite{meyer2022}.
 \subsubsection*{Functional requirements}
 \begin{enumerate}
   \item \textbf{User verification.}
@@ -171,7 +232,6 @@ Usability (NFR) & \textbf{R/A} & C & C & I \\
 \noindent{\textbf{Legend:}} R = Responsible (executes the work); A = Accountable (final sign-off); C = Consulted (provides input); I = Informed (kept up to date).
 
 \subsection{(G.5) High-level Usage Scenarios}
-\label{sec:goals5}
 
 \subsubsection*{Use Case 1: Driver Offers Ride}
 \begin{enumerate}
@@ -216,14 +276,12 @@ Usability (NFR) & \textbf{R/A} & C & C & I \\
 \begin{figure}[htbp]
   \centering
   % path is relative to the .tex file; create docs/SRS/images/ and put your file there
-  \includegraphics[width=1.1\textwidth]{use-case.png}
+  \includegraphics[width=0.75\textwidth]{use-case.png}
   \caption{Hitchly Use Case Diagram.}
   \label{fig:ride-matching}
 \end{figure}
 
 \subsection{(G.6) Limitations and Exclusions}
-\label{sec:goals6}
-
 \begin{itemize}
   \item McMaster-Only Access: Hitchly will only be available to McMaster students, staff, and faculty during the pilot phase. Users must verify their identity through a McMaster email. This restriction ensures trust and control but limits the platform’s reach to a single institution. 
 
@@ -234,8 +292,6 @@ Usability (NFR) & \textbf{R/A} & C & C & I \\
 
 
 \subsection{(G.7) Stakeholders and Requirements Sources}
-\label{sec:goals7}
-
 
 \subsubsection*{Direct Stakeholders}
 
@@ -272,7 +328,7 @@ Gains reduced congestion and measurable sustainability improvements, aligning wi
 \paragraph{Hamilton Community}
 Benefits from fewer cars on the road, reduced emissions, and improved air quality.
 
-\newpage
+\clearpage
 
 % ---------- (E) Environment ----------
 \section{(E) Environment}
@@ -288,7 +344,7 @@ Benefits from fewer cars on the road, reduced emissions, and improved air qualit
 
 \begin{figure}[h] 
     \centering
-    \includegraphics[width=0.95\linewidth]{Domain Model.png}
+    \includegraphics[width=0.8\linewidth]{Domain Model.png}
     \caption{Domain Model}
     \label{fig:domain-model}
 \end{figure}
@@ -320,11 +376,11 @@ There are a few important assumptions that will be made to simplify the system. 
 \end{enumerate}
 
 \subsection{(E.5) Effects}
-Effects of the application include:
+Elements and properties of the environment that the system will affect \cite{meyer2022}. Effects of the application include:
 \begin{enumerate}
-\item \textbf{Improved Sustainability and Reduced Traffic Congestion:} The system will positively affect the environment by lowering the GHG emissions caused by vehicles of individuals commuting to and from McMaster University. Secondly, as a result of carpooling, there will be a reduction in the use of single-occupancy vehicles which will cause a reduction in traffic congestion on roads and highways. 
+\item \textbf{Improved sustainability and Reduced Traffic Congestion:} The system will positively affect the environment by lowering the GHG emissions caused by vehicles of individuals commuting to and from McMaster University. Secondly, as a result of carpooling, there will be a reduction in the use of single-occupancy vehicles which will cause a reduction in traffic congestion on roads and highways. 
 \item \textbf{Usage of Public Transit:} There will be a significant reduction in the usage of buses and trains to commute to McMaster University because of the transition of people moving towards using the rideshare application, Hitchly. It may become convenient and affordable for commuters to use the rideshare services. Thus, resulting in a potential reduction in the usage of public transit.  
-\item \textbf{Increase in Parking Spaces:} There can be an increase in available parking spaces due to the overall reduction of vehicles arriving at McMaster University. As a result of using the rideshare platform Hitchly, the number of single-occupancy vehicles will decrease. This would mean that fewer cars would arrive at McMaster University, reducing the overall demand for parking spaces.
+\item \textbf{UIncrease in Parking Spaces:} There can be an increase in available parking spaces due to the overall reduction of vehicles arriving at McMaster University. As a result of using the rideshare platform Hitchly, the number of single-occupancy vehicles will decrease. This would mean that fewer cars would arrive at McMaster University, reducing the overall demand for parking spaces.
 \item \textbf{Increased Savings:} There can be an overall increase in the amount each commuter saves as a result of shifting to carpooling from other modes of transportation. Carpooling enables users to divide and share their cost, resulting in leaving them with more money in hand. 
 \end{enumerate}
 
@@ -367,7 +423,7 @@ It interfaces with the scheduling system to ensure rides can be matched, whether
   \caption{Hitchly Component Diagram.}
 \end{figure}
 \end{samepage}
-\newpage
+\clearpage
 
 \subsection{(S.2) Functionality}
 \textbf{Matchmaking engine} \\
@@ -729,8 +785,9 @@ Hitchly will be deemed acceptable if:
     \item UAT demonstrates usability and trustworthiness.
     \item The system supports the project’s goals of affordability, safety, and sustainability.
 \end{itemize}
+\textit{Nothing available at this point.}
 
-\newpage
+\clearpage
 
 % ---------- (P) Project ----------
 \section{(P) Project}
@@ -953,7 +1010,7 @@ For each stakeholder, the type of interview, its objective, and the most importa
     \end{itemize}
 \end{itemize}
 
-\newpage
+\clearpage
 
 % ---------- References ----------
 \begin{thebibliography}{9}
@@ -961,75 +1018,63 @@ For each stakeholder, the type of interview, its objective, and the most importa
 \bibitem{sommerville1997} Ian Sommerville and Peter Sawyer. \textit{Requirements Engineering: A Good Practice Guide}. Wiley, 1997.
 \end{thebibliography}
 
-\newpage
+\clearpage
 \section{Reflection}
 \begin{enumerate} 
 
 \item What went well while writing this deliverable?  \\
-\vspace{1em}
 Burhan: \\
 The team had a clear idea of what we were trying to achieve with this document. The template is organized very well. It covers all of the concepts that need to be discussed for requirements. Moreover, the team was very active in brainstorming ideas for certain sections (i.e, function requirements, invariants, etc.). Lastly the instructions provided for most sections were very clear and detailed, which helped me understand and write the document easily.  
 \\
-\vspace{1em}
+
 Sarim: \\
 Our team used the last document as a learning process to build off on what we did wrong. We made sure to hold frequent group sessions to ensure we were all on the same page. This was extremely important for a document like the SRS as there are many different sections that require team members to stay on the same page and work towards one specific goal.
 \\
-\vspace{1em}
+
 Hamzah: \\
 I believe our team did a good job of dividing the work evenly so we are each doing sections that relate to each other. Also, we got started early on this deliverable so everyone had adequate time to complete their sections. The meyer template was easy to follow once it was set up, allowing our work to be very organized. 
 \\
-\vspace{1em}
+
 Swesan: \\
 Since I am currently taking 3RA3 (Requirements), much of the content felt familiar and directly applicable. This helped me understand the structure of the deliverable and made writing easier, since I could connect course concepts with what we were expected to produce. It also gave me confidence that our sections were aligned with best practices. 
 \\
-\vspace{1em}
-Aidan: \\
-What went well for me was how well our group collaborated and communicated throughout the process. Everyone contributed meaningfully and was responsive to feedback, which made integrating sections much smoother. I also found that using the Meyer template made it easier to stay consistent and structured, since it clearly outlined what was expected for each section. Writing my portion went smoothly because of the clear division of work and early start—we avoided last-minute stress and had time to review everything together before submission.  
-\\
-\vspace{1em}
-\item What pain points did you experience during this deliverable, and how did you resolve them? \\
-\vspace{1em}
 
+\item What pain points did you experience during this deliverable, and how did you resolve them? \\
 Burhan:\\ 
 
 For some sections, the instructions were a little ambiguous. For example, the environment section, the instructions for assumptions and constraints were very similar, making it a bit unclear on how to differentiate between those two sections. Moreover, the SRS and the Hazard Analysis document both had a section for listing assumptions. This caused some confusion while writing the deliverable as I was unsure of which section to provide more detail. I was able to resolve this by asking detailed and specific questions about the ambiguity and confusion with the sections and instructions to the TA during our informal discussions. 
 \\
-\vspace{1em}
+
 Sarim: \\
 Since there was not one speciic SRS document to pick from, there was alot of decision making involved in terms of which sections were important for the rubric, and which information needed to be on the Hazard Analysis document rather than the SRS or vice versa. It was extremely useful for us to utilize our TA meeting and ask questions regarding any ambiguity we faced, and to contiously review the rubric.
 \\
-\vspace{1em}
+ 
+
 Hamzah: \\
 The initial set up of the document was confusing at first since there are several SRS template options to choose from, all of which have different formats and content. Additionally, there seemed to be many sections that were redundant and/or repetitive between sections and documents, which required clarification from the TA during our meeting. This includes questions such as what diagrams are required, how many requirements are needed, and more. 
 \\
-\vspace{1em}
  Swesan: \\
 One of the main challenges was making the diagrams and ensuring everyone's parts of the document were consistent in style and content. At first, this caused some confusion and extra editing, but I resolved it by refining the diagrams carefully and coordinating with the team to keep formatting and tone aligned across sections. 
  \\
- \vspace{1em}
- Aidan: \\
- A challenge I faced was ensuring consistency between sections, especially when multiple people were editing the same parts or referencing the same requirements differently. Early drafts had minor overlap or conflicting terminology, which took some coordination to resolve. I also found it difficult to interpret some of the expectations for specific subsections at first, since the template can be dense. I overcame this by meeting with teammates frequently to align on definitions and by reviewing past examples and TA feedback to make sure our document followed the expected structure.  
- \\
- \vspace{1em}
+
   \item How many of your requirements were inspired by speaking to your   client(s) or their proxies (e.g. your peers, stakeholders, potential users)? \\
-  \vspace{1em}
+ 
 
   The stakeholders for our project are McMaster students and faculty that commute to campus, so this would include our team members and many of our peers. By discussing our pain points and desires for this application
   with other students who are commuters, we were able to get a better understanding of what our application needs to include to meet their standards and expectations. This includes many of the features mentioned in section S.2,
   since this covers what is expected for each major component in the system. 
  
-  \vspace{1em}
+
   \item Which of the courses you have taken, or are currently taking, will help 
 
   your team to be successful with your capstone project. \\
-  \vspace{1em}
 
 One of the most helpful courses for the capstone project so far has been SFWRENG 3RA3 (Software Requirements and Security Concerns), as the main project in this course was following the Meyer Tenplate to write a requirements document. 
 This was extremely useful for this deliverable in particular, but also for all documentation deliverables in general since we got experience and learned key concepts which can be carried over. 
-Other helpful courses include SFWRENG 2AA4, SFWRENG 3BB4 (Software Design I and II) as they gave experience working in a group on a development project, and learning key software engineering principles which will be helpful
+Other helpful courses include SFWRENG 2AA4, SFWREND 3BB4 (Software Design I and II) as they gave experience working in a group on a development project, and learning key software engineering principles which will be helpful
 for the development of our application. 
  
-\vspace{1em}
+
   \item What knowledge and skills will the team collectively need to acquire to 
 
   successfully complete this capstone project?  Examples of possible knowledge 
@@ -1043,27 +1088,27 @@ for the development of our application.
   or presentation, or team management, etc.  You should look to identify at 
 
   least one item for each team member. \\
-  \vspace{1em}
 
  
 
 Burhan: \\
 
-I have minimal experience working on building a full stack application. There are a few things that I would need to acquire knowledge about. Our application will be based on a stack including React Native, TypeScript, and PostgreSQL. I have a lot of experience working with SQL; however, I haven’t worked with PostgreSQL before. This is an area in which I need to do some research and practice. Moreover, as this course involves a lot of documentation, I also need to acquire some knowledge within this area to strengthen my grammar and formal writing skills. \\
-\vspace{1em}
+I have minimal experience working on building a full stack application. There are a few things that I would need to acquire knowledge about. Our application will be based on a stack including React Native, TypeScript, and PostgreSQL. I have a lot of experience working with SQL; however, I haven’t worked with PostgreSQL before. This is an area in which I need to do some research and practice. Moreover, as this course involves a lot of documentation, I also need to acquire some knowledge within this area to strengthen my grammar and formal writing skills.  
+
+ \\
+
  Sarim: \\
  Since my experience has mainly been in web development, I will need to focus my learing on mobile development. We chose React Native based on our skillset, since alot of us had experience with React.JS in web development so the skill would be somewhat familiar to us. This choice still requires me to learn a new skill but since both are comparitively similar, it makes for an easy transition.
 \\
-\vspace{1em}
+
 Hamzah: \\
 
 One of the main skills I will need to learn is TypeScript, as we plan to use it to develop the application. I have experience with languages like JavaScript and other typed languages like Java, however I have not used TypeScript before, so this will be a new experience for me which I will need to take time to learn and get familiar with to be able to contribute better to the development of the application. 
 \\
-\vspace{1em}
+ 
 Swesan: \\
 For me, the most important skills are collaboration, coding, and motivation. Since this is a team-based project, being able to work effectively with others and keep everyone on track will be essential. I also want to improve my technical coding contributions especially with type script while maintaining the drive to push the project forward. 
 \\
-\vspace{1em}
 
   \item For each of the knowledge areas and skills identified in the previous 
 
@@ -1071,23 +1116,25 @@ For me, the most important skills are collaboration, coding, and motivation. Sin
 
   mastering the skill?  Of the identified approaches, which will each team 
 
-  member pursue, and why did they make this choice? \\
-  \vspace{1em}
+  member pursue, and why did they make this choice? 
+
+ \\
 
 Burhan:  \\
 
 For PostgreSQL, I will read the documentation provided by the official website and then proceed to watch YouTube tutorials on the basics of how the technology works. The next step would be to learn how to use it efficiently in a full stack environment. For this as well, I will watch YouTube tutorials. For my writing skills, I will go over some formal grammar documentations online. Moreover, I will also practice what I have learned with grammatical exercises found online.  
 \\
-\vspace{1em}
+
 Sarim: \\
 To learn mobile development in React Native, my initial plan is to follow a youtube tutorial that goes through the fundamentals of framework. Once I learn the fundamentals, I will take some time to create simple mobile applications and utilize documentation to support my development. I believe that to apply any skill you need to be fully understand the fundamentals. By watching an initial tutorial, I would truly understand what I need. Being able to work on simple applications will help reinforce the fundamentals and learn through making mistakes.
 \\
-\vspace{1em}
+ 
+
 Hamzah: \\
 
 In order to familiarize myself with TypeScript, I plan to read documentation and go through video tutorials to get a good understanding of the fundamentals and how it can be used. Additionally, once I have a grasp of the basics, I will attempt practice questions and/or small applications to apply my understanding and improve. Being able to follow along is useful, but actually applying the knowledge is the best way to learn. 
 \\
-\vspace{1em}
+
 Swesan: \\
 For collaboration and motivation, two approaches are: (1) actively communicating with teammates and holding regular check-ins, and (2) staying accountable by being on top of my own tasks and deadlines. For coding, I will continue practicing through team coding sessions and peer reviews. I plan to pursue these approaches because working closely with my team and staying consistent with my responsibilities will naturally build both my technical and teamwork skills. 
 \\

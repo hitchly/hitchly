@@ -40,7 +40,7 @@
 October 7th, 2025 & Burhanuddin Kharodawala & Worked on Sections 1 and 2\\
 October 7th, 2025 & Hamzah Rawasia & Worked on Safety and Security Requirements\\
 October 7th, 2025 & Sarim Zia & Worked on Sections 3, 4 and 7\\
-October 9th, 2025 & Swesan Pathmanathan & Worked on Failure Methods\\
+October 9th, 2025 & Swesan Pathmanathan & Worked on Faluire Methods\\
 October 9th, 2025 & Aidan Froggatt & Worked on Effect Analysis\\
 \bottomrule
 \end{tabularx}
@@ -53,6 +53,8 @@ October 9th, 2025 & Aidan Froggatt & Worked on Effect Analysis\\
 ~\newpage
 
 \pagenumbering{arabic}
+
+\wss{You are free to modify this template.}
 
 \section{Introduction}
 Hitchly is an application that aims to provide a safe and reliable ride share platform to McMaster students, staff and faculty members. Anything that would become an obstacle to selling this software could be considered a hazard. Large software platforms like Hitchly handle user data and interactions between different users. These areas require attention as they are the most prone to hazards.  
@@ -93,15 +95,13 @@ trips and to add reviews to their profiles.
 
 The system follows these critical assumptions about the software and system:
 
-\vspace{1em}
+\subsection{The Maps API provides up-to-date navigation for all users in the surrounding GTA region.}
 
-\noindent \textbf{CA-1:} The Maps API provides up-to-date navigation for all users in the surrounding GTA region.\\
+\subsection{The application will only target McMaster students for the initial build.}
 
-\noindent \textbf{CA-2:} The application will only target McMaster students for the initial build.\\
+\subsection{The expected user base of the application will be within the planned demographic (students and university faculty).}
 
-\noindent \textbf{CA-3:} The expected user base of the application will be within the planned demographic (students and university faculty).\\
-
-\noindent \textbf{CA-4:} API rate limits will not be exceeded under the expected user load.\\
+\subsection{API rate limits will not be exceeded under the expected user load.}
 
 \section{Failure Mode and Effect Analysis}
 
@@ -220,6 +220,8 @@ The following requirements are planned as \textbf{future milestones} beyond the 
 
 \section*{Appendix --- Reflection}
 
+\wss{Not required for CAS 741}
+
 \input{../Reflection.tex}
 
 \begin{enumerate}
@@ -245,29 +247,20 @@ What went well while writing this deliverable was that I am currently taking 3RA
 
     Burhan: \\
     Initially, we weren't able to decide how deeply we wanted to discuss each hazard. We had discussed a lot of hazards initially, but it became difficult to decide which one to keep and which one to remove. We came up with the strategy to prioritize the hazards and then check for similarities to avoid redundancy. This helped us ensure that all of the critical hazards were covered and that there were no redundancies.  \\    
-
-    Sarim: \\
+Sarim: \\
 Understanding some of the terminology for my assigned sections was a hurdle I faced for this deliverable. When it came to writing the critical assumptions, I struggled to understand what it was referring to. However, since I started the document early, I was able to identify this issue early, and ask our TA during our meeting.
 \\    
-
 Hamzah: \\
 It was initially a bit difficult to understand how the safety and security requirements in this document are different to what is in the SRS document, but I was able to clarify by asking the TA about this. It relied on what was done in the previous section, so I had to wait for other team members to complete that section before I could finalize mine. 
 \\   
-
 Swesan: \\
 One of the main pain points I encountered during this deliverable was creating the diagrams and ensuring they were both accurate and visually clear. This process took more time than expected because I had to revise the structure multiple times to properly capture the relationships between components. Another challenge was making sure everyone's individual sections aligned in tone, terminology, and formatting, since inconsistencies made the overall document feel disjointed at first. To resolve these issues, I set aside extra time to refine the diagrams and cross-check them against the written content, while also coordinating with my teammates to review each other's sections and apply a consistent style guide across the deliverable. This not only improved the clarity of the final submission but also strengthened our collaboration. 
-\\
-
-
-Aidan: \\
-The main challenge I faced was distinguishing between what belonged in the SRS versus the Hazard Analysis. Since both documents discuss risks and requirements, it took some coordination to avoid overlap or repetition. Another pain point was keeping the FMEA table concise while still providing enough detail to make each hazard meaningful — at first, it was easy to get lost in too much explanation. I resolved these issues by reviewing past examples and our TA’s guidance to clarify expectations, and by working closely with teammates to check for consistency across both documents. Once we streamlined our structure, the writing process became much more efficient.
 \\
 
     \item Which of your listed risks had your team thought of before this
     deliverable, and which did you think of while doing this deliverable? For
     the latter ones (ones you thought of while doing the Hazard Analysis), how
     did they come about?\\
-
    One of the obvious ones that arises with platforms like these includes user safety and security. These ideas came from the past experiences of my teammates. The risk of having an unverified driver, breach of data, incorrect ride matches, and fake ratings and reviews, were listed before this deliverable. The rest came up while working on this deliverable. We did some research on similar applications and brainstormed ideas focusing on Hazards that could indirectly affect the user. This deliverable sets the basis for considering all of the components of the application. That is when we came up with some of the system failure hazards like notification delays, loss of trip history data, location API failure, and system unavailability. 
 
     \item Other than the risk of physical harm (some projects may not have any
