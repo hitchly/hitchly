@@ -197,20 +197,15 @@ CAS741) for a partial usability survey.}
 
 \subsection{Automated Testing and Verification Tools}
 
-\wss{What tools are you using for automated testing.  Likely a unit testing
-  framework and maybe a profiling tool, like ValGrind.  Other possible tools
-  include a static analyzer, make, continuous integration tools, test coverage
-  tools, etc.  Explain your plans for summarizing code coverage metrics.
-  Linters are another important class of tools.  For the programming language
-  you select, you should look at the available linters.  There may also be tools
-  that verify that coding standards have been respected, like flake9 for
-  Python.}
+To ensure high quality, correct, and maintainable codebase, the team will use the following tools for automated testing and code verification, which were also briefly outlined in the Development Plan document. \\ 
 
-\wss{If you have already done this in the development plan, you can point to
-that document.}
+\noindent \textbf{Unit Testing Framework:} Jest will be the primary framework for running unit tests for both the React Native frontend and Node.js backend logic. We will write unit tests for important business logic such as the cost-sharing calculation, parsing user timetables, and individual React components. \\
+ 
+\noindent \textbf{Backend Integration Testing:} Supertest will be used to conduct integration testing on our backend API by simulating HTTP requests and verifying the responses. We will create test suites to verify that all API endpoints are functioning as expected, which includes testing for correct data responses and error handling. \\
 
-\wss{The details of this section will likely evolve as you get closer to the
-  implementation.}
+\noindent \textbf{Static Analysis and Formatting:} ESLint and Prettier will ensure the codebase remains consistent, readable, and without common errors. ESLint will be configured to analyze our code for potential bugs and help enforce best practices, and Prettier will format code to maintain a consistent style across the codebase. \\
+
+\noindent Jest will also be used for code coverage by utilizing the integrated coverage reporter to measure the percentage of our codebase that is executed by our unit and integration tests. Finally, we will also use Github Actions for Continuous Integration to automate the testing and verification process. \\
 
 \subsection{Software Validation}
 
