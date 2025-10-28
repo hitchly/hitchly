@@ -95,155 +95,210 @@ in.}
 
 \pagenumbering{arabic}
 
-This document ... \wss{provide an introductory blurb and roadmap of the
-  Verification and Validation plan}
 
 \section{General Information}
 
 \subsection{Summary}
 
-\wss{Say what software is being tested.  Give its name and a brief overview of
-  its general functions.}
+The Verification and Validation plan sets a strong basis for documenting the testing strategies 
+to test key features of this application. It aims to discuss an approach to test the correctness, 
+validity, and reliability of the application and its features. Hitchly is a rideshare application 
+which aims to help McMaster students, staff and faculty members to get an easy, convenient and 
+trustworthy platform to carpool to and from McMaster University. Some of the key functions of this 
+application are to match riders using the user's timetable, location, and user preferences. Another 
+important feature that makes the application more trustworthy is the McMaster official email verification 
+system. This ensures that each user accessing this application is truly associated with the university. 
+The application also aims to provide a cost calculator for drivers to estimate their total cost of carpooling
+ which they can use to set their rideshare prices. Lastly, it includes the payment integration feature which 
+ allows for a smooth transaction between drivers and riders.  
 
 \subsection{Objectives}
-
-\wss{State what is intended to be accomplished.  The objective will be around
-  the qualities that are most important for your project.  You might have
-  something like: ``build confidence in the software correctness,''
-  ``demonstrate adequate usability.'' etc.  You won't list all of the qualities,
-  just those that are most important.}
-
-\wss{You should also list the objectives that are out of scope.  You don't have 
-the resources to do everything, so what will you be leaving out.  For instance, 
-if you are not going to verify the quality of usability, state this.  It is also 
-worthwhile to justify why the objectives are left out.}
-
-\wss{The objectives are important because they highlight that you are aware of 
-limitations in your resources for verification and validation.  You can't do everything, 
-so what are you going to prioritize?  As an example, if your system depends on an 
-external library, you can explicitly state that you will assume that external library 
-has already been verified by its implementation team.}
+The Verification and Validation plan's main objectives are as follows: 
+\begin{itemize}
+    \item \textbf{Software Correctness:} Build confidence in the software's correctness by verifying and validating its critical requirements, ensuring that the application does what it claims to do. 
+    \item \textbf{Features Validation:} Validate the implemented features to ensure they provide a smooth and comfortable user experience. 
+    \item \textbf{Confidence in Stakeholders:} Build confidence among the stakeholders by providing proof of validation for all software requirements for the project.  
+    \item \textbf{Validate Components:} This plan aims to verify and confirm the proper implementation and integration of critical components like the matching algorithm, cost calculator, and payment interface. 
+    \item \textbf{Large Scale Concurrent Testing:}
+    \item \textbf{Comprehensive Data Testing:}
+\end{itemize}
+The out of scope objectives are as follows:
+\begin{itemize}
+    \item \textbf{Large Scale Concurrent Testing:} Due to the limited time and resource, performing large scale testing with users accessing the system concurrently to ensure server capabilities may be valuable but avoided.  
+    \item \textbf{Comprehensive Data Testing:} The validation of secured data encryption may just be limited to functional testing due to the limited resources and time for this project. It will just be limited to the verification of user authentication. 
+\end{itemize}
 
 \subsection{Challenge Level and Extras}
 
-\wss{State the challenge level (advanced, general, basic) for your project.
-Your challenge level should exactly match what is included in your problem
-statement.  This should be the challenge level agreed on between you and the
-course instructor.  You can use a pull request to update your challenge level
-(in TeamComposition.csv or Repos.csv) if your plan changes as a result of the
-VnV planning exercise.}
+There will be two extras for this project. Both documents play an important role in making the application as user friendly as possible. 
+\begin{itemize}
+    \item \textbf{User Manual:} This will help users navigate the application and provide a brief description of the key features to allow for a smooth and comfortable user experience.
+    \item \textbf{Usability Testing Report:} This will ensure that users have a positive and smooth interaction with the application by observing the users while using the application. Moreover, opinions and feedback from the user will be considered and documented to improve the usability of this application. This will help evaluate the user-friendliness of the key features of the application. 
+\end{itemize}
 
-\wss{Summarize the extras (if any) that were tackled by this project.  Extras
-can include usability testing, code walkthroughs, user documentation, formal
-proof, GenderMag personas, Design Thinking, etc.  Extras should have already
-been approved by the course instructor as included in your problem statement.
-You can use a pull request to update your extras (in TeamComposition.csv or
-Repos.csv) if your plan changes as a result of the VnV planning exercise.}
 
 \subsection{Relevant Documentation}
 
-\wss{Reference relevant documentation.  This will definitely include your SRS
-  and your other project documents (design documents, like MG, MIS, etc).  You
-  can include these even before they are written, since by the time the project
-  is done, they will be written.  You can create BibTeX entries for your
-  documents and within those entries include a hyperlink to the documents.}
-
-\citet{SRS}
-
-\wss{Don't just list the other documents.  You should explain why they are relevant and 
-how they relate to your VnV efforts.}
+\begin{itemize}
+    \item \textbf{Problem Statement and Goals:} This document is very important in providing a layout for documenting the main problem that the application aims to solve and the main goals it plans to achieve. This provides a starting point for testing and highlights the desired results through the identification of goals in the document \citet{PSG}. 
+    \item \textbf{Development Plan:} This document provides a timeline for the development of the project. It ensures that the project is on track with its development and testing. It also provides a timeline for the tests based on the timeline for the developement of the application \citet{DevPlan}. 
+    \item \textbf{Software Requirements Specification:}  This document aims to breakdown the application's key features and functionality into two-part, functional and non-functional requirements. This plays a key role in listing all key functionalities and planning requirements-based testing \citet{SRS}. 
+    \item \textbf{Hazard Analysis:} This document identifies the key hazards involved with the development of this application. It helps provide a list of vulnerabilities that must be addressed and ruled out through testing \citet{HA}. 
+    \item \textbf{Module Guide:} This document provides a description of the division of the application into modules. This is important as it provides a clear basis for planing and running module-based and component-based testing \citet{MG}. 
+    \item \textbf{Module Interface Specification:} This document dives deep into exploring the interface specifications between modules. This would be important to plan testing functionality and interactions between two modules \citet{MIS}. 
+    \item \textbf{Usability Testing Report:} This documents the feedback and observation from usability testing. This is an additional test which ensures the user compatibility of the application \citet{UT}. 
+\end{itemize}
 
 \section{Plan}
 
-\wss{Introduce this section.  You can provide a roadmap of the sections to
-  come.}
+This section discusses the team's plan for verification and validation of process implementation. It covers the teams and their roles, the SRS verification plan, the design verification plan, the verification and validation verification plan, the implementation verification plan, automated testing and verification tools, and the software validation plan. 
 
 \subsection{Verification and Validation Team}
 
-\wss{Your teammates.  Maybe your supervisor.
-  You should do more than list names.  You should say what each person's role is
-  for the project's verification.  A table is a good way to summarize this information.}
+\section{Team Roles and Responsibilities}
+
+\begin{tabular}{p{4cm} p{11cm}}
+
+\textbf{Dr. Spencer Smith} \\ 
+\textit{Advisor and Primary Documentation Reviewer} 
+& Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle. \\[1em]
+
+\textbf{Lucas Dutton} \\ 
+\textit{Advisor and Primary Documentation Reviewer} 
+& Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle. \\[1em]
+
+\textbf{Sarim Zia} \\ 
+\textit{Developer and Internal Lead Tester} 
+& Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. 
+Ensures smooth integration of reviewed features. Leads internal beta testing throughout the development phase and manages public beta testing to collect and review relevant feedback. \\[1em]
+
+\textbf{Aidan Froggatt} \\ 
+\textit{Developer and Code Quality Reviewer} 
+& Reviews team members’ pull requests to suggest improvements and/or fixes to code and documentation. 
+Oversees smooth integration of reviewed features through the creation of rulesets. 
+Conducts internal beta testing throughout the development phase. \\[1em]
+
+\textbf{Swesan Pathmanathan} \\ 
+\textit{Developer and UI/UX Reviewer} 
+& Reviews pull requests to identify code and documentation improvements. 
+Ensures smooth integration of reviewed features. 
+Conducts internal beta testing throughout the development phase, focusing on user interface responsiveness and overall usability. \\[1em]
+
+\textbf{Hamzah Rawasia} \\ 
+\textit{Developer and Functional Feature Tester} 
+& Reviews pull requests to ensure adherence to coding standards and proper documentation. 
+Conducts internal beta testing with an emphasis on validating functional features and performance reliability. \\[1em]
+
+\textbf{Burhanuddin Kharodawala} \\ 
+\textit{Developer and Non-Functional Feature Tester} 
+& Reviews pull requests for quality and compliance with best practices. 
+Ensures smooth integration of reviewed features. 
+Conducts internal beta testing with a focus on non-functional requirements such as scalability, stability, and usability. \\
+
+\end{tabular}
 
 \subsection{SRS Verification}
 
-\wss{List any approaches you intend to use for SRS verification.  This may
-  include ad hoc feedback from reviewers, like your classmates (like your
-  primary reviewer), or you may plan for something more rigorous/systematic.}
+We want to ensure that the SRS document is complete, accurate, and consistent, which will be verified using the following approaches: \\
 
-\wss{If you have a supervisor for the project, you shouldn't just say they will
-read over the SRS.  You should explain your structured approach to the review.
-Will you have a meeting?  What will you present?  What questions will you ask?
-Will you give them instructions for a task-based inspection?  Will you use your
-issue tracker?}
+\noindent \textbf{Peer Review:} The team will rely on feedback from classmates that are from other capstone teams for peer evaluation. It is expected that they will provide feedback on the clarity and completeness of each section, going through and finding any inconsistencies and flaws. Based on their findings, GitHub issues will be opened to provide specific suggestions for improvement and any aspects that can be improved. \\ 
 
-\wss{Maybe create an SRS checklist?}
+\noindent \textbf{Stakeholder Feedback:} The primary stakeholder(s) of our project are McMaster University students and faculty that commute to campus. As such, we will share the SRS document with a sample of chosen stakeholders. This is important to ensure that the SRS reflects actual stakeholder needs and expectations rather than internal assumptions. The selected users will be able to give specific feedback on which features, requirements, and workflows meet their expectations of the functionality of the system. Any conflicts that may arise between user expectations and written requirements will trigger a revision of the corresponding sections. As for testing the requirements, users will be given an opportunity to use the system and  perform basic testing of functionality with set cases given to each user, where they will be able to see the workflow of the application first-hand and provide feedback on the functionality and whether it meets the requirements stated in the SRS. \\
 
+\noindent \textbf{Team Validation:} The team will also meet internally to discuss the SRS and ensure the content is consistent with the intended functionlity and capabilities of the application, and is consistent throughout. Additionally, the team will also conduct our own testing using the system, especially for non-functional requirements to ensure that the application meets the performance requirements, as well as the overall functionality of each major component of the system. \\
+
+\noindent \textbf{SRS Verification Checklist}
+\begin{itemize}
+    \item[{[ ]}] Are all of the core features (Matchmaking, scheduling, safety, payments, etc.) clearly described?
+    \item[{[ ]}] Is every requirement unique and traceable?
+    \item[{[ ]}] Has feedback from the classmate peer review been addressed?
+    \item[{[ ]}] Are the requirements clearly defined and measurable?
+    \item[{[ ]}] Are the inputs and outputs for important use cases clearly defined?
+    \item[{[ ]}] Are there any conflicting requirements and/or assumptions?
+
+\end{itemize}
 \subsection{Design Verification}
 
-\wss{Plans for design verification}
+To ensure the design is functional and up to standards, the team will conduct several reviews with all developers to thoroughly go over the technical soundness of the design and major artifacts, such as the system’s architecture, database schema, API specifications, and the UI/UX design. 
+For the UI/UX design, it is especially important that we receive feedback from stakeholders to validate the user experience and flow. We will provide users with key user stories and the corresponding interface which is used to complete them so that they are able to get a feel of the functionality of the design. 
+It is important that the team documents all feedback and any confusion from the users to validate the usability of the design. There will also be feedback received from peers on other capstone teams to verify design components, especially written components and diagrams. \\
 
-\wss{The review will include reviews by your classmates}
-
-\wss{Create a checklists?}
-
+\noindent \textbf{Design Verification Checklist:}
+\begin{itemize}
+  \item[{[ ]}] Does the database schema correctly model necessary fields for required data, and appropriate relationships? 
+  \item[{[ ]}] Does the API design include secure, authenticated endpoints for core components and the functionality? 
+  \item[{[ ]}] Does the system architecture clearly define how components will interact and how key features such as the matchmaking engine will work? 
+  \item[{[ ]}] Do the UI wireframes clearly and intuitively display all core features and workflows? 
+\end{itemize}
 \subsection{Verification and Validation Plan Verification}
 
-\wss{The verification and validation plan is an artifact that should also be
-verified.  Techniques for this include review and mutation testing.}
+To ensure that the Verification and Validation plan is complete, correct, and effective, the team will hold an internal review meeting to ensure that the document is complete and feasible. We will also get peer feedback from classmates where they will identify areas of the plan which are unclear, incomplete, or needs improvement. 
+To keep track of the feedback from peers, GitHub issues will be used so that peers can clearly communicate their thoughts. Additionally, the team will ensure that the tests have complete coverage of requirements, and will also make use of mutation testing to verify the quality and effectiveness of the unit tests in the plan. 
+This involves introducing small faults into the code, such as changes in the matchmaking algorithm to modify efficiency and/or effectiveness and running the test suite against it to validate that it is robust. \\
 
-\wss{The review will include reviews by your classmates}
-
-\wss{Create a checklists?}
-
+\noindent \textbf{Verification and Validation Plan Verification:}
+\begin{itemize}
+  \item[{[ ]}] Do the requirements in the SRS have at least one corresponding test case?
+  \item[{[ ]}] Are all test cases clear, specific, and testable, with defined expected outcomes? 
+  \item[{[ ]}] Is the plan for mutation testing feasible?
+  \item[{[ ]}] Has feedback from the peer review been addressed and closed? 
+\end{itemize}
 \subsection{Implementation Verification}
 
-\wss{You should at least point to the tests listed in this document and the unit
-  testing plan.}
+\begin{itemize}
+  \item \textbf{Code Walkthrough/Inspection:} 
+  New Code PR’s will be reviewed by at least two team members before the change is merged into the main branch. 
+  The code will be reviewed via pull requests on GitHub and will include thoughtful titles and comments to ensure the reviewers are able to understand the changes. 
+  If any further clarification is required, the developer will conduct a code walkthrough. 
+  All feedback will be conveyed via GitHub, ensuring a standardized review procedure. 
+  Only approved code will be merged into the main branch.
 
-\wss{In this section you would also give any details of any plans for static
-  verification of the implementation.  Potential techniques include code
-  walkthroughs, code inspection, static analyzers, etc.}
+  \item \textbf{Unit Testing:} 
+  Unit tests will be used to verify the expected behavior of the application. 
+  Each module will have a corresponding unit test suite. 
+  Unit test plans are outlined in Section 5 of this document.
 
-\wss{The final class presentation in CAS 741 could be used as a code
-walkthrough.  There is also a possibility of using the final presentation (in
-CAS741) for a partial usability survey.}
+  \item \textbf{System Testing:} 
+  System testing will ensure all functional and non-functional requirements are met by the application. 
+  Functional testing will verify key workflows, and non-functional testing will include performance, usability, and security checks. 
+  System test plans are outlined in Section 4 of this document.
+
+  \item \textbf{Static Analyzers:} 
+  Static analysis tools will be used to analyze the code for formatting and good coding practices. 
+  Reports generated from static analysis will be reviewed periodically to ensure high code quality. 
+  Specific tools are listed under Section 3.6.
+\end{itemize}
 
 \subsection{Automated Testing and Verification Tools}
 
-\wss{What tools are you using for automated testing.  Likely a unit testing
-  framework and maybe a profiling tool, like ValGrind.  Other possible tools
-  include a static analyzer, make, continuous integration tools, test coverage
-  tools, etc.  Explain your plans for summarizing code coverage metrics.
-  Linters are another important class of tools.  For the programming language
-  you select, you should look at the available linters.  There may also be tools
-  that verify that coding standards have been respected, like flake9 for
-  Python.}
+To ensure high quality, correct, and maintainable codebase, the team will use the following tools for automated testing and code verification, which were also briefly outlined in the Development Plan document. \\ 
 
-\wss{If you have already done this in the development plan, you can point to
-that document.}
+\noindent \textbf{Unit Testing Framework:} Jest will be the primary framework for running unit tests for both the React Native frontend and Node.js backend logic. We will write unit tests for important business logic such as the cost-sharing calculation, parsing user timetables, and individual React components. \\
+ 
+\noindent \textbf{Backend Integration Testing:} Supertest will be used to conduct integration testing on our backend API by simulating HTTP requests and verifying the responses. We will create test suites to verify that all API endpoints are functioning as expected, which includes testing for correct data responses and error handling. \\
 
-\wss{The details of this section will likely evolve as you get closer to the
-  implementation.}
+\noindent \textbf{Static Analysis and Formatting:} ESLint and Prettier will ensure the codebase remains consistent, readable, and without common errors. ESLint will be configured to analyze our code for potential bugs and help enforce best practices, and Prettier will format code to maintain a consistent style across the codebase. \\
+
+\noindent Jest will also be used for code coverage by utilizing the integrated coverage reporter to measure the percentage of our codebase that is executed by our unit and integration tests. Finally, we will also use Github Actions for Continuous Integration to automate the testing and verification process. \\
 
 \subsection{Software Validation}
 
-\wss{If there is any external data that can be used for validation, you should
-  point to it here.  If there are no plans for validation, you should state that
-  here.}
+\section{Software Validation}
 
-\wss{You might want to use review sessions with the stakeholder to check that
-the requirements document captures the right requirements.  Maybe task based
-inspection?}
+Our validation plan for the software includes extensive user testing and review sessions with all relevant stakeholders to ensure that all functional and non-functional requirements are met.
 
-\wss{For those capstone teams with an external supervisor, the Rev 0 demo should 
-be used as an opportunity to validate the requirements.  You should plan on 
-demonstrating your project to your supervisor shortly after the scheduled Rev 0 demo.  
-The feedback from your supervisor will be very useful for improving your project.}
+\begin{itemize}
+    \item \textbf{User Testing:} 
+    Hitchly relies on extensive external user testing to validate that the system functions correctly under real-world conditions. 
+    Beta testing will begin early with a focus on core functionality. 
+    Relevant feedback from beta users will be incorporated throughout the development phase. 
+    Internal beta testing will also be performed to validate feature functionality and consistency before releasing it for public testing.
 
-\wss{For teams without an external supervisor, user testing can serve the same purpose 
-as a Rev 0 demo for the supervisor.}
+    \item \textbf{Stakeholder Review Sessions:} 
+    Our stakeholder review sessions will be conducted regularly with our assigned TA to evaluate the system's progress against expected targets. 
+    These meetings will be used to refine the system’s design and ensure stakeholder expectations are met.
+\end{itemize}
 
-\wss{This section might reference back to the SRS verification section.}
 
 \section{System Tests}
 
@@ -517,16 +572,31 @@ How test will be performed:
 
 \section{Appendix}
 
-This is where you can place additional information.
+\subsection{Usability Testing Plan}
+Usability testing will be conducted at the end of the first stage of development of the application. This will be used to assess and judge the user's compatibility with the application. This section will include a plan for conducting this test. 
+\\
+The goal is to conduct usability testing right after the development of the MVP of Hitchly. The MVP (minimal viable product) includes the ride matching algorithm, and user authentication. The plan is to find a group of students and staff to navigate through the application on their own and ask them for any feedback they may have. Secondly, ask the users a set of questions and observe their expressions; the time it takes them to complete a given task and features that may confuse them.  Below is a list of possible questions/tasks a user must complete to test the user compatibility of the application: 
 
-\subsection{Symbolic Parameters}
+\begin{itemize}
+    \item Launch the application and register on the application.  
+    \item Navigate to the user profile and add your timetable to the application. Update some information on your profile. 
+    \item Navigate to the list of matched drivers/riders in the application.
+    \item Select your profile type, Drivers or Riders.
+    \item For Riders, click on the matched driver and access their user information.
+    \item For Drivers, click on the matched rider and access their user information.
+    \item Log out of the application and re-login to the application with the registered credentials in a given time constraint. 
+\end{itemize}
 
-The definition of the test cases will call for SYMBOLIC\_CONSTANTS.
-Their values are defined in this section for easy maintenance.
+Here are the main objectives of the test: 
+\begin{itemize}
+    \item Users find the process of creating an account intuitive and easy.
+    \item Users are able to verify their emails quickly.
+    \item Users are able to navigate through the various sections of the app without any problem.
+    \item Users address any discomfort they have while using the application.  
+    \item Users address any errors they face while using the application.
+\end{itemize}
 
-\subsection{Usability Survey Questions?}
-
-\wss{This is a section that would be appropriate for some projects.}
+This brief test plan provides a structured approach for analyzing user's interaction with the application and understanding the key areas of improvement. Users will be monitored using a time metric to check if a user is able to complete a task within a given time constraint, ensuring efficiency. Moreover, users will be asked for feedback after each task they perform to get as much feedback as possible to improve the user experience.  
 
 \newpage{}
 \section*{Appendix --- Reflection}
@@ -576,6 +646,17 @@ An important skill the team will need to learn is Jest, which will be the primar
 (Sarim)
 I think when it comes to verification, knowing the tool is important, however it is also important to know theory about what type of tests we can and should perform alongside any additional theory that could help provide complete verification coverage. However, the last time our team members took a class related to verification testing was years ago, so it may be an aspect we need a refresher on. 
 \\
+(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I’m happy with how cohesive the final document feels.
+\\(Aidan) I found that structuring the V\&V plan around clear verification tiers (SRS, design, implementation, and validation) made the writing process straightforward. Aligning test cases directly with functional and non-functional requirements improved traceability and reduced redundancy. Integrating automation tools like Jest and GitHub Actions into the plan also felt natural since these align closely with our existing workflow. Overall, this deliverable came together efficiently once the structure and testing philosophy were defined.
+
+\item \textbf{What pain points did you experience during this deliverable, and how did you resolve them?}\\
+(Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.
+\\(Aidan) One challenge was balancing feasibility with completeness — the temptation was to include every possible validation step, but time and scope required focusing on what could realistically be tested this term. I also found it tricky to document test coverage without finalizing the detailed design. To resolve this, I focused on defining testing strategies conceptually and left module-specific details as placeholders for post-design updates.
+
+\item \textbf{What knowledge and skills will you need to acquire to successfully complete the verification and validation of your project?}\\
+(Swesan) I need to deepen my understanding of dynamic testing and automation. Specifically, I want to improve at writing reproducible automated test scripts for functional verification and gain familiarity with load testing tools to assess performance under peak usage conditions. These skills will help ensure Hitchly’s matching and verification features are both reliable and scalable.
+\\(Aidan) I want to strengthen my understanding of end-to-end testing workflows and CI/CD validation. Specifically, I need to improve at automating test pipelines that integrate unit, integration, and mutation testing with coverage reporting. I also plan to deepen my knowledge of usability testing methodologies and how to quantify user satisfaction during beta testing.
+
 \item \textbf{For each of the knowledge areas and skills identified in the previous question, what are at least two approaches to acquiring the knowledge or mastering the skill? Which will you pursue, and why?}\\
 (Swesan) To build my dynamic testing and automation skills, I can:  \\
 (1) Review documentation and tutorials for testing frameworks and testing utilities.  \\
@@ -592,6 +673,14 @@ One approach is to learn the important principles and strategies of good unit te
 (Sarim)
 The best approach would be to review any relevant course material from past years. This is a good approach because it would simply be a quick refresher in a format, we are familiar with, rather than learning something with a new format/approach. However, another option is to follow any online sources such as tech blogs that show how to provide complete system coverage. 
 \\
+\\(Aidan) For CI/CD and automated test coverage, I can:  
+(1) Experiment with GitHub Actions to create incremental test pipelines that validate each pull request automatically.  
+(2) Study testing patterns from large-scale open-source monorepos to understand practical approaches to test orchestration.  
+For usability validation, I can:  
+(1) Research UX testing frameworks and heuristics to design structured surveys and A/B test flows.  
+(2) Conduct real-world pilot tests with early users to collect actionable feedback.  
+I plan to prioritize hands-on experimentation with automated pipelines since this will directly improve code reliability and streamline team workflows.
+
 \end{enumerate}
 
 \end{document}
