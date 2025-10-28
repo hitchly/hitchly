@@ -95,34 +95,38 @@ in.}
 
 \pagenumbering{arabic}
 
-This document ... \wss{provide an introductory blurb and roadmap of the
-  Verification and Validation plan}
 
 \section{General Information}
 
 \subsection{Summary}
 
-\wss{Say what software is being tested.  Give its name and a brief overview of
-  its general functions.}
+The Verification and Validation plan sets a strong basis for documenting the testing strategies 
+to test key features of this application. It aims to discuss an approach to test the correctness, 
+validity, and reliability of the application and its features. Hitchly is a rideshare application 
+which aims to help McMaster students, staff and faculty members to get an easy, convenient and 
+trustworthy platform to carpool to and from McMaster University. Some of the key functions of this 
+application are to match riders using the user's timetable, location, and user preferences. Another 
+important feature that makes the application more trustworthy is the McMaster official email verification 
+system. This ensures that each user accessing this application is truly associated with the university. 
+The application also aims to provide a cost calculator for drivers to estimate their total cost of carpooling
+ which they can use to set their rideshare prices. Lastly, it includes the payment integration feature which 
+ allows for a smooth transaction between drivers and riders.  
 
 \subsection{Objectives}
-
-\wss{State what is intended to be accomplished.  The objective will be around
-  the qualities that are most important for your project.  You might have
-  something like: ``build confidence in the software correctness,''
-  ``demonstrate adequate usability.'' etc.  You won't list all of the qualities,
-  just those that are most important.}
-
-\wss{You should also list the objectives that are out of scope.  You don't have 
-the resources to do everything, so what will you be leaving out.  For instance, 
-if you are not going to verify the quality of usability, state this.  It is also 
-worthwhile to justify why the objectives are left out.}
-
-\wss{The objectives are important because they highlight that you are aware of 
-limitations in your resources for verification and validation.  You can't do everything, 
-so what are you going to prioritize?  As an example, if your system depends on an 
-external library, you can explicitly state that you will assume that external library 
-has already been verified by its implementation team.}
+The Verification and Validation plan's main objectives are as follows: 
+\begin{itemize}
+    \item \textbf{Software Correctness:} Build confidence in the software's correctness by verifying and validating its critical requirements, ensuring that the application does what it claims to do. 
+    \item \textbf{Features Validation:} Validate the implemented features to ensure they provide a smooth and comfortable user experience. 
+    \item \textbf{Confidence in Stakeholders:} Build confidence among the stakeholders by providing proof of validation for all software requirements for the project.  
+    \item \textbf{Validate Components:} This plan aims to verify and confirm the proper implementation and integration of critical components like the matching algorithm, cost calculator, and payment interface. 
+    \item \textbf{Large Scale Concurrent Testing:}
+    \item \textbf{Comprehensive Data Testing:}
+\end{itemize}
+The out of scope objectives are as follows:
+\begin{itemize}
+    \item \textbf{Large Scale Concurrent Testing:} Due to the limited time and resource, performing large scale testing with users accessing the system concurrently to ensure server capabilities may be valuable but avoided.  
+    \item \textbf{Comprehensive Data Testing:} The validation of secured data encryption may just be limited to functional testing due to the limited resources and time for this project. It will just be limited to the verification of user authentication. 
+\end{itemize}
 
 \subsection{Challenge Level and Extras}
 
