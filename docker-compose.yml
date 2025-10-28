@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  api:
+    env_file: ".env"
+    container_name: api
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    restart: always
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    networks:
+      - app_network
+
+  db:
+    env_file: ".env"
+    image: postgres:15-alpine
+    container_name: db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    external: true
+
+volumes:
+  db-data:
