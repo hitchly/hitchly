@@ -28,68 +28,23 @@
 
 \section*{Revision History}
 
-\begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
-\toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
+\begin{tabularx}{\textwidth}{llX}
+\toprule {\bf Date} & {\bf Developer} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+October 24th & Swesan Pathmanathan and Aidan Froggatt & Completed System Tests section\\
+October 25th & Hamzah Rawasia & Completed Plan sections 2.2, 2.3, 2.4, 2.6\\
+October 26th & Sarim Zia & Added Plan sections 2.1, 2.5, 2.7\\
+October 26th & Burhan Kharodawala & Added Sections 1 and 5\\
+October 27th & All & Added Reflections \\
+
 \bottomrule
 \end{tabularx}
 
 ~\\
-\wss{The intention of the VnV plan is to increase confidence in the software.
-However, this does not mean listing every verification and validation technique
-that has ever been devised.  The VnV plan should also be a \textbf{feasible}
-plan. Execution of the plan should be possible with the time and team available.
-If the full plan cannot be completed during the time available, it can either be
-modified to ``fake it'', or a better solution is to add a section describing
-what work has been completed and what work is still planned for the future.}
-
-\wss{The VnV plan is typically started after the requirements stage, but before
-the design stage.  This means that the sections related to unit testing cannot
-initially be completed.  The sections will be filled in after the design stage
-is complete.  the final version of the VnV plan should have all sections filled
-in.}
 
 \newpage
 
 \tableofcontents
-
-\listoftables
-\wss{Remove this section if it isn't needed}
-
-\listoffigures
-\wss{Remove this section if it isn't needed}
-
-\newpage
-
-\section{Symbols, Abbreviations, and Acronyms}
-
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{l l} 
-  \toprule		
-  \textbf{symbol} & \textbf{description}\\
-  \midrule 
-  T & Test\\
-  FR & Functional Requirement\\
-  NFR & Non-Functional Requirement\\
-  V\&V & Verification and Validation\\
-  SRS & Software Requirements Specification\\
-  MG & Module Guide\\
-  MIS & Module Interface Specification\\
-  UI & User Interface\\
-  DB & Database\\
-  API & Application Programming Interface\\
-  PoC & Proof of Concept\\
-  QA & Quality Assurance\\
-  CSV & Comma-Separated Values (data format)\\
-  \bottomrule
-\end{tabular}\\
-
-\wss{symbols, abbreviations, or acronyms --- you can simply reference the SRS
-  \citep{SRS} tables, if appropriate}
-
-\wss{Remove this section if it isn't needed}
 
 \newpage
 
@@ -155,47 +110,40 @@ This section discusses the team's plan for verification and validation of proces
 
 \subsection{Verification and Validation Team}
 
-\section{Team Roles and Responsibilities}
+\textbf{Dr. Spencer Smith:}
+\begin{itemize}
+    \item Advisor and primary documentation reviewer. Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle.
+\end{itemize}
 
-\begin{tabular}{p{4cm} p{11cm}}
+\textbf{Lucas Dutton:}
+\begin{itemize}
+    \item Advisor and primary documentation reviewer. Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle.
+\end{itemize}
 
-\textbf{Dr. Spencer Smith} \\ 
-\textit{Advisor and Primary Documentation Reviewer} 
-& Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle. \\[1em]
+\textbf{Sarim Zia:}
+\begin{itemize}
+    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Lead internal beta testing throughout the development phase and lead public beta testing to collect and review all relevant feedback.
+\end{itemize}
 
-\textbf{Lucas Dutton} \\ 
-\textit{Advisor and Primary Documentation Reviewer} 
-& Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle. \\[1em]
+\textbf{Aidan Froggatt:}
+\begin{itemize}
+    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Oversee smooth integration of reviewed features through creating rulesets. Conduct internal beta testing throughout the development phase.
+\end{itemize}
 
-\textbf{Sarim Zia} \\ 
-\textit{Developer and Internal Lead Tester} 
-& Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. 
-Ensures smooth integration of reviewed features. Leads internal beta testing throughout the development phase and manages public beta testing to collect and review relevant feedback. \\[1em]
+\textbf{Swesan Pathmanathan:}
+\begin{itemize}
+    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on user interface responsiveness.
+\end{itemize}
 
-\textbf{Aidan Froggatt} \\ 
-\textit{Developer and Code Quality Reviewer} 
-& Reviews team members’ pull requests to suggest improvements and/or fixes to code and documentation. 
-Oversees smooth integration of reviewed features through the creation of rulesets. 
-Conducts internal beta testing throughout the development phase. \\[1em]
+\textbf{Hamzah Rawasia:}
+\begin{itemize}
+    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on functional feature validation.
+\end{itemize}
 
-\textbf{Swesan Pathmanathan} \\ 
-\textit{Developer and UI/UX Reviewer} 
-& Reviews pull requests to identify code and documentation improvements. 
-Ensures smooth integration of reviewed features. 
-Conducts internal beta testing throughout the development phase, focusing on user interface responsiveness and overall usability. \\[1em]
-
-\textbf{Hamzah Rawasia} \\ 
-\textit{Developer and Functional Feature Tester} 
-& Reviews pull requests to ensure adherence to coding standards and proper documentation. 
-Conducts internal beta testing with an emphasis on validating functional features and performance reliability. \\[1em]
-
-\textbf{Burhanuddin Kharodawala} \\ 
-\textit{Developer and Non-Functional Feature Tester} 
-& Reviews pull requests for quality and compliance with best practices. 
-Ensures smooth integration of reviewed features. 
-Conducts internal beta testing with a focus on non-functional requirements such as scalability, stability, and usability. \\
-
-\end{tabular}
+\textbf{Burhanuddin Kharodawala:}
+\begin{itemize}
+    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on non-functional feature validation.
+\end{itemize}
 
 \subsection{SRS Verification}
 
@@ -283,8 +231,6 @@ To ensure high quality, correct, and maintainable codebase, the team will use th
 
 \subsection{Software Validation}
 
-\section{Software Validation}
-
 Our validation plan for the software includes extensive user testing and review sessions with all relevant stakeholders to ensure that all functional and non-functional requirements are met.
 
 \begin{itemize}
@@ -306,9 +252,9 @@ Purpose: Verify that Hitchly meets its defined functional and non-functional req
 
 Structure: 
 \begin{itemize}
-    \item Section 4.1 tests core functional requirements (verification and matching).
-    \item Section 4.2 tests key non-functional qualities (reliability and usability).
-    \item Section 4.3 maps each test to its source requirement for traceability.
+    \item Section 3.1 tests core functional requirements (verification and matching).
+    \item Section 3.2 tests key non-functional qualities (reliability and usability).
+    \item Section 3.3 maps each test to its source requirement for traceability.
 \end{itemize}
 
 Reference: Section 1.4 (G.4) \textit{Functionality Overview} defines the functional and non-functional requirements.
@@ -321,8 +267,8 @@ Justification: These address Hitchly’s two most critical risks trust and core 
 
 Sub-areas:
 \begin{itemize}
-    \item 4.1.1 User Verification Tests
-    \item 4.1.2 Ride Matching Tests
+    \item 3.1.1 User Verification Tests
+    \item 3.1.2 Ride Matching Tests
 \end{itemize}
 
 \subsubsection{Area of Testing 1 – User Verification}
@@ -377,8 +323,8 @@ Approach: Use performance measurement and user feedback methods rather than simp
 
 Sub-areas:
 \begin{itemize}
-    \item 4.2.1 Reliability (Matching Correctness)
-    \item 4.2.2 Usability (Low-Friction Flows)
+    \item 3.2.1 Reliability (Matching Correctness)
+    \item 3.2.2 Usability (Low-Friction Flows)
 \end{itemize}
 
 \subsubsection{Area of Testing 1 – Reliability (Matching Correctness)}
@@ -428,11 +374,11 @@ How test will be performed: Walkthrough by UX reviewers using standard heuristic
 \begin{tabular}{|l|l|l|}
 \hline
 \textbf{Requirement ID} & \textbf{Requirement Description (from 1.4 G.4)} & \textbf{Test Case ID(s)} \\ \hline
-FR-1 & User Verification & 4.1.1-1, 4.1.1-2 \\ \hline
-FR-3 & Ride Matching & 4.1.2-1, 4.1.2-2 \\ \hline
-FR-4 & Cost Estimate & 4.1.2-1 \\ \hline
-NFR-1 & Reliability (Matching Correctness) & 4.2.1-1, 4.2.1-2 \\ \hline
-NFR-2 & Usability (Low-Friction Flows) & 4.2.2-1, 4.2.2-2 \\ \hline
+FR-1 & User Verification & 3.1.1-1, 3.1.1-2 \\ \hline
+FR-3 & Ride Matching & 3.1.2-1, 3.1.2-2 \\ \hline
+FR-4 & Cost Estimate & 3.1.2-1 \\ \hline
+NFR-1 & Reliability (Matching Correctness) & 3.2.1-1, 3.2.1-2 \\ \hline
+NFR-2 & Usability (Low-Friction Flows) & 3.2.2-1, 3.2.2-2 \\ \hline
 \end{tabular}
 \caption{Traceability between test cases and requirements as defined in Section 1.4 (G.4) Functionality Overview.}
 \end{table}
@@ -601,7 +547,6 @@ This brief test plan provides a structured approach for analyzing user's interac
 \newpage{}
 \section*{Appendix --- Reflection}
 
-\wss{This section is not required for CAS 741}
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Lifelong Learning.
@@ -611,43 +556,44 @@ graduate attribute of Lifelong Learning.
 \begin{enumerate}
 
 \item \textbf{What went well while writing this deliverable?}\\
-(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I'm happy with how cohesive the final document feels.
-\\
+(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I'm happy with how cohesive the final document feels.\\
+
 (Burhanuddin)
-This document was very helpful in setting the basis for identifying and documenting the testing approaches for our capstone project. Specifically, the list of documentation was a very critical section that allowed me to understand the importance of each document and their connection to the specific tests. Overall, we had an in-depth discussion of the testing approaches we wanted to consider and documented them with full clarity.  
-\\
+This document was very helpful in setting the basis for identifying and documenting the testing approaches for our capstone project. Specifically, the list of documentation was a very critical section that allowed me to understand the importance of each document and their connection to the specific tests. Overall, we had an in-depth discussion of the testing approaches we wanted to consider and documented them with full clarity.  \\
+
 (Hamzah)
-A few things that went well were that this document tied back to previous documents we already completed, so being able to see everything come together under the project was nice. I worked on the Plan section, so having a clear project scope and defined features made it easier to brainstorm what needed to be verified and validated for each part of the project. It was also nice to have some reference/example documents to look at to get a better idea of the expectations in some sections.  
-\\
+A few things that went well were that this document tied back to previous documents we already completed, so being able to see everything come together under the project was nice. I worked on the Plan section, so having a clear project scope and defined features made it easier to brainstorm what needed to be verified and validated for each part of the project. It was also nice to have some reference/example documents to look at to get a better idea of the expectations in some sections.  \\
+
 (Sarim)
-Working on one section with another team member meant we had to ensure we were fairly dividing the section. It also meant that some parts would be dependent on the other team members to finish before they could be started. We were able to deal with this well by discussing our schedules early on and setting key deadlines so neither of us suffered from delays by the other. 
-\\
+Working on one section with another team member meant we had to ensure we were fairly dividing the section. It also meant that some parts would be dependent on the other team members to finish before they could be started. We were able to deal with this well by discussing our schedules early on and setting key deadlines so neither of us suffered from delays by the other. \\
+
 \item \textbf{What pain points did you experience during this deliverable, and how did you resolve them?}\\
-(Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.
-\\
+(Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.\\
+
 (Burhanuddin)
-Initially, the documentation had a few areas/sections that were very ambiguous in what they wanted. They lacked clarity in the description of the sections. Some of the descriptions were also outdated, which caused some confusion. Example, section 2 had a subsection for challenges which is part of an old rubric. Through the TA meetings, we were able to clarify what the description meant. 
-\\
+Initially, the documentation had a few areas/sections that were very ambiguous in what they wanted. They lacked clarity in the description of the sections. Some of the descriptions were also outdated, which caused some confusion. Example, section 2 had a subsection for challenges which is part of an old rubric. Through the TA meetings, we were able to clarify what the description meant. \\
+
 (Hamzah)
-At first it was a bit hard to understand what was expected in the Plan sections, in terms of what can be actionable, and there seemed to be a lot of overlap between sections. Also, since our team does not have a supervisor for the project, it felt like we were missing out on a big aspect of the verification process. After speaking with the TA, I was able to get some more clarity on what parts can overlap between sections, and also how we can incorporate stakeholders into the plan instead of a supervisor. 
-\\
+At first it was a bit hard to understand what was expected in the Plan sections, in terms of what can be actionable, and there seemed to be a lot of overlap between sections. Also, since our team does not have a supervisor for the project, it felt like we were missing out on a big aspect of the verification process. After speaking with the TA, I was able to get some more clarity on what parts can overlap between sections, and also how we can incorporate stakeholders into the plan instead of a supervisor.\\
+
 (Sarim)
-Our team had numerous questions planned for the TA meeting, however, due to traffic delays, most of us were unable to reach on time. We were able to communicate this early to the team members who were present and get our deliverable questions across even with the inability to attend on time. For me, these questions helped clear up ambiguity in the Plan section and ensured I was able to have a clear understanding while writing the section. 
-\\
+Our team had numerous questions planned for the TA meeting, however, due to traffic delays, most of us were unable to reach on time. We were able to communicate this early to the team members who were present and get our deliverable questions across even with the inability to attend on time. For me, these questions helped clear up ambiguity in the Plan section and ensured I was able to have a clear understanding while writing the section. \\
+
 \item \textbf{What knowledge and skills will you need to acquire to successfully complete the verification and validation of your project?}\\
-(Swesan) I need to deepen my understanding of dynamic testing and automation. Specifically, I want to improve at writing reproducible automated test scripts for functional verification and gain familiarity with load testing tools to assess performance under peak usage conditions. These skills will help ensure Hitchly's matching and verification features are both reliable and scalable.
-\\
+(Swesan) I need to deepen my understanding of dynamic testing and automation. Specifically, I want to improve at writing reproducible automated test scripts for functional verification and gain familiarity with load testing tools to assess performance under peak usage conditions. These skills will help ensure Hitchly's matching and verification features are both reliable and scalable.\\
+
 (Burhanuddin)
-As I am fairly new to app development, I need to learn all types of web development testing frameworks. I also need to understand them in Typescript, a language we will be using for the development of the application.  
-\\
+As I am fairly new to app development, I need to learn all types of web development testing frameworks. I also need to understand them in Typescript, a language we will be using for the development of the application.  \\
+
 (Hamzah)
-An important skill the team will need to learn is Jest, which will be the primary unit testing framework we use to test our codebase. Writing unit tests with good coverage and effectiveness is crucial for the project, so it's important to be familiar with the tools that will be used. 
-\\
+An important skill the team will need to learn is Jest, which will be the primary unit testing framework we use to test our codebase. Writing unit tests with good coverage and effectiveness is crucial for the project, so it's important to be familiar with the tools that will be used. \\
+
 (Sarim)
-I think when it comes to verification, knowing the tool is important, however it is also important to know theory about what type of tests we can and should perform alongside any additional theory that could help provide complete verification coverage. However, the last time our team members took a class related to verification testing was years ago, so it may be an aspect we need a refresher on. 
-\\
-(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I’m happy with how cohesive the final document feels.
-\\(Aidan) I found that structuring the V\&V plan around clear verification tiers (SRS, design, implementation, and validation) made the writing process straightforward. Aligning test cases directly with functional and non-functional requirements improved traceability and reduced redundancy. Integrating automation tools like Jest and GitHub Actions into the plan also felt natural since these align closely with our existing workflow. Overall, this deliverable came together efficiently once the structure and testing philosophy were defined.
+I think when it comes to verification, knowing the tool is important, however it is also important to know theory about what type of tests we can and should perform alongside any additional theory that could help provide complete verification coverage. However, the last time our team members took a class related to verification testing was years ago, so it may be an aspect we need a refresher on. \\
+
+(Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I’m happy with how cohesive the final document feels.\\
+
+(Aidan) I found that structuring the V\&V plan around clear verification tiers (SRS, design, implementation, and validation) made the writing process straightforward. Aligning test cases directly with functional and non-functional requirements improved traceability and reduced redundancy. Integrating automation tools like Jest and GitHub Actions into the plan also felt natural since these align closely with our existing workflow. Overall, this deliverable came together efficiently once the structure and testing philosophy were defined.
 
 \item \textbf{What pain points did you experience during this deliverable, and how did you resolve them?}\\
 (Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.
