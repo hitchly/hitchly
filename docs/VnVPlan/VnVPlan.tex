@@ -197,16 +197,29 @@ verified.  Techniques for this include review and mutation testing.}
 
 \subsection{Implementation Verification}
 
-\wss{You should at least point to the tests listed in this document and the unit
-  testing plan.}
+\begin{itemize}
+  \item \textbf{Code Walkthrough/Inspection:} 
+  New Code PR’s will be reviewed by at least two team members before the change is merged into the main branch. 
+  The code will be reviewed via pull requests on GitHub and will include thoughtful titles and comments to ensure the reviewers are able to understand the changes. 
+  If any further clarification is required, the developer will conduct a code walkthrough. 
+  All feedback will be conveyed via GitHub, ensuring a standardized review procedure. 
+  Only approved code will be merged into the main branch.
 
-\wss{In this section you would also give any details of any plans for static
-  verification of the implementation.  Potential techniques include code
-  walkthroughs, code inspection, static analyzers, etc.}
+  \item \textbf{Unit Testing:} 
+  Unit tests will be used to verify the expected behavior of the application. 
+  Each module will have a corresponding unit test suite. 
+  Unit test plans are outlined in Section 5 of this document.
 
-\wss{The final class presentation in CAS 741 could be used as a code
-walkthrough.  There is also a possibility of using the final presentation (in
-CAS741) for a partial usability survey.}
+  \item \textbf{System Testing:} 
+  System testing will ensure all functional and non-functional requirements are met by the application. 
+  Functional testing will verify key workflows, and non-functional testing will include performance, usability, and security checks. 
+  System test plans are outlined in Section 4 of this document.
+
+  \item \textbf{Static Analyzers:} 
+  Static analysis tools will be used to analyze the code for formatting and good coding practices. 
+  Reports generated from static analysis will be reviewed periodically to ensure high code quality. 
+  Specific tools are listed under Section 3.6.
+\end{itemize}
 
 \subsection{Automated Testing and Verification Tools}
 
