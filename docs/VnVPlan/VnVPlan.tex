@@ -612,12 +612,15 @@ graduate attribute of Lifelong Learning.
 
 \item \textbf{What went well while writing this deliverable?}\\
 (Swesan) The structure of the V\&V plan came together smoothly once I reviewed the example templates and understood what was expected. I was able to clearly link each test to the functional and non-functional requirements from Section~1.4 (G.4), which made the writing process more organized. Formatting, tone consistency, and version control all went well, and I’m happy with how cohesive the final document feels.
+\\(Aidan) I found that structuring the V\&V plan around clear verification tiers (SRS, design, implementation, and validation) made the writing process straightforward. Aligning test cases directly with functional and non-functional requirements improved traceability and reduced redundancy. Integrating automation tools like Jest and GitHub Actions into the plan also felt natural since these align closely with our existing workflow. Overall, this deliverable came together efficiently once the structure and testing philosophy were defined.
 
 \item \textbf{What pain points did you experience during this deliverable, and how did you resolve them?}\\
 (Swesan) The main difficulty was determining how detailed each test case should be and distinguishing between verification and validation tasks. At first, I wrote overly detailed descriptions, but after reviewing previous examples and clarifying expectations from the course materials, I refined the structure to focus on clarity and traceability. Once I aligned the test coverage with the proof-of-concept scope of Hitchly, the process became much more straightforward.
+\\(Aidan) One challenge was balancing feasibility with completeness — the temptation was to include every possible validation step, but time and scope required focusing on what could realistically be tested this term. I also found it tricky to document test coverage without finalizing the detailed design. To resolve this, I focused on defining testing strategies conceptually and left module-specific details as placeholders for post-design updates.
 
 \item \textbf{What knowledge and skills will you need to acquire to successfully complete the verification and validation of your project?}\\
 (Swesan) I need to deepen my understanding of dynamic testing and automation. Specifically, I want to improve at writing reproducible automated test scripts for functional verification and gain familiarity with load testing tools to assess performance under peak usage conditions. These skills will help ensure Hitchly’s matching and verification features are both reliable and scalable.
+\\(Aidan) I want to strengthen my understanding of end-to-end testing workflows and CI/CD validation. Specifically, I need to improve at automating test pipelines that integrate unit, integration, and mutation testing with coverage reporting. I also plan to deepen my knowledge of usability testing methodologies and how to quantify user satisfaction during beta testing.
 
 \item \textbf{For each of the knowledge areas and skills identified in the previous question, what are at least two approaches to acquiring the knowledge or mastering the skill? Which will you pursue, and why?}\\
 (Swesan) To build my dynamic testing and automation skills, I can:  
@@ -625,6 +628,13 @@ graduate attribute of Lifelong Learning.
 (2) Develop small-scale automated test cases directly within the Hitchly repository to gain hands-on experience.  
 
 I will prioritize the second approach since applying testing concepts directly in code helps uncover integration issues early and strengthens confidence in both the testing process and implementation reliability.
+\\(Aidan) For CI/CD and automated test coverage, I can:  
+(1) Experiment with GitHub Actions to create incremental test pipelines that validate each pull request automatically.  
+(2) Study testing patterns from large-scale open-source monorepos to understand practical approaches to test orchestration.  
+For usability validation, I can:  
+(1) Research UX testing frameworks and heuristics to design structured surveys and A/B test flows.  
+(2) Conduct real-world pilot tests with early users to collect actionable feedback.  
+I plan to prioritize hands-on experimentation with automated pipelines since this will directly improve code reliability and streamline team workflows.
 
 \end{enumerate}
 
