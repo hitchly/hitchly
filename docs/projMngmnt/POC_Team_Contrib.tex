@@ -164,6 +164,12 @@ Every pull request triggers automated workflows that:
 \end{itemize}
 This guarantees that only validated, production-ready code is merged into the main branch.
 
+\subsection{Continuous Deployment}
+
+Successful merges to \texttt{main} trigger Docker-based deployments of the Express/tRPC API 
+to the cloud environment and Expo EAS builds for the mobile client. Drizzle ORM migrations 
+are automatically applied to synchronize the database schema with production.
+
 
 \section{Team Charter Trigger Items}
 
