@@ -170,6 +170,11 @@ Successful merges to \texttt{main} trigger Docker-based deployments of the Expre
 to the cloud environment and Expo EAS builds for the mobile client. Drizzle ORM migrations 
 are automatically applied to synchronize the database schema with production.
 
+\subsection{Design Considerations}
+
+The pipeline emphasizes speed, consistency, and modularity. Turborepo caching reduces build 
+times, Docker ensures environment reproducibility, and automated checks maintain project 
+stability as new features are introduced.
 
 \section{Team Charter Trigger Items}
 
