@@ -154,6 +154,17 @@ Hitchly employs a Continuous Integration and Continuous Deployment (CI/CD) pipel
 GitHub Actions and Docker to ensure consistent quality, reliability, and maintainability 
 across all project components.
 
+\subsection{Continuous Integration}
+
+Every pull request triggers automated workflows that:
+\begin{itemize}
+  \item Install dependencies via \texttt{pnpm} within the Turborepo monorepo.
+  \item Run ESLint, Prettier, and TypeScript checks for code quality and type safety.
+  \item Execute unit tests (Jest) and verify build integrity for the API and mobile app.
+\end{itemize}
+This guarantees that only validated, production-ready code is merged into the main branch.
+
+
 \section{Team Charter Trigger Items}
 
 Triggers included no more than 2 unexcused absences per term, each member should make regular commits and contribute to opening and closing issues, and review teammates work before submission. So far, we have not had any violations of triggers, as any members that were unable to attend a meeting or any other discussed rule informed the team ahead of time with a valid reason. Throughout the project, we will continue to assess the triggers we set in the team charter and modify them as appropriate when we find that they can be further improved and realistic for all members.  
