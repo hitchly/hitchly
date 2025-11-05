@@ -241,19 +241,15 @@ between requirements and modules is listed in Table~\ref{TblRT}.
 
 \section{Module Decomposition} \label{SecMD}
 
-Modules are decomposed according to the principle of ``information hiding''
-proposed by \citet{ParnasEtAl1984}. The \emph{Secrets} field in a module
-decomposition is a brief statement of the design decision hidden by the
-module. The \emph{Services} field specifies \emph{what} the module will do
-without documenting \emph{how} to do it. For each module, a suggestion for the
-implementing software is given under the \emph{Implemented By} title. If the
-entry is \emph{OS}, this means that the module is provided by the operating
-system or by standard programming language libraries.  \emph{\progname{}} means the
-module will be implemented by the \progname{} software.
-
-Only the leaf modules in the hierarchy have to be implemented. If a dash
-(\emph{--}) is shown, this means that the module is not a leaf and will not have
-to be implemented.
+Modules are decomposed according to the principle of information hiding
+\citep{ParnasEtAl1984}.  
+Each module’s \emph{Secrets} field describes the internal design decision that is
+hidden, while the \emph{Services} field specifies \emph{what} the module provides
+without detailing \emph{how}.  
+\emph{Implemented By} identifies the software or subsystem that realizes the
+module, and \emph{Type of Module} classifies it as Hardware-Hiding,
+Behaviour-Hiding, or Software-Decision.  
+Only the leaf modules from Section 5 are included.
 
 \subsection{Hardware Hiding Modules (\mref{mHH})}
 
