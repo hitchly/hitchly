@@ -183,109 +183,81 @@ decisions will be changed.
 \item ...
 \end{description}
 
-
 \section{Module Hierarchy} \label{SecMH}
 
 This section provides an overview of the modular design for Hitchly.  
-The decomposition follows the principle of information hiding, 
+The decomposition follows the principle of information hiding,  
 where each module conceals a design decision that may change independently.  
-This structure improves maintainability, scalability, and adaptability of the system.  
-The hierarchy is divided into three main categories: Hardware-Hiding, Behaviour-Hiding, and Software-Decision Modules.  
+This organization improves maintainability, scalability, and adaptability of the system.  
+The hierarchy is divided into three main categories: Hardware-Hiding, Behaviour-Hiding,  
+and Software-Decision Modules.  
 Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
-\subsection{Hardware-Hiding Modules}
-These modules provide the interface between Hitchly and the mobile device hardware.  
-Each hides a specific hardware dependency that may vary between platforms.
+\begin{description}
+\item[\textbf{5.1 Hardware-Hiding Modules}]  
+These modules interface directly with device hardware and operating-system services.  
+They abstract away platform-specific APIs to ensure the rest of the system is independent  
+of hardware details.
 
 \begin{itemize}
-    \item \textbf{GPS Module:}  
-    Provides access to real-time location data and coordinates for ride matching, route generation, and distance tracking.
-
-    \item \textbf{Camera Module:}  
-    Manages camera operations for capturing license and ID images.  
-    Ensures proper image quality, orientation, and permission handling across devices.
-
-    \item \textbf{Verification Module:}  
-    Uses device sensors (e.g., camera) and external verification APIs to validate driver identity and license authenticity.
+  \item M1: GPS Module
+  \item M2: Camera Module
 \end{itemize}
 
-\subsection{Behaviour-Hiding Modules}
-These modules define Hitchly’s externally visible behaviour as described in the SRS.  
-Each hides a key design decision such as authentication, matching, or payment processing.  
-Together, they implement all user-facing functionality and maintain a consistent interface across the system.
+\item[\textbf{5.2 Behaviour-Hiding Modules}]  
+These modules implement Hitchly’s user-visible features and external integrations.  
+They define the functional behaviour of the application, hiding API calls and workflow logic  
+from users.
 
 \begin{itemize}
-    \item \textbf{Authentication Module:}  
-    Handles McMaster SSO verification, account registration, and credential management.
-
-    \item \textbf{Matching Module:}  
-    Performs ride matching based on time, route, and preferences, and ranks recommended rides for users.
-
-    \item \textbf{Mapping Module:}  
-    Integrates with mapping APIs (Google Maps or Mapbox) to render routes, estimate distances, and calculate travel times.
-
-    \item \textbf{Payment Module:}  
-    Manages digital transactions, fare splitting, and payment verification through secure third-party APIs.
-
-    \item \textbf{Database Module:}  
-    Provides persistent storage for users, rides, and transaction history.  
-    Handles schema management, queries, and indexing.
-
-    \item \textbf{Notification Module:}  
-    Sends push and in-app notifications for ride requests, confirmations, and reminders.
-
-    \item \textbf{Rating Module:}  
-    Manages rider and driver feedback, aggregates average scores, and updates user reputation.
-
-    \item \textbf{Search Module:}  
-    Enables users to search or filter available rides by location, date, and user preference.
+  \item M3: Verification Module
+  \item M4: Authentication Module
+  \item M5: Matching Module
+  \item M6: Mapping Module
+  \item M7: Payment Module
+  \item M8: Database Module
+  \item M9: Notification Module
+  \item M10: Rating Module
+  \item M11: Search Module
 \end{itemize}
 
-
-\subsection{Software-Decision Modules}
-These modules implement Hitchly’s internal computation and decision-making logic.  
-They handle analytics, scheduling, safety enforcement, and pricing — the core business rules that support behaviour modules.
+\item[\textbf{5.3 Software-Decision Modules}]  
+These modules encapsulate the system’s internal computational logic and algorithmic decisions.  
+They handle analytics, scheduling, safety enforcement, and pricing calculations that are invisible  
+to users.
 
 \begin{itemize}
-    \item \textbf{Analytics Module:}  
-    Collects and processes app usage and sustainability metrics to support decision-making and reporting.
-
-    \item \textbf{Scheduling Module:}  
-    Manages trip creation, availability, rescheduling, and cancellations for both riders and drivers.
-
-    \item \textbf{Safety Module:}  
-    Oversees incident reporting, user trust mechanisms, and enforces safety-related policies and verification results.
-
-    \item \textbf{Pricing Module:}  
-    Calculates ride fares and implements cost-sharing logic between participants based on route and number of passengers.
+  \item M12: Analytics Module
+  \item M13: Scheduling Module
+  \item M14: Safety Module
+  \item M15: Pricing Module
 \end{itemize}
+\end{description}
 
 \begin{table}[h!]
 \centering
 \begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
 \toprule
-\textbf{Level 1} & \textbf{Level 2 (Leaf Modules)}\\
+\textbf{Level 1} & \textbf{Level 2}\\
 \midrule
-\multirow{3}{0.3\textwidth}{Hardware-Hiding Modules}
-& GPS Module\\
-& Camera Module\\
-& Verification Module\\
+Hardware-Hiding Module & M1: GPS Module; M2: Camera Module\\
 \midrule
-\multirow{8}{0.3\textwidth}{Behaviour-Hiding Modules} 
-& Authentication Module\\
-& Matching Module\\
-& Mapping Module\\
-& Payment Module\\
-& Database Module\\
-& Notification Module\\
-& Rating Module\\
-& Search Module\\
+\multirow{9}{0.3\textwidth}{Behaviour-Hiding Module}
+& M3: Verification Module\\
+& M4: Authentication Module\\
+& M5: Matching Module\\
+& M6: Mapping Module\\
+& M7: Payment Module\\
+& M8: Database Module\\
+& M9: Notification Module\\
+& M10: Rating Module\\
+& M11: Search Module\\
 \midrule
-\multirow{4}{0.3\textwidth}{Software-Decision Modules} 
-& Analytics Module\\
-& Scheduling Module\\
-& Safety Module\\
-& Pricing Module\\
+\multirow{4}{0.3\textwidth}{Software-Decision Module}
+& M12: Analytics Module\\
+& M13: Scheduling Module\\
+& M14: Safety Module\\
+& M15: Pricing Module\\
 \bottomrule
 \end{tabular}
 \caption{Module Hierarchy}
