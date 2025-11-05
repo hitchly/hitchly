@@ -358,18 +358,44 @@ Only the leaf modules from Section 5 are included.
 
 \subsection{Software Decision Module}
 
-\begin{description}
-\item[Secrets:] The design decision based on mathematical theorems, physical
-  facts, or programming considerations. The secrets of this module are
-  \emph{not} described in the SRS.
-\item[Services:] Includes data structure and algorithms used in the system that
-  do not provide direct interaction with the user. 
-  % Changes in these modules are more likely to be motivated by a desire to
-  % improve performance than by externally imposed changes.
-\item[Implemented By:] --
-\end{description}
+\subsection*{Software-Decision Modules}
 
-\subsubsection{Etc.}
+\subsubsection*{M12: Analytics Module}
+\textbf{Secrets:} Data-aggregation and metric-computation methods for sustainability and usage tracking.  
+
+\textbf{Services:} Collects anonymized usage data and generates reports for performance monitoring.  
+
+\textbf{Implemented By:} Backend analytics engine using Node.js and PostgreSQL scheduled jobs.  
+
+\textbf{Type of Module:} Software-Decision Module.
+
+\subsubsection*{M13: Scheduling Module}
+\textbf{Secrets:} Trip allocation and time-slot management algorithm.  
+
+\textbf{Services:} Manages ride creation, modifications, and cancellations while preventing overlap conflicts.  
+
+\textbf{Implemented By:} Node.js backend with Drizzle ORM transactional logic.  
+
+\textbf{Type of Module:} Software-Decision Module.
+
+\subsubsection*{M14: Safety Module}
+\textbf{Secrets:} Safety policy enforcement logic and verification thresholds.  
+
+\textbf{Services:} Oversees ride safety checks, monitors incidents, and handles emergency triggers.  
+
+\textbf{Implemented By:} Node.js backend integrated with Verification and Notification modules.  
+
+\textbf{Type of Module:} Software-Decision Module.
+
+\subsubsection*{M15: Pricing Module}
+\textbf{Secrets:} Fare-calculation formula and cost-sharing model parameters.  
+
+\textbf{Services:} Computes ride prices and divides costs among passengers based on route and occupancy.  
+
+\textbf{Implemented By:} Node.js backend using Mapping and Scheduling data.  
+
+\textbf{Type of Module:} Software-Decision Module.
+
 
 \section{Traceability Matrix} \label{SecTM}
 
