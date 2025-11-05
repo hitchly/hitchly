@@ -292,15 +292,6 @@ They handle analytics, scheduling, safety enforcement, and pricing — the core 
 \label{TblMH}
 \end{table}
 
-\subsection*{Design Rationale}
-
-The architecture follows a top-down dependency structure.  
-Hardware-hiding modules interface directly with device sensors and platform APIs.  
-Behaviour-hiding modules depend on these hardware interfaces to deliver user-facing features such as authentication, matching, and payments.  
-The software-decision layer provides the computational and analytical foundation that supports higher-level behaviour.  
-This separation of concerns allows independent modification of each component — for example, updating the pricing logic, integrating a new mapping API, or refining verification — without impacting the rest of the system.
-
-
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
