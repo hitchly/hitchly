@@ -241,6 +241,9 @@ between requirements and modules is listed in Table~\ref{TblRT}.
 
 \section{Module Decomposition} \label{SecMD}
 
+\begingroup
+\setlength{\parindent}{0pt}
+
 Modules are decomposed according to the principle of information hiding
 \citep{ParnasEtAl1984}.  
 Each module’s \emph{Secrets} field describes the internal design decision that is
@@ -249,152 +252,144 @@ without detailing \emph{how}.
 \emph{Implemented By} identifies the software or subsystem that realizes the
 module, and \emph{Type of Module} classifies it as Hardware-Hiding,
 Behaviour-Hiding, or Software-Decision.  
-Only the leaf modules from Section 5 are included.
+Only the leaf modules from Section~\ref{SecMH} are included.
 
 \subsection*{Hardware-Hiding Modules}
 
+These modules provide abstraction from physical device hardware and OS APIs,
+ensuring portability and isolating device-dependent changes.
+
 \subsubsection*{M1: GPS Module}
-\textbf{Secrets:} How the app accesses and optimizes GPS data, including sampling rate, accuracy, and permission handling.  
-
-\textbf{Services:} Provides real-time coordinates and continuous tracking used for routing, pricing, and ride matching.  
-
-\textbf{Implemented By:} React Native Location API and Expo Location.  
-
-\textbf{Type of Module:} Hardware-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} How the app accesses and optimizes GPS data, including sampling rate, accuracy, and permission handling.
+  \item \textbf{Services:} Provides real-time coordinates and continuous tracking used for routing, pricing, and ride matching.
+  \item \textbf{Implemented By:} React Native Location API and Expo Location.
+  \item \textbf{Type of Module:} Hardware-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M2: Camera Module}
-\textbf{Secrets:} Camera access configuration, resolution settings, and permission control.  
+\begin{itemize}
+  \item \textbf{Secrets:} Camera access configuration, resolution settings, and permission control.
+  \item \textbf{Services:} Captures photos for license, ID, and profile verification; processes images for upload.
+  \item \textbf{Implemented By:} Expo Camera API and React Native Permissions.
+  \item \textbf{Type of Module:} Hardware-Hiding Module.
+\end{itemize}
 
-\textbf{Services:} Captures photos for license, ID, and profile verification; processes images for upload.  
+\subsection*{Behaviour-Hiding Modules}
 
-\textbf{Implemented By:} Expo Camera API and React Native Permissions.  
-
-\textbf{Type of Module:} Hardware-Hiding Module.
+These modules implement Hitchly’s user-visible behaviours and external interactions.
+They hide workflow logic, API details, and data representations from the end user.
 
 \subsubsection*{M3: Verification Module}
-\textbf{Secrets:} Verification algorithms and third-party API credentials used for identity validation.  
-
-\textbf{Services:} Validates user identity via McMaster SSO and license image verification.  
-
-\textbf{Implemented By:} Node.js (Express) backend integrated with McMaster SSO OAuth API.  
-
-\textbf{Type of Module:} Hardware-Hiding Module.
-
-
-\\subsection*{Behaviour-Hiding Modules}
+\begin{itemize}
+  \item \textbf{Secrets:} Identity-validation logic, including SSO integration and license verification algorithms.
+  \item \textbf{Services:} Verifies users through McMaster SSO authentication and driver-license uploads, interacting with the Camera Module for photo capture.
+  \item \textbf{Implemented By:} Node.js (Express) backend integrated with McMaster SSO and third-party verification APIs.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M4: Authentication Module}
-\textbf{Secrets:} Token management and session lifetime configuration.  
-
-\textbf{Services:} Handles user login, registration, and secure JWT refresh.  
-
-\textbf{Implemented By:} Node.js + tRPC backend with PostgreSQL user store and JWT middleware.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Token management and session lifetime configuration.
+  \item \textbf{Services:} Handles user login, registration, and secure JWT refresh.
+  \item \textbf{Implemented By:} Node.js + tRPC backend with PostgreSQL user store and JWT middleware.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M5: Matching Module}
-\textbf{Secrets:} Ride-matching algorithm and ranking heuristics based on route and time overlap.  
-
-\textbf{Services:} Matches riders and drivers, returns ranked ride options, and records confirmed pairings.  
-
-\textbf{Implemented By:} Node.js backend using Mapbox API and PostgreSQL.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Ride-matching algorithm and ranking heuristics based on route and time overlap.
+  \item \textbf{Services:} Matches riders and drivers, returns ranked ride options, and records confirmed pairings.
+  \item \textbf{Implemented By:} Node.js backend using Mapbox API and PostgreSQL.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M6: Mapping Module}
-\textbf{Secrets:} API key management and caching strategy for rendering maps and computing routes.  
-
-\textbf{Services:} Displays maps, computes distances and ETAs, and provides coordinates for pricing and matching.  
-
-\textbf{Implemented By:} React Native frontend using Google Maps / Mapbox SDK.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} API-key management and caching strategy for rendering maps and computing routes.
+  \item \textbf{Services:} Displays maps, computes distances and ETAs, and provides coordinates for pricing and matching.
+  \item \textbf{Implemented By:} React Native frontend using Google Maps / Mapbox SDK.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M7: Payment Module}
-\textbf{Secrets:} Payment flow design and validation logic for cost-sharing transactions.  
-
-\textbf{Services:} Handles transactions, manages fare splitting, and stores payment records.  
-
-\textbf{Implemented By:} Node.js backend integrated with a Stripe-like API and PostgreSQL.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Payment-flow design and validation logic for cost-sharing transactions.
+  \item \textbf{Services:} Handles transactions, manages fare splitting, and stores payment records.
+  \item \textbf{Implemented By:} Node.js backend integrated with a Stripe-like API and PostgreSQL.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M8: Database Module}
-\textbf{Secrets:} Schema definitions, indexing strategies, and ORM mappings.  
-
-\textbf{Services:} Provides persistent data storage and structured query interfaces for all other modules.  
-
-\textbf{Implemented By:} PostgreSQL database accessed via Drizzle ORM in Node.js backend.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Schema definitions, indexing strategies, and ORM mappings.
+  \item \textbf{Services:} Provides persistent data storage and structured query interfaces for all other modules.
+  \item \textbf{Implemented By:} PostgreSQL database accessed via Drizzle ORM in Node.js backend.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M9: Notification Module}
-\textbf{Secrets:} Message queue structure and token-based delivery mechanism for push notifications.  
-
-\textbf{Services:} Sends trip confirmations, cancellations, and safety alerts through the Expo Push Notification Service.  
-
-\textbf{Implemented By:} Expo Push Service API with backend dispatcher in Node.js.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Message-queue structure and token-based delivery mechanism for push notifications.
+  \item \textbf{Services:} Sends trip confirmations, cancellations, and safety alerts through the Expo Push Notification Service.
+  \item \textbf{Implemented By:} Expo Push Service API with backend dispatcher in Node.js.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M10: Rating Module}
-\textbf{Secrets:} Scoring and weighting logic for user reputation computation.  
-
-\textbf{Services:} Records ratings, aggregates averages, and updates driver and rider reputations.  
-
-\textbf{Implemented By:} Node.js microservice with PostgreSQL + Drizzle ORM.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Scoring and weighting logic for user-reputation computation.
+  \item \textbf{Services:} Records ratings, aggregates averages, and updates driver and rider reputations.
+  \item \textbf{Implemented By:} Node.js microservice with PostgreSQL + Drizzle ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsubsection*{M11: Search Module}
-\textbf{Secrets:} Search indexing and filtering logic for ride listings.  
-
-\textbf{Services:} Enables users to search rides by date, location, and preference filters.  
-
-\textbf{Implemented By:} Node.js backend using PostgreSQL full-text search.  
-
-\textbf{Type of Module:} Behaviour-Hiding Module.
-
-
-\subsection{Software Decision Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Search indexing and filtering logic for ride listings.
+  \item \textbf{Services:} Enables users to search rides by date, location, and preference filters.
+  \item \textbf{Implemented By:} Node.js backend using PostgreSQL full-text search.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
 \subsection*{Software-Decision Modules}
 
+These modules contain Hitchly’s internal logic and algorithms invisible to users.
+They implement data analysis, computation, scheduling, and enforcement mechanisms.
+
 \subsubsection*{M12: Analytics Module}
-\textbf{Secrets:} Data-aggregation and metric-computation methods for sustainability and usage tracking.  
-
-\textbf{Services:} Collects anonymized usage data and generates reports for performance monitoring.  
-
-\textbf{Implemented By:} Backend analytics engine using Node.js and PostgreSQL scheduled jobs.  
-
-\textbf{Type of Module:} Software-Decision Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Data-aggregation and metric-computation methods for sustainability and usage tracking.
+  \item \textbf{Services:} Collects anonymized usage data and generates reports for performance monitoring.
+  \item \textbf{Implemented By:} Backend analytics engine using Node.js and PostgreSQL scheduled jobs.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
 
 \subsubsection*{M13: Scheduling Module}
-\textbf{Secrets:} Trip allocation and time-slot management algorithm.  
-
-\textbf{Services:} Manages ride creation, modifications, and cancellations while preventing overlap conflicts.  
-
-\textbf{Implemented By:} Node.js backend with Drizzle ORM transactional logic.  
-
-\textbf{Type of Module:} Software-Decision Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Trip allocation and time-slot management algorithm.
+  \item \textbf{Services:} Manages ride creation, modifications, and cancellations while preventing overlap conflicts.
+  \item \textbf{Implemented By:} Node.js backend with Drizzle ORM transactional logic.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
 
 \subsubsection*{M14: Safety Module}
-\textbf{Secrets:} Safety policy enforcement logic and verification thresholds.  
-
-\textbf{Services:} Oversees ride safety checks, monitors incidents, and handles emergency triggers.  
-
-\textbf{Implemented By:} Node.js backend integrated with Verification and Notification modules.  
-
-\textbf{Type of Module:} Software-Decision Module.
+\begin{itemize}
+  \item \textbf{Secrets:} Safety-policy enforcement logic and verification thresholds.
+  \item \textbf{Services:} Oversees ride safety checks, monitors incidents, and handles emergency triggers.
+  \item \textbf{Implemented By:} Node.js backend integrated with Verification and Notification modules.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
 
 \subsubsection*{M15: Pricing Module}
-\textbf{Secrets:} Fare-calculation formula and cost-sharing model parameters.  
+\begin{itemize}
+  \item \textbf{Secrets:} Fare-calculation formula and cost-sharing model parameters.
+  \item \textbf{Services:} Computes ride prices and divides costs among passengers based on route and occupancy.
+  \item \textbf{Implemented By:} Node.js backend using Mapping and Scheduling data.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
 
-\textbf{Services:} Computes ride prices and divides costs among passengers based on route and occupancy.  
-
-\textbf{Implemented By:} Node.js backend using Mapping and Scheduling data.  
-
-\textbf{Type of Module:} Software-Decision Module.
+\endgroup
 
 
 \section{Traceability Matrix} \label{SecTM}
