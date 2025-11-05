@@ -183,48 +183,22 @@ decisions will be changed.
 \item ...
 \end{description}
 
+
 \section{Module Hierarchy} \label{SecMH}
 
-This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
-below, which are leaves in the hierarchy tree, are the modules that will
-actually be implemented.
+This section provides an overview of the modular design for Hitchly.  
+The decomposition follows the principle of information hiding, 
+where each module conceals a design decision that may change independently.  
+This structure improves maintainability, scalability, and adaptability of the system.  
+The hierarchy is divided into three main categories: Hardware-Hiding, Behaviour-Hiding, and Software-Decision Modules.  
+Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
-\begin{description}
-\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
-\end{description}
+\subsection{Hardware-Hiding Modules}
 
+\subsection{Behaviour-Hiding Modules}
 
-\begin{table}[h!]
-\centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
-\toprule
-\textbf{Level 1} & \textbf{Level 2}\\
-\midrule
+\subsection{Software-Decision Modules}
 
-{Hardware-Hiding Module} & ~ \\
-\midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding Module} & ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\ 
-& ?\\
-\midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision Module} & {?}\\
-& ?\\
-& ?\\
-\bottomrule
-
-\end{tabular}
-\caption{Module Hierarchy}
-\label{TblMH}
-\end{table}
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
