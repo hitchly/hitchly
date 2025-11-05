@@ -319,6 +319,42 @@ Only the leaf modules from Section 5 are included.
 
 \textbf{Type of Module:} Behaviour-Hiding Module.
 
+\subsubsection*{M8: Database Module}
+\textbf{Secrets:} Schema definitions, indexing strategies, and ORM mappings.  
+
+\textbf{Services:} Provides persistent data storage and structured query interfaces for all other modules.  
+
+\textbf{Implemented By:} PostgreSQL database accessed via Drizzle ORM in Node.js backend.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M9: Notification Module}
+\textbf{Secrets:} Message queue structure and token-based delivery mechanism for push notifications.  
+
+\textbf{Services:} Sends trip confirmations, cancellations, and safety alerts through the Expo Push Notification Service.  
+
+\textbf{Implemented By:} Expo Push Service API with backend dispatcher in Node.js.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M10: Rating Module}
+\textbf{Secrets:} Scoring and weighting logic for user reputation computation.  
+
+\textbf{Services:} Records ratings, aggregates averages, and updates driver and rider reputations.  
+
+\textbf{Implemented By:} Node.js microservice with PostgreSQL + Drizzle ORM.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M11: Search Module}
+\textbf{Secrets:} Search indexing and filtering logic for ride listings.  
+
+\textbf{Services:} Enables users to search rides by date, location, and preference filters.  
+
+\textbf{Implemented By:} Node.js backend using PostgreSQL full-text search.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
 
 \subsection{Software Decision Module}
 
