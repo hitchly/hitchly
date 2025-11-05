@@ -281,30 +281,43 @@ Only the leaf modules from Section 5 are included.
 \textbf{Type of Module:} Hardware-Hiding Module.
 
 
-\subsection{Behaviour-Hiding Module}
+\\subsection*{Behaviour-Hiding Modules}
 
-\begin{description}
-\item[Secrets:]The contents of the required behaviours.
-\item[Services:]Includes programs that provide externally visible behaviour of
-  the system as specified in the software requirements specification (SRS)
-  documents. This module serves as a communication layer between the
-  hardware-hiding module and the software decision module. The programs in this
-  module will need to change if there are changes in the SRS.
-\item[Implemented By:] --
-\end{description}
+\subsubsection*{M4: Authentication Module}
+\textbf{Secrets:} Token management and session lifetime configuration.  
 
-\subsubsection{Input Format Module (\mref{mInput})}
+\textbf{Services:} Handles user login, registration, and secure JWT refresh.  
 
-\begin{description}
-\item[Secrets:]The format and structure of the input data.
-\item[Services:]Converts the input data into the data structure used by the
-  input parameters module.
-\item[Implemented By:] [Your Program Name Here]
-\item[Type of Module:] [Record, Library, Abstract Object, or Abstract Data Type]
-  [Information to include for leaf modules in the decomposition by secrets tree.]
-\end{description}
+\textbf{Implemented By:} Node.js + tRPC backend with PostgreSQL user store and JWT middleware.  
 
-\subsubsection{Etc.}
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M5: Matching Module}
+\textbf{Secrets:} Ride-matching algorithm and ranking heuristics based on route and time overlap.  
+
+\textbf{Services:} Matches riders and drivers, returns ranked ride options, and records confirmed pairings.  
+
+\textbf{Implemented By:} Node.js backend using Mapbox API and PostgreSQL.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M6: Mapping Module}
+\textbf{Secrets:} API key management and caching strategy for rendering maps and computing routes.  
+
+\textbf{Services:} Displays maps, computes distances and ETAs, and provides coordinates for pricing and matching.  
+
+\textbf{Implemented By:} React Native frontend using Google Maps / Mapbox SDK.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
+
+\subsubsection*{M7: Payment Module}
+\textbf{Secrets:} Payment flow design and validation logic for cost-sharing transactions.  
+
+\textbf{Services:} Handles transactions, manages fare splitting, and stores payment records.  
+
+\textbf{Implemented By:} Node.js backend integrated with a Stripe-like API and PostgreSQL.  
+
+\textbf{Type of Module:} Behaviour-Hiding Module.
 
 
 \subsection{Software Decision Module}
