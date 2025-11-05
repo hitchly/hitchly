@@ -251,16 +251,35 @@ module, and \emph{Type of Module} classifies it as Hardware-Hiding,
 Behaviour-Hiding, or Software-Decision.  
 Only the leaf modules from Section 5 are included.
 
-\subsection{Hardware Hiding Modules (\mref{mHH})}
+\subsection*{Hardware-Hiding Modules}
 
-\begin{description}
-\item[Secrets:]The data structure and algorithm used to implement the virtual
-  hardware.
-\item[Services:]Serves as a virtual hardware used by the rest of the
-  system. This module provides the interface between the hardware and the
-  software. So, the system can use it to display outputs or to accept inputs.
-\item[Implemented By:] OS
-\end{description}
+\subsubsection*{M1: GPS Module}
+\textbf{Secrets:} How the app accesses and optimizes GPS data, including sampling rate, accuracy, and permission handling.  
+
+\textbf{Services:} Provides real-time coordinates and continuous tracking used for routing, pricing, and ride matching.  
+
+\textbf{Implemented By:} React Native Location API and Expo Location.  
+
+\textbf{Type of Module:} Hardware-Hiding Module.
+
+\subsubsection*{M2: Camera Module}
+\textbf{Secrets:} Camera access configuration, resolution settings, and permission control.  
+
+\textbf{Services:} Captures photos for license, ID, and profile verification; processes images for upload.  
+
+\textbf{Implemented By:} Expo Camera API and React Native Permissions.  
+
+\textbf{Type of Module:} Hardware-Hiding Module.
+
+\subsubsection*{M3: Verification Module}
+\textbf{Secrets:} Verification algorithms and third-party API credentials used for identity validation.  
+
+\textbf{Services:} Validates user identity via McMaster SSO and license image verification.  
+
+\textbf{Implemented By:} Node.js (Express) backend integrated with McMaster SSO OAuth API.  
+
+\textbf{Type of Module:} Hardware-Hiding Module.
+
 
 \subsection{Behaviour-Hiding Module}
 
