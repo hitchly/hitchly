@@ -194,6 +194,22 @@ The hierarchy is divided into three main categories: Hardware-Hiding, Behaviour-
 Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
 \subsection{Hardware-Hiding Modules}
+These modules provide the interface between Hitchly and the mobile device hardware.  
+Each hides a specific hardware dependency that may vary between platforms.
+
+\begin{itemize}
+    \item \textbf{GPS Module:}  
+    Provides access to real-time location data and coordinates for ride matching, route generation, and distance tracking.
+
+    \item \textbf{Camera Module:}  
+    Manages camera operations for capturing license and ID images.  
+    Ensures proper image quality, orientation, and permission handling across devices.
+
+    \item \textbf{Verification Module:}  
+    Uses device sensors (e.g., camera) and external verification APIs to validate driver identity and license authenticity.
+\end{itemize}
+
+
 
 \subsection{Behaviour-Hiding Modules}
 
