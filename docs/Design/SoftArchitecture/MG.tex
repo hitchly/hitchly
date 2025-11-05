@@ -243,6 +243,22 @@ Together, they implement all user-facing functionality and maintain a consistent
 
 
 \subsection{Software-Decision Modules}
+These modules implement Hitchly’s internal computation and decision-making logic.  
+They handle analytics, scheduling, safety enforcement, and pricing — the core business rules that support behaviour modules.
+
+\begin{itemize}
+    \item \textbf{Analytics Module:}  
+    Collects and processes app usage and sustainability metrics to support decision-making and reporting.
+
+    \item \textbf{Scheduling Module:}  
+    Manages trip creation, availability, rescheduling, and cancellations for both riders and drivers.
+
+    \item \textbf{Safety Module:}  
+    Oversees incident reporting, user trust mechanisms, and enforces safety-related policies and verification results.
+
+    \item \textbf{Pricing Module:}  
+    Calculates ride fares and implements cost-sharing logic between participants based on route and number of passengers.
+\end{itemize}
 
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
