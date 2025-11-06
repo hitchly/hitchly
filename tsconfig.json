@@ -1,0 +1,30 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./apps/mobile" },
+    { "path": "./packages/db" },
+    { "path": "./packages/utils" },
+    { "path": "./packages/types" }
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hitchly/db/*": ["packages/db/src/*"],
+      "@hitchly/utils/*": ["packages/utils/src/*"],
+      "@hitchly/types/*": ["packages/types/src/*"]
+    }
+  }
+}

@@ -1,9 +1,20 @@
+// apps/api/trpc/context.ts
+import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../auth/auth";
 import { db } from "../db";
 
-export type Context = {
-  db: typeof db;
-};
+export async function createContext({ req, res }: CreateExpressContextOptions) {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
 
-export const createContext = async (): Promise<Context> => {
-  return { db };
-};
+  return {
+    req,
+    res,
+    db,
+    userId: session?.user?.id ?? undefined,
+  };
+}
+
+export type Context = Awaited<ReturnType<typeof createContext>>;
