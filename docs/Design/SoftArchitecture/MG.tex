@@ -157,16 +157,14 @@ adapted here is called design for
 change.
 
 \begin{description}
-\item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
-  hardware on which the software is running.
-\item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchingAlgorithm}:] \textbf{Matching Algorithm:} The matching algorithm focuses on 
+the goal of finding the best available drivers for the riders. This algorithm takes into account the user's location, timetable, time, and distance. For instance, it matches a rider with a driver that has the same timetable and lives in the same area. The current algorithm will be simply based on these four parameters, and it will have to change in the future to consider more parameters to increase its efficiency and accuracy. Moreover, subtle changes to the algorithm may also be expected for further optimization of its complexity and speed. 
+\item[\refstepcounter{acnum} \actheacnum \label{acUserInterface}:] \textbf{User Interface:} The matching algorithm focuses on the goal of finding the best available drivers for the riders. This algorithm takes into account the user's location, timetable, time, and distance. For instance, it matches a rider with a driver that has the same timetable and lives in the same area. The current algorithm will be simply based on these four parameters, and it will have to change in the future to consider more parameters to increase its efficiency and accuracy. Moreover, subtle changes to the algorithm may also be expected for further optimization of its complexity and speed. 
+\item[\refstepcounter{acnum} \actheacnum \label{acDB}:] \textbf{Database Schema:} As the app updates with new features, the current method of analytics may change. New parameters would be considered for the matching algorithm, and new features may be added based on future user needs. Therefore, changes may need to be made to the database schemas
+\item[\refstepcounter{acnum} \actheacnum \label{acPayment}:] \textbf{Payment Processing:} Additional payment processors and pricing formulas will be used to determine the price estimate for drivers. An addition of parameters to estimate the cost would cause the algorithms to change.  
+\item[\refstepcounter{acnum} \actheacnum \label{acDevEnvioremnt}:] \textbf{Development Environment:} Changes could be made to the CI/CD configuration to improve the reliability and stability of the system.
 \end{description}
 
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -178,9 +176,10 @@ will potentially need to be modified. Hence, it is not intended that these
 decisions will be changed.
 
 \begin{description}
-\item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucDevices}:] \textbf{Devices:} Hitchly is an application that is developed for mobile devices only. A version that is compatible to run on a desktop is an unlikely change as it requires major changes to the software design. 
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucLanguage}:] \textbf{Language Support:} The application is primarily based on the English language. Adding additional languages to the interface would require a major design decision.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucProgramming}:] \textbf{Programming Language and Technologies:} The core of this application is supposed to be developed using React Native, Typescript, and SQL. Making changes to how the application is developed is an unlikely change as it requires a change in the entire design of the application.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucVerification}:] \textbf{Verification Requirement:} This app is strictly restricted for McMaster affiliated users as the entire concept of this application is designed for them. It is not subject to removal. Verification of the users will be their McMaster affiliated email.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
