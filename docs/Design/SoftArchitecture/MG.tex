@@ -186,52 +186,44 @@ decisions will be changed.
 \section{Module Hierarchy} \label{SecMH}
 
 This section provides an overview of the modular design for Hitchly.  
-The decomposition follows the principle of information hiding,  
-where each module conceals a design decision that may change independently.  
-This organization improves maintainability, scalability, and adaptability of the system.  
-The hierarchy is divided into three main categories: Hardware-Hiding, Behaviour-Hiding,  
-and Software-Decision Modules.  
+The hierarchy follows the principle of information hiding, where each module  
+encapsulates a design decision that may change independently.  
 Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
 \begin{description}
-\item[\textbf{5.1 Hardware-Hiding Modules}]  
-These modules interface directly with device hardware and operating-system services.  
-They abstract away platform-specific APIs to ensure the rest of the system is independent  
-of hardware details.
 
-\begin{itemize}
-  \item M1: GPS Module
-  \item M2: Camera Module
-\end{itemize}
+\item[\textbf{5.1 Hardware-Hiding Modules}]  
+There are no hardware-hiding modules in this design.  
+Hitchly relies on high-level framework APIs (Expo, React Native),  
+so no direct hardware abstraction is required.
 
 \item[\textbf{5.2 Behaviour-Hiding Modules}]  
-These modules implement Hitchly’s user-visible features and external integrations.  
-They define the functional behaviour of the application, hiding API calls and workflow logic  
-from users.
+These modules implement the user-visible behaviour of the application.  
+They hide workflow logic, API interactions, and data handling that support  
+Hitchly’s core features.
 
 \begin{itemize}
-  \item M3: Verification Module
-  \item M4: Authentication Module
-  \item M5: Matching Module
-  \item M6: Mapping Module
-  \item M7: Payment Module
-  \item M8: Database Module
-  \item M9: Notification Module
-  \item M10: Rating Module
-  \item M11: Search Module
+  \item M1: Authentication \& Verification Module
+  \item M2: User Profile Module
+  \item M3: Route \& Trip Module
+  \item M4: Matching Module
+  \item M5: Scheduling Module
+  \item M6: Notification Module
+  \item M7: Rating \& Feedback Module
+  \item M8: Safety \& Reporting Module
+  \item M9: Payment \& Cost Estimation Module
+  \item M10: Admin \& Moderation Module
 \end{itemize}
 
 \item[\textbf{5.3 Software-Decision Modules}]  
-These modules encapsulate the system’s internal computational logic and algorithmic decisions.  
-They handle analytics, scheduling, safety enforcement, and pricing calculations that are invisible  
-to users.
+These modules encapsulate internal logic, algorithms,  
+and implementation decisions not visible to users.
 
 \begin{itemize}
-  \item M12: Analytics Module
-  \item M13: Scheduling Module
-  \item M14: Safety Module
-  \item M15: Pricing Module
+  \item M11: Pricing Module
+  \item M12: Database Module
 \end{itemize}
+
 \end{description}
 
 \begin{table}[h!]
@@ -240,29 +232,29 @@ to users.
 \toprule
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
-Hardware-Hiding Module & M1: GPS Module; M2: Camera Module\\
+Hardware-Hiding Module & None\\
 \midrule
-\multirow{9}{0.3\textwidth}{Behaviour-Hiding Module}
-& M3: Verification Module\\
-& M4: Authentication Module\\
-& M5: Matching Module\\
-& M6: Mapping Module\\
-& M7: Payment Module\\
-& M8: Database Module\\
-& M9: Notification Module\\
-& M10: Rating Module\\
-& M11: Search Module\\
+\multirow{10}{0.3\textwidth}{Behaviour-Hiding Module}
+& M1: Authentication \& Verification Module\\
+& M2: User Profile Module\\
+& M3: Route \& Trip Module\\
+& M4: Matching Module\\
+& M5: Scheduling Module\\
+& M6: Notification Module\\
+& M7: Rating \& Feedback Module\\
+& M8: Safety \& Reporting Module\\
+& M9: Payment \& Cost Estimation Module\\
+& M10: Admin \& Moderation Module\\
 \midrule
-\multirow{4}{0.3\textwidth}{Software-Decision Module}
-& M12: Analytics Module\\
-& M13: Scheduling Module\\
-& M14: Safety Module\\
-& M15: Pricing Module\\
+\multirow{2}{0.3\textwidth}{Software-Decision Module}
+& M11: Pricing Module\\
+& M12: Database Module\\
 \bottomrule
 \end{tabular}
 \caption{Module Hierarchy}
 \label{TblMH}
 \end{table}
+
 
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
