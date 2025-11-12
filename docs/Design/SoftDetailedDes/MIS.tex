@@ -605,7 +605,7 @@ The backend exposes tRPC endpoints such as \texttt{findMatchesForUser()}, \textt
 The data layer maintains persistent records of matches, swipes, and scoring metrics within PostgreSQL via Drizzle ORM.  
 Key tables include:
 \begin{itemize}
-    \item \texttt{matches} — stores confirmed mutual matches (rider ↔ driver) with timestamp and score.
+    \item \texttt{matches} — stores confirmed mutual matches (rider <-> driver) with timestamp and score.
     \item \texttt{swipes} — records all swipe actions for analytics and recommender tuning.
     \item \texttt{match\_history} — archives past matches for feedback and trust scoring.
 \end{itemize}
@@ -708,6 +708,371 @@ It is the computational bridge between trip listings and user engagement, suppor
     \end{itemize}
     \item \texttt{normalizeScore(raw)} – scales values into [0, 100].
 \end{itemize}
+
+% ============================================================
+% 6.5 Scheduling Module
+% ============================================================
+
+\subsection{Scheduling Module}
+
+\subsubsection{Module}
+The Scheduling Module manages recurring and one-time ride schedules for drivers and riders.
+It allows users to automate trip creation, define weekly patterns, and ensures that recurring schedules generate valid trip entries.  
+This module integrates directly with the Trip Module and the Notification Module.
+
+\paragraph{Frontend}
+Implemented in the Expo app, the frontend provides UI controls for defining recurring or one-time schedules.
+
+Key capabilities:
+\begin{itemize}
+    \item Time picker for selecting departure time
+    \item Day-of-week toggles for recurring schedules
+    \item Interface to view and cancel existing schedules
+    \item Integration with tRPC hooks such as \texttt{useCreateSchedule()}, \texttt{useGetUserSchedules()}
+    \item Form validation for time ranges and required fields
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements scheduling logic via tRPC.
+
+Responsibilities include:
+\begin{itemize}
+    \item Parsing user-defined recurrence patterns
+    \item Generating future trips based on schedules
+    \item Ensuring schedules do not conflict with existing trips
+    \item Validating schedule timing (future date, valid days)
+    \item Exposing procedures such as \texttt{createSchedule()}, \texttt{cancelSchedule()}
+\end{itemize}
+
+\paragraph{Data}
+The module persists schedule definitions and generated trip associations.
+
+Tables:
+\begin{itemize}
+    \item \texttt{schedules} — recurring schedule definitions (days, time, userId)
+    \item \texttt{schedule\_instances} — maps schedules to generated trips
+    \item \texttt{trips} — created by this module but stored by Trip Module
+\end{itemize}
+
+\subsubsection{Uses}
+\begin{itemize}
+    \item Trip Module — creates trip entries from schedules
+    \item User Profile Module — determines valid schedule types
+    \item Notification Module — sends reminders for upcoming rides
+\end{itemize}
+
+\subsubsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_RECURRING\_YEARS = 1}
+    \item \texttt{VALID\_DAYS = [Mon..Sun]}
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{createSchedule()} & scheduleData & ScheduleRecord & ValidationError \\
+\texttt{getUserSchedules()} & userId & ScheduleList & NotFoundError \\
+\texttt{cancelSchedule()} & scheduleId & Confirmation & UnauthorizedError \\
+\texttt{generateFutureTrips()} & scheduleId & TripList & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+
+\subsubsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{userSchedules}
+    \item \texttt{activeRules}
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item System scheduler
+    \item Device timezone
+    \item Database connection
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item Users must be verified before scheduling
+    \item Database schema is correctly migrated
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{createSchedule()}:
+\begin{itemize}
+    \item \textbf{transition:} Inserts schedule into DB
+    \item \textbf{output:} Returns schedule record
+\end{itemize}
+
+\texttt{generateFutureTrips()}:
+\begin{itemize}
+    \item \textbf{transition:} Generates future trips
+    \item \textbf{output:} List of trips
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{parseRecurrenceRule()}
+    \item \texttt{nextOccurrence()}
+\end{itemize}
+
+
+% ============================================================
+% 6.6 Notification Module
+% ============================================================
+
+\subsection{Notification Module}
+
+\subsubsection{Module}
+The Notification Module handles system alerts including match notifications, trip updates, and reminders.
+
+\paragraph{Frontend}
+Implemented via Expo Notifications.
+
+UI responsibilities:
+\begin{itemize}
+    \item Requesting push permission
+    \item Displaying notification center
+    \item Handling tap events
+\end{itemize}
+
+Frontend integration:
+\begin{itemize}
+    \item \texttt{useRegisterPushToken()}
+    \item \texttt{useGetNotifications()}
+\end{itemize}
+
+\paragraph{Backend}
+Backend procedures manage dispatch and retrieval:
+\begin{itemize}
+    \item Storing device push tokens
+    \item Sending push messages via Expo Push API
+    \item Queueing async notification events
+    \item Procedures: \texttt{sendNotification()}, \texttt{markAsRead()}
+\end{itemize}
+
+\paragraph{Data}
+\begin{itemize}
+    \item \texttt{notifications} — stored messages
+    \item \texttt{push\_tokens} — device tokens
+\end{itemize}
+
+\subsubsection{Uses}
+\begin{itemize}
+    \item Matching Module — notifies mutual matches
+    \item Scheduling Module — sends reminders
+    \item Trip Module — alerts cancellations
+\end{itemize}
+
+\subsubsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{sendNotification()} & userId, message & Confirmation & DeliveryError \\
+\texttt{getNotifications()} & userId & NotificationList & NotFoundError \\
+\texttt{markAsRead()} & notificationId & Confirmation & UnauthorizedError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsubsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{queuedNotifications}
+    \item \texttt{readStatus}
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Expo Push Service
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{formatNotificationPayload()}
+    \item \texttt{enqueueNotification()}
+\end{itemize}
+
+
+% ============================================================
+% 6.7 Rating & Feedback Module
+% ============================================================
+
+\subsection{Rating \& Feedback Module}
+
+\subsubsection{Module}
+This module collects and stores ride ratings and feedback, updating reliability scores used by the Matching Module.
+
+\paragraph{Frontend}
+UI elements:
+\begin{itemize}
+    \item Post-ride rating screen
+    \item Optional text feedback box
+    \item History of past ratings
+\end{itemize}
+
+Hooks:
+\begin{itemize}
+    \item \texttt{useSubmitRating()}
+    \item \texttt{useGetUserRatings()}
+\end{itemize}
+
+\paragraph{Backend}
+Backend responsibilities:
+\begin{itemize}
+    \item Validating rating payloads
+    \item Linking ratings to matches
+    \item Recomputing reliability scores
+    \item Procedures: \texttt{submitRating()}, \texttt{calculateReliability()}
+\end{itemize}
+
+\paragraph{Data}
+Tables:
+\begin{itemize}
+    \item \texttt{ratings}
+    \item \texttt{reliability\_metrics}
+\end{itemize}
+
+\subsubsection{Uses}
+\begin{itemize}
+    \item Matching Module — reliability score as weighted factor
+    \item User Profile Module — shows aggregated rating
+\end{itemize}
+
+\subsubsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{submitRating()} & ratingData & Confirmation & ValidationError \\
+\texttt{getUserRatings()} & userId & RatingList & NotFoundError \\
+\texttt{calculateReliability()} & userId & Score & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsubsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{recentRatings}
+    \item \texttt{reliabilityScore}
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{computeWeightedAverage()}
+    \item \texttt{sanitizeComment()}
+\end{itemize}
+
+
+% ============================================================
+% 6.8 Safety & Reporting Module
+% ============================================================
+
+\subsection{Safety \& Reporting Module}
+
+\subsubsection{Module}
+This module manages user-submitted safety reports and flags, assisting platform moderation.
+
+\paragraph{Frontend}
+Includes:
+\begin{itemize}
+    \item Report User form
+    \item Safety resources page
+\end{itemize}
+
+Hooks:
+\begin{itemize}
+    \item \texttt{useSubmitReport()}
+\end{itemize}
+
+\paragraph{Backend}
+Backend responsibilities:
+\begin{itemize}
+    \item Validating and storing incident reports
+    \item Assigning severity scores
+    \item Procedures: \texttt{submitReport()}, \texttt{resolveReport()}
+\end{itemize}
+
+\paragraph{Data}
+Tables include:
+\begin{itemize}
+    \item \texttt{reports}
+    \item \texttt{safety\_flags}
+\end{itemize}
+
+\subsubsection{Uses}
+\begin{itemize}
+    \item Admin \& Moderation Module
+    \item Notification Module
+\end{itemize}
+
+\subsubsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{submitReport()} & reportData & Confirmation & ValidationError \\
+\texttt{getReports()} & userId/adminId & ReportList & UnauthorizedError \\
+\texttt{resolveReport()} & reportId, action & Confirmation & PermissionError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsubsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{pendingReports}
+    \item \texttt{userSafetyStatus}
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{categorizeSeverity()}
+    \item \texttt{flagUser()}
+    \item \texttt{closeReport()}
+\end{itemize}
+
+
+
 
 
 \section{Appendix} \label{Appendix}
