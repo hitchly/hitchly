@@ -246,146 +246,155 @@ between requirements and modules is listed in Table~\ref{TblRT}.
 
 Modules are decomposed according to the principle of information hiding
 \citep{ParnasEtAl1984}.  
-Each module’s \emph{Secrets} field describes the internal design decision that is
-hidden, while the \emph{Services} field specifies \emph{what} the module provides
-without detailing \emph{how}.  
-\emph{Implemented By} identifies the software or subsystem that realizes the
-module, and \emph{Type of Module} classifies it as Hardware-Hiding,
-Behaviour-Hiding, or Software-Decision.  
-Only the leaf modules from Section~\ref{SecMH} are included.
+Each module’s \textit{Secrets} describes the internal design decision that is
+intentionally hidden from other modules, while the \textit{Services} field specifies
+\textit{what} the module provides without revealing \textit{how} the service is implemented.  
+The \textit{Frontend UI}, \textit{API Logic}, and \textit{Database Models} indicate 
+how each module is realized across the system’s architecture.  
+\textit{Implemented By} identifies the technologies used, and 
+\textit{Type of Module} classifies each module as a Behaviour-Hiding or 
+Software-Decision module according to Section~\ref{SecMH}.  
+Only the leaf modules are included.
 
-\subsection*{Hardware-Hiding Modules}
-
-These modules provide abstraction from physical device hardware and OS APIs,
-ensuring portability and isolating device-dependent changes.
-
-\subsubsection*{M1: GPS Module}
-\begin{itemize}
-  \item \textbf{Secrets:} How the app accesses and optimizes GPS data, including sampling rate, accuracy, and permission handling.
-  \item \textbf{Services:} Provides real-time coordinates and continuous tracking used for routing, pricing, and ride matching.
-  \item \textbf{Implemented By:} React Native Location API and Expo Location.
-  \item \textbf{Type of Module:} Hardware-Hiding Module.
-\end{itemize}
-
-\subsubsection*{M2: Camera Module}
-\begin{itemize}
-  \item \textbf{Secrets:} Camera access configuration, resolution settings, and permission control.
-  \item \textbf{Services:} Captures photos for license, ID, and profile verification; processes images for upload.
-  \item \textbf{Implemented By:} Expo Camera API and React Native Permissions.
-  \item \textbf{Type of Module:} Hardware-Hiding Module.
-\end{itemize}
-
+% ---------------------------------------------------------
+% BEHAVIOUR-HIDING MODULES
+% ---------------------------------------------------------
 \subsection*{Behaviour-Hiding Modules}
 
-These modules implement Hitchly’s user-visible behaviours and external interactions.
-They hide workflow logic, API details, and data representations from the end user.
-
-\subsubsection*{M3: Verification Module}
+\subsubsection*{M1: Authentication \& Verification Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Identity-validation logic, including SSO integration and license verification algorithms.
-  \item \textbf{Services:} Verifies users through McMaster SSO authentication and driver-license uploads, interacting with the Camera Module for photo capture.
-  \item \textbf{Implemented By:} Node.js (Express) backend integrated with McMaster SSO and third-party verification APIs.
+  \item \textbf{Secrets:} Token/session strategy, email-verification workflow, and credential-validation logic.
+  \item \textbf{Services:} Allows users to register, log in, and verify McMaster email accounts.
+  \item \textbf{Frontend UI:} Login screens, signup forms, verification code UI.
+  \item \textbf{API Logic:} \texttt{authRouter} (login, register, verify), session helpers, Zod validation.
+  \item \textbf{Database Models:} \texttt{User} table (email, password hash, verified flag, session tokens).
+  \item \textbf{Implemented By:} React Native (Expo) + tRPC backend with Prisma ORM.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M4: Authentication Module}
+\subsubsection*{M2: User Profile Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Token management and session lifetime configuration.
-  \item \textbf{Services:} Handles user login, registration, and secure JWT refresh.
-  \item \textbf{Implemented By:} Node.js + tRPC backend with PostgreSQL user store and JWT middleware.
+  \item \textbf{Secrets:} Role-assignment logic and profile-preference storage design.
+  \item \textbf{Services:} Provides profile editing, preferences, and vehicle data management.
+  \item \textbf{Frontend UI:} Profile page, edit forms, vehicle info inputs.
+  \item \textbf{API Logic:} \texttt{userRouter} for CRUD operations, preference update flow.
+  \item \textbf{Database Models:} \texttt{User}, \texttt{Vehicle}, \texttt{Preference}.
+  \item \textbf{Implemented By:} React Native UI + tRPC + Prisma.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M5: Matching Module}
+\subsubsection*{M3: Route \& Trip Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Ride-matching algorithm and ranking heuristics based on route and time overlap.
-  \item \textbf{Services:} Matches riders and drivers, returns ranked ride options, and records confirmed pairings.
-  \item \textbf{Implemented By:} Node.js backend using Mapbox API and PostgreSQL.
+  \item \textbf{Secrets:} Trip-storage schema, route normalization, and time formatting.
+  \item \textbf{Services:} Allows users to create, list, and cancel trips.
+  \item \textbf{Frontend UI:} Trip creation form, trip list UI, route selection screen.
+  \item \textbf{API Logic:} \texttt{tripRouter} for trip creation, querying, and deletion.
+  \item \textbf{Database Models:} \texttt{Trip} table (origin, destination, time, seat count).
+  \item \textbf{Implemented By:} React Native + tRPC backend + Prisma.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M6: Mapping Module}
+\subsubsection*{M4: Matching Module}
 \begin{itemize}
-  \item \textbf{Secrets:} API-key management and caching strategy for rendering maps and computing routes.
-  \item \textbf{Services:} Displays maps, computes distances and ETAs, and provides coordinates for pricing and matching.
-  \item \textbf{Implemented By:} React Native frontend using Google Maps / Mapbox SDK.
+  \item \textbf{Secrets:} Scoring algorithm, distance/time weighting, and Strategy Pattern implementation.
+  \item \textbf{Services:} Computes driver–rider compatibility and returns ordered match results.
+  \item \textbf{Frontend UI:} Swipe-based card UI, match results list.
+  \item \textbf{API Logic:} \texttt{matchmakingRouter}, MatchEngine (Strategy Pattern).
+  \item \textbf{Database Models:} \texttt{Match}, \texttt{Swipe}.
+  \item \textbf{Implemented By:} Node.js backend (tRPC) + algorithm utilities + Prisma ORM.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M7: Payment Module}
+\subsubsection*{M5: Scheduling Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Payment-flow design and validation logic for cost-sharing transactions.
-  \item \textbf{Services:} Handles transactions, manages fare splitting, and stores payment records.
-  \item \textbf{Implemented By:} Node.js backend integrated with a Stripe-like API and PostgreSQL.
+  \item \textbf{Secrets:} Recurring-trip generation algorithm and time-window parsing.
+  \item \textbf{Services:} Creates recurring or one-time schedules linked to trips.
+  \item \textbf{Frontend UI:} Time picker, recurring toggle, calendar UI.
+  \item \textbf{API Logic:} Schedule parser and recurring schedule generator.
+  \item \textbf{Database Models:} \texttt{Schedule} table.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M8: Database Module}
+\subsubsection*{M6: Notification Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Schema definitions, indexing strategies, and ORM mappings.
-  \item \textbf{Services:} Provides persistent data storage and structured query interfaces for all other modules.
-  \item \textbf{Implemented By:} PostgreSQL database accessed via Drizzle ORM in Node.js backend.
+  \item \textbf{Secrets:} Push-token handling and asynchronous event queue logic.
+  \item \textbf{Services:} Sends push notifications for matches, cancellations, and reminders.
+  \item \textbf{Frontend UI:} In-app notification center, Expo push integration.
+  \item \textbf{API Logic:} Notification service with event emitters.
+  \item \textbf{Database Models:} \texttt{Notification} table.
+  \item \textbf{Implemented By:} Expo Push Service + tRPC backend dispatcher.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M9: Notification Module}
+\subsubsection*{M7: Rating \& Feedback Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Message-queue structure and token-based delivery mechanism for push notifications.
-  \item \textbf{Services:} Sends trip confirmations, cancellations, and safety alerts through the Expo Push Notification Service.
-  \item \textbf{Implemented By:} Expo Push Service API with backend dispatcher in Node.js.
+  \item \textbf{Secrets:} Reputation computation and weighting logic.
+  \item \textbf{Services:} Enables users to submit ratings and text feedback after trips.
+  \item \textbf{Frontend UI:} Post-ride rating screen.
+  \item \textbf{API Logic:} \texttt{ratingRouter}.
+  \item \textbf{Database Models:} \texttt{Rating} table (linked to \texttt{Match}).
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma ORM.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M10: Rating Module}
+\subsubsection*{M8: Safety \& Reporting Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Scoring and weighting logic for user-reputation computation.
-  \item \textbf{Services:} Records ratings, aggregates averages, and updates driver and rider reputations.
-  \item \textbf{Implemented By:} Node.js microservice with PostgreSQL + Drizzle ORM.
+  \item \textbf{Secrets:} Incident-flagging thresholds and safety-response workflow.
+  \item \textbf{Services:} Allows reporting of unsafe behaviour and stores incidents for admin review.
+  \item \textbf{Frontend UI:} Report button, safety resources screen.
+  \item \textbf{API Logic:} Report submission via \texttt{reportRouter}.
+  \item \textbf{Database Models:} \texttt{Report}.
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M11: Search Module}
+\subsubsection*{M9: Payment \& Cost Estimation Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Search indexing and filtering logic for ride listings.
-  \item \textbf{Services:} Enables users to search rides by date, location, and preference filters.
-  \item \textbf{Implemented By:} Node.js backend using PostgreSQL full-text search.
+  \item \textbf{Secrets:} Fare-calculation logic and mock-payment validation.
+  \item \textbf{Services:} Estimates ride cost and records payment confirmations.
+  \item \textbf{Frontend UI:} Fare display, confirmation screen.
+  \item \textbf{API Logic:} \texttt{paymentRouter}.
+  \item \textbf{Database Models:} \texttt{Payment}, \texttt{Transaction}.
+  \item \textbf{Implemented By:} tRPC backend + Prisma ORM.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
+\subsubsection*{M10: Admin \& Moderation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Moderation rules, flagging thresholds, and admin-only access logic.
+  \item \textbf{Services:} Allows admins to review reports, ban users, and view platform stats.
+  \item \textbf{Frontend UI:} Admin dashboard (optional).
+  \item \textbf{API Logic:} \texttt{adminRouter}.
+  \item \textbf{Database Models:} Admin logs, flagged users.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+% ---------------------------------------------------------
+% SOFTWARE-DECISION MODULES
+% ---------------------------------------------------------
 \subsection*{Software-Decision Modules}
 
-These modules contain Hitchly’s internal logic and algorithms invisible to users.
-They implement data analysis, computation, scheduling, and enforcement mechanisms.
-
-\subsubsection*{M12: Analytics Module}
+\subsubsection*{M11: Pricing Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Data-aggregation and metric-computation methods for sustainability and usage tracking.
-  \item \textbf{Services:} Collects anonymized usage data and generates reports for performance monitoring.
-  \item \textbf{Implemented By:} Backend analytics engine using Node.js and PostgreSQL scheduled jobs.
+  \item \textbf{Secrets:} Fuel-rate constants, distance multipliers, and fare model.
+  \item \textbf{Services:} Computes estimated trip price using distance and conditions.
+  \item \textbf{Frontend UI:} Fare estimate displayed in trip preview.
+  \item \textbf{API Logic:} Cost-calculation service reused by M9.
+  \item \textbf{Database Models:} Pricing configuration constants.
+  \item \textbf{Implemented By:} Node.js backend utilities + shared pricing helpers.
   \item \textbf{Type of Module:} Software-Decision Module.
 \end{itemize}
 
-\subsubsection*{M13: Scheduling Module}
+\subsubsection*{M12: Database Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Trip allocation and time-slot management algorithm.
-  \item \textbf{Services:} Manages ride creation, modifications, and cancellations while preventing overlap conflicts.
-  \item \textbf{Implemented By:} Node.js backend with Drizzle ORM transactional logic.
-  \item \textbf{Type of Module:} Software-Decision Module.
-\end{itemize}
-
-\subsubsection*{M14: Safety Module}
-\begin{itemize}
-  \item \textbf{Secrets:} Safety-policy enforcement logic and verification thresholds.
-  \item \textbf{Services:} Oversees ride safety checks, monitors incidents, and handles emergency triggers.
-  \item \textbf{Implemented By:} Node.js backend integrated with Verification and Notification modules.
-  \item \textbf{Type of Module:} Software-Decision Module.
-\end{itemize}
-
-\subsubsection*{M15: Pricing Module}
-\begin{itemize}
-  \item \textbf{Secrets:} Fare-calculation formula and cost-sharing model parameters.
-  \item \textbf{Services:} Computes ride prices and divides costs among passengers based on route and occupancy.
-  \item \textbf{Implemented By:} Node.js backend using Mapping and Scheduling data.
+  \item \textbf{Secrets:} ORM mapping, schema decisions, and migration strategy.
+  \item \textbf{Services:} Provides access to all persistent data models via a centralized DB client.
+  \item \textbf{Frontend UI:} None.
+  \item \textbf{API Logic:} Prisma client configuration and model exports.
+  \item \textbf{Database Models:} All tables (User, Trip, Match, Schedule, etc.).
+  \item \textbf{Implemented By:} Prisma ORM + PostgreSQL.
   \item \textbf{Type of Module:} Software-Decision Module.
 \end{itemize}
 
