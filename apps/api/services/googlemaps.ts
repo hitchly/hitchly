@@ -68,17 +68,23 @@ export async function getDetourAndRideDetails(
 ) {
   const targetArrivalTime = getFutureDateTime(driver.plannedArrivalTime);
 
-  const departureTime = new Date(targetArrivalTime.getTime());
-  departureTime.setHours(departureTime.getHours() - 1);
+  const predictiveDepartureTime = new Date(targetArrivalTime.getTime());
+  predictiveDepartureTime.setHours(predictiveDepartureTime.getHours() - 1);
+
+  const now = new Date();
+
+  const departureTime = new Date(
+    Math.max(predictiveDepartureTime.getTime(), now.getTime()),
+  );
 
   const originalRoute = await getRouteDetails(
     driver.origin,
     driver.destination,
-    driver.routeWaypoints,
+    [],
     departureTime,
   );
 
-  const newWaypoints = [rider.origin, ...driver.routeWaypoints];
+  const newWaypoints = [rider.origin];
   const newRoute = await getRouteDetails(
     driver.origin,
     driver.destination,
@@ -92,11 +98,24 @@ export async function getDetourAndRideDetails(
   const riderRoute = await getRouteDetails(
     rider.origin,
     driver.destination,
-    [...driver.routeWaypoints],
+    [],
     departureTime,
   );
   const rideDistanceKm = riderRoute.totalDistanceMeters / 1000;
   const rideDurationSeconds = riderRoute.totalDurationSeconds;
+
+  console.group(`\n--- [Debug] Detour for Driver: ${driver.id} ---`);
+  console.log(`Rider ID: ${rider.id}`);
+  console.log(`Departure Time Used: ${predictiveDepartureTime.toISOString()}`);
+  console.log(
+    `Original Time (Driver Only): ${(originalRoute.totalDurationSeconds / 60).toFixed(2)} mins`,
+  );
+  console.log(
+    `New Time (With Pickup):     ${(newRoute.totalDurationSeconds / 60).toFixed(2)} mins`,
+  );
+  console.log(
+    `Calculated Detour:        ${(detourTimeInSeconds / 60).toFixed(2)} mins`,
+  );
 
   return {
     detourTimeInSeconds: Math.max(0, detourTimeInSeconds), // Ensure no negative detour
