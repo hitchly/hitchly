@@ -1,0 +1,35 @@
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import type { AppRouter } from "./trpc/routers";
+import type { RiderProfile } from "./services/matchmaking_service";
+
+const trpc = createTRPCProxyClient<AppRouter>({
+  links: [
+    httpBatchLink({
+      // URL of running API server
+      url: "http://localhost:3000/trpc",
+    }),
+  ],
+});
+
+const testRider: RiderProfile = {
+  id: "test-rider-1",
+  origin: { lat: 43.255, lng: -79.9 }, // A test location in Hamilton
+  destination: { lat: 43.2609, lng: -79.9192 }, // McMaster
+  desiredArrivalTime: "08:45",
+  maxOccupancy: 3, // They are willing to be in a car with 3 people total
+};
+
+async function runTest() {
+  console.log(`🚀 Sending test request for rider: ${testRider.id}...`);
+  try {
+    const result = await trpc.matchmaking.findMatches.query(testRider);
+    console.log("\n✅ Test client received success!");
+    console.log("This is the raw data returned to the client:");
+    console.log(result);
+  } catch (error) {
+    console.error("\n❌ Test Failed:");
+    console.error(error);
+  }
+}
+
+runTest();
