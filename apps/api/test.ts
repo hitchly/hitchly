@@ -19,6 +19,22 @@ const testRider: RiderProfile = {
   maxOccupancy: 3, // They are willing to be in a car with 3 people total
 };
 
+const testRider2: RiderProfile = {
+  id: "test-rider-2",
+  origin: { lat: 43.09363, lng: -80.44377 },
+  destination: { lat: 43.2609, lng: -79.9192 },
+  desiredArrivalTime: "11:45",
+  maxOccupancy: 2,
+};
+
+const testRider3: RiderProfile = {
+  id: "test-rider-3",
+  origin: { lat: 43.80225, lng: -79.26099 },
+  destination: { lat: 43.2609, lng: -79.9192 },
+  desiredArrivalTime: "13:35",
+  maxOccupancy: 1,
+};
+
 async function runTest() {
   console.log(`🚀 Sending test request for rider: ${testRider.id}...`);
   try {

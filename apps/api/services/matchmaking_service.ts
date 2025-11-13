@@ -65,6 +65,95 @@ export const hardcodedDrivers: DriverProfile[] = [
     maxPassengers: 2,
     currentPassengers: 1,
   },
+
+  //////////////////
+  {
+    id: "driver-3",
+    origin: { lat: 43.31009, lng: -79.83965 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "10:00",
+    detourToleranceMinutes: 15,
+    maxPassengers: 5,
+    currentPassengers: 4,
+  },
+
+  {
+    id: "driver-4",
+    origin: { lat: 43.3205, lng: -79.82787 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "11:00",
+    detourToleranceMinutes: 4,
+    maxPassengers: 3,
+    currentPassengers: 2,
+  },
+
+  {
+    id: "driver-5",
+    origin: { lat: 43.34768, lng: -79.77522 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "4:00",
+    detourToleranceMinutes: 20,
+    maxPassengers: 4,
+    currentPassengers: 2,
+  },
+
+  {
+    id: "driver-6",
+    origin: { lat: 43.54736, lng: -79.59591 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "8:20",
+    detourToleranceMinutes: 23,
+    maxPassengers: 4,
+    currentPassengers: 2,
+  },
+
+  {
+    id: "driver-7",
+    origin: { lat: 43.58022, lng: -79.66507 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "15:20",
+    detourToleranceMinutes: 25,
+    maxPassengers: 2,
+    currentPassengers: 1,
+  },
+
+  {
+    id: "driver-8",
+    origin: { lat: 43.58111, lng: -79.95911 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "16:20",
+    detourToleranceMinutes: 15,
+    maxPassengers: 4,
+    currentPassengers: 3,
+  },
+
+  {
+    id: "driver-9",
+    origin: { lat: 43.15278, lng: -79.61796 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "18:20",
+    detourToleranceMinutes: 20,
+    maxPassengers: 3,
+    currentPassengers: 2,
+  },
+
+  {
+    id: "driver-10",
+    origin: { lat: 43.13844, lng: -80.27294 },
+    destination: { lat: 43.2609, lng: -79.9192 },
+    routeWaypoints: [{ lat: 43.245, lng: -79.9 }],
+    plannedArrivalTime: "14:50",
+    detourToleranceMinutes: 25,
+    maxPassengers: 4,
+    currentPassengers: 3,
+  },
 ];
 
 function calculateScheduleScore(riderTime: string, driverTime: string): number {
