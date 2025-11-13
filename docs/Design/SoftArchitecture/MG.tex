@@ -185,16 +185,46 @@ decisions will be changed.
 
 \section{Module Hierarchy} \label{SecMH}
 
-This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
-below, which are leaves in the hierarchy tree, are the modules that will
-actually be implemented.
+This section provides an overview of the modular design for Hitchly.  
+The hierarchy follows the principle of information hiding, where each module  
+encapsulates a design decision that may change independently.  
+Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
 \begin{description}
-\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
-\end{description}
 
+\item[\textbf{5.1 Hardware-Hiding Modules}]  
+There are no hardware-hiding modules in this design.  
+Hitchly relies on high-level framework APIs (Expo, React Native),  
+so no direct hardware abstraction is required.
+
+\item[\textbf{5.2 Behaviour-Hiding Modules}]  
+These modules implement the user-visible behaviour of the application.  
+They hide workflow logic, API interactions, and data handling that support  
+Hitchly’s core features.
+
+\begin{itemize}
+  \item M1: Authentication \& Verification Module
+  \item M2: User Profile Module
+  \item M3: Route \& Trip Module
+  \item M4: Matching Module
+  \item M5: Scheduling Module
+  \item M6: Notification Module
+  \item M7: Rating \& Feedback Module
+  \item M8: Safety \& Reporting Module
+  \item M9: Payment \& Cost Estimation Module
+  \item M10: Admin \& Moderation Module
+\end{itemize}
+
+\item[\textbf{5.3 Software-Decision Modules}]  
+These modules encapsulate internal logic, algorithms,  
+and implementation decisions not visible to users.
+
+\begin{itemize}
+  \item M11: Pricing Module
+  \item M12: Database Module
+\end{itemize}
+
+\end{description}
 
 \begin{table}[h!]
 \centering
@@ -202,29 +232,30 @@ actually be implemented.
 \toprule
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
-
-{Hardware-Hiding Module} & ~ \\
+Hardware-Hiding Module & None\\
 \midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding Module} & ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\ 
-& ?\\
+\multirow{10}{0.3\textwidth}{Behaviour-Hiding Module}
+& M1: Authentication \& Verification Module\\
+& M2: User Profile Module\\
+& M3: Route \& Trip Module\\
+& M4: Matching Module\\
+& M5: Scheduling Module\\
+& M6: Notification Module\\
+& M7: Rating \& Feedback Module\\
+& M8: Safety \& Reporting Module\\
+& M9: Payment \& Cost Estimation Module\\
+& M10: Admin \& Moderation Module\\
 \midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision Module} & {?}\\
-& ?\\
-& ?\\
+\multirow{2}{0.3\textwidth}{Software-Decision Module}
+& M11: Pricing Module\\
+& M12: Database Module\\
 \bottomrule
-
 \end{tabular}
 \caption{Module Hierarchy}
 \label{TblMH}
 \end{table}
+
+
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
