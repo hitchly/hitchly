@@ -108,9 +108,6 @@ Complementary documents include the System Requirement Specifications and Module
 
 \section{Notation}
 
-\wss{You should describe your notation.  You can use what is below as
-  a starting point.}
-
 The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
 with the addition that template modules have been adapted from
 \cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
@@ -371,6 +368,9 @@ All other modules depend on this component to validate user identity before allo
 
 \paragraph{Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -381,6 +381,8 @@ All other modules depend on this component to validate user identity before allo
 \texttt{logoutUser()} & sessionToken & confirmation & InvalidSessionError \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -506,6 +508,9 @@ Through these integrations, the module forms the foundation of personalization a
 
 \paragraph{Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -517,6 +522,8 @@ Through these integrations, the module forms the foundation of personalization a
 \texttt{updatePreferences()} & userId, PreferenceData & UpdatedPreference & ValidationError \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -642,6 +649,9 @@ It serves as the foundation for dynamic route pairing and trip coordination with
 
 \paragraph{Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -653,6 +663,8 @@ It serves as the foundation for dynamic route pairing and trip coordination with
 \texttt{getTripById()} & tripId & TripRecord & NotFoundError \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -783,6 +795,9 @@ It is the computational bridge between trip listings and user engagement, suppor
 
 \paragraph{Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -793,6 +808,8 @@ It is the computational bridge between trip listings and user engagement, suppor
 \texttt{computeScore()} & rider, driver & Float (0-100) & AlgorithmError \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -1263,6 +1280,9 @@ It interacts directly with:
 
 \paragraph{6.9.3.2 Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -1272,6 +1292,8 @@ It interacts directly with:
 \texttt{get\_paymentRecord()} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -1371,6 +1393,9 @@ This layer will store a schema of tables used across multiple modules. This incl
 
 \paragraph{6.10.3.2 Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -1382,6 +1407,8 @@ This layer will store a schema of tables used across multiple modules. This incl
 \texttt{getAllRecords()} & tablename & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -1486,6 +1513,9 @@ The database component is responsible for storing the following table:
 
 \paragraph{6.11.3.2 Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -1495,6 +1525,8 @@ The database component is responsible for storing the following table:
 \texttt{update\_fare()} & new\_rider\_count & updated\_fare & APITimeOutException \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -1581,6 +1613,9 @@ This layer is responsible for handling communication with RESTAPI endpoints usin
 
 \paragraph{6.12.3.2 Exported Access Programs}
 \par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l l l l}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -1590,6 +1625,8 @@ This layer is responsible for handling communication with RESTAPI endpoints usin
 \texttt{get\_analytics()} & None & Returns a dataset of user and application statistics & NotFoundError, InsufficientAdminPrivileges \\
 \bottomrule
 \end{tabular}
+}
+\end{center}
 
 \subsubsection{Semantics}
 
@@ -1646,13 +1683,10 @@ N/A
 
 \section{Appendix} \label{Appendix}
 
-\wss{Extra information if required}
 
 \newpage{}
 
 \section*{Appendix --- Reflection}
-
-\wss{Not required for CAS 741 projects}
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Problem Analysis and Design.
