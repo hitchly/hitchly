@@ -1235,9 +1235,9 @@ It interacts directly with:
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{init_payment()} & user_id, ride_id & Boolean (verified or unverified) & NotFoundError \\
-\texttt{process_payment()} & payment_id, payment_method  & payment_status  & ExpiredSessionError \\
-\texttt{get_paymentRecord()} & payment_id, user_id, ride_id & paymentRecord & NotFoundError \\
+\texttt{init\_payment()} & user\_id, ride\_id & Boolean (verified or unverified) & NotFoundError \\
+\texttt{process\_payment()} & payment\_id, payment\_method  & payment_status  & ExpiredSessionError \\
+\texttt{get\_paymentRecord()} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
 \bottomrule
 \end{tabular}
 
@@ -1245,8 +1245,8 @@ It interacts directly with:
 
 \paragraph{6.9.4.1 State Variables}
 \begin{itemize}
-    \item \texttt{current_amount: float} — holds the current amount for the transaction.
-    \item \texttt{session_token: string} — holds the current amount for the transaction.
+    \item \texttt{current\_amount: float} — holds the current amount for the transaction.
+    \item \texttt{session\_token: string} — holds the current amount for the transaction.
     \item \texttt{sessionState: object} — holds session metadata for frontend persistence.
 \end{itemize}
 
