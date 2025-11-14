@@ -74,7 +74,6 @@ This section records information for easy reference.
   SRS & Software Requirements Specification\\
   \progname & Explanation of program name\\
   UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
   \bottomrule
 \end{tabular}\\
 
@@ -157,16 +156,14 @@ adapted here is called design for
 change.
 
 \begin{description}
-\item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
-  hardware on which the software is running.
-\item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchingAlgorithm}:] \textbf{Matching Algorithm:} The matching algorithm focuses on 
+the goal of finding the best available drivers for the riders. This algorithm takes into account the user's location, timetable, time, and distance. For instance, it matches a rider with a driver that has the same timetable and lives in the same area. The current algorithm will be simply based on these four parameters, and it will have to change in the future to consider more parameters to increase its efficiency and accuracy. Moreover, subtle changes to the algorithm may also be expected for further optimization of its complexity and speed. 
+\item[\refstepcounter{acnum} \actheacnum \label{acUserInterface}:] \textbf{User Interface:} As the application proceeds to go through its initial phase of development and use, usability testing is expected to be done to ensure user satisfaction. As the users provide feedback, changes will be made to the user interface in the future phases of development. Moreover, even after that, changes will be made based on accessibility requirements in the future. The layout and navigation are the two main things from the user interaction that would need the most changes as per user's feedback.   
+\item[\refstepcounter{acnum} \actheacnum \label{acDB}:] \textbf{Database Schema:} As the app updates with new features, the current method of analytics may change. New parameters would be considered for the matching algorithm, and new features may be added based on future user needs. Therefore, changes may need to be made to the database schemas
+\item[\refstepcounter{acnum} \actheacnum \label{acPayment}:] \textbf{Payment Processing:} Additional payment processors and pricing formulas will be used to determine the price estimate for drivers. An addition of parameters to estimate the cost would cause the algorithms to change.  
+\item[\refstepcounter{acnum} \actheacnum \label{acDevEnvioremnt}:] \textbf{Development Environment:} Changes could be made to the CI/CD configuration to improve the reliability and stability of the system.
 \end{description}
 
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -178,9 +175,10 @@ will potentially need to be modified. Hence, it is not intended that these
 decisions will be changed.
 
 \begin{description}
-\item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucDevices}:] \textbf{Devices:} Hitchly is an application that is developed for mobile devices only. A version that is compatible to run on a desktop is an unlikely change as it requires major changes to the software design. 
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucLanguage}:] \textbf{Language Support:} The application is primarily based on the English language. Adding additional languages to the interface would require a major design decision.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucProgramming}:] \textbf{Programming Language and Technologies:} The core of this application is supposed to be developed using React Native, Typescript, and SQL. Making changes to how the application is developed is an unlikely change as it requires a change in the entire design of the application.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucVerification}:] \textbf{Verification Requirement:} This app is strictly restricted for McMaster affiliated users as the entire concept of this application is designed for them. It is not subject to removal. Verification of the users will be their McMaster affiliated email.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
@@ -262,13 +260,6 @@ Hardware-Hiding Module & None\\
 The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
 between requirements and modules is listed in Table~\ref{TblRT}.
-
-\wss{The intention of this section is to document decisions that are made
-  ``between'' the requirements and the design.  To satisfy some requirements,
-  design decisions need to be made.  Rather than make these decisions implicit,
-  they are explicitly recorded here.  For instance, if a program has security
-  requirements, a specific design decision may be made to satisfy those
-  requirements with a password.}
 
 \section{Module Decomposition} \label{SecMD}
 
@@ -445,17 +436,44 @@ requirements and between the modules and the anticipated changes.
 \toprule
 \textbf{Req.} & \textbf{Modules}\\
 \midrule
-R1 & \mref{mHH}, \mref{mInput}, \mref{mParams}, \mref{mControl}\\
-R2 & \mref{mInput}, \mref{mParams}\\
-R3 & \mref{mVerify}\\
-R4 & \mref{mOutput}, \mref{mControl}\\
-R5 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R6 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R7 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R8 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R9 & \mref{mVerifyOut}\\
-R10 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}\\
-R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
+FR211 & M4, M3, M5, M10\\
+FR212 & M4, M5, M10\\
+FR213 & M4, M2\\
+FR214 & M4, M2, M5\\
+NFR211 & M4, M10\\
+NFR212 & M4, M1, M10\\
+FR221 & M5, M3, M10\\
+FR222 & M5, M6\\
+FR223 & M5, M6, M9\\
+FR224 & M6, M5\\
+NFR221 & M10, M5\\
+NFR222 & M6, M5, M10\\
+FR231 & M1, M2\\
+FR232 & M1, M10\\
+FR233 & M8, M3, M6\\
+FR234 & M8, M2, M12\\
+NFR231 & M1, M10\\
+NFR232 & M1, M10, M12\\
+FR241 & M11, M5, M3\\
+FR242 & M9\\
+FR243 & M9\\
+FR244 & M10, M9\\
+NFR241 & M9\\
+NFR242 & M9\\
+FR251 & M2, M1\\
+FR252 & M10, M2\\
+FR253 & M10, M2, M3\\
+FR254 & M2, M4\\
+NFR251 & M2, M1\\
+NFR252 & M2, M10\\
+FR261 & M7, M2\\
+FR262 & M8, M12\\
+FR263 & M7, M5, M4\\
+FR264 & M7, M2\\
+NFR261 & M7, M12\\
+
+
+
 \bottomrule
 \end{tabular}
 \caption{Trace Between Requirements and Modules}
@@ -468,18 +486,11 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 \toprule
 \textbf{AC} & \textbf{Modules}\\
 \midrule
-\acref{acHardware} & \mref{mHH}\\
-\acref{acInput} & \mref{mInput}\\
-\acref{acParams} & \mref{mParams}\\
-\acref{acVerify} & \mref{mVerify}\\
-\acref{acOutput} & \mref{mOutput}\\
-\acref{acVerifyOut} & \mref{mVerifyOut}\\
-\acref{acODEs} & \mref{mODEs}\\
-\acref{acEnergy} & \mref{mEnergy}\\
-\acref{acControl} & \mref{mControl}\\
-\acref{acSeqDS} & \mref{mSeqDS}\\
-\acref{acSolver} & \mref{mSolver}\\
-\acref{acPlot} & \mref{mPlot}\\
+\acref{acMatchingAlgorithm} & M4, M2, M5\\
+\acref{acUserInterface} & M1, M2, M3, M4, M5, M6, M7, M8, M9, M11, M12\\
+\acref{acDB} & M10\\
+\acref{acPayment} & M9, M11\\
+\acref{acDevEnvioremnt} & N/A (External Process)\\
 \bottomrule
 \end{tabular}
 \caption{Trace Between Anticipated Changes and Modules}
@@ -519,8 +530,119 @@ arrows in the diagram typically correspond to the presence of import statement.}
 
 \section{User Interfaces}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
+This sections provides an overview of the important screens of the application. 
+
+\begin{figure}[h!]
+\caption{Main Login Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{figure/Login Screen.png}
+\end{figure}
+
+
+\begin{figure}[h!]
+\caption{Register Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{figure/Register Screen.png}
+\end{figure}
+
+
+\begin{figure}[h!]
+\caption{Verification Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Register-2.png}
+\end{figure}
+
+
+\begin{figure}[h!]
+\caption{Upload Schedule Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Register-3.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Select User Type Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Register-3 (1).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{User Prompted to Add Profile Information}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Profile.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Home Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Selection (1).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Switch to Driver Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Drive-Selection.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Switch to Rider Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Selection.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Driver Connection Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Drive-Connection.png}
+\end{figure}
+
+
+\begin{figure}[h!]
+\caption{Rider Connection Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Connection.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Matched Rider List Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Connection (2).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Matched Driver List Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Connection (1).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{No Matches Found Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Connection (3).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{No Matches Found Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Passenger-Connection (3).png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Driver Navigation Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Driver-navigation.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Rider Wait Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Passenger-pickup-wait.png}
+\end{figure}
+
+\begin{figure}[h!]
+\caption{Cost Estimation Screen}
+\centering
+\includegraphics[width=0.2\textwidth]{D:\University\4th year\4th_Year_Fall\4G06\hitchly\docs\Design\SoftArchitecture\figure\Home-Drive-Connection (1).png}
+\end{figure}
 
 \section{Design of Communication Protocols}
 
@@ -628,10 +750,129 @@ reliability, and sustainability for McMaster commuters.
 
 
 \section{Timeline}
+The following timeline details our implementation for Rev 0. Each task is broken down to the module level. Each tasks has roles and responsibilities defined along with estimated development duration.
+\begin{table}[h!]
+  \centering
+  \caption{Phase 1}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+  
+  Creating Hitchly Wireframes for UI & M2 & Done & Burhan, Sarim \\
+  \hline
 
-\wss{Schedule of tasks and who is responsible}
+  Make initial version of matching algorithm & M4 & Done & Hamzah, Sarim \\
+  \hline
 
-\wss{You can point to GitHub if this information is included there}
+  Set up authentication and application bones & M1 & Done & Aidan \\
+  \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 2: Front End and User Roles}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Develop login, registration, and session flows & M1 & Weeks 14--16 & Aidan \\
+  \hline
+
+  Build user profile screens and preferences interface & M2 & Weeks 14--16 & Swesan \\
+  \hline
+
+  Create upload, settings, and account management pages & M2 & Weeks 14--16 & Burhan \\
+  \hline
+
+  Build navigation, layouts, and key frontend components & M2 & Weeks 14--16 & Hamzah \\
+  \hline
+
+  Integrate basic user-to-database connections for profile initialization & M12 & Weeks 15--17 & Sarim \\
+  \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 3: Core Ride-Share Logic and Trip Flow}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Implement matching algorithm and rider–driver compatibility logic 
+  & M4 & Weeks 18--21 & Sarim, Hamzah \\
+  \hline
+
+  Build Routing \& Trip creation (origin, destination, seat count) 
+  & M3 & Weeks 18--21 & Burhan \\
+  \hline
+
+  Implement Scheduling module (recurring rides, time windows) 
+  & M5 & Weeks 19--22 & Aidan \\
+  \hline
+
+  Integrate Payment \& Cost estimation (distance, time, pricing model) 
+  & M9 & Weeks 20--22 & Swesan \\
+  \hline
+
+  Build Pricing module (fare calculations, dynamic pricing rules) 
+  & M11 & Weeks 20--23 & Swesan \\
+  \hline
+
+  Add Rating \& Feedback system for both riders and drivers 
+  & M7 & Weeks 21--23 & Sarim \\
+  \hline
+
+  Implement Admin \& Moderation tools (flagging, dispute handling) 
+  & M10 & Weeks 22--24 & Burhan, Aidan \\
+  \hline
+
+  Build Notification module (push/in-app updates for trips) 
+  & M6 & Weeks 21--24 & Hamzah \\
+  \hline
+
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 4: Safety, Database Integration, and Finalization}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Implement Safety \& Reporting module (incident reports, flagging) 
+  & M8 & Weeks 24--26 & Burhan \\
+  \hline
+
+  Complete full Database Module integration across all features 
+  & M12 & Weeks 24--27 & Aidan, Sarim \\
+  \hline
+
+  Perform end-to-end testing of all ride flows 
+  & M1--M12 & Weeks 25--28 & All \\
+  \hline
+
+  Optimize performance, resolve bugs, and finalize UI polish 
+  & M1--M12 & Weeks 26--29 & All \\
+  \hline
+
+  Prepare release build, documentation, and deployment setup 
+  & M1--M12 & Weeks 28--30 & All \\
+  \hline
+
+  \end{tabularx}
+\end{table}
+
+
+    
+
+\clearpage
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}
