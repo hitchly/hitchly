@@ -82,7 +82,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-5",
-    origin: { lat: 43.34768, lng: -79.77522 }, // Burlington, ON
+    origin: { lat: 43.34768, lng: -79.77522 }, // Burlington, ON (Good overnight test)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "04:00",
     detourToleranceMinutes: 20,
@@ -90,17 +90,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-6",
-    origin: { lat: 43.54736, lng: -79.59591 }, // Mississauga, ON (near Port Credit)
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:20",
-    detourToleranceMinutes: 23,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
     id: "driver-7",
-    origin: { lat: 43.58022, lng: -79.66507 }, // Mississauga, ON (Erin Mills area)
+    origin: { lat: 43.58022, lng: -79.66507 }, // Mississauga, ON (Far East - Afternoon)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "15:20",
     detourToleranceMinutes: 25,
@@ -109,7 +100,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-8",
-    origin: { lat: 43.58111, lng: -79.95911 }, // Milton, ON
+    origin: { lat: 43.58111, lng: -79.95911 }, // Milton, ON (Far North)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "16:20",
     detourToleranceMinutes: 15,
@@ -118,7 +109,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-9",
-    origin: { lat: 43.15278, lng: -79.61796 }, // Grimsby, ON
+    origin: { lat: 43.15278, lng: -79.61796 }, // Grimsby, ON (South-East - Evening)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "18:20",
     detourToleranceMinutes: 20,
@@ -127,7 +118,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-10",
-    origin: { lat: 43.13844, lng: -80.27294 }, // Brantford, ON
+    origin: { lat: 43.13844, lng: -80.27294 }, // Brantford, ON (Far West - Afternoon)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "14:50",
     detourToleranceMinutes: 25,
@@ -136,7 +127,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-11",
-    origin: { lat: 43.265, lng: -79.940 }, // West Hamilton, ON
+    origin: { lat: 43.265, lng: -79.94 }, // West Hamilton, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:45",
     detourToleranceMinutes: 10,
@@ -145,7 +136,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-12",
-    origin: { lat: 43.220, lng: -79.830 }, // Stoney Creek, ON
+    origin: { lat: 43.22, lng: -79.83 }, // Stoney Creek, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:10",
     detourToleranceMinutes: 12,
@@ -154,7 +145,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-13",
-    origin: { lat: 43.190, lng: -79.950 }, // Ancaster, ON
+    origin: { lat: 43.19, lng: -79.95 }, // Ancaster, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:00",
     detourToleranceMinutes: 8,
@@ -163,7 +154,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-14",
-    origin: { lat: 43.280, lng: -79.880 }, // Hamilton Mountain, ON
+    origin: { lat: 43.28, lng: -79.88 }, // Hamilton Mountain, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:20",
     detourToleranceMinutes: 6,
@@ -171,17 +162,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 0,
   },
   {
-    id: "driver-15",
-    origin: { lat: 43.320, lng: -79.790 }, // Burlington East, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:30",
-    detourToleranceMinutes: 20,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
     id: "driver-16",
-    origin: { lat: 43.040, lng: -79.980 }, // Caledonia, ON
+    origin: { lat: 43.04, lng: -79.98 }, // Caledonia, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:15",
     detourToleranceMinutes: 25,
@@ -190,7 +172,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-17",
-    origin: { lat: 43.145, lng: -79.720 }, // Beamsville, ON
+    origin: { lat: 43.145, lng: -79.72 }, // Beamsville, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:30",
     detourToleranceMinutes: 15,
@@ -198,35 +180,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 1,
   },
   {
-    id: "driver-18",
-    origin: { lat: 43.250, lng: -79.870 }, // Corktown, Hamilton, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:40",
-    detourToleranceMinutes: 5,
-    maxPassengers: 3,
-    currentPassengers: 0,
-  },
-  {
-    id: "driver-19",
-    origin: { lat: 43.300, lng: -79.930 }, // Dundas Valley, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:50",
-    detourToleranceMinutes: 10,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-20",
-    origin: { lat: 43.350, lng: -79.790 }, // Aldershot, Burlington, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "11:00",
-    detourToleranceMinutes: 12,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
     id: "driver-21",
-    origin: { lat: 43.500, lng: -79.700 }, // Oakville, ON
+    origin: { lat: 43.5, lng: -79.7 }, // Oakville, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:55",
     detourToleranceMinutes: 15,
@@ -234,17 +189,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 0,
   },
   {
-    id: "driver-22",
-    origin: { lat: 43.575, lng: -79.630 }, // Mississauga City Centre, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:40",
-    detourToleranceMinutes: 18,
-    maxPassengers: 4,
-    currentPassengers: 1,
-  },
-  {
     id: "driver-23",
-    origin: { lat: 43.650, lng: -79.380 }, // Toronto Downtown, ON
+    origin: { lat: 43.65, lng: -79.38 }, // Toronto Downtown, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:10",
     detourToleranceMinutes: 30,
@@ -252,35 +198,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-24",
-    origin: { lat: 43.730, lng: -79.470 }, // North York, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:15",
-    detourToleranceMinutes: 25,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-25",
-    origin: { lat: 43.775, lng: -79.500 }, // Vaughan, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:05",
-    detourToleranceMinutes: 22,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-26",
-    origin: { lat: 43.540, lng: -79.870 }, // Milton, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:30",
-    detourToleranceMinutes: 20,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
     id: "driver-27",
-    origin: { lat: 43.140, lng: -79.850 }, // Binbrook, ON
+    origin: { lat: 43.14, lng: -79.85 }, // Binbrook, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:25",
     detourToleranceMinutes: 15,
@@ -288,26 +207,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-28",
-    origin: { lat: 43.220, lng: -79.770 }, // Winona, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:50",
-    detourToleranceMinutes: 10,
-    maxPassengers: 4,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-29",
-    origin: { lat: 43.150, lng: -79.630 }, // Grimsby East, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:35",
-    detourToleranceMinutes: 18,
-    maxPassengers: 2,
-    currentPassengers: 1,
-  },
-  {
     id: "driver-30",
-    origin: { lat: 43.100, lng: -80.050 }, // Jerseyville, ON
+    origin: { lat: 43.1, lng: -80.05 }, // Jerseyville, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:45",
     detourToleranceMinutes: 14,
@@ -315,17 +216,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-31",
-    origin: { lat: 43.400, lng: -79.830 }, // East Burlington, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:40",
-    detourToleranceMinutes: 9,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
     id: "driver-32",
-    origin: { lat: 43.560, lng: -79.700 }, // Mississauga (Erindale), ON
+    origin: { lat: 43.56, lng: -79.7 }, // Mississauga (Erindale), ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:20",
     detourToleranceMinutes: 15,
@@ -333,26 +225,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 3,
   },
   {
-    id: "driver-33",
-    origin: { lat: 43.620, lng: -79.480 }, // Etobicoke, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "11:15",
-    detourToleranceMinutes: 20,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-34",
-    origin: { lat: 43.260, lng: -79.890 }, // Westdale, Hamilton, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:15",
-    detourToleranceMinutes: 5,
-    maxPassengers: 2,
-    currentPassengers: 0,
-  },
-  {
     id: "driver-35",
-    origin: { lat: 43.200, lng: -79.910 }, // Ancaster Meadowlands, ON
+    origin: { lat: 43.2, lng: -79.91 }, // Ancaster Meadowlands, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:35",
     detourToleranceMinutes: 8,
@@ -360,26 +234,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 1,
   },
   {
-    id: "driver-36",
-    origin: { lat: 43.340, lng: -79.930 }, // Waterdown, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:05",
-    detourToleranceMinutes: 11,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-37",
-    origin: { lat: 43.050, lng: -79.980 }, // Caledonia South, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "11:50",
-    detourToleranceMinutes: 18,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
     id: "driver-38",
-    origin: { lat: 43.380, lng: -79.810 }, // Burlington Central, ON
+    origin: { lat: 43.38, lng: -79.81 }, // Burlington Central, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:05",
     detourToleranceMinutes: 12,
@@ -387,35 +243,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-39",
-    origin: { lat: 43.230, lng: -79.950 }, // Hamilton West, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:55",
-    detourToleranceMinutes: 7,
-    maxPassengers: 2,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-40",
-    origin: { lat: 43.260, lng: -79.860 }, // Durand, Hamilton, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:30",
-    detourToleranceMinutes: 10,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-41",
-    origin: { lat: 43.510, lng: -79.640 }, // Oakville East, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:45",
-    detourToleranceMinutes: 13,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
     id: "driver-42",
-    origin: { lat: 43.650, lng: -79.550 }, // Etobicoke South, ON
+    origin: { lat: 43.65, lng: -79.55 }, // Etobicoke South, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:55",
     detourToleranceMinutes: 20,
@@ -423,17 +252,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-43",
-    origin: { lat: 43.705, lng: -79.390 }, // Midtown Toronto, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:25",
-    detourToleranceMinutes: 25,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
     id: "driver-44",
-    origin: { lat: 43.780, lng: -79.320 }, // Scarborough, ON
+    origin: { lat: 43.78, lng: -79.32 }, // Scarborough, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:10",
     detourToleranceMinutes: 30,
@@ -441,64 +261,15 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 1,
   },
   {
-    id: "driver-45",
-    origin: { lat: 43.470, lng: -79.760 }, // Oakville West, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:25",
-    detourToleranceMinutes: 15,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-46",
-    origin: { lat: 43.180, lng: -79.700 }, // Beamsville, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:00",
-    detourToleranceMinutes: 10,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-47",
-    origin: { lat: 43.210, lng: -79.940 }, // Ancaster, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:35",
-    detourToleranceMinutes: 8,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-48",
-    origin: { lat: 43.250, lng: -79.910 }, // Hamilton West End, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:40",
-    detourToleranceMinutes: 6,
-    maxPassengers: 2,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-49",
-    origin: { lat: 43.300, lng: -79.800 }, // Burlington East, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:25",
-    detourToleranceMinutes: 15,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
     id: "driver-50",
-    origin: { lat: 43.600, lng: -79.680 }, // Mississauga West, ON
+    origin: { lat: 43.6, lng: -79.68 }, // Mississauga West, ON
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "11:45",
     detourToleranceMinutes: 18,
     maxPassengers: 4,
     currentPassengers: 3,
   },
-
-  
 ];
-
-
 
 function calculateScheduleScore(riderTime: string, driverTime: string): number {
   const tRider = timeToMinutes(riderTime);

@@ -35,13 +35,13 @@ const testRider3: RiderProfile = {
   maxOccupancy: 1,
 };
 
-const testRider4: RiderProfile = {
-  id: "test-rider-4",
-  origin: { lat: 43.432035, lng: -79.776309 }, // Oakville, Ontario
-  destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "09:45",
-  maxOccupancy: 4,
-};
+// const testRider4: RiderProfile = {
+//   id: "test-rider-4",
+//   origin: { lat: 43.432035, lng: -79.776309 }, // Oakville, Ontario
+//   destination: { lat: 43.2609, lng: -79.9192 },
+//   desiredArrivalTime: "09:45",
+//   maxOccupancy: 4,
+// };
 
 const testRider5: RiderProfile = {
   id: "test-rider-5",
@@ -99,17 +99,17 @@ const testRider11: RiderProfile = {
   maxOccupancy: 3,
 };
 
-const testRider12: RiderProfile = {
-  id: "test-rider-12",
-  origin: { lat: 43.085, lng: -79.083 }, // Niagara Falls, ON
-  destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "10:45",
-  maxOccupancy: 1,
-};
+// const testRider12: RiderProfile = {
+//   id: "test-rider-12",
+//   origin: { lat: 43.085, lng: -79.083 }, // Niagara Falls, ON
+//   destination: { lat: 43.2609, lng: -79.9192 },
+//   desiredArrivalTime: "10:45",
+//   maxOccupancy: 1,
+// };
 
 const testRider13: RiderProfile = {
   id: "test-rider-13",
-  origin: { lat: 43.595, lng: -79.640 }, // Mississauga, ON
+  origin: { lat: 43.595, lng: -79.64 }, // Mississauga, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:50",
   maxOccupancy: 3,
@@ -125,39 +125,39 @@ const testRider14: RiderProfile = {
 
 const testRider15: RiderProfile = {
   id: "test-rider-15",
-  origin: { lat: 43.720, lng: -79.450 }, // North York, ON
+  origin: { lat: 43.72, lng: -79.45 }, // North York, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:55",
   maxOccupancy: 4,
 };
 
-const testRider16: RiderProfile = {
-  id: "test-rider-16",
-  origin: { lat: 43.772, lng: -79.501 }, // Vaughan, ON
-  destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "11:20",
-  maxOccupancy: 2,
-};
+// const testRider16: RiderProfile = {
+//   id: "test-rider-16",
+//   origin: { lat: 43.772, lng: -79.501 }, // Vaughan, ON
+//   destination: { lat: 43.2609, lng: -79.9192 },
+//   desiredArrivalTime: "11:20",
+//   maxOccupancy: 2,
+// };
 
 const testRider17: RiderProfile = {
   id: "test-rider-17",
-  origin: { lat: 43.200, lng: -79.980 }, // Ancaster, ON
+  origin: { lat: 43.2, lng: -79.98 }, // Ancaster, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:55",
   maxOccupancy: 3,
 };
 
-const testRider18: RiderProfile = {
-  id: "test-rider-18",
-  origin: { lat: 43.250, lng: -79.730 }, // Winona, ON
-  destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "08:10",
-  maxOccupancy: 2,
-};
+// const testRider18: RiderProfile = {
+//   id: "test-rider-18",
+//   origin: { lat: 43.250, lng: -79.730 }, // Winona, ON
+//   destination: { lat: 43.2609, lng: -79.9192 },
+//   desiredArrivalTime: "08:10",
+//   maxOccupancy: 2,
+// };
 
 const testRider19: RiderProfile = {
   id: "test-rider-19",
-  origin: { lat: 43.037, lng: -79.940 }, // Caledonia, ON
+  origin: { lat: 43.037, lng: -79.94 }, // Caledonia, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:05",
   maxOccupancy: 3,
@@ -173,7 +173,7 @@ const testRider20: RiderProfile = {
 
 const testRider21: RiderProfile = {
   id: "test-rider-21",
-  origin: { lat: 43.220, lng: -79.950 }, // Meadowlands, Ancaster, ON
+  origin: { lat: 43.22, lng: -79.95 }, // Meadowlands, Ancaster, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:00",
   maxOccupancy: 3,
@@ -181,7 +181,7 @@ const testRider21: RiderProfile = {
 
 const testRider22: RiderProfile = {
   id: "test-rider-22",
-  origin: { lat: 43.260, lng: -79.890 }, // Westdale, Hamilton, ON
+  origin: { lat: 43.26, lng: -79.89 }, // Westdale, Hamilton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:40",
   maxOccupancy: 2,
@@ -189,7 +189,7 @@ const testRider22: RiderProfile = {
 
 const testRider23: RiderProfile = {
   id: "test-rider-23",
-  origin: { lat: 43.180, lng: -79.710 }, // Beamsville, ON
+  origin: { lat: 43.18, lng: -79.71 }, // Beamsville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:35",
   maxOccupancy: 3,
@@ -197,7 +197,7 @@ const testRider23: RiderProfile = {
 
 const testRider24: RiderProfile = {
   id: "test-rider-24",
-  origin: { lat: 43.420, lng: -79.820 }, // East Burlington, ON
+  origin: { lat: 43.42, lng: -79.82 }, // East Burlington, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "16:05",
   maxOccupancy: 4,
@@ -205,7 +205,7 @@ const testRider24: RiderProfile = {
 
 const testRider25: RiderProfile = {
   id: "test-rider-25",
-  origin: { lat: 43.610, lng: -79.590 }, // Mississauga South, ON
+  origin: { lat: 43.61, lng: -79.59 }, // Mississauga South, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "18:00",
   maxOccupancy: 2,
@@ -213,23 +213,23 @@ const testRider25: RiderProfile = {
 
 const testRider26: RiderProfile = {
   id: "test-rider-26",
-  origin: { lat: 43.150, lng: -80.020 }, // Jerseyville, ON
+  origin: { lat: 43.15, lng: -80.02 }, // Jerseyville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "18:25",
   maxOccupancy: 3,
 };
 
-const testRider27: RiderProfile = {
-  id: "test-rider-27",
-  origin: { lat: 43.340, lng: -79.930 }, // Waterdown, ON
-  destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "09:10",
-  maxOccupancy: 4,
-};
+// const testRider27: RiderProfile = {
+//   id: "test-rider-27",
+//   origin: { lat: 43.340, lng: -79.930 }, // Waterdown, ON
+//   destination: { lat: 43.2609, lng: -79.9192 },
+//   desiredArrivalTime: "09:10",
+//   maxOccupancy: 4,
+// };
 
 const testRider28: RiderProfile = {
   id: "test-rider-28",
-  origin: { lat: 43.550, lng: -79.720 }, // Erin Mills, Mississauga, ON
+  origin: { lat: 43.55, lng: -79.72 }, // Erin Mills, Mississauga, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "19:55",
   maxOccupancy: 2,
@@ -237,22 +237,47 @@ const testRider28: RiderProfile = {
 
 const testRider29: RiderProfile = {
   id: "test-rider-29",
-  origin: { lat: 43.420, lng: -79.730 }, // Glen Abbey, Oakville, ON
+  origin: { lat: 43.42, lng: -79.73 }, // Glen Abbey, Oakville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
-  desiredArrivalTime: "7:25",
+  desiredArrivalTime: "07:25",
   maxOccupancy: 3,
 };
 
 const testRider30: RiderProfile = {
   id: "test-rider-30",
-  origin: { lat: 43.250, lng: -79.860 }, // Corktown, Hamilton, ON
+  origin: { lat: 43.25, lng: -79.86 }, // Corktown, Hamilton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "12:50",
   maxOccupancy: 2,
 };
 
-
-const allTestRiders = [testRider1, testRider2, testRider3, testRider4];
+const allTestRiders = [
+  testRider1,
+  testRider2,
+  testRider3,
+  testRider5,
+  testRider6,
+  testRider7,
+  testRider8,
+  testRider9,
+  testRider10,
+  testRider11,
+  testRider13,
+  testRider14,
+  testRider15,
+  testRider17,
+  testRider19,
+  testRider20,
+  testRider21,
+  testRider22,
+  testRider23,
+  testRider24,
+  testRider25,
+  testRider26,
+  testRider28,
+  testRider29,
+  testRider30,
+];
 
 async function runTest() {
   console.log(`🚀 Starting tests for ${allTestRiders.length} riders...`);
