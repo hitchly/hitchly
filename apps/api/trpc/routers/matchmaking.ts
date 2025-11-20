@@ -24,6 +24,7 @@ const riderProfileSchema = z.object({
   desiredArrivalTime: z.string().regex(/^\d{2}:\d{2}$/),
 
   maxOccupancy: z.number().int().min(1),
+  preference: z.enum(["default", "costPriority", "comfortPriority"]).optional(),
 });
 
 export const matchmakingRouter = router({

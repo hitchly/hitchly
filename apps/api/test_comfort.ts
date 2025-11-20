@@ -18,6 +18,7 @@ const testRider1: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 }, // McMaster
   desiredArrivalTime: "08:45",
   maxOccupancy: 3, // They are willing to be in a car with 3 people total
+  preference: "comfortPriority",
 };
 
 const testRider2: RiderProfile = {
@@ -26,6 +27,7 @@ const testRider2: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "11:45",
   maxOccupancy: 3,
+  preference: "costPriority",
 };
 
 const testRider3: RiderProfile = {
@@ -58,6 +60,7 @@ const testRider6: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:15",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider7: RiderProfile = {
@@ -82,6 +85,7 @@ const testRider9: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:30",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider10: RiderProfile = {
@@ -114,6 +118,7 @@ const testRider13: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:50",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider14: RiderProfile = {
@@ -122,6 +127,7 @@ const testRider14: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:40",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider15: RiderProfile = {
@@ -178,6 +184,7 @@ const testRider21: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:00",
   maxOccupancy: 4,
+  preference: "comfortPriority",
 };
 
 const testRider22: RiderProfile = {
@@ -194,6 +201,7 @@ const testRider23: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:35",
   maxOccupancy: 4,
+  preference: "comfortPriority",
 };
 
 const testRider24: RiderProfile = {
@@ -290,7 +298,9 @@ const allTestRiders = [
 ];
 
 async function runTest() {
-  console.log(`🚀 Starting tests for ${allTestRiders.length} riders...`);
+  console.log(
+    `🚀 Starting COMFORT PREFERENCE tests for ${allTestRiders.length} riders...`,
+  );
 
   for (const rider of allTestRiders) {
     console.log(`\n------------------------------------------`);

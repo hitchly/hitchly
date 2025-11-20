@@ -6,8 +6,8 @@ export type Location = {
 };
 
 const PLATFORM_BASE_FARE = 2.5;
-const PLATFORM_RATE_PER_KM = 0.4;
-const PLATFORM_RATE_PER_MINUTE = 0.2;
+const PLATFORM_RATE_PER_KM = 0.35;
+const PLATFORM_RATE_PER_MINUTE = 0.15;
 
 const GENERIC_WEIGHTS = {
   schedule: 2.0,
@@ -28,15 +28,15 @@ const WEIGHT_PRESETS = {
   costPriority: {
     schedule: 2.0,
     location: 2.0,
-    cost: 2.0,
-    comfort: 0.5,
+    cost: 1.75,
+    comfort: 0.1,
   },
 
   comfortPriority: {
     schedule: 2.0,
     location: 2.0,
     cost: 1.0,
-    comfort: 1.5,
+    comfort: 1.0,
   },
 };
 //NEW
@@ -71,9 +71,10 @@ export type DriverProfile = {
 };
 
 export const hardcodedDrivers: DriverProfile[] = [
+  // --- Local Hamilton Matches (For Rider 1 & 21) ---
   {
     id: "driver-1",
-    origin: { lat: 43.25, lng: -79.92 }, // Hamilton, ON (near McMaster area)
+    origin: { lat: 43.25, lng: -79.92 }, // Hamilton (McMaster area)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:50",
     detourToleranceMinutes: 10,
@@ -82,7 +83,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-2",
-    origin: { lat: 43.2381, lng: -79.8891 }, // Downtown Hamilton, ON
+    origin: { lat: 43.2381, lng: -79.8891 }, // Downtown Hamilton
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:30",
     detourToleranceMinutes: 5,
@@ -90,8 +91,97 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 1,
   },
   {
+    id: "driver-35",
+    origin: { lat: 43.2, lng: -79.91 }, // Ancaster Meadowlands (Perfect for Rider 21)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "07:35",
+    detourToleranceMinutes: 8,
+    maxPassengers: 3,
+    currentPassengers: 1,
+  },
+
+  // --- Stoney Creek / Mountain (For Rider 6) ---
+  {
+    id: "driver-14",
+    origin: { lat: 43.28, lng: -79.88 }, // Hamilton Mountain (Close to Stoney Creek)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "09:20",
+    detourToleranceMinutes: 6,
+    maxPassengers: 2,
+    currentPassengers: 0,
+  },
+  {
+    id: "driver-12",
+    origin: { lat: 43.22, lng: -79.83 }, // Stoney Creek
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "08:10",
+    detourToleranceMinutes: 12,
+    maxPassengers: 4,
+    currentPassengers: 2,
+  },
+
+  // --- Long Distance East (For Rider 23) ---
+  {
+    id: "driver-17",
+    origin: { lat: 43.145, lng: -79.72 }, // Beamsville (Perfect for Rider 23)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "08:45",
+    detourToleranceMinutes: 15,
+    maxPassengers: 2,
+    currentPassengers: 1,
+  },
+  {
+    id: "driver-9",
+    origin: { lat: 43.15278, lng: -79.61796 }, // Grimsby
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "10:00",
+    detourToleranceMinutes: 20,
+    maxPassengers: 3,
+    currentPassengers: 1,
+  },
+
+  // --- GTA / Toronto (For Rider 14, 13, 9) ---
+  {
+    id: "driver-22",
+    origin: { lat: 43.575, lng: -79.63 }, // Mississauga City Centre (Perfect for Rider 13 & 9)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "09:40",
+    detourToleranceMinutes: 18,
+    maxPassengers: 4,
+    currentPassengers: 1,
+  },
+  {
+    id: "driver-23",
+    origin: { lat: 43.65, lng: -79.38 }, // Toronto Downtown (Match for Rider 14)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "10:10",
+    detourToleranceMinutes: 30,
+    maxPassengers: 3,
+    currentPassengers: 2,
+  },
+  {
+    id: "driver-43",
+    origin: { lat: 43.705, lng: -79.39 }, // Midtown Toronto (Better time for Rider 14)
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "08:25",
+    detourToleranceMinutes: 25,
+    maxPassengers: 4,
+    currentPassengers: 3,
+  },
+  {
+    id: "driver-21",
+    origin: { lat: 43.5, lng: -79.7 }, // Oakville
+    destination: { lat: 43.2609, lng: -79.9192 },
+    plannedArrivalTime: "08:55",
+    detourToleranceMinutes: 15,
+    maxPassengers: 2,
+    currentPassengers: 0,
+  },
+
+  // --- Variety / Edge Cases ---
+  {
     id: "driver-3",
-    origin: { lat: 43.31009, lng: -79.83965 }, // Dundas, ON
+    origin: { lat: 43.31009, lng: -79.83965 }, // Dundas
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:00",
     detourToleranceMinutes: 15,
@@ -100,7 +190,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-4",
-    origin: { lat: 43.3205, lng: -79.82787 }, // Waterdown, ON
+    origin: { lat: 43.3205, lng: -79.82787 }, // Waterdown
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "11:00",
     detourToleranceMinutes: 4,
@@ -108,44 +198,8 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 2,
   },
   {
-    id: "driver-5",
-    origin: { lat: 43.34768, lng: -79.77522 }, // Burlington, ON (Good overnight test)
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "04:00",
-    detourToleranceMinutes: 20,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-7",
-    origin: { lat: 43.58022, lng: -79.66507 }, // Mississauga, ON (Far East - Afternoon)
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "15:20",
-    detourToleranceMinutes: 25,
-    maxPassengers: 2,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-8",
-    origin: { lat: 43.58111, lng: -79.95911 }, // Milton, ON (Far North)
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "16:20",
-    detourToleranceMinutes: 15,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-9",
-    origin: { lat: 43.15278, lng: -79.61796 }, // Grimsby, ON (South-East - Evening)
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "18:20",
-    detourToleranceMinutes: 20,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
     id: "driver-10",
-    origin: { lat: 43.13844, lng: -80.27294 }, // Brantford, ON (Far West - Afternoon)
+    origin: { lat: 43.13844, lng: -80.27294 }, // Brantford (West)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "14:50",
     detourToleranceMinutes: 25,
@@ -153,146 +207,11 @@ export const hardcodedDrivers: DriverProfile[] = [
     currentPassengers: 3,
   },
   {
-    id: "driver-11",
-    origin: { lat: 43.265, lng: -79.94 }, // West Hamilton, ON
+    id: "driver-8",
+    origin: { lat: 43.58111, lng: -79.95911 }, // Milton (North)
     destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:45",
-    detourToleranceMinutes: 10,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-12",
-    origin: { lat: 43.22, lng: -79.83 }, // Stoney Creek, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:10",
-    detourToleranceMinutes: 12,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-13",
-    origin: { lat: 43.19, lng: -79.95 }, // Ancaster, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:00",
-    detourToleranceMinutes: 8,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-14",
-    origin: { lat: 43.28, lng: -79.88 }, // Hamilton Mountain, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:20",
-    detourToleranceMinutes: 6,
-    maxPassengers: 2,
-    currentPassengers: 0,
-  },
-  {
-    id: "driver-16",
-    origin: { lat: 43.04, lng: -79.98 }, // Caledonia, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:15",
-    detourToleranceMinutes: 25,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-17",
-    origin: { lat: 43.145, lng: -79.72 }, // Beamsville, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:30",
+    plannedArrivalTime: "16:20",
     detourToleranceMinutes: 15,
-    maxPassengers: 2,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-21",
-    origin: { lat: 43.5, lng: -79.7 }, // Oakville, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:55",
-    detourToleranceMinutes: 15,
-    maxPassengers: 2,
-    currentPassengers: 0,
-  },
-  {
-    id: "driver-23",
-    origin: { lat: 43.65, lng: -79.38 }, // Toronto Downtown, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:10",
-    detourToleranceMinutes: 30,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-27",
-    origin: { lat: 43.14, lng: -79.85 }, // Binbrook, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:25",
-    detourToleranceMinutes: 15,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-30",
-    origin: { lat: 43.1, lng: -80.05 }, // Jerseyville, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:45",
-    detourToleranceMinutes: 14,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-32",
-    origin: { lat: 43.56, lng: -79.7 }, // Mississauga (Erindale), ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "10:20",
-    detourToleranceMinutes: 15,
-    maxPassengers: 4,
-    currentPassengers: 3,
-  },
-  {
-    id: "driver-35",
-    origin: { lat: 43.2, lng: -79.91 }, // Ancaster Meadowlands, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:35",
-    detourToleranceMinutes: 8,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-38",
-    origin: { lat: 43.38, lng: -79.81 }, // Burlington Central, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "08:05",
-    detourToleranceMinutes: 12,
-    maxPassengers: 3,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-42",
-    origin: { lat: 43.65, lng: -79.55 }, // Etobicoke South, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "07:55",
-    detourToleranceMinutes: 20,
-    maxPassengers: 4,
-    currentPassengers: 2,
-  },
-  {
-    id: "driver-44",
-    origin: { lat: 43.78, lng: -79.32 }, // Scarborough, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "09:10",
-    detourToleranceMinutes: 30,
-    maxPassengers: 3,
-    currentPassengers: 1,
-  },
-  {
-    id: "driver-50",
-    origin: { lat: 43.6, lng: -79.68 }, // Mississauga West, ON
-    destination: { lat: 43.2609, lng: -79.9192 },
-    plannedArrivalTime: "11:45",
-    detourToleranceMinutes: 18,
     maxPassengers: 4,
     currentPassengers: 3,
   },
@@ -303,8 +222,8 @@ function calculateScheduleScore(riderTime: string, driverTime: string): number {
   const tDriver = timeToMinutes(driverTime);
   const timeDiff = tDriver - tRider;
 
-  if (timeDiff >= 0 && timeDiff <= 10) return 1.0;
-  if (timeDiff > 10) return Math.max(0, 1.0 - (timeDiff - 10) / 30);
+  if (timeDiff >= 0 && timeDiff <= 20) return 1.0;
+  if (timeDiff > 20) return Math.max(0, 1.0 - (timeDiff - 20) / 30);
   if (timeDiff < 0) return Math.max(0, 1.0 - Math.abs(timeDiff) / 60);
   return 0;
 }

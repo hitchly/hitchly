@@ -8,6 +8,8 @@
     "dev": "nodemon --exec \"node -r esbuild-register index.ts\" -e .ts",
     "start:local": "node -r esbuild-register index.ts",
     "test:client": "node -r esbuild-register test.ts",
+    "test:cost": "node -r esbuild-register test_cost.ts",
+    "test:comfort": "node -r esbuild-register test_comfort.ts",
     "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
     "start": "node -r esbuild-register index.ts",
     "test": "jest --detectOpenHandles"
