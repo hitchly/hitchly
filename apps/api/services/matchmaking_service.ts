@@ -16,6 +16,31 @@ const GENERIC_WEIGHTS = {
   comfort: 0.5,
 };
 
+//NEW
+const WEIGHT_PRESETS = {
+  default: {
+    schedule: 2.0,
+    location: 2.0,
+    cost: 1.5,
+    comfort: 0.5,
+  },
+
+  costPriority: {
+    schedule: 2.0,
+    location: 2.0,
+    cost: 2.0,
+    comfort: 0.5,
+  },
+
+  comfortPriority: {
+    schedule: 2.0,
+    location: 2.0,
+    cost: 1.0,
+    comfort: 1.5,
+  },
+};
+//NEW
+
 const COST_DISCOUNT_TIERS = {
   0: 0.0,
   1: 0.15,
@@ -28,8 +53,10 @@ export type RiderProfile = {
   origin: Location;
   destination: Location;
   desiredArrivalTime: string;
-
   maxOccupancy: number;
+  //NEW
+  preference?: "default" | "costPriority" | "comfortPriority";
+  //NEW
 };
 
 export type DriverProfile = {
@@ -403,12 +430,24 @@ export async function findAndRankMatches(rider: RiderProfile) {
   const scoredDrivers = preliminaryData.map((data) => {
     const costScore = calculateCostScore(data.estimatedCost, minCost);
 
+    //NEW
+    const selectedPreset = WEIGHT_PRESETS[rider.preference ?? "default"];
+    //NEW
+
     // Calculate the final total score using all our values
+    // const totalScore =
+    //  data.scheduleScore * GENERIC_WEIGHTS.schedule +
+    //   data.locationScore * GENERIC_WEIGHTS.location +
+    //   costScore * GENERIC_WEIGHTS.cost +
+    // data.comfortScore * GENERIC_WEIGHTS.comfort;
+
+    //NEW
     const totalScore =
-      data.scheduleScore * GENERIC_WEIGHTS.schedule +
-      data.locationScore * GENERIC_WEIGHTS.location +
-      costScore * GENERIC_WEIGHTS.cost +
-      data.comfortScore * GENERIC_WEIGHTS.comfort;
+      data.scheduleScore * selectedPreset.schedule +
+      data.locationScore * selectedPreset.location +
+      costScore * selectedPreset.cost +
+      data.comfortScore * selectedPreset.comfort;
+    //NEW
 
     return {
       driverId: data.driver.id,

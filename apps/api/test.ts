@@ -6,7 +6,8 @@ const trpc = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
       // URL of running API server
-      url: "http://localhost:3000/trpc",
+      url: "http://127.0.0.1:3000/trpc",
+      // url: "http://localhost:3000/trpc",
     }),
   ],
 });
@@ -17,6 +18,8 @@ const testRider1: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 }, // McMaster
   desiredArrivalTime: "08:45",
   maxOccupancy: 3, // They are willing to be in a car with 3 people total
+
+  preference: "costPriority",
 };
 
 const testRider2: RiderProfile = {
@@ -25,6 +28,7 @@ const testRider2: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "11:45",
   maxOccupancy: 2,
+  preference: "comfortPriority",
 };
 
 const testRider3: RiderProfile = {
@@ -57,6 +61,7 @@ const testRider6: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:15",
   maxOccupancy: 2,
+  preference: "costPriority",
 };
 
 const testRider7: RiderProfile = {
@@ -73,6 +78,7 @@ const testRider8: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:45",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider9: RiderProfile = {
@@ -113,6 +119,7 @@ const testRider13: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:50",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider14: RiderProfile = {
@@ -161,6 +168,7 @@ const testRider19: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:05",
   maxOccupancy: 3,
+  preference: "costPriority",
 };
 
 const testRider20: RiderProfile = {
@@ -169,6 +177,7 @@ const testRider20: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "10:25",
   maxOccupancy: 2,
+  preference: "comfortPriority",
 };
 
 const testRider21: RiderProfile = {
@@ -193,6 +202,7 @@ const testRider23: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:35",
   maxOccupancy: 3,
+  preference: "comfortPriority",
 };
 
 const testRider24: RiderProfile = {
@@ -233,6 +243,7 @@ const testRider28: RiderProfile = {
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "19:55",
   maxOccupancy: 2,
+  preference: "costPriority",
 };
 
 const testRider29: RiderProfile = {
