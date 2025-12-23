@@ -24,4 +24,7 @@ export const env = {
   origins: {
     client: process.env.CLIENT_ORIGIN ?? "http://localhost:3000",
   },
+  google: {
+    apiKey: process.env.GOOGLE_MAPS_API_KEY!,
+  },
 };
