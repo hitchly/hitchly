@@ -6,8 +6,8 @@ export type Location = {
 };
 
 const PLATFORM_BASE_FARE = 2.5;
-const PLATFORM_RATE_PER_KM = 0.35;
-const PLATFORM_RATE_PER_MINUTE = 0.15;
+const PLATFORM_RATE_PER_KM = 0.2;
+const PLATFORM_RATE_PER_MINUTE = 0.1;
 
 const GENERIC_WEIGHTS = {
   schedule: 2.0,
@@ -50,6 +50,7 @@ const COST_DISCOUNT_TIERS = {
 
 export type RiderProfile = {
   id: string;
+  city: string;
   origin: Location;
   destination: Location;
   desiredArrivalTime: string;
@@ -61,6 +62,7 @@ export type RiderProfile = {
 
 export type DriverProfile = {
   id: string;
+  city: string;
   origin: Location;
   destination: Location;
   plannedArrivalTime: string;
@@ -74,6 +76,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   // --- Local Hamilton Matches (For Rider 1 & 21) ---
   {
     id: "driver-1",
+    city: "Hamilton McMaster Area",
     origin: { lat: 43.25, lng: -79.92 }, // Hamilton (McMaster area)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:50",
@@ -83,6 +86,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-2",
+    city: "Downtown Hamilton",
     origin: { lat: 43.2381, lng: -79.8891 }, // Downtown Hamilton
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:30",
@@ -92,6 +96,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-35",
+    city: "Ancaster Meadowlands",
     origin: { lat: 43.2, lng: -79.91 }, // Ancaster Meadowlands (Perfect for Rider 21)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "07:35",
@@ -103,6 +108,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   // --- Stoney Creek / Mountain (For Rider 6) ---
   {
     id: "driver-14",
+    city: "Hamilton Mountain",
     origin: { lat: 43.28, lng: -79.88 }, // Hamilton Mountain (Close to Stoney Creek)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:20",
@@ -112,6 +118,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-12",
+    city: "Stoney Creek",
     origin: { lat: 43.22, lng: -79.83 }, // Stoney Creek
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:10",
@@ -123,6 +130,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   // --- Long Distance East (For Rider 23) ---
   {
     id: "driver-17",
+    city: "Beamsville",
     origin: { lat: 43.145, lng: -79.72 }, // Beamsville (Perfect for Rider 23)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:45",
@@ -132,6 +140,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-9",
+    city: "Grimsby",
     origin: { lat: 43.15278, lng: -79.61796 }, // Grimsby
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:00",
@@ -143,6 +152,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   // --- GTA / Toronto (For Rider 14, 13, 9) ---
   {
     id: "driver-22",
+    city: "Mississauga",
     origin: { lat: 43.575, lng: -79.63 }, // Mississauga City Centre (Perfect for Rider 13 & 9)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "09:40",
@@ -152,6 +162,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-23",
+    city: "Toronto Downtown",
     origin: { lat: 43.65, lng: -79.38 }, // Toronto Downtown (Match for Rider 14)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:10",
@@ -161,6 +172,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-43",
+    city: "Toronto Midtown",
     origin: { lat: 43.705, lng: -79.39 }, // Midtown Toronto (Better time for Rider 14)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:25",
@@ -170,6 +182,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-21",
+    city: "Oakville",
     origin: { lat: 43.5, lng: -79.7 }, // Oakville
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "08:55",
@@ -181,6 +194,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   // --- Variety / Edge Cases ---
   {
     id: "driver-3",
+    city: "Dundas",
     origin: { lat: 43.31009, lng: -79.83965 }, // Dundas
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "10:00",
@@ -190,6 +204,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-4",
+    city: "Waterdown",
     origin: { lat: 43.3205, lng: -79.82787 }, // Waterdown
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "11:00",
@@ -199,6 +214,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-10",
+    city: "Brantford West",
     origin: { lat: 43.13844, lng: -80.27294 }, // Brantford (West)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "14:50",
@@ -208,6 +224,7 @@ export const hardcodedDrivers: DriverProfile[] = [
   },
   {
     id: "driver-8",
+    city: "Milton North",
     origin: { lat: 43.58111, lng: -79.95911 }, // Milton (North)
     destination: { lat: 43.2609, lng: -79.9192 },
     plannedArrivalTime: "16:20",
@@ -370,6 +387,7 @@ export async function findAndRankMatches(rider: RiderProfile) {
 
     return {
       driverId: data.driver.id,
+      driver: data.driver,
       totalScore,
       scores: {
         schedule: data.scheduleScore,

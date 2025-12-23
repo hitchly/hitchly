@@ -14,6 +14,7 @@ const trpc = createTRPCProxyClient<AppRouter>({
 
 const testRider1: RiderProfile = {
   id: "test-rider-1",
+  city: "Hamilton",
   origin: { lat: 43.255, lng: -79.9 }, // A test location in Hamilton
   destination: { lat: 43.2609, lng: -79.9192 }, // McMaster
   desiredArrivalTime: "08:45",
@@ -22,6 +23,7 @@ const testRider1: RiderProfile = {
 
 const testRider2: RiderProfile = {
   id: "test-rider-2",
+  city: "Brantford",
   origin: { lat: 43.09363, lng: -80.44377 }, // Brantford, Ontario
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "11:45",
@@ -30,6 +32,7 @@ const testRider2: RiderProfile = {
 
 const testRider3: RiderProfile = {
   id: "test-rider-3",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.80225, lng: -79.26099 }, // Markham, Ontario
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "13:35",
@@ -46,6 +49,7 @@ const testRider3: RiderProfile = {
 
 const testRider5: RiderProfile = {
   id: "test-rider-5",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.238, lng: -79.885 }, // Downtown Hamilton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:30",
@@ -54,6 +58,7 @@ const testRider5: RiderProfile = {
 
 const testRider6: RiderProfile = {
   id: "test-rider-6",
+  city: "Stoney Creek",
   origin: { lat: 43.217, lng: -79.828 }, // Stoney Creek, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:15",
@@ -62,6 +67,7 @@ const testRider6: RiderProfile = {
 
 const testRider7: RiderProfile = {
   id: "test-rider-7",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.312, lng: -79.885 }, // Dundas, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "10:00",
@@ -70,6 +76,7 @@ const testRider7: RiderProfile = {
 
 const testRider8: RiderProfile = {
   id: "test-rider-8",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.336, lng: -79.807 }, // Burlington, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:45",
@@ -78,6 +85,7 @@ const testRider8: RiderProfile = {
 
 const testRider9: RiderProfile = {
   id: "test-rider-9",
+  city: "Oakville North",
   origin: { lat: 43.479, lng: -79.698 }, // Oakville North, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:30",
@@ -86,6 +94,7 @@ const testRider9: RiderProfile = {
 
 const testRider10: RiderProfile = {
   id: "test-rider-10",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.518, lng: -79.879 }, // Milton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:15",
@@ -94,6 +103,7 @@ const testRider10: RiderProfile = {
 
 const testRider11: RiderProfile = {
   id: "test-rider-11",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.165, lng: -79.623 }, // Grimsby, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:50",
@@ -110,6 +120,7 @@ const testRider11: RiderProfile = {
 
 const testRider13: RiderProfile = {
   id: "test-rider-13",
+  city: "Mississauga",
   origin: { lat: 43.595, lng: -79.64 }, // Mississauga, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:50",
@@ -118,6 +129,7 @@ const testRider13: RiderProfile = {
 
 const testRider14: RiderProfile = {
   id: "test-rider-14",
+  city: "Toronto Downtown",
   origin: { lat: 43.654, lng: -79.383 }, // Toronto Downtown, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:40",
@@ -126,6 +138,7 @@ const testRider14: RiderProfile = {
 
 const testRider15: RiderProfile = {
   id: "test-rider-15",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.72, lng: -79.45 }, // North York, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:55",
@@ -142,6 +155,7 @@ const testRider15: RiderProfile = {
 
 const testRider17: RiderProfile = {
   id: "test-rider-17",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.2, lng: -79.98 }, // Ancaster, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:55",
@@ -158,6 +172,7 @@ const testRider17: RiderProfile = {
 
 const testRider19: RiderProfile = {
   id: "test-rider-19",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.037, lng: -79.94 }, // Caledonia, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:05",
@@ -166,6 +181,7 @@ const testRider19: RiderProfile = {
 
 const testRider20: RiderProfile = {
   id: "test-rider-20",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.006, lng: -79.625 }, // Smithville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "10:25",
@@ -174,6 +190,7 @@ const testRider20: RiderProfile = {
 
 const testRider21: RiderProfile = {
   id: "test-rider-21",
+  city: "Ancaster",
   origin: { lat: 43.22, lng: -79.95 }, // Meadowlands, Ancaster, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "08:00",
@@ -182,6 +199,7 @@ const testRider21: RiderProfile = {
 
 const testRider22: RiderProfile = {
   id: "test-rider-22",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.26, lng: -79.89 }, // Westdale, Hamilton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:40",
@@ -190,6 +208,7 @@ const testRider22: RiderProfile = {
 
 const testRider23: RiderProfile = {
   id: "test-rider-23",
+  city: "Beamsville",
   origin: { lat: 43.18, lng: -79.71 }, // Beamsville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "09:35",
@@ -198,6 +217,7 @@ const testRider23: RiderProfile = {
 
 const testRider24: RiderProfile = {
   id: "test-rider-24",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.42, lng: -79.82 }, // East Burlington, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "16:05",
@@ -206,6 +226,7 @@ const testRider24: RiderProfile = {
 
 const testRider25: RiderProfile = {
   id: "test-rider-25",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.61, lng: -79.59 }, // Mississauga South, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "18:00",
@@ -214,6 +235,7 @@ const testRider25: RiderProfile = {
 
 const testRider26: RiderProfile = {
   id: "test-rider-26",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.15, lng: -80.02 }, // Jerseyville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "18:25",
@@ -230,6 +252,7 @@ const testRider26: RiderProfile = {
 
 const testRider28: RiderProfile = {
   id: "test-rider-28",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.55, lng: -79.72 }, // Erin Mills, Mississauga, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "19:55",
@@ -238,6 +261,7 @@ const testRider28: RiderProfile = {
 
 const testRider29: RiderProfile = {
   id: "test-rider-29",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.42, lng: -79.73 }, // Glen Abbey, Oakville, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "07:25",
@@ -246,6 +270,7 @@ const testRider29: RiderProfile = {
 
 const testRider30: RiderProfile = {
   id: "test-rider-30",
+  city: "Hamilton McMaster Area",
   origin: { lat: 43.25, lng: -79.86 }, // Corktown, Hamilton, ON
   destination: { lat: 43.2609, lng: -79.9192 },
   desiredArrivalTime: "12:50",

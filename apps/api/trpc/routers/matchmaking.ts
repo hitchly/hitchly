@@ -19,6 +19,7 @@ const locationSchema = z.object({
 
 const riderProfileSchema = z.object({
   id: z.string(),
+  city: z.string(),
   origin: locationSchema,
   destination: locationSchema,
   desiredArrivalTime: z.string().regex(/^\d{2}:\d{2}$/),
@@ -35,17 +36,21 @@ export const matchmakingRouter = router({
 
       const matches = await findAndRankMatches(rider);
 
-      console.log(`\n--- Matchmaking Results for Rider ${rider.id} ---`);
+      console.log(
+        `\n--- Matchmaking Results for Rider ${rider.id} (${rider.city}) ---`,
+      );
       console.table(
         matches.map((m) => ({
           Driver: m.driverId,
-          "Total Score": m.totalScore.toFixed(2),
-          "Schedule (s)": m.scores.schedule.toFixed(2),
-          "Location (s)": m.scores.location.toFixed(2),
-          "Cost (s)": m.scores.cost.toFixed(2),
-          "Comfort (s)": m.scores.comfort.toFixed(2),
-          "Est. Cost": `$${m.details.estimatedCost.toFixed(2)}`,
-          "Detour (min)": m.details.detourMinutes.toFixed(1),
+          // If you added the city field, keep it short:
+          Location: m.driver.city,
+          Score: m.totalScore.toFixed(2), // Was "Total Score"
+          Sched: m.scores.schedule.toFixed(2), // Was "Schedule (s)"
+          Loc: m.scores.location.toFixed(2), // Was "Location (s)"
+          Cost: m.scores.cost.toFixed(2), // Was "Cost (s)"
+          Comf: m.scores.comfort.toFixed(2), // Was "Comfort (s)"
+          $$: `$${m.details.estimatedCost.toFixed(2)}`, // Rounded to whole dollar to save space
+          Detour: `${m.details.detourMinutes.toFixed(0)}m`, // Shortened header & value
         })),
       );
       console.log("----------------------------------------------\n");
