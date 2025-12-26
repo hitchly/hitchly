@@ -296,3 +296,29 @@ jobs:
           fi
           echo "All LaTeX directories compiled successfully"
 
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [install, type-check, lint, format-check, build, latex-compile-check]
+    if: always()
+    steps:
+      - name: Check all CI jobs
+        run: |
+          failed_jobs=()
+          [ "${{ needs.install.result }}" != "success" ] && failed_jobs+=("Install Dependencies")
+          [ "${{ needs.type-check.result }}" != "success" ] && failed_jobs+=("Type Check")
+          [ "${{ needs.lint.result }}" != "success" ] && failed_jobs+=("Lint")
+          [ "${{ needs.format-check.result }}" != "success" ] && failed_jobs+=("Format Check")
+          [ "${{ needs.build.result }}" != "success" ] && failed_jobs+=("Build")
+          [ "${{ needs.latex-compile-check.result }}" != "success" ] && failed_jobs+=("LaTeX Compilation")
+          
+          if [ ${#failed_jobs[@]} -gt 0 ]; then
+            echo "❌ The following CI jobs failed:"
+            printf '  - %s\n' "${failed_jobs[@]}"
+            echo ""
+            echo "Please check the individual job logs for details."
+            exit 1
+          fi
+          
+          echo "✅ All CI checks passed successfully!"
+
