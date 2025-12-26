@@ -178,7 +178,7 @@ jobs:
       - name: Install LaTeX packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra texlive-science
 
       - name: Compile LaTeX documents
         working-directory: docs
