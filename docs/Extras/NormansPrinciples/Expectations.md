@@ -1,4 +1,4 @@
-**What is expected for a Norman’s Principle’s Extra?** 
+**What is expected for a Norman’s Principle’s Extra?**
 
 For this extra we're looking for your team to develop a document that uses
 Norman’s Design Principles as a benchmark to evaluate the design decisions made
@@ -11,7 +11,7 @@ the principles discussed in the document, with at least three "good" or "bad"
 applications analyzed per principle. There should be explanations as to why your
 group thinks that aspects of your design achieved a certain principle or
 recommendations for how you can improve the design to achieve said principle.
-Make sure you include screenshots to aid your explanations. 
+Make sure you include screenshots to aid your explanations.
 
 For a brief refresher on what Norman’s Principles are:
 

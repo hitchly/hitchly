@@ -3,28 +3,17 @@ import { Button, Text, View } from "react-native";
 import { trpc } from "../utils/trpc";
 
 export default function UsersScreen() {
-  const usersQuery = trpc.getUsers.useQuery();
-  const createUser = trpc.createUser.useMutation();
+  const userQuery = trpc.user.getCurrent.useQuery();
 
   return (
     <View style={{ padding: 20 }}>
-      {usersQuery.isLoading && <Text>Loading users...</Text>}
+      {userQuery.isLoading && <Text>Loading user...</Text>}
 
-      {usersQuery.data?.map((u) => (
-        <Text
-          key={u.id}
-          style={{ fontSize: 16, marginVertical: 2, color: "red" }}
-        >
-          {u.name} ({u.email})
+      {userQuery.data && (
+        <Text style={{ fontSize: 16, marginVertical: 2, color: "red" }}>
+          {userQuery.data.email || "No email"}
         </Text>
-      ))}
-
-      <Button
-        title="Add User"
-        onPress={() =>
-          createUser.mutate({ name: "Alice", email: "alice@example.com" })
-        }
-      />
+      )}
     </View>
   );
 }
