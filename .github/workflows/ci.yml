@@ -175,24 +175,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup LaTeX
-        uses: xu-cheng/latex-action@v3
-        with:
-          root_file: docs/Common.tex
-          latexmk_use_xelatex: false
+      - name: Install LaTeX packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra
 
-      - name: Compile all LaTeX files
+      - name: Compile LaTeX documents
         working-directory: docs
         run: |
-          # Install pdflatex if not available
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended
-
-          # Compile all .tex files
+          # Files to skip (include files, not standalone documents)
+          SKIP_FILES="Common.tex Comments.tex"
+          
+          # Find all .tex files and compile standalone documents
           find . -name "*.tex" -type f | while read texfile; do
-            echo "Compiling $texfile"
-            cd "$(dirname "$texfile")"
-            pdflatex -interaction=nonstopmode "$(basename "$texfile")" || exit 1
-            cd - > /dev/null
+            filename=$(basename "$texfile")
+            
+            # Skip include files
+            if echo "$SKIP_FILES" | grep -q "$filename"; then
+              echo "Skipping include file: $texfile"
+              continue
+            fi
+            
+            # Check if file has \documentclass (standalone document)
+            if grep -q "\\documentclass" "$texfile"; then
+              echo "Compiling document: $texfile"
+              dir=$(dirname "$texfile")
+              cd "$dir"
+              # Run pdflatex multiple times for references
+              pdflatex -interaction=nonstopmode "$filename" || exit 1
+              # Run bibtex if .aux file exists
+              if [ -f "${filename%.tex}.aux" ]; then
+                bibtex "${filename%.tex}" || true
+              fi
+              # Run pdflatex again for references
+              pdflatex -interaction=nonstopmode "$filename" || exit 1
+              pdflatex -interaction=nonstopmode "$filename" || exit 1
+              cd - > /dev/null
+            else
+              echo "Skipping include file (no \\documentclass): $texfile"
+            fi
           done
 
