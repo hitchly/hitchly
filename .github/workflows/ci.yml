@@ -201,15 +201,25 @@ jobs:
               echo "Compiling document: $texfile"
               dir=$(dirname "$texfile")
               cd "$dir"
-              # Run pdflatex multiple times for references
-              pdflatex -interaction=nonstopmode "$filename" || exit 1
-              # Run bibtex if .aux file exists
-              if [ -f "${filename%.tex}.aux" ]; then
-                bibtex "${filename%.tex}" || true
+              
+              # Check if file has bibliography commands
+              if grep -q '\\bibliography{' "$texfile" || grep -q '\\bibliographystyle{' "$texfile"; then
+                echo "  Document has bibliography, running full compilation with bibtex"
+                # First pass to generate .aux file
+                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                # Run bibtex if .aux file exists and has citations
+                if [ -f "${filename%.tex}.aux" ] && grep -q '\\citation{' "${filename%.tex}.aux" 2>/dev/null; then
+                  bibtex "${filename%.tex}" || true
+                fi
+                # Run pdflatex again for references and bibliography
+                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                pdflatex -interaction=nonstopmode "$filename" || exit 1
+              else
+                echo "  Document has no bibliography, running simple compilation"
+                # Simple compilation without bibtex
+                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                pdflatex -interaction=nonstopmode "$filename" || exit 1
               fi
-              # Run pdflatex again for references
-              pdflatex -interaction=nonstopmode "$filename" || exit 1
-              pdflatex -interaction=nonstopmode "$filename" || exit 1
               cd - > /dev/null
             else
               echo "Skipping include file (no \\documentclass): $texfile"
