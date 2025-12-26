@@ -28,9 +28,11 @@ jobs:
           version: 10.17.1
 
       - name: Get pnpm store directory
+        id: store_path
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          echo "store_path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -49,33 +51,26 @@ jobs:
     needs: install
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-
       - name: Get pnpm store directory
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Type check
         run: pnpm type-check
 
@@ -85,55 +80,55 @@ jobs:
     needs: install
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-
       - name: Get pnpm store directory
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Lint
         run: pnpm lint
 
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
+    needs: install
     steps:
       - uses: actions/checkout@v4
-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Check formatting
         run: pnpm format:check || (echo "Code is not formatted. Run 'pnpm format' to fix." && exit 1)
 
@@ -143,35 +138,141 @@ jobs:
     needs: install
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-
       - name: Get pnpm store directory
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Build
         run: pnpm build
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Test
+        run: pnpm test
+
+  latex-lint:
+    name: LaTeX Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ChkTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chktex
+      - name: Lint LaTeX files
+        run: |
+          SKIP_FILES="Common.tex Comments.tex"
+          ERROR_FOUND=0
+          
+          find docs -name "*.tex" -type f | while read texfile; do
+            filename=$(basename "$texfile")
+            
+            # Skip include files
+            if echo "$SKIP_FILES" | grep -q "$filename"; then
+              continue
+            fi
+            
+            # Check if file has \documentclass (standalone document)
+            if grep -q "\\documentclass" "$texfile"; then
+              echo "Linting: $texfile"
+              # Run ChkTeX with non-zero exit on errors, but allow warnings
+              chktex -q -n24 -n13 -n8 "$texfile" || {
+                echo "ERROR: ChkTeX found issues in $texfile"
+                ERROR_FOUND=1
+              }
+            fi
+          done
+          
+          if [ $ERROR_FOUND -eq 1 ]; then
+            echo "One or more LaTeX files have linting errors"
+            exit 1
+          fi
+
+  latex-format-check:
+    name: LaTeX Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install LaTeX and latexindent
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra perl
+          # latexindent comes with texlive-latex-extra
+      - name: Check LaTeX formatting
+        run: |
+          SKIP_FILES="Common.tex Comments.tex"
+          ERROR_FOUND=0
+          
+          find docs -name "*.tex" -type f | while read texfile; do
+            filename=$(basename "$texfile")
+            
+            # Skip include files
+            if echo "$SKIP_FILES" | grep -q "$filename"; then
+              continue
+            fi
+            
+            # Check if file has \documentclass (standalone document)
+            if grep -q "\\documentclass" "$texfile"; then
+              echo "Checking formatting: $texfile"
+              # Create temporary file for formatted output
+              TEMP_FILE=$(mktemp)
+              latexindent -w -c "$texfile" -o "$TEMP_FILE" 2>/dev/null || true
+              
+              # Compare original and formatted (ignoring whitespace-only differences)
+              if ! diff -q -w "$texfile" "$TEMP_FILE" > /dev/null 2>&1; then
+                echo "ERROR: $texfile is not properly formatted"
+                echo "Run: latexindent -w $texfile"
+                ERROR_FOUND=1
+              fi
+              rm -f "$TEMP_FILE"
+            fi
+          done
+          
+          if [ $ERROR_FOUND -eq 1 ]; then
+            echo "One or more LaTeX files are not properly formatted"
+            echo "Run 'latexindent -w <file>' to format them"
+            exit 1
+          fi
 
   latex-compile:
     name: LaTeX Compilation
@@ -303,7 +404,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [install, type-check, lint, format-check, build, latex-compile-check]
+    needs: [install, type-check, lint, format-check, build, test, latex-lint, latex-format-check, latex-compile-check]
     if: always()
     steps:
       - name: Check all CI jobs
@@ -314,6 +415,9 @@ jobs:
           [ "${{ needs.lint.result }}" != "success" ] && failed_jobs+=("Lint")
           [ "${{ needs.format-check.result }}" != "success" ] && failed_jobs+=("Format Check")
           [ "${{ needs.build.result }}" != "success" ] && failed_jobs+=("Build")
+          [ "${{ needs.test.result }}" != "success" ] && failed_jobs+=("Test")
+          [ "${{ needs.latex-lint.result }}" != "success" ] && failed_jobs+=("LaTeX Lint")
+          [ "${{ needs.latex-format-check.result }}" != "success" ] && failed_jobs+=("LaTeX Format Check")
           [ "${{ needs.latex-compile-check.result }}" != "success" ] && failed_jobs+=("LaTeX Compilation")
           
           if [ ${#failed_jobs[@]} -gt 0 ]; then
