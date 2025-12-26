@@ -281,3 +281,18 @@ jobs:
             fi
           done
 
+  latex-compile-check:
+    name: LaTeX Compilation
+    runs-on: ubuntu-latest
+    needs: latex-compile
+    if: always()
+    steps:
+      - name: Check LaTeX compilation status
+        run: |
+          if [ "${{ needs.latex-compile.result }}" != "success" ]; then
+            echo "One or more LaTeX directories failed to compile"
+            echo "Check the individual LaTeX Compilation (directory) jobs for details"
+            exit 1
+          fi
+          echo "All LaTeX directories compiled successfully"
+
