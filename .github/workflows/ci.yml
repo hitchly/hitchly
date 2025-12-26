@@ -206,22 +206,27 @@ jobs:
               if grep -qE '\\bibliography\{|\\bibliographystyle\{' "$texfile"; then
                 echo "  Document has bibliography, running full compilation with bibtex"
                 # First pass to generate .aux file
-                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                echo "    Running pdflatex (pass 1) on $filename"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile"; exit 1; }
                 # Run bibtex ONLY if .aux file exists AND has actual citations
                 if [ -f "${filename%.tex}.aux" ] && grep -qE '\\citation\{' "${filename%.tex}.aux" 2>/dev/null; then
-                  echo "    Running bibtex (citations found)"
-                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || true
+                  echo "    Running bibtex (citations found) on $filename"
+                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || { echo "ERROR: bibtex failed on $texfile"; exit 1; }
                 else
-                  echo "    Skipping bibtex (no citations found)"
+                  echo "    Skipping bibtex (no citations found) for $filename"
                 fi
                 # Run pdflatex again for references and bibliography
-                pdflatex -interaction=nonstopmode "$filename" || exit 1
-                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                echo "    Running pdflatex (pass 2) on $filename"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 2)"; exit 1; }
+                echo "    Running pdflatex (pass 3) on $filename"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 3)"; exit 1; }
               else
                 echo "  Document has no bibliography, running simple compilation"
                 # Simple compilation without bibtex (2 passes for cross-references)
-                pdflatex -interaction=nonstopmode "$filename" || exit 1
-                pdflatex -interaction=nonstopmode "$filename" || exit 1
+                echo "    Running pdflatex (pass 1) on $filename"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 1)"; exit 1; }
+                echo "    Running pdflatex (pass 2) on $filename"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 2)"; exit 1; }
               fi
               cd - > /dev/null
             else
