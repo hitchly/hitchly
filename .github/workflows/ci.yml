@@ -172,6 +172,22 @@ jobs:
   latex-compile:
     name: LaTeX Compilation
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        directory:
+          - Checklists
+          - Design/SoftArchitecture
+          - Design/SoftDetailedDes
+          - DevelopmentPlan
+          - HazardAnalysis
+          - ProblemStatementAndGoals
+          - ReflectAndTrace
+          - SRS
+          - UserGuide
+          - VnVPlan
+          - VnVReport
+          - projMngmnt
     steps:
       - uses: actions/checkout@v4
 
@@ -180,57 +196,52 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra texlive-science
 
-      - name: Compile LaTeX documents
-        working-directory: docs
+      - name: Compile LaTeX in ${{ matrix.directory }}
+        working-directory: docs/${{ matrix.directory }}
         run: |
           # Files to skip (include files, not standalone documents)
           SKIP_FILES="Common.tex Comments.tex"
           
-          # Find all .tex files and compile standalone documents
-          find . -name "*.tex" -type f | while read texfile; do
+          # Find all .tex files in this directory
+          find . -maxdepth 1 -name "*.tex" -type f | while read texfile; do
             filename=$(basename "$texfile")
             
             # Skip include files
             if echo "$SKIP_FILES" | grep -q "$filename"; then
-              echo "Skipping include file: $texfile"
+              echo "Skipping include file: $filename"
               continue
             fi
             
             # Check if file has \documentclass (standalone document)
             if grep -q "\\documentclass" "$texfile"; then
-              echo "Compiling document: $texfile"
-              dir=$(dirname "$texfile")
-              cd "$dir"
+              echo "Compiling: $filename"
               
-              # Check if file has bibliography commands (must be in the actual file, not just hyperref)
+              # Check if file has bibliography commands
               if grep -qE '\\bibliography\{|\\bibliographystyle\{' "$texfile"; then
                 echo "  Document has bibliography, running full compilation with bibtex"
                 # First pass to generate .aux file
                 echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 1)"; exit 1; }
                 # Run bibtex ONLY if .aux file exists AND has actual citations
                 if [ -f "${filename%.tex}.aux" ] && grep -qE '\\citation\{' "${filename%.tex}.aux" 2>/dev/null; then
                   echo "    Running bibtex (citations found) on $filename"
-                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || { echo "ERROR: bibtex failed on $texfile"; exit 1; }
+                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || { echo "ERROR: bibtex failed on $filename"; exit 1; }
                 else
                   echo "    Skipping bibtex (no citations found) for $filename"
                 fi
                 # Run pdflatex again for references and bibliography
                 echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 2)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 2)"; exit 1; }
                 echo "    Running pdflatex (pass 3) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 3)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 3)"; exit 1; }
               else
                 echo "  Document has no bibliography, running simple compilation"
                 # Simple compilation without bibtex (2 passes for cross-references)
                 echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 1)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 1)"; exit 1; }
                 echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $texfile (pass 2)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 2)"; exit 1; }
               fi
-              cd - > /dev/null
-            else
-              echo "Skipping include file (no \\documentclass): $texfile"
             fi
           done
 
