@@ -11,9 +11,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      latex: ${{ steps.filter.outputs.latex }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**/*.{ts,tsx,js,jsx,json,md}'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - 'tsconfig.json'
+              - '.eslintrc*'
+              - '.prettierrc*'
+            latex:
+              - 'docs/**/*.tex'
+              - 'refs/**/*.bib'
+
   install:
     name: Install Dependencies
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -28,16 +57,17 @@ jobs:
           version: 10.17.1
 
       - name: Get pnpm store directory
-        id: store_path
+        id: pnpm-cache
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-          echo "store_path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+          STORE_PATH=$(pnpm store path --silent)
+          echo "STORE_PATH=$STORE_PATH" >> $GITHUB_ENV
+          echo "store_path=$STORE_PATH" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH }}
+          path: ${{ steps.pnpm-cache.outputs.store_path }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -48,19 +78,10 @@ jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
-    needs: install
+    needs: [detect-changes, install]
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -69,6 +90,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Type check
@@ -77,19 +109,10 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: install
+    needs: [detect-changes, install]
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -98,6 +121,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
@@ -106,19 +140,10 @@ jobs:
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
-    needs: install
+    needs: [detect-changes, install]
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -127,6 +152,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check formatting
@@ -135,19 +171,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: install
+    needs: [detect-changes, install]
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -156,6 +183,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
@@ -164,19 +202,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: install
+    needs: [detect-changes, install]
+    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -185,6 +214,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Test
@@ -231,6 +271,8 @@ jobs:
   latex-format-check:
     name: LaTeX Format Check
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - name: Install LaTeX and latexindent
@@ -277,6 +319,8 @@ jobs:
   latex-compile:
     name: LaTeX Compilation
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push'
     strategy:
       fail-fast: false
       matrix:
@@ -389,8 +433,8 @@ jobs:
   latex-compile-check:
     name: LaTeX Compilation
     runs-on: ubuntu-latest
-    needs: latex-compile
-    if: always()
+    needs: [detect-changes, latex-compile]
+    if: (needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push') && always()
     steps:
       - name: Check LaTeX compilation status
         run: |
@@ -404,21 +448,29 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [install, type-check, lint, format-check, build, test, latex-lint, latex-format-check, latex-compile-check]
+    needs: [detect-changes, install, type-check, lint, format-check, build, test, latex-lint, latex-format-check, latex-compile-check]
     if: always()
     steps:
       - name: Check all CI jobs
         run: |
           failed_jobs=()
-          [ "${{ needs.install.result }}" != "success" ] && failed_jobs+=("Install Dependencies")
-          [ "${{ needs.type-check.result }}" != "success" ] && failed_jobs+=("Type Check")
-          [ "${{ needs.lint.result }}" != "success" ] && failed_jobs+=("Lint")
-          [ "${{ needs.format-check.result }}" != "success" ] && failed_jobs+=("Format Check")
-          [ "${{ needs.build.result }}" != "success" ] && failed_jobs+=("Build")
-          [ "${{ needs.test.result }}" != "success" ] && failed_jobs+=("Test")
-          [ "${{ needs.latex-lint.result }}" != "success" ] && failed_jobs+=("LaTeX Lint")
-          [ "${{ needs.latex-format-check.result }}" != "success" ] && failed_jobs+=("LaTeX Format Check")
-          [ "${{ needs.latex-compile-check.result }}" != "success" ] && failed_jobs+=("LaTeX Compilation")
+          
+          # Code-related jobs (only check if code changed or push event)
+          if [ "${{ needs.detect-changes.outputs.code }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
+            [ "${{ needs.install.result }}" != "success" ] && [ "${{ needs.install.result }}" != "skipped" ] && failed_jobs+=("Install Dependencies")
+            [ "${{ needs.type-check.result }}" != "success" ] && [ "${{ needs.type-check.result }}" != "skipped" ] && failed_jobs+=("Type Check")
+            [ "${{ needs.lint.result }}" != "success" ] && [ "${{ needs.lint.result }}" != "skipped" ] && failed_jobs+=("Lint")
+            [ "${{ needs.format-check.result }}" != "success" ] && [ "${{ needs.format-check.result }}" != "skipped" ] && failed_jobs+=("Format Check")
+            [ "${{ needs.build.result }}" != "success" ] && [ "${{ needs.build.result }}" != "skipped" ] && failed_jobs+=("Build")
+            [ "${{ needs.test.result }}" != "success" ] && [ "${{ needs.test.result }}" != "skipped" ] && failed_jobs+=("Test")
+          fi
+          
+          # LaTeX-related jobs (only check if LaTeX changed or push event)
+          if [ "${{ needs.detect-changes.outputs.latex }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
+            [ "${{ needs.latex-lint.result }}" != "success" ] && [ "${{ needs.latex-lint.result }}" != "skipped" ] && failed_jobs+=("LaTeX Lint")
+            [ "${{ needs.latex-format-check.result }}" != "success" ] && [ "${{ needs.latex-format-check.result }}" != "skipped" ] && failed_jobs+=("LaTeX Format Check")
+            [ "${{ needs.latex-compile-check.result }}" != "success" ] && [ "${{ needs.latex-compile-check.result }}" != "skipped" ] && failed_jobs+=("LaTeX Compilation")
+          fi
           
           if [ ${#failed_jobs[@]} -gt 0 ]; then
             echo "❌ The following CI jobs failed:"
