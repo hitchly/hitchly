@@ -1287,8 +1287,8 @@ It interacts directly with:
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{init\_payment()} & user\_id, ride\_id & Boolean (verified or unverified) & NotFoundError \\
-\texttt{process\_payment()} & payment\_id, payment\_method  & payment_status  & ExpiredSessionError \\
+\texttt{init\_payment()} & user\_id, ride\_id & Boolean~(verified or unverified) & NotFoundError \\
+\texttt{process\_payment()} & payment\_id, payment\_method & payment\_status & ExpiredSessionError \\
 \texttt{get\_paymentRecord()} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
 \bottomrule
 \end{tabular}

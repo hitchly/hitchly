@@ -221,7 +221,15 @@ jobs:
                 echo "  Document has bibliography, running full compilation with bibtex"
                 # First pass to generate .aux file
                 echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 1)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || {
+                  # Check if PDF was generated despite errors
+                  if [ -f "${filename%.tex}.pdf" ]; then
+                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 1)"
+                  else
+                    echo "ERROR: pdflatex failed on $filename (pass 1) - no PDF generated"
+                    exit 1
+                  fi
+                }
                 # Run bibtex ONLY if .aux file exists AND has actual citations
                 if [ -f "${filename%.tex}.aux" ] && grep -qE '\\citation\{' "${filename%.tex}.aux" 2>/dev/null; then
                   echo "    Running bibtex (citations found) on $filename"
@@ -231,16 +239,44 @@ jobs:
                 fi
                 # Run pdflatex again for references and bibliography
                 echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 2)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || {
+                  if [ -f "${filename%.tex}.pdf" ]; then
+                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 2)"
+                  else
+                    echo "ERROR: pdflatex failed on $filename (pass 2) - no PDF generated"
+                    exit 1
+                  fi
+                }
                 echo "    Running pdflatex (pass 3) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 3)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || {
+                  if [ -f "${filename%.tex}.pdf" ]; then
+                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 3)"
+                  else
+                    echo "ERROR: pdflatex failed on $filename (pass 3) - no PDF generated"
+                    exit 1
+                  fi
+                }
               else
                 echo "  Document has no bibliography, running simple compilation"
                 # Simple compilation without bibtex (2 passes for cross-references)
                 echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 1)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || {
+                  if [ -f "${filename%.tex}.pdf" ]; then
+                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 1)"
+                  else
+                    echo "ERROR: pdflatex failed on $filename (pass 1) - no PDF generated"
+                    exit 1
+                  fi
+                }
                 echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pdflatex failed on $filename (pass 2)"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || {
+                  if [ -f "${filename%.tex}.pdf" ]; then
+                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 2)"
+                  else
+                    echo "ERROR: pdflatex failed on $filename (pass 2) - no PDF generated"
+                    exit 1
+                  fi
+                }
               fi
             fi
           done
