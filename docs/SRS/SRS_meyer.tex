@@ -52,12 +52,13 @@
 \input{../Comments}
 \input{../Common}
 
+\begin{document}
+\maketitle
+
 \setcounter{tocdepth}{3}
 \makeatletter
 \@starttoc{toc}
 \makeatother
-\begin{document}
-\maketitle
 \begin{table}[hp]
   \caption{Revision History} \label{TblRevisionHistory}
   \begin{tabularx}{\textwidth}{llX}
@@ -953,14 +954,6 @@ For each stakeholder, the type of interview, its objective, and the most importa
 \end{itemize}
 
 \newpage
-
-% ---------- References ----------
-\begin{thebibliography}{9}
-\bibitem{meyer2022} Bertrand Meyer. \textit{Handbook of Requirements and Business Analysis}. Springer, 2022.
-\bibitem{sommerville1997} Ian Sommerville and Peter Sawyer. \textit{Requirements Engineering: A Good Practice Guide}. Wiley, 1997.
-\end{thebibliography}
-
-\newpage
 \section{Reflection}
 \begin{enumerate} 
 
@@ -1075,4 +1068,7 @@ Swesan: \\
 For collaboration and motivation, two approaches are: (1) actively communicating with teammates and holding regular check-ins, and (2) staying accountable by being on top of my own tasks and deadlines. For coding, I will continue practicing through team coding sessions and peer reviews. I plan to pursue these approaches because working closely with my team and staying consistent with my responsibilities will naturally build both my technical and teamwork skills. 
 
 \end{enumerate}
+
+\bibliographystyle{plainnat}
+
 \end{document}

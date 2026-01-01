@@ -8,7 +8,6 @@ import { appRouter } from "./trpc/routers";
 export function createServer(): Express {
   const app = express();
 
-   
   app.all("/api/auth/*", toNodeHandler(auth));
 
   app.use(express.json());
@@ -18,7 +17,7 @@ export function createServer(): Express {
     trpcExpress.createExpressMiddleware({
       router: appRouter,
       createContext,
-    }),
+    })
   );
 
   app.get("/", (_req, res) => {
