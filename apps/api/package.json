@@ -9,7 +9,10 @@
     "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
     "start": "node -r esbuild-register index.ts",
     "test": "jest --detectOpenHandles --passWithNoTests",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "drizzle:generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "drizzle:migrate": "drizzle-kit migrate --config ./drizzle.config.ts",
+    "drizzle:studio": "drizzle-kit studio --config ./drizzle.config.ts"
   },
   "jest": {
     "preset": "ts-jest",
