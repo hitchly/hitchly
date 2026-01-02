@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { trpc } from "../utils/trpc";
 
 export default function UsersScreen() {
