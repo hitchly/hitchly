@@ -11,7 +11,7 @@ export function createServer(): Express {
   app.use(json());
 
   // -------------------------------
-  // Mount Better-Auth only on its routePrefix
+  // better-auth middleware
   // -------------------------------
   app.all("/api/auth/*splat", toNodeHandler(auth));
 
