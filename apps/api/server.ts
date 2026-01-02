@@ -1,6 +1,5 @@
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { toNodeHandler } from "better-auth/node";
-import { json } from "body-parser";
 import express, { Express } from "express";
 import { auth } from "./auth/auth";
 import { createContext } from "./trpc/context";
@@ -8,7 +7,6 @@ import { appRouter } from "./trpc/routers";
 
 export function createServer(): Express {
   const app = express();
-  app.use(json());
 
   // -------------------------------
   // better-auth middleware
