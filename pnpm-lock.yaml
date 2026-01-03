@@ -75,9 +75,6 @@ importers:
       '@types/cors':
         specifier: ^2.8.19
         version: 2.8.19
-      '@types/dotenv':
-        specifier: ^8.2.3
-        version: 8.2.3
       '@types/express':
         specifier: ^5.0.5
         version: 5.0.5
@@ -2163,10 +2160,6 @@ packages:
 
   '@types/cors@2.8.19':
     resolution: {integrity: sha512-mFNylyeyqN93lfe/9CSxOGREz8cpzAhH+E93xJ4xWQf62V8sQ/24reV2nyzUWM6H6Xji+GGHpkbLe7pVoUEskg==}
-
-  '@types/dotenv@8.2.3':
-    resolution: {integrity: sha512-g2FXjlDX/cYuc5CiQvyU/6kkbP1JtmGzh0obW50zD7OKeILVL0NSpPWLXVfqoAGQjom2/SLLx9zHq0KXvD6mbw==}
-    deprecated: This is a stub types definition. dotenv provides its own type definitions, so you do not need this installed.
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -8795,10 +8788,6 @@ snapshots:
   '@types/cors@2.8.19':
     dependencies:
       '@types/node': 24.10.0
-
-  '@types/dotenv@8.2.3':
-    dependencies:
-      dotenv: 17.2.3
 
   '@types/estree@1.0.8': {}
 

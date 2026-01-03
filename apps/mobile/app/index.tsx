@@ -1,18 +1,18 @@
-import { Text, View } from "react-native";
-import { trpc } from "../utils/trpc";
+// apps/mobile/app/index.tsx
+import { ActivityIndicator, Text, View } from "react-native";
+import { trpc } from "../lib/trpc";
 
-export default function UsersScreen() {
-  const userQuery = trpc.user.getCurrent.useQuery();
-  console.log("User data:", userQuery.data);
+export default function TestTRPC() {
+  const { data, isLoading, error } = trpc.health.ping.useQuery();
+
+  console.log("TRPC Health Check:", { data, isLoading, error });
+
+  if (isLoading) return <ActivityIndicator />;
+  if (error) return <Text>Error: {error.message}</Text>;
+
   return (
-    <View style={{ padding: 20 }}>
-      {userQuery.isLoading && <Text>Loading user...</Text>}
-
-      {userQuery.data && (
-        <Text style={{ fontSize: 16, marginVertical: 2, color: "red" }}>
-          {userQuery.data.email || "No email"}
-        </Text>
-      )}
+    <View style={{ padding: 24 }}>
+      <Text>{data?.message}</Text>
     </View>
   );
 }
