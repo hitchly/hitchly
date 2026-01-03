@@ -1,10 +1,9 @@
-import React from "react";
 import { Text, View } from "react-native";
 import { trpc } from "../utils/trpc";
 
 export default function UsersScreen() {
   const userQuery = trpc.user.getCurrent.useQuery();
-
+  console.log("User data:", userQuery.data);
   return (
     <View style={{ padding: 20 }}>
       {userQuery.isLoading && <Text>Loading user...</Text>}
