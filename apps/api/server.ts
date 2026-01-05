@@ -8,10 +8,14 @@ import { appRouter } from "./trpc/routers";
 export function createServer(): Express {
   const app = express();
 
-  app.all("/api/auth/*", toNodeHandler(auth));
+  // -------------------------------
+  // better-auth middleware
+  // -------------------------------
+  app.all("/api/auth/*splat", toNodeHandler(auth));
 
-  app.use(express.json());
-
+  // -------------------------------
+  // tRPC middleware
+  // -------------------------------
   app.use(
     "/trpc",
     trpcExpress.createExpressMiddleware({
@@ -20,6 +24,9 @@ export function createServer(): Express {
     })
   );
 
+  // -------------------------------
+  // Health check
+  // -------------------------------
   app.get("/", (_req, res) => {
     res.send("🚀 API is alive! Auth → /api/auth/*  tRPC → /trpc");
   });

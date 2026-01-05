@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Slot } from "expo-router";
-import React from "react";
-import { trpc, trpcClient } from "../utils/trpc";
+import { trpc, trpcClient } from "../lib/trpc";
 
 const queryClient = new QueryClient();
 

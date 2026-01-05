@@ -9,7 +9,7 @@ import type { AppRouter } from "api/trpc/routers";
 const getBaseUrl = () => {
   if (__DEV__) {
     // change this to your LAN IP if using a device
-    return "http://172.17.97.102:3001";
+    return "http://192.168.2.13:3000";
   }
   return "https://your-production-api.com";
 };
