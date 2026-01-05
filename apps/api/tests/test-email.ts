@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // scripts/test-email.ts
 import dotenv from "dotenv";
 import path from "path";

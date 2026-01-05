@@ -128,13 +128,12 @@ interface SendEmailOptions {
 
 export const sendEmail = async ({ to, subject, html }: SendEmailOptions) => {
   try {
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Hitchly Support" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       html: getEmailTemplate(html), // Wrap raw HTML in our branded template
     });
-    console.log(`✅ Email sent to ${to}: ${info.messageId}`);
     return { success: true };
   } catch (error) {
     console.error("❌ Failed to send email:", error);

@@ -10,7 +10,7 @@ export const auth = betterAuth({
   plugins: [
     expo(),
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
+      async sendVerificationOTP({ email, otp }) {
         await sendOTPEmail(email, otp);
       },
       sendVerificationOnSignUp: true,
