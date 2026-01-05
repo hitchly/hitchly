@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +12,8 @@ import {
 import { authClient } from "../../lib/auth-client";
 
 export default function SignUp() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +41,12 @@ export default function SignUp() {
             // The Root Layout (useSession) will detect the new session automatically
             // and redirect the user to the (app) folder.
             console.log("Sign up successful", ctx);
+            // Success! The server has already emailed the code.
+            // Navigate to Verify and pass the email so they don't have to re-type it.
+            router.push({
+              pathname: "/verify",
+              params: { email: email, password: password }, // Pass password for auto-login after verification
+            });
           },
           onError: (ctx) => {
             // ctx.error.message will contain your "Only @mcmaster.ca emails" error

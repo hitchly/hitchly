@@ -1,11 +1,21 @@
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { emailOTP } from "better-auth/plugins";
 import { env } from "../config/env";
 import { db } from "../db";
+import { sendOTPEmail } from "../lib/email";
 
 export const auth = betterAuth({
-  plugins: [expo()],
+  plugins: [
+    expo(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        await sendOTPEmail(email, otp);
+      },
+      sendVerificationOnSignUp: true,
+    }),
+  ],
 
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -14,6 +24,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
     validateSignUpInput(input: {
       email: string;
       password?: string;

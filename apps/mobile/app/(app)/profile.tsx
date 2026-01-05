@@ -20,8 +20,6 @@ export default function ProfileScreen() {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
-            // The Root Layout is listening to useSession()
-            // It will automatically redirect to (auth) when session becomes null
             console.log("Sign out successful");
           },
         },
@@ -32,8 +30,10 @@ export default function ProfileScreen() {
     }
   };
 
-  // Safe fallback if session is null (shouldn't happen on this screen due to protection)
   const user = session?.user;
+  const isVerified = user?.emailVerified; // Check verification status
+
+  // Generate initials for avatar
   const initials = user?.name
     ? user.name
         .split(" ")
@@ -45,10 +45,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           {user?.image ? (
-            // If you have an image URL in the future
             <Text>Image here</Text>
           ) : (
             <Text style={styles.avatarText}>{initials}</Text>
@@ -58,12 +58,31 @@ export default function ProfileScreen() {
         <Text style={styles.name}>{user?.name || "User"}</Text>
         <Text style={styles.email}>{user?.email || "No email"}</Text>
 
-        <View style={styles.badge}>
-          {/* TODO: Add user role badge */}
-          <Text style={styles.badgeText}>Student</Text>
+        {/* Dynamic Verified Badge */}
+        <View
+          style={[
+            styles.badge,
+            isVerified ? styles.badgeSuccess : styles.badgeWarning,
+          ]}
+        >
+          <Ionicons
+            name={isVerified ? "checkmark-circle" : "alert-circle"}
+            size={16}
+            color={isVerified ? "#006400" : "#8B4500"}
+            style={{ marginRight: 4 }}
+          />
+          <Text
+            style={[
+              styles.badgeText,
+              isVerified ? styles.textSuccess : styles.textWarning,
+            ]}
+          >
+            {isVerified ? "Verified Student" : "Not Verified"}
+          </Text>
         </View>
       </View>
 
+      {/* Actions Section */}
       <View style={styles.actionSection}>
         <TouchableOpacity
           style={styles.actionButton}
@@ -89,6 +108,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Sign Out Button */}
       <TouchableOpacity
         style={styles.signOutButton}
         onPress={handleSignOut}
@@ -106,6 +126,8 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
+
+  // Header
   header: {
     backgroundColor: "#fff",
     alignItems: "center",
@@ -117,7 +139,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#7A003C", // McMaster Maroon
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -130,14 +152,29 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 36, fontWeight: "bold", color: "#fff" },
   name: { fontSize: 24, fontWeight: "700", color: "#333", marginBottom: 4 },
   email: { fontSize: 16, color: "#666", marginBottom: 12 },
-  badge: {
-    backgroundColor: "#e1ecf4",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: { color: "#007AFF", fontSize: 12, fontWeight: "600" },
 
+  // Badges
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  badgeSuccess: {
+    backgroundColor: "#e6f4ea", // Light Green
+    borderColor: "#c6e7ce",
+  },
+  badgeWarning: {
+    backgroundColor: "#fff3e0", // Light Orange
+    borderColor: "#ffe0b2",
+  },
+  badgeText: { fontSize: 13, fontWeight: "600" },
+  textSuccess: { color: "#006400" }, // Dark Green
+  textWarning: { color: "#8B4500" }, // Dark Orange
+
+  // Actions
   actionSection: {
     marginTop: 24,
     backgroundColor: "#fff",
@@ -155,6 +192,7 @@ const styles = StyleSheet.create({
   icon: { width: 30 },
   actionText: { flex: 1, fontSize: 16, color: "#333" },
 
+  // Sign Out
   signOutButton: {
     margin: 24,
     backgroundColor: "#ff3b30",

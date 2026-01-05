@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -14,8 +15,14 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
     setLoading(true);
     try {
       await authClient.signIn.email(
@@ -25,11 +32,35 @@ export default function SignIn() {
         },
         {
           onSuccess: () => {
-            // The Root Layout (useSession) will detect the change automatically
-            // No need to manually invalidate queries or redirect!
+            // Root Layout detects session change
+            // router.replace('/'); // Optional: explicit redirect if needed
           },
-          onError: (ctx) => {
-            Alert.alert("Login Failed", ctx.error.message);
+          onError: async (ctx) => {
+            // Check for unverified email error
+            if (
+              ctx.error.code === "EMAIL_NOT_VERIFIED" ||
+              ctx.error.message.includes("verified")
+            ) {
+              Alert.alert(
+                "Verification Required",
+                "Your account is not verified. We are sending a new code.",
+                [{ text: "OK" }]
+              );
+
+              // 1. Resend the OTP
+              await authClient.emailOtp.sendVerificationOtp({
+                email,
+                type: "email-verification",
+              });
+
+              // 2. Redirect to Verify screen
+              router.push({
+                pathname: "/verify",
+                params: { email }, // Pass email to next screen
+              });
+            } else {
+              Alert.alert("Login Failed", ctx.error.message);
+            }
           },
         }
       );
