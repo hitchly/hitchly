@@ -1,0 +1,35 @@
+{
+  "name": "@hitchly/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./schema": "./schema.ts",
+    "./config": "./drizzle.config.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./index.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config ./drizzle.config.ts",
+    "push": "drizzle-kit push --config ./drizzle.config.ts",
+    "studio": "drizzle-kit studio --config ./drizzle.config.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.16.3",
+    "drizzle-kit": "^0.31.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/pg": "^8.15.6"
+  }
+}

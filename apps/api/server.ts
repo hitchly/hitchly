@@ -1,3 +1,4 @@
+import "dotenv/config";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";

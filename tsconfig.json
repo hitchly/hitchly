@@ -3,9 +3,7 @@
   "references": [
     { "path": "./apps/api" },
     { "path": "./apps/mobile" },
-    { "path": "./packages/db" },
-    { "path": "./packages/utils" },
-    { "path": "./packages/types" }
+    { "path": "./packages/db" }
   ],
   "compilerOptions": {
     "composite": true,
@@ -22,9 +20,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@hitchly/db/*": ["packages/db/src/*"],
-      "@hitchly/utils/*": ["packages/utils/src/*"],
-      "@hitchly/types/*": ["packages/types/src/*"]
+      "@hitchly/db/*": ["packages/db/*"]
     }
   }
 }

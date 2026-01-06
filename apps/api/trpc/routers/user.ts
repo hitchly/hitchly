@@ -1,5 +1,5 @@
+import { users } from "@hitchly/db/schema";
 import { eq } from "drizzle-orm";
-import { users } from "../../db/schema";
 import { protectedProcedure, router } from "../trpc";
 
 /**

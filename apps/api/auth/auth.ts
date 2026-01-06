@@ -1,9 +1,8 @@
 import { expo } from "@better-auth/expo";
+import { db } from "@hitchly/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";
-import { env } from "../config/env";
-import { db } from "../db";
 import { sendOTPEmail } from "../lib/email";
 
 export const auth = betterAuth({
@@ -38,7 +37,7 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: [
-    env.origins.client, // Keep your existing web client
+    process.env.CLIENT_ORIGIN ?? "http://localhost:3000", // Keep your existing web client
     "mobile://", // The scheme you defined in auth-client.ts
     "exp://", // Generic Expo scheme
     "http://192.168.2.13:8081", // The Metro bundler origin

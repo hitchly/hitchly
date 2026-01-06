@@ -1,8 +1,8 @@
 // apps/api/trpc/context.ts
+import { db } from "@hitchly/db";
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../auth/auth";
-import { db } from "../db";
 
 export async function createContext({ req, res }: CreateExpressContextOptions) {
   const session = await auth.api.getSession({
