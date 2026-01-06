@@ -1,55 +1,67 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
+
+import { Button } from "../../components/ui/button";
+import { ControlledInput } from "../../components/ui/form";
+import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
+
+// 1. Define Validation Schema
+const signUpSchema = z.object({
+  name: z.string().min(1, "Full Name is required"),
+  email: z
+    .string()
+    .email("Please enter a valid email address")
+    .refine(
+      (email) => email.endsWith("@mcmaster.ca"),
+      "Only @mcmaster.ca emails are allowed"
+    ),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUp() {
   const router = useRouter();
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async () => {
-    // Basic client-side validation
-    if (!name || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
+  // 2. Setup React Hook Form
+  const { control, handleSubmit } = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
 
+  // 3. Handle Submission
+  const onSubmit = async (data: SignUpFormData) => {
     setLoading(true);
 
     try {
       await authClient.signUp.email(
         {
-          email,
-          password,
-          name,
+          email: data.email,
+          password: data.password,
+          name: data.name,
         },
         {
           onSuccess: (ctx) => {
-            // The Root Layout (useSession) will detect the new session automatically
-            // and redirect the user to the (app) folder.
             console.log("Sign up successful", ctx);
-            // Success! The server has already emailed the code.
-            // Navigate to Verify and pass the email so they don't have to re-type it.
+            // Navigate to Verify and pass credentials
             router.push({
               pathname: "/verify",
-              params: { email: email, password: password }, // Pass password for auto-login after verification
+              params: { email: data.email, password: data.password },
             });
           },
           onError: (ctx) => {
-            // ctx.error.message will contain your "Only @mcmaster.ca emails" error
             Alert.alert("Registration Failed", ctx.error.message);
           },
         }
@@ -62,71 +74,73 @@ export default function SignUp() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.form}>
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Jane Doe"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
+        <Text style={[styles.title, { color: theme.text }]}>
+          Create Account
+        </Text>
 
-        <Text style={styles.label}>Email (McMaster Only)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="jane@mcmaster.ca"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+        {/* 4. Use ControlledInput Components */}
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="name"
+            label="Full Name"
+            placeholder="Jane Doe"
+            autoCapitalize="words"
+          />
+        </View>
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="email"
+            label="McMaster Email"
+            placeholder="jane@mcmaster.ca"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSignUp}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="password"
+            label="Password"
+            placeholder="••••••••"
+            secureTextEntry
+          />
+        </View>
+
+        <Button
+          title="Create Account"
+          onPress={handleSubmit(onSubmit)}
+          isLoading={loading}
+          variant="primary"
+          style={{ marginTop: 16 }}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-  form: { marginTop: 24 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
+  container: {
+    flex: 1,
+    padding: 24,
   },
-  button: {
-    backgroundColor: "#28a745", // Green to distinguish Sign Up from Sign In
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
+  form: {
+    width: "100%",
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 32,
+    textAlign: "center",
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
 });

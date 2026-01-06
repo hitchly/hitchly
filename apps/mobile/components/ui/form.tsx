@@ -1,27 +1,31 @@
 import React from "react";
 import { Controller } from "react-hook-form";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   TextInput,
+  TextInputProps,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useTheme } from "../../context/theme-context";
+import { Button } from "./button";
 
 // --- 1. Controlled Text Input ---
+interface ControlledInputProps extends TextInputProps {
+  control: any;
+  name: string;
+  label: string;
+}
+
 export function ControlledInput({
   control,
   name,
   label,
-  placeholder,
-  multiline,
-  numeric,
-  autoCapitalize,
-}: any) {
+  ...props
+}: ControlledInputProps) {
   const theme = useTheme();
 
   return (
@@ -45,20 +49,14 @@ export function ControlledInput({
                 borderColor: error ? theme.error : theme.border,
                 ...(error ? { backgroundColor: theme.errorBackground } : {}),
               },
-              multiline && styles.textArea,
+              props.multiline && styles.textArea,
             ]}
             onBlur={onBlur}
-            onChangeText={(val) =>
-              numeric
-                ? onChange(val ? parseInt(val) : undefined)
-                : onChange(val)
-            }
+            onChangeText={onChange} // ✅ Fixed: No more parseInt() here
             value={value?.toString() || ""}
-            placeholder={placeholder}
             placeholderTextColor={theme.textSecondary}
-            multiline={multiline}
-            keyboardType={numeric ? "number-pad" : "default"}
-            autoCapitalize={autoCapitalize}
+            autoCapitalize="none"
+            {...props} // Passes secureTextEntry, keyboardType, etc.
           />
           {error && (
             <Text style={[styles.errorText, { color: theme.error }]}>
@@ -278,20 +276,14 @@ export function ControlledSwitch({ control, name, label }: any) {
 
 // --- 6. Submit Button ---
 export function SubmitButton({ title, onPress, isPending }: any) {
-  const theme = useTheme();
-
   return (
-    <TouchableOpacity
-      style={[styles.saveBtn, { backgroundColor: theme.primary }]}
+    <Button
+      title={title}
       onPress={onPress}
-      disabled={isPending}
-    >
-      {isPending ? (
-        <ActivityIndicator color="#fff" />
-      ) : (
-        <Text style={styles.saveBtnText}>{title}</Text>
-      )}
-    </TouchableOpacity>
+      isLoading={isPending}
+      variant="primary"
+      style={{ marginTop: 24 }}
+    />
   );
 }
 
@@ -361,13 +353,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   switchLabel: { fontSize: 16 },
-
-  // Button
-  saveBtn: {
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 24,
-  },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

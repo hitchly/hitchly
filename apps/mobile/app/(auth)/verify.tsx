@@ -1,40 +1,48 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
+
+import { Button } from "../../components/ui/button";
+import { ControlledInput } from "../../components/ui/form";
+import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 
+// 1. Validation Schema
+const verifySchema = z.object({
+  otp: z.string().length(6, "Verification code must be 6 digits"),
+});
+
+type VerifyFormData = z.infer<typeof verifySchema>;
+
 export default function Verify() {
-  // We grab the password passed from the Register screen
+  const router = useRouter();
+  const theme = useTheme();
+  const [loading, setLoading] = useState(false);
+
+  // We grab the email/password passed from the previous screen
   const { email, password } = useLocalSearchParams<{
     email: string;
     password?: string;
   }>();
-  const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const handleVerify = async () => {
-    if (!otp) {
-      Alert.alert("Error", "Please enter the verification code");
-      return;
-    }
+  // 2. Setup Form
+  const { control, handleSubmit } = useForm<VerifyFormData>({
+    resolver: zodResolver(verifySchema),
+    defaultValues: { otp: "" },
+  });
 
+  // 3. Handle Verify & Auto-Login
+  const onVerify = async (data: VerifyFormData) => {
     setLoading(true);
     try {
-      // ---------------------------------------------------------
-      // Step 1: Verify the Email
-      // ---------------------------------------------------------
+      // Step A: Verify Email
       const { error: verifyError } = await authClient.emailOtp.verifyEmail({
         email,
-        otp,
+        otp: data.otp,
       });
 
       if (verifyError) {
@@ -43,9 +51,7 @@ export default function Verify() {
         return;
       }
 
-      // ---------------------------------------------------------
-      // Step 2: Auto-Login (Behind the Scenes)
-      // ---------------------------------------------------------
+      // Step B: Auto-Login if password exists
       if (password) {
         const { error: signInError } = await authClient.signIn.email({
           email,
@@ -53,17 +59,15 @@ export default function Verify() {
         });
 
         if (signInError) {
-          // Rare edge case: Verified but login failed (maybe changed password?)
           Alert.alert("Verified", "Email verified! Please sign in manually.");
-          router.replace("/sign-in");
+          router.replace("/(auth)/sign-in");
         } else {
-          // Success! Verified AND Logged in.
+          // Success! Root layout will handle redirect to (app)
           router.replace("/");
         }
       } else {
-        // Fallback: If for some reason we don't have the password (e.g. user restarted app)
         Alert.alert("Success", "Email verified! Please sign in.");
-        router.replace("/sign-in");
+        router.replace("/(auth)/sign-in");
       }
     } catch (err) {
       Alert.alert("Error", "An unexpected error occurred");
@@ -90,76 +94,69 @@ export default function Verify() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.form}>
-        <Text style={styles.headerTitle}>Verify Email</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Verify Email
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           Please enter the code sent to {email}
         </Text>
 
-        <Text style={styles.label}>Verification Code</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="123456"
-          keyboardType="number-pad"
-          autoCapitalize="none"
-          value={otp}
-          onChangeText={setOtp}
-          maxLength={6}
+        {/* Form Input */}
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="otp"
+            label="Verification Code"
+            placeholder="123456"
+            keyboardType="number-pad"
+            maxLength={6}
+          />
+        </View>
+
+        <Button
+          title="Verify & Sign In"
+          onPress={handleSubmit(onVerify)}
+          isLoading={loading}
+          variant="primary"
+          style={{ marginTop: 8 }}
         />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleVerify}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Verify & Sign In</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
+        <Button
+          title="Resend Code"
           onPress={handleResendCode}
           disabled={loading}
-          style={styles.linkButton}
-        >
-          <Text style={styles.linkText}>Resend Code</Text>
-        </TouchableOpacity>
+          variant="ghost"
+          style={{ marginTop: 16 }}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-  form: { marginTop: 24 },
+  container: {
+    flex: 1,
+    padding: 24,
+  },
+  form: {
+    width: "100%",
+  },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#333",
+    textAlign: "center",
   },
-  subtitle: { fontSize: 16, color: "#666", marginBottom: 32 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
+  subtitle: {
     fontSize: 16,
+    marginBottom: 32,
+    textAlign: "center",
+  },
+  inputGroup: {
     marginBottom: 20,
-    backgroundColor: "#f9f9f9",
   },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-  linkButton: { alignItems: "center", marginTop: 20 },
-  linkText: { color: "#007AFF", fontSize: 16 },
 });

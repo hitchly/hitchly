@@ -1,27 +1,35 @@
 import { Link } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Button } from "../../components/ui/button";
+import { useTheme } from "../../context/theme-context";
+
 export default function LandingPage() {
+  const theme = useTheme();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Hitchly</Text>
-        <Text style={styles.subtitle}>
+        {/* Branding */}
+        <Text style={[styles.title, { color: theme.text }]}>
+          Welcome to Hitchly
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           McMaster&apos;s Ridesharing Platform
         </Text>
 
+        {/* Actions */}
         <View style={styles.buttonContainer}>
           <Link href="/(auth)/sign-in" asChild>
-            <TouchableOpacity style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-            </TouchableOpacity>
+            <Button title="Sign In" variant="primary" />
           </Link>
 
           <Link href="/(auth)/sign-up" asChild>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Create Account</Text>
-            </TouchableOpacity>
+            <Button title="Create Account" variant="secondary" />
           </Link>
         </View>
       </View>
@@ -30,33 +38,26 @@ export default function LandingPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   content: {
     flex: 1,
     padding: 24,
     justifyContent: "center",
     alignItems: "center",
   },
-  title: { fontSize: 32, fontWeight: "bold", marginBottom: 12 },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
   subtitle: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 48,
     textAlign: "center",
   },
-  buttonContainer: { width: "100%", gap: 16 },
-  primaryButton: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
+  buttonContainer: {
+    width: "100%",
+    gap: 16,
   },
-  primaryButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  secondaryButton: {
-    backgroundColor: "#f0f0f0",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  secondaryButtonText: { color: "#333", fontSize: 16, fontWeight: "600" },
 });

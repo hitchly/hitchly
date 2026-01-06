@@ -1,42 +1,58 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { z } from "zod";
+
+import { Button } from "../../components/ui/button";
+import { ControlledInput } from "../../components/ui/form";
+import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 
+// 1. Define Validation Schema (Added McMaster check)
+const signInSchema = z.object({
+  email: z
+    .string()
+    .email("Please enter a valid email address")
+    .refine(
+      (email) => email.endsWith("@mcmaster.ca"),
+      "Only @mcmaster.ca emails are allowed"
+    ),
+  password: z.string().min(1, "Password is required"),
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
+
 export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const theme = useTheme();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
-      return;
-    }
+  // 2. Setup React Hook Form
+  const { control, handleSubmit } = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
+  // 3. Handle Submission
+  const onSubmit = async (data: SignInFormData) => {
     setLoading(true);
     try {
       await authClient.signIn.email(
         {
-          email,
-          password,
+          email: data.email,
+          password: data.password,
         },
         {
           onSuccess: () => {
-            // Root Layout detects session change
-            // router.replace('/'); // Optional: explicit redirect if needed
+            // Root Layout handles redirect
           },
           onError: async (ctx) => {
-            // Check for unverified email error
             if (
               ctx.error.code === "EMAIL_NOT_VERIFIED" ||
               ctx.error.message.includes("verified")
@@ -47,16 +63,16 @@ export default function SignIn() {
                 [{ text: "OK" }]
               );
 
-              // 1. Resend the OTP
+              // Resend OTP
               await authClient.emailOtp.sendVerificationOtp({
-                email,
+                email: data.email,
                 type: "email-verification",
               });
 
-              // 2. Redirect to Verify screen
+              // Redirect
               router.push({
                 pathname: "/verify",
-                params: { email }, // Pass email to next screen
+                params: { email: data.email, password: data.password },
               });
             } else {
               Alert.alert("Login Failed", ctx.error.message);
@@ -72,62 +88,61 @@ export default function SignIn() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="jane@example.com"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+        <Text style={[styles.title, { color: theme.text }]}>Sign In</Text>
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        {/* 4. Use ControlledInput Components */}
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="email"
+            label="McMaster Email" // Updated Label
+            placeholder="jane@mcmaster.ca"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSignIn}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <ControlledInput
+            control={control}
+            name="password"
+            label="Password"
+            placeholder="••••••••"
+            secureTextEntry
+          />
+        </View>
+
+        <Button
+          title="Sign In"
+          onPress={handleSubmit(onSubmit)}
+          isLoading={loading}
+          variant="primary"
+          style={{ marginTop: 16 }}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-  form: { marginTop: 24 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
+  container: {
+    flex: 1,
+    padding: 24,
   },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
+  form: {
+    width: "100%",
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 32,
+    textAlign: "center",
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
 });

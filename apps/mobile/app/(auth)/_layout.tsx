@@ -4,34 +4,22 @@ export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
         headerBackTitle: "Back",
+        headerBackground: () => null,
+        headerTitle: "",
       }}
     >
-      <Stack.Screen name="index" />
-
       <Stack.Screen
-        name="sign-in"
+        name="index"
         options={{
-          headerShown: true,
-          headerTitle: "Sign In",
+          headerShown: false,
         }}
       />
 
-      <Stack.Screen
-        name="sign-up"
-        options={{
-          headerShown: true,
-          headerTitle: "Create Account",
-        }}
-      />
-      <Stack.Screen
-        name="verify"
-        options={{
-          headerShown: true,
-          headerTitle: "Verify Email",
-        }}
-      />
+      <Stack.Screen name="sign-in" />
+
+      <Stack.Screen name="sign-up" />
+      <Stack.Screen name="verify" />
     </Stack>
   );
 }
