@@ -8,7 +8,8 @@
   "exports": {
     ".": "./index.ts",
     "./schema": "./schema.ts",
-    "./config": "./drizzle.config.ts"
+    "./config": "./drizzle.config.ts",
+    "./validators/profile": "./validators/profile.ts"
   },
   "typesVersions": {
     "*": {
@@ -24,9 +25,10 @@
     "studio": "drizzle-kit studio --config ./drizzle.config.ts"
   },
   "dependencies": {
+    "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7",
-    "pg": "^8.16.3",
-    "drizzle-kit": "^0.31.6"
+    "drizzle-zod": "^0.8.3",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

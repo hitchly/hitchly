@@ -5,10 +5,9 @@ import { trpc } from "../../lib/trpc";
 export default function HomeScreen() {
   const { data, isLoading, error } = trpc.health.ping.useQuery();
 
-  console.log("TRPC Health Check:", { data, isLoading, error });
-
   if (isLoading) return <ActivityIndicator />;
   if (error) return <Text>Error: {error.message}</Text>;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Home Feed</Text>

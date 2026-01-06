@@ -1,5 +1,25 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import {
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
+// --- ENUMS ---
+export const universityRoleEnum = pgEnum("university_role", [
+  "student",
+  "professor",
+  "staff",
+  "alumni",
+  "other",
+]);
+
+export const appRoleEnum = pgEnum("app_role", ["rider", "driver"]);
+
+// --- EXISTING AUTH TABLES (Unchanged) ---
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -9,7 +29,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 
@@ -19,7 +39,7 @@ export const sessions = pgTable("sessions", {
   token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
@@ -44,7 +64,7 @@ export const accounts = pgTable("accounts", {
   password: text("password"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 
@@ -56,6 +76,91 @@ export const verifications = pgTable("verifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
+
+// --- NEW PROFILE MODULE TABLES ---
+
+export const profiles = pgTable("profiles", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique() // 1:1 Relationship
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Personal Context
+  bio: text("bio"),
+  faculty: text("faculty"), // e.g. "Engineering", "Health Sciences"
+  year: integer("year"), // e.g. 1, 2, 3, 4
+
+  // Roles
+  universityRole: universityRoleEnum("university_role")
+    .default("student")
+    .notNull(),
+  appRole: appRoleEnum("app_role").default("rider").notNull(),
+
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const preferences = pgTable("preferences", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Ride Preferences
+  music: boolean("music").default(true).notNull(),
+  chatty: boolean("chatty").default(true).notNull(),
+  smoking: boolean("smoking").default(false).notNull(),
+  pets: boolean("pets").default(false).notNull(),
+
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const vehicles = pgTable("vehicles", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Vehicle Details
+  make: text("make").notNull(),
+  model: text("model").notNull(),
+  color: text("color").notNull(),
+  plate: text("plate").notNull(),
+  seats: integer("seats").default(4).notNull(),
+
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+// --- RELATIONS ---
+
+export const usersRelations = relations(users, ({ one }) => ({
+  profile: one(profiles, {
+    fields: [users.id],
+    references: [profiles.userId],
+  }),
+  preferences: one(preferences, {
+    fields: [users.id],
+    references: [preferences.userId],
+  }),
+  vehicle: one(vehicles, {
+    fields: [users.id],
+    references: [vehicles.userId],
+  }),
+}));

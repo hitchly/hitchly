@@ -13,3 +13,4 @@ const pool = new Pool({
 export const db = drizzle(pool, { schema });
 export { and, asc, desc, eq, or, sql } from "drizzle-orm";
 export * from "./schema";
+export * from "./validators/profile";
