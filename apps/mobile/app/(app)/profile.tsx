@@ -4,7 +4,8 @@ import type {
   UpdateProfileInput,
   UpdateVehicleInput,
 } from "@hitchly/db/validators/profile";
-import React, { useState } from "react";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -36,6 +37,12 @@ type ModalState =
   | { type: "vehicle"; initialData: UpdateVehicleInput }
   | null;
 
+// Helper to format coordinates (e.g., 43.26 N, 79.92 W)
+const formatCoord = (val: number, type: "lat" | "long") => {
+  const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
+  return `${Math.abs(val).toFixed(4)}° ${dir}`;
+};
+
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
@@ -52,9 +59,19 @@ export default function ProfileScreen() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
+  // --- New Location State ---
+  const [locationInfo, setLocationInfo] = useState<{
+    address: string;
+    coords: string;
+  } | null>(null);
+
   // 2. Handlers
   const handleCloseModal = () => setModalState(null);
-  const handleRefresh = async () => await refetch();
+
+  // Refresh both Profile data AND Location
+  const handleRefresh = async () => {
+    await Promise.all([refetch(), fetchLocation()]);
+  };
 
   const onSuccess = () => {
     utils.profile.getMe.invalidate();
@@ -68,6 +85,41 @@ export default function ProfileScreen() {
       fetchOptions: { onSuccess: () => console.log("Signed out") },
     });
   };
+
+  // --- Location Fetcher ---
+  const fetchLocation = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== "granted") return;
+
+      const loc = await Location.getCurrentPositionAsync({});
+
+      // Reverse Geocode to get readable address
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+
+      const place = reverse[0];
+      // Construct readable string: "City, Region" or "Street, City"
+      const parts = [place?.street, place?.city, place?.region].filter(Boolean);
+
+      const address = parts.length > 0 ? parts.join(", ") : "Unknown Address";
+      const coords = `${formatCoord(loc.coords.latitude, "lat")}, ${formatCoord(
+        loc.coords.longitude,
+        "long"
+      )}`;
+
+      setLocationInfo({ address, coords });
+    } catch (e) {
+      console.log("Failed to fetch location for profile", e);
+    }
+  };
+
+  // Fetch location on mount
+  useEffect(() => {
+    fetchLocation();
+  }, []);
 
   // 3. Modal Openers
   const openProfileModal = () => {
@@ -186,6 +238,39 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </Card>
+
+        {/* --- NEW LOCATION CARD --- */}
+        <InfoCard
+          title="Current Location"
+          empty={!locationInfo}
+          emptyText="Location unavailable"
+        >
+          {locationInfo && (
+            <View style={styles.locationContainer}>
+              <View
+                style={[
+                  styles.iconBox,
+                  { backgroundColor: theme.primaryLight },
+                ]}
+              >
+                <Ionicons name="location" size={24} color={theme.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.locationAddress, { color: theme.text }]}>
+                  {locationInfo.address}
+                </Text>
+                <Text
+                  style={[
+                    styles.locationCoords,
+                    { color: theme.textSecondary },
+                  ]}
+                >
+                  {locationInfo.coords}
+                </Text>
+              </View>
+            </View>
+          )}
+        </InfoCard>
 
         <InfoCard
           title="About Me"
@@ -411,6 +496,21 @@ const styles = StyleSheet.create({
   // Containers
   row: { flexDirection: "row", justifyContent: "space-between" },
   chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+
+  // NEW: Location Styling
+  locationContainer: { flexDirection: "row", alignItems: "center", gap: 12 },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locationAddress: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
+  locationCoords: {
+    fontSize: 13,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
 
   // Vehicle Specifics
   vehicleRow: { flexDirection: "row", alignItems: "center" },
