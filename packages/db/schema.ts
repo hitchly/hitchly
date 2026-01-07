@@ -1,11 +1,13 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 // --- ENUMS ---
@@ -146,6 +148,20 @@ export const vehicles = pgTable("vehicles", {
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date()),
+});
+
+export const userLocations = pgTable("user_locations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // Unique is critical here for "Current Location" logic
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .unique(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  heading: doublePrecision("heading"),
+  speed: doublePrecision("speed"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // --- RELATIONS ---

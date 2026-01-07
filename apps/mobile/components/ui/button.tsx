@@ -1,4 +1,3 @@
-import React from "react";
 import {
   ActivityIndicator,
   StyleProp,
@@ -15,6 +14,8 @@ interface ButtonProps extends TouchableOpacityProps {
   variant?: "primary" | "secondary" | "ghost";
   isLoading?: boolean;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+  onPress?: () => void;
 }
 
 export function Button({
@@ -23,72 +24,59 @@ export function Button({
   isLoading = false,
   style,
   disabled,
-  ...props
+  onPress,
+  ...props // 2. Capture all standard TouchableOpacity props (onPress, etc.)
 }: ButtonProps) {
   const theme = useTheme();
 
-  // Define styles based on variant
-  const getVariantStyles = () => {
-    switch (variant) {
-      case "primary":
-        return {
-          container: {
-            backgroundColor: theme.primary,
-            borderColor: theme.primary,
-          },
-          text: { color: "#fff" },
-          indicator: "#fff",
-        };
-      case "secondary":
-        return {
-          container: {
-            backgroundColor: theme.surface,
-            borderWidth: 1,
-            borderColor: theme.border,
-          },
-          text: { color: theme.text },
-          indicator: theme.text,
-        };
-      case "ghost":
-        return {
-          container: { backgroundColor: "transparent" },
-          text: { color: theme.primary },
-          indicator: theme.primary,
-        };
-      default:
-        return {
-          container: { backgroundColor: theme.primary },
-          text: { color: "#fff" },
-          indicator: "#fff",
-        };
-    }
+  const variants = {
+    primary: {
+      container: { backgroundColor: theme.primary, borderWidth: 0 },
+      text: { color: "#fff" },
+      indicator: "#fff",
+    },
+    secondary: {
+      container: {
+        backgroundColor: theme.surface,
+        borderWidth: 1,
+        borderColor: theme.border,
+      },
+      text: { color: theme.text },
+      indicator: theme.text,
+    },
+    ghost: {
+      container: { backgroundColor: "transparent", borderWidth: 0 },
+      text: { color: theme.primary },
+      indicator: theme.primary,
+    },
   };
 
-  const stylesConfig = getVariantStyles();
+  const currentVariant = variants[variant];
 
   return (
     <TouchableOpacity
       style={[
-        styles.button,
-        stylesConfig.container,
-        disabled && { opacity: 0.5 },
+        styles.base,
+        currentVariant.container,
+        disabled && styles.disabled,
         style,
       ]}
       disabled={disabled || isLoading}
       activeOpacity={0.8}
-      {...props}
+      onPress={onPress}
+      {...props} // 3. Spread them here. This passes onPress to the component.
     >
       {isLoading ? (
-        <ActivityIndicator color={stylesConfig.indicator} />
+        <ActivityIndicator color={currentVariant.indicator} />
       ) : (
-        <Text style={[styles.text, stylesConfig.text]}>{title}</Text>
+        <Text style={[styles.text, currentVariant.text]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  base: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -96,6 +84,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     width: "100%",
+  },
+  disabled: {
+    opacity: 0.5,
   },
   text: {
     fontSize: 16,

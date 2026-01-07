@@ -11,8 +11,9 @@ import {
   View,
   useColorScheme,
 } from "react-native";
-
+import { RequireLocation } from "../components/location/require-location";
 import { Colors } from "../constants/theme";
+import { LocationProvider } from "../context/location-context";
 import { AppThemeProvider } from "../context/theme-context";
 import { authClient } from "../lib/auth-client";
 import { trpc, trpcClient } from "../lib/trpc";
@@ -48,21 +49,36 @@ function RootNavigator() {
   const colorScheme = useColorScheme();
   const isAuthenticated = !!session;
 
+  // 1. Define the Main Stack separate from the wrapper logic
+  const MainStack = (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={!isAuthenticated}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+    </Stack>
+  );
+
   return (
     <NavigationThemeProvider
       value={colorScheme === "dark" ? MyDarkTheme : MyLightTheme}
     >
       <AppThemeProvider>
         <View style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Protected guard={!isAuthenticated}>
-              <Stack.Screen name="(auth)" />
-            </Stack.Protected>
-
-            <Stack.Protected guard={isAuthenticated}>
-              <Stack.Screen name="(app)" />
-            </Stack.Protected>
-          </Stack>
+          {/* 2. Conditional Wrapping:
+             Only enforce location requirements if the user is logged in.
+             This prevents the permission screen from blocking the Login page.
+          */}
+          {isAuthenticated ? (
+            <RequireLocation>
+              <LocationProvider>{MainStack}</LocationProvider>
+            </RequireLocation>
+          ) : (
+            MainStack
+          )}
 
           {isPending && (
             <View
@@ -73,7 +89,9 @@ function RootNavigator() {
             >
               <ActivityIndicator
                 size="large"
-                color={Colors[colorScheme ?? "light"].primary}
+                color={
+                  Colors[(colorScheme ?? "light") as "light" | "dark"].primary
+                }
               />
             </View>
           )}
