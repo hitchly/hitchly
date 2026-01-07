@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/theme-context";
 import { Button } from "../ui/button";
 
@@ -19,7 +19,6 @@ export const RequireLocation = ({
 }) => {
   const [status, requestPermission] = Location.useForegroundPermissions();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [appState, setAppState] = useState<AppStateStatus>(
     AppState.currentState
@@ -59,7 +58,7 @@ export const RequireLocation = ({
   }
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         {
@@ -92,7 +91,7 @@ export const RequireLocation = ({
           )}
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
