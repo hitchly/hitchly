@@ -15,9 +15,6 @@ export const profileRouter = router({
    * Throws NotFoundError if user doesn't exist.
    */
   getMe: protectedProcedure.query(async ({ ctx }) => {
-    // We fetch everything in one go using Drizzle's query builder (if relations are setup)
-    // Or explicit joins. Here is the explicit join/query method for clarity.
-
     const userRecord = await ctx.db.query.users.findFirst({
       where: eq(users.id, ctx.userId!),
       with: {
@@ -45,7 +42,6 @@ export const profileRouter = router({
   updateProfile: protectedProcedure
     .input(updateProfileSchema)
     .mutation(async ({ ctx, input }) => {
-      // Upsert: Try to insert, on conflict update
       await ctx.db
         .insert(profiles)
         .values({

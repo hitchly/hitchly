@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "tsx watch server.ts",
     "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
-    "test": "jest --detectOpenHandles --passWithNoTests",
+    "test": "vitest",
     "type-check": "tsc --noEmit"
   },
   "jest": {
@@ -32,14 +32,14 @@
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",
+    "@hitchly/db": "workspace:*",
+    "@hitchly/emails": "workspace:*",
     "@trpc/client": "^11.7.1",
     "@trpc/server": "^11.7.1",
     "better-auth": "^1.4.10",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "zod": "^4.1.12",
-    "@hitchly/db": "workspace:*",
-    "@hitchly/emails": "workspace:*"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

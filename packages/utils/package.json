@@ -15,7 +15,9 @@
       ]
     }
   },
-  "scripts": {},
+  "scripts": {
+    "test": "vitest"
+  },
   "dependencies": {},
   "devDependencies": {}
 }
