@@ -20,7 +20,6 @@ import { trpc, trpcClient } from "../lib/trpc";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    // Setting some default options for queries, reducing unnecessary refetches
     queries: {
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -56,7 +55,9 @@ const MyDarkTheme = {
 function RootNavigator() {
   const { data: session, isPending } = authClient.useSession();
   const colorScheme = useColorScheme();
+
   const isAuthenticated = !!session;
+  const showSplash = isPending && !session;
 
   const MainStack = (
     <Stack screenOptions={{ headerShown: false }}>
@@ -83,8 +84,7 @@ function RootNavigator() {
           ) : (
             MainStack
           )}
-
-          {isPending && (
+          {showSplash && (
             <View
               style={[
                 styles.loadingOverlay,
