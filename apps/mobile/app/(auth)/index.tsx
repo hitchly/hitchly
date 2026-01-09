@@ -2,23 +2,22 @@ import { Link } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Button } from "../../components/ui/button";
 import { useTheme } from "../../context/theme-context";
 
 export default function LandingPage() {
-  const theme = useTheme();
+  const { colors } = useTheme();
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.content}>
         {/* Branding */}
-        <Text style={[styles.title, { color: theme.text }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
           Welcome to Hitchly
         </Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           McMaster&apos;s Ridesharing Platform
         </Text>
 

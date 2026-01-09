@@ -1,37 +1,20 @@
+import { SignInInput, signInSchema } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { z } from "zod";
-
-import { Button } from "../../components/ui/button";
-import { ControlledInput } from "../../components/ui/form";
+import { Alert } from "react-native";
+import { ControlledInput, SubmitButton } from "../../components/ui/form";
+import { OnboardingLayout } from "../../components/ui/screen-layout";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 
-// 1. Define Validation Schema (Added McMaster check)
-const signInSchema = z.object({
-  email: z
-    .string()
-    .email("Please enter a valid email address")
-    .refine(
-      (email) => email.endsWith("@mcmaster.ca"),
-      "Only @mcmaster.ca emails are allowed"
-    ),
-  password: z.string().min(1, "Password is required"),
-});
-
-type SignInFormData = z.infer<typeof signInSchema>;
-
 export default function SignIn() {
-  const theme = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // 2. Setup React Hook Form
-  const { control, handleSubmit } = useForm<SignInFormData>({
+  const { control, handleSubmit } = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
@@ -39,8 +22,7 @@ export default function SignIn() {
     },
   });
 
-  // 3. Handle Submission
-  const onSubmit = async (data: SignInFormData) => {
+  const onSubmit = async (data: SignInInput) => {
     setLoading(true);
     try {
       await authClient.signIn.email(
@@ -50,7 +32,7 @@ export default function SignIn() {
         },
         {
           onSuccess: () => {
-            // Root Layout handles redirect
+            // Root Layout handles redirect automatically
           },
           onError: async (ctx) => {
             if (
@@ -63,13 +45,11 @@ export default function SignIn() {
                 [{ text: "OK" }]
               );
 
-              // Resend OTP
               await authClient.emailOtp.sendVerificationOtp({
                 email: data.email,
                 type: "email-verification",
               });
 
-              // Redirect
               router.push({
                 pathname: "/verify",
                 params: { email: data.email, password: data.password },
@@ -88,61 +68,29 @@ export default function SignIn() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.background }]}
-    >
-      <View style={styles.form}>
-        <Text style={[styles.title, { color: theme.text }]}>Sign In</Text>
+    <OnboardingLayout title="Sign In" subtitle="Welcome back to Hitchly.">
+      <ControlledInput
+        control={control}
+        name="email"
+        label="McMaster Email"
+        placeholder="jane@mcmaster.ca"
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
 
-        {/* 4. Use ControlledInput Components */}
-        <View style={styles.inputGroup}>
-          <ControlledInput
-            control={control}
-            name="email"
-            label="McMaster Email" // Updated Label
-            placeholder="jane@mcmaster.ca"
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-        </View>
+      <ControlledInput
+        control={control}
+        name="password"
+        label="Password"
+        placeholder="••••••••"
+        secureTextEntry
+      />
 
-        <View style={styles.inputGroup}>
-          <ControlledInput
-            control={control}
-            name="password"
-            label="Password"
-            placeholder="••••••••"
-            secureTextEntry
-          />
-        </View>
-
-        <Button
-          title="Sign In"
-          onPress={handleSubmit(onSubmit)}
-          isLoading={loading}
-          variant="primary"
-          style={{ marginTop: 16 }}
-        />
-      </View>
-    </SafeAreaView>
+      <SubmitButton
+        title="Sign In"
+        onPress={handleSubmit(onSubmit)}
+        isPending={loading}
+      />
+    </OnboardingLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-  },
-  form: {
-    width: "100%",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 32,
-    textAlign: "center",
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-});

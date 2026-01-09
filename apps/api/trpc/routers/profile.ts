@@ -1,10 +1,10 @@
-import { eq } from "@hitchly/db/client";
-import { preferences, profiles, users, vehicles } from "@hitchly/db/schema";
 import {
   updatePreferencesSchema,
   updateProfileSchema,
   updateVehicleSchema,
-} from "@hitchly/db/validators/profile";
+} from "@hitchly/db";
+import { eq } from "@hitchly/db/client";
+import { preferences, profiles, users, vehicles } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 

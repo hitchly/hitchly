@@ -3,7 +3,6 @@ import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../context/theme-context";
 
-// --- Read-Only Chip ---
 export const Chip = ({
   icon,
   label,
@@ -13,27 +12,27 @@ export const Chip = ({
   label: string;
   active: boolean;
 }) => {
-  const theme = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View
       style={[
         styles.chip,
         {
-          backgroundColor: active ? theme.primaryLight : theme.surface,
-          borderColor: active ? theme.primary : theme.border,
+          backgroundColor: active ? colors.primaryLight : colors.surface,
+          borderColor: active ? colors.primary : colors.border,
         },
       ]}
     >
       <Ionicons
         name={icon}
         size={14}
-        color={active ? theme.primary : theme.textSecondary}
+        color={active ? colors.primary : colors.textSecondary}
       />
       <Text
         style={[
           styles.chipText,
-          { color: active ? theme.primary : theme.textSecondary },
+          { color: active ? colors.primary : colors.textSecondary },
           active && styles.chipTextActive,
         ]}
       >
@@ -43,23 +42,22 @@ export const Chip = ({
   );
 };
 
-// --- Skeleton Loader ---
 export const LoadingSkeleton = ({ text = "Loading..." }: { text?: string }) => {
-  const theme = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View
       style={[
         styles.skeletonContainer,
         {
-          backgroundColor: theme.background,
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
         },
       ]}
     >
-      <ActivityIndicator size="large" color={theme.primary} />
-      <Text style={{ marginTop: 16, color: theme.textSecondary }}>{text}</Text>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={{ marginTop: 16, color: colors.textSecondary }}>{text}</Text>
     </View>
   );
 };

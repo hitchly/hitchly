@@ -1,25 +1,34 @@
 import React, { createContext, useContext } from "react";
 import { useColorScheme } from "react-native";
-import { Colors } from "../constants/theme"; // Adjust path to your theme file
+import { Colors, Fonts } from "../constants/theme";
 
-// Automatically infer the type of your theme object
-type Theme = typeof Colors.light;
+type Theme = {
+  colors: typeof Colors.light;
+  fonts: typeof Fonts;
+  isDark: boolean;
+};
 
-// Create the context with default light values
-const ThemeContext = createContext<Theme>(Colors.light);
+const ThemeContext = createContext<Theme>({
+  colors: Colors.light,
+  fonts: Fonts,
+  isDark: false,
+});
 
 export function AppThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
-  // Select the correct theme object based on system setting
-  const theme = Colors[colorScheme === "dark" ? "dark" : "light"];
+  const theme: Theme = {
+    colors: isDark ? Colors.dark : Colors.light,
+    fonts: Fonts,
+    isDark,
+  };
 
   return (
     <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
   );
 }
 
-// Custom Hook to use in your components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {

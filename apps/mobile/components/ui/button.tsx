@@ -25,29 +25,29 @@ export function Button({
   style,
   disabled,
   onPress,
-  ...props // 2. Capture all standard TouchableOpacity props (onPress, etc.)
+  ...props
 }: ButtonProps) {
-  const theme = useTheme();
+  const { colors } = useTheme();
 
   const variants = {
     primary: {
-      container: { backgroundColor: theme.primary, borderWidth: 0 },
+      container: { backgroundColor: colors.primary, borderWidth: 0 },
       text: { color: "#fff" },
       indicator: "#fff",
     },
     secondary: {
       container: {
-        backgroundColor: theme.surface,
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: theme.border,
+        borderColor: colors.border,
       },
-      text: { color: theme.text },
-      indicator: theme.text,
+      text: { color: colors.text },
+      indicator: colors.text,
     },
     ghost: {
       container: { backgroundColor: "transparent", borderWidth: 0 },
-      text: { color: theme.primary },
-      indicator: theme.primary,
+      text: { color: colors.primary },
+      indicator: colors.primary,
     },
   };
 
@@ -64,7 +64,7 @@ export function Button({
       disabled={disabled || isLoading}
       activeOpacity={0.8}
       onPress={onPress}
-      {...props} // 3. Spread them here. This passes onPress to the component.
+      {...props}
     >
       {isLoading ? (
         <ActivityIndicator color={currentVariant.indicator} />

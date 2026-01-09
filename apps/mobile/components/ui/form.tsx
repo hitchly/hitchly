@@ -30,7 +30,7 @@ export function ControlledInput({
   label,
   ...props
 }: ControlledInputProps) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
 
   return (
     <Controller
@@ -41,29 +41,29 @@ export function ControlledInput({
         fieldState: { error },
       }) => (
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
           <TextInput
             style={[
               styles.input,
               {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: error ? theme.error : theme.border,
-                ...(error ? { backgroundColor: theme.errorBackground } : {}),
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: error ? colors.error : colors.border,
+                ...(error ? { backgroundColor: colors.errorBackground } : {}),
               },
               props.multiline && styles.textArea,
             ]}
             onBlur={onBlur}
             onChangeText={onChange}
             value={value?.toString() || ""}
-            placeholderTextColor={theme.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             {...props}
           />
           {error && (
-            <Text style={[styles.errorText, { color: theme.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {error.message}
             </Text>
           )}
@@ -100,7 +100,7 @@ export function ControlledLocationInput({
   onSelect,
   onTextChange,
 }: ControlledLocationInputProps) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
   const [results, setResults] = useState<LocationResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -126,7 +126,6 @@ export function ControlledLocationInput({
     );
     const regionLine = regionParts.join(", ");
 
-    // Determine POI
     const isPOI =
       loc.name &&
       isNaN(Number(loc.name)) &&
@@ -212,7 +211,7 @@ export function ControlledLocationInput({
       name={name}
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View style={[styles.inputGroup, { zIndex: 100 }]}>
-          <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
 
@@ -221,21 +220,19 @@ export function ControlledLocationInput({
               style={[
                 styles.input,
                 {
-                  backgroundColor: theme.background,
-                  color: theme.text,
-                  borderColor: error ? theme.error : theme.border,
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: error ? colors.error : colors.border,
                 },
               ]}
               value={value}
               onChangeText={(text) => {
                 onChange(text);
-                // Trigger invalidation in parent
                 if (onTextChange) onTextChange(text);
-                // Debounce search
                 if (text.length > 4) handleSearch(text);
               }}
               placeholder={placeholder}
-              placeholderTextColor={theme.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               onFocus={() => {
                 if (results.length > 0) setShowDropdown(true);
               }}
@@ -243,7 +240,7 @@ export function ControlledLocationInput({
 
             {isSearching && (
               <View style={styles.inputIconRight}>
-                <ActivityIndicator size="small" color={theme.primary} />
+                <ActivityIndicator size="small" color={colors.primary} />
               </View>
             )}
           </View>
@@ -252,7 +249,7 @@ export function ControlledLocationInput({
             <View
               style={[
                 styles.dropdown,
-                { backgroundColor: theme.surface, borderColor: theme.border },
+                { backgroundColor: colors.surface, borderColor: colors.border },
               ]}
             >
               {results.map((item) => (
@@ -260,7 +257,7 @@ export function ControlledLocationInput({
                   key={item.id}
                   style={[
                     styles.dropdownItem,
-                    { borderBottomColor: theme.border },
+                    { borderBottomColor: colors.border },
                   ]}
                   onPress={() => {
                     onChange(item.fullAddress);
@@ -278,19 +275,25 @@ export function ControlledLocationInput({
                   <View
                     style={[
                       styles.iconBox,
-                      { backgroundColor: theme.primaryLight },
+                      { backgroundColor: colors.primaryLight },
                     ]}
                   >
-                    <Ionicons name="location" size={18} color={theme.primary} />
+                    <Ionicons
+                      name="location"
+                      size={18}
+                      color={colors.primary}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.dropdownTitle, { color: theme.text }]}>
+                    <Text
+                      style={[styles.dropdownTitle, { color: colors.text }]}
+                    >
                       {item.title}
                     </Text>
                     <Text
                       style={[
                         styles.dropdownSubtitle,
-                        { color: theme.textSecondary },
+                        { color: colors.textSecondary },
                       ]}
                     >
                       {item.subtitle}
@@ -302,7 +305,7 @@ export function ControlledLocationInput({
           )}
 
           {error && (
-            <Text style={[styles.errorText, { color: theme.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {error.message}
             </Text>
           )}
@@ -321,7 +324,7 @@ export function ControlledNumberSelector({
   max,
 }: any) {
   const options = Array.from({ length: max - min + 1 }, (_, i) => i + min);
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <Controller
@@ -329,7 +332,7 @@ export function ControlledNumberSelector({
       name={name}
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
           <ScrollView
@@ -346,9 +349,9 @@ export function ControlledNumberSelector({
                     styles.numberCircle,
                     {
                       backgroundColor: isActive
-                        ? theme.primary
-                        : theme.background,
-                      borderColor: isActive ? theme.primary : theme.border,
+                        ? colors.primary
+                        : colors.background,
+                      borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
                   onPress={() => onChange(num)}
@@ -356,7 +359,7 @@ export function ControlledNumberSelector({
                   <Text
                     style={[
                       styles.numberText,
-                      { color: isActive ? "#fff" : theme.textSecondary },
+                      { color: isActive ? "#fff" : colors.textSecondary },
                     ]}
                   >
                     {num}
@@ -366,7 +369,7 @@ export function ControlledNumberSelector({
             })}
           </ScrollView>
           {error && (
-            <Text style={[styles.errorText, { color: theme.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {error.message}
             </Text>
           )}
@@ -383,7 +386,7 @@ export function ControlledSegmentedControl({
   label,
   options,
 }: any) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <Controller
@@ -391,13 +394,13 @@ export function ControlledSegmentedControl({
       name={name}
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
           <View
             style={[
               styles.segmentContainer,
-              { backgroundColor: theme.background },
+              { backgroundColor: colors.background },
             ]}
           >
             {options.map((option: any) => {
@@ -409,7 +412,7 @@ export function ControlledSegmentedControl({
                     styles.segmentBtn,
                     isActive && [
                       styles.segmentBtnActive,
-                      { backgroundColor: theme.surface },
+                      { backgroundColor: colors.surface },
                     ],
                   ]}
                   onPress={() => onChange(option.value)}
@@ -417,7 +420,9 @@ export function ControlledSegmentedControl({
                   <Text
                     style={[
                       styles.segmentText,
-                      { color: isActive ? theme.primary : theme.textSecondary },
+                      {
+                        color: isActive ? colors.primary : colors.textSecondary,
+                      },
                       isActive && styles.segmentTextActive,
                     ]}
                   >
@@ -428,7 +433,7 @@ export function ControlledSegmentedControl({
             })}
           </View>
           {error && (
-            <Text style={[styles.errorText, { color: theme.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {error.message}
             </Text>
           )}
@@ -440,7 +445,7 @@ export function ControlledSegmentedControl({
 
 // --- 5. Chip Group ---
 export function ControlledChipGroup({ control, name, label, options }: any) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <Controller
@@ -448,7 +453,7 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
       name={name}
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
           <View style={styles.chipGrid}>
@@ -461,9 +466,9 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
                     styles.selectChip,
                     {
                       backgroundColor: isActive
-                        ? theme.primaryLight
-                        : theme.surface,
-                      borderColor: isActive ? theme.primary : theme.border,
+                        ? colors.primaryLight
+                        : colors.surface,
+                      borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
                   onPress={() => onChange(option.value)}
@@ -471,7 +476,9 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
                   <Text
                     style={[
                       styles.selectChipText,
-                      { color: isActive ? theme.primary : theme.textSecondary },
+                      {
+                        color: isActive ? colors.primary : colors.textSecondary,
+                      },
                       isActive && styles.selectChipTextActive,
                     ]}
                   >
@@ -482,7 +489,7 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
             })}
           </View>
           {error && (
-            <Text style={[styles.errorText, { color: theme.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {error.message}
             </Text>
           )}
@@ -494,20 +501,20 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
 
 // --- 6. Switch ---
 export function ControlledSwitch({ control, name, label }: any) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <Controller
       control={control}
       name={name}
       render={({ field: { onChange, value } }) => (
-        <View style={[styles.switchRow, { borderColor: theme.border }]}>
-          <Text style={[styles.switchLabel, { color: theme.text }]}>
+        <View style={[styles.switchRow, { borderColor: colors.border }]}>
+          <Text style={[styles.switchLabel, { color: colors.text }]}>
             {label}
           </Text>
           <Switch
-            trackColor={{ false: "#e0e0e0", true: theme.primaryLight }}
-            thumbColor={value ? theme.primary : "#f4f3f4"}
+            trackColor={{ false: "#e0e0e0", true: colors.primaryLight }}
+            thumbColor={value ? colors.primary : "#f4f3f4"}
             onValueChange={onChange}
             value={value}
           />

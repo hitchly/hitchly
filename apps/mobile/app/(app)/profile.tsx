@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import {
   EditModalState,
   EditProfileModal,
@@ -22,6 +22,7 @@ import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
+// Helper
 const formatCoord = (val: number, type: "lat" | "long") => {
   const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
   return `${Math.abs(val).toFixed(4)}° ${dir}`;
@@ -30,7 +31,9 @@ const formatCoord = (val: number, type: "lat" | "long") => {
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
-  const theme = useTheme();
+
+  // 1. Destructure simplified theme
+  const { colors, fonts } = useTheme();
 
   const {
     data: userRecord,
@@ -67,7 +70,10 @@ export default function ProfileScreen() {
         address: userRecord.profile.defaultAddress,
         coords:
           userRecord.profile.defaultLat && userRecord.profile.defaultLong
-            ? `${formatCoord(userRecord.profile.defaultLat, "lat")}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
+            ? `${formatCoord(
+                userRecord.profile.defaultLat,
+                "lat"
+              )}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
             : "Coordinates pending",
       }
     : null;
@@ -76,7 +82,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
       edges={["top", "left", "right"]}
     >
       <ScrollView
@@ -85,23 +91,24 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor={theme.primary}
+            tintColor={colors.primary}
           />
         }
       >
+        {/* --- HEADER --- */}
         <Card style={{ alignItems: "center" }}>
           <View
             style={[
               styles.avatar,
-              { backgroundColor: theme.primary, borderColor: theme.surface },
+              { backgroundColor: colors.primary, borderColor: colors.surface },
             ]}
           >
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <Text style={[styles.name, { color: theme.text }]}>
+          <Text style={[styles.name, { color: colors.text }]}>
             {session?.user?.name}
           </Text>
-          <Text style={[styles.email, { color: theme.textSecondary }]}>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>
             {session?.user?.email}
           </Text>
 
@@ -109,8 +116,14 @@ export default function ProfileScreen() {
             style={[
               styles.badge,
               session?.user?.emailVerified
-                ? styles.badgeSuccess
-                : styles.badgeWarning,
+                ? {
+                    backgroundColor: colors.successBackground,
+                    borderColor: colors.success,
+                  }
+                : {
+                    backgroundColor: colors.warningBackground,
+                    borderColor: colors.warning,
+                  },
             ]}
           >
             <Ionicons
@@ -121,7 +134,7 @@ export default function ProfileScreen() {
               }
               size={16}
               color={
-                session?.user?.emailVerified ? theme.success : theme.warning
+                session?.user?.emailVerified ? colors.success : colors.warning
               }
             />
             <Text
@@ -129,8 +142,8 @@ export default function ProfileScreen() {
                 styles.badgeText,
                 {
                   color: session?.user?.emailVerified
-                    ? theme.success
-                    : theme.warning,
+                    ? colors.success
+                    : colors.warning,
                 },
               ]}
             >
@@ -139,6 +152,7 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
+        {/* --- ADDRESS --- */}
         <InfoCard
           title="Address"
           onEdit={() =>
@@ -160,19 +174,19 @@ export default function ProfileScreen() {
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: theme.primaryLight },
+                  { backgroundColor: colors.primaryLight },
                 ]}
               >
-                <Ionicons name="location" size={24} color={theme.primary} />
+                <Ionicons name="location" size={24} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.locationAddress, { color: theme.text }]}>
+                <Text style={[styles.locationAddress, { color: colors.text }]}>
                   {locationDisplay.address}
                 </Text>
                 <Text
                   style={[
                     styles.locationCoords,
-                    { color: theme.textSecondary },
+                    { color: colors.textSecondary, fontFamily: fonts.mono },
                   ]}
                 >
                   {locationDisplay.coords}
@@ -182,6 +196,7 @@ export default function ProfileScreen() {
           )}
         </InfoCard>
 
+        {/* --- PROFILE INFO --- */}
         <InfoCard
           title="About Me"
           onEdit={() =>
@@ -233,6 +248,7 @@ export default function ProfileScreen() {
           )}
         </InfoCard>
 
+        {/* --- PREFERENCES --- */}
         <InfoCard
           title="Ride Preferences"
           onEdit={() =>
@@ -275,6 +291,7 @@ export default function ProfileScreen() {
           )}
         </InfoCard>
 
+        {/* --- VEHICLE --- */}
         {isDriver && (
           <InfoCard
             title="Vehicle Details"
@@ -299,20 +316,20 @@ export default function ProfileScreen() {
                 <View
                   style={[
                     styles.vehicleIcon,
-                    { backgroundColor: theme.primaryLight },
+                    { backgroundColor: colors.primaryLight },
                   ]}
                 >
-                  <Ionicons name="car-sport" size={24} color={theme.primary} />
+                  <Ionicons name="car-sport" size={24} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.vehicleName, { color: theme.text }]}>
+                  <Text style={[styles.vehicleName, { color: colors.text }]}>
                     {userRecord.vehicle.color} {userRecord.vehicle.make}{" "}
                     {userRecord.vehicle.model}
                   </Text>
                   <Text
                     style={[
                       styles.vehiclePlate,
-                      { color: theme.textSecondary },
+                      { color: colors.textSecondary, fontFamily: fonts.mono },
                     ]}
                   >
                     {userRecord.vehicle.plate}
@@ -321,11 +338,11 @@ export default function ProfileScreen() {
                 <View
                   style={[
                     styles.seatBadge,
-                    { backgroundColor: theme.background },
+                    { backgroundColor: colors.background },
                   ]}
                 >
                   <Text
-                    style={[styles.seatText, { color: theme.textSecondary }]}
+                    style={[styles.seatText, { color: colors.textSecondary }]}
                   >
                     {userRecord.vehicle.seats} Seats
                   </Text>
@@ -335,24 +352,26 @@ export default function ProfileScreen() {
           </InfoCard>
         )}
 
+        {/* --- SIGN OUT --- */}
         <TouchableOpacity
           style={[
             styles.signOutBtn,
-            { borderColor: theme.error, backgroundColor: theme.surface },
+            { borderColor: colors.error, backgroundColor: colors.surface },
           ]}
           onPress={handleSignOut}
           disabled={isSigningOut}
         >
           {isSigningOut ? (
-            <ActivityIndicator color={theme.error} />
+            <ActivityIndicator color={colors.error} />
           ) : (
-            <Text style={[styles.signOutText, { color: theme.error }]}>
+            <Text style={[styles.signOutText, { color: colors.error }]}>
               Sign Out
             </Text>
           )}
         </TouchableOpacity>
       </ScrollView>
 
+      {/* --- EXTRACTED EDIT MODAL --- */}
       <EditProfileModal
         state={modalState}
         onClose={handleCloseModal}
@@ -362,7 +381,6 @@ export default function ProfileScreen() {
   );
 }
 
-// --- Simplified Styles ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
@@ -390,8 +408,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 6,
   },
-  badgeSuccess: { backgroundColor: "#e6f4ea", borderColor: "#c6e7ce" },
-  badgeWarning: { backgroundColor: "#fff3e0", borderColor: "#ffe0b2" },
   badgeText: { fontSize: 13, fontWeight: "600" },
   row: { flexDirection: "row", justifyContent: "space-between" },
   chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -404,10 +420,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   locationAddress: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
-  locationCoords: {
-    fontSize: 13,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-  },
+  locationCoords: { fontSize: 13 },
   vehicleRow: { flexDirection: "row", alignItems: "center" },
   vehicleIcon: {
     width: 48,
@@ -418,12 +431,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   vehicleName: { fontSize: 16, fontWeight: "700" },
-  vehiclePlate: {
-    fontSize: 13,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-    marginTop: 2,
+  vehiclePlate: { fontSize: 13, marginTop: 2 },
+  seatBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  seatBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   seatText: { fontSize: 12, fontWeight: "600" },
   signOutBtn: {
     marginHorizontal: 16,

@@ -1,45 +1,31 @@
+import { verifyOtpSchema, type VerifyOtpInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { z } from "zod";
-
+import { Alert } from "react-native";
 import { Button } from "../../components/ui/button";
-import { ControlledInput } from "../../components/ui/form";
-import { useTheme } from "../../context/theme-context";
+import { ControlledInput, SubmitButton } from "../../components/ui/form";
+import { OnboardingLayout } from "../../components/ui/screen-layout";
 import { authClient } from "../../lib/auth-client";
-
-// 1. Validation Schema
-const verifySchema = z.object({
-  otp: z.string().length(6, "Verification code must be 6 digits"),
-});
-
-type VerifyFormData = z.infer<typeof verifySchema>;
 
 export default function Verify() {
   const router = useRouter();
-  const theme = useTheme();
   const [loading, setLoading] = useState(false);
 
-  // We grab the email/password passed from the previous screen
   const { email, password } = useLocalSearchParams<{
     email: string;
     password?: string;
   }>();
 
-  // 2. Setup Form
-  const { control, handleSubmit } = useForm<VerifyFormData>({
-    resolver: zodResolver(verifySchema),
+  const { control, handleSubmit } = useForm<VerifyOtpInput>({
+    resolver: zodResolver(verifyOtpSchema),
     defaultValues: { otp: "" },
   });
 
-  // 3. Handle Verify & Auto-Login
-  const onVerify = async (data: VerifyFormData) => {
+  const onVerify = async (data: VerifyOtpInput) => {
     setLoading(true);
     try {
-      // Step A: Verify Email
       const { error: verifyError } = await authClient.emailOtp.verifyEmail({
         email,
         otp: data.otp,
@@ -51,7 +37,6 @@ export default function Verify() {
         return;
       }
 
-      // Step B: Auto-Login if password exists
       if (password) {
         const { error: signInError } = await authClient.signIn.email({
           email,
@@ -62,7 +47,6 @@ export default function Verify() {
           Alert.alert("Verified", "Email verified! Please sign in manually.");
           router.replace("/(auth)/sign-in");
         } else {
-          // Success! Root layout will handle redirect to (app)
           router.replace("/");
         }
       } else {
@@ -94,69 +78,32 @@ export default function Verify() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.background }]}
+    <OnboardingLayout
+      title="Verify Email"
+      subtitle={`Please enter the code sent to ${email}`}
     >
-      <View style={styles.form}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          Verify Email
-        </Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Please enter the code sent to {email}
-        </Text>
+      <ControlledInput
+        control={control}
+        name="otp"
+        label="Verification Code"
+        placeholder="123456"
+        keyboardType="number-pad"
+        maxLength={6}
+      />
 
-        {/* Form Input */}
-        <View style={styles.inputGroup}>
-          <ControlledInput
-            control={control}
-            name="otp"
-            label="Verification Code"
-            placeholder="123456"
-            keyboardType="number-pad"
-            maxLength={6}
-          />
-        </View>
+      <SubmitButton
+        title="Verify & Sign In"
+        onPress={handleSubmit(onVerify)}
+        isPending={loading}
+      />
 
-        <Button
-          title="Verify & Sign In"
-          onPress={handleSubmit(onVerify)}
-          isLoading={loading}
-          variant="primary"
-          style={{ marginTop: 8 }}
-        />
-
-        <Button
-          title="Resend Code"
-          onPress={handleResendCode}
-          disabled={loading}
-          variant="ghost"
-          style={{ marginTop: 16 }}
-        />
-      </View>
-    </SafeAreaView>
+      <Button
+        title="Resend Code"
+        onPress={handleResendCode}
+        disabled={loading}
+        variant="ghost"
+        style={{ marginTop: 16 }}
+      />
+    </OnboardingLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-  },
-  form: {
-    width: "100%",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 32,
-    textAlign: "center",
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-});

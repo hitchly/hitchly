@@ -1,4 +1,3 @@
-import { useGPSLocation } from "@/hooks/use-gps-location";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +14,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useTheme } from "../../context/theme-context";
+import { useGPSLocation } from "../../hooks/use-gps-location";
 import { trpc } from "../../lib/trpc";
 import { ControlledLocationInput, SubmitButton } from "../ui/form";
 
@@ -24,7 +25,7 @@ export const RequireLocation = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
   const utils = trpc.useUtils();
 
   const { data: profile, isLoading } = trpc.profile.getMe.useQuery();
@@ -71,18 +72,18 @@ export const RequireLocation = ({
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView
-        style={[styles.container, { backgroundColor: theme.background }]}
+        style={[styles.container, { backgroundColor: colors.background }]}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.content}
         >
           <View style={styles.header}>
-            <Ionicons name="location" size={48} color={theme.primary} />
-            <Text style={[styles.title, { color: theme.text }]}>
+            <Ionicons name="location" size={48} color={colors.primary} />
+            <Text style={[styles.title, { color: colors.text }]}>
               Set Your Location
             </Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Enter your primary pickup/drop-off address to continue.
             </Text>
           </View>
@@ -113,9 +114,9 @@ export const RequireLocation = ({
               <Ionicons
                 name="navigate-circle"
                 size={20}
-                color={theme.primary}
+                color={colors.primary}
               />
-              <Text style={[styles.gpsText, { color: theme.primary }]}>
+              <Text style={[styles.gpsText, { color: colors.primary }]}>
                 Use current location
               </Text>
             </TouchableOpacity>

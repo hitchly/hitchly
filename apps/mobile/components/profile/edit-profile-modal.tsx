@@ -4,7 +4,7 @@ import type {
   UpdatePreferencesInput,
   UpdateProfileInput,
   UpdateVehicleInput,
-} from "@hitchly/db/validators/profile";
+} from "@hitchly/db"; // Ensure this matches your export location
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -42,7 +42,7 @@ export const EditProfileModal = ({
   onClose,
   onSuccess,
 }: EditProfileModalProps) => {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
 
   if (!state) return null;
 
@@ -72,13 +72,15 @@ export const EditProfileModal = ({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.modalOverlay}
       >
-        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+        <View
+          style={[styles.modalContent, { backgroundColor: colors.surface }]}
+        >
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
               {getTitle()}
             </Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={theme.text} />
+              <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 

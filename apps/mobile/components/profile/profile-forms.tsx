@@ -104,7 +104,7 @@ export function PreferencesForm({
   initialData: UpdatePreferencesInput;
   onSuccess: () => void;
 }) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
   const { control, handleSubmit } = useForm<UpdatePreferencesInput>({
     defaultValues: initialData,
     resolver: zodResolver(updatePreferencesSchema),
@@ -114,7 +114,7 @@ export function PreferencesForm({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.switchList, { backgroundColor: theme.background }]}>
+      <View style={[styles.switchList, { backgroundColor: colors.background }]}>
         <ControlledSwitch control={control} name="music" label="Play Music" />
         <ControlledSwitch control={control} name="chatty" label="Chatty" />
         <ControlledSwitch control={control} name="pets" label="Pet Friendly" />
@@ -211,7 +211,7 @@ export function LocationForm({
   initialData: SaveAddressInput;
   onSuccess: () => void;
 }) {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
 
   const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
     resolver: zodResolver(saveAddressSchema),
@@ -269,8 +269,8 @@ export function LocationForm({
         onPress={getLocation}
         disabled={isGeocoding}
       >
-        <Ionicons name="navigate-circle" size={20} color={theme.primary} />
-        <Text style={[styles.gpsText, { color: theme.primary }]}>
+        <Ionicons name="navigate-circle" size={20} color={colors.primary} />
+        <Text style={[styles.gpsText, { color: colors.primary }]}>
           Use Current Location
         </Text>
       </TouchableOpacity>

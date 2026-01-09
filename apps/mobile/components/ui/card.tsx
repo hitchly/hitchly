@@ -16,10 +16,10 @@ interface CardProps {
 }
 
 export const Card = ({ children, style }: CardProps) => {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated: Destructure colors
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.surface }, style]}>
+    <View style={[styles.card, { backgroundColor: colors.surface }, style]}>
       {children}
     </View>
   );
@@ -42,29 +42,29 @@ export const InfoCard = ({
   emptyText,
   actionLabel = "Add Info",
 }: InfoCardProps) => {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <Card>
       <View style={styles.cardHeader}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{title}</Text>
         {onEdit && (
           <TouchableOpacity
             onPress={onEdit}
-            style={[styles.editIcon, { backgroundColor: theme.primaryLight }]}
+            style={[styles.editIcon, { backgroundColor: colors.primaryLight }]}
           >
-            <Ionicons name="pencil" size={16} color={theme.primary} />
+            <Ionicons name="pencil" size={16} color={colors.primary} />
           </TouchableOpacity>
         )}
       </View>
       {empty ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             {emptyText}
           </Text>
           {onEdit && (
             <TouchableOpacity onPress={onEdit}>
-              <Text style={[styles.emptyLink, { color: theme.primary }]}>
+              <Text style={[styles.emptyLink, { color: colors.primary }]}>
                 {actionLabel}
               </Text>
             </TouchableOpacity>
@@ -91,17 +91,17 @@ export const InfoRow = ({
   fullWidth,
   capitalize,
 }: InfoRowProps) => {
-  const theme = useTheme();
+  const { colors } = useTheme(); // Updated
 
   return (
     <View style={[styles.infoItem, fullWidth && { width: "100%" }]}>
-      <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>
+      <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
         {label}
       </Text>
       <Text
         style={[
           styles.infoValue,
-          { color: theme.text },
+          { color: colors.text },
           capitalize && { textTransform: "capitalize" },
         ]}
         numberOfLines={2}
