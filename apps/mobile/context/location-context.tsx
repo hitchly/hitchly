@@ -1,5 +1,5 @@
 import * as Location from "expo-location";
-import { createContext, useEffect } from "react";
+import { createContext, useEffect, useMemo } from "react";
 import { trpc } from "../lib/trpc";
 
 const LocationContext = createContext({});
@@ -9,25 +9,23 @@ export const LocationProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const updateLocation = trpc.location.update.useMutation();
+  const { mutate } = trpc.location.update.useMutation();
 
   useEffect(() => {
     let subscriber: Location.LocationSubscription | null = null;
 
     const startWatching = async () => {
-      // 1. Check permission, but DO NOT REQUEST it here.
-      // The UI component handles the request. We only track if already granted.
       const { status } = await Location.getForegroundPermissionsAsync();
 
       if (status === "granted") {
         subscriber = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
-            timeInterval: 10000, // Slow down to 10s to save battery
-            distanceInterval: 50,
+            timeInterval: 10000, // Update every 10 seconds
+            distanceInterval: 50, // OR every 50 meters
           },
           (loc) => {
-            updateLocation.mutate({
+            mutate({
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
               heading: loc.coords.heading,
@@ -43,9 +41,13 @@ export const LocationProvider = ({
     return () => {
       if (subscriber) subscriber.remove();
     };
-  }, [updateLocation]); // Run once on mount
+  }, [mutate]);
+
+  const value = useMemo(() => ({}), []);
 
   return (
-    <LocationContext.Provider value={{}}>{children}</LocationContext.Provider>
+    <LocationContext.Provider value={value}>
+      {children}
+    </LocationContext.Provider>
   );
 };

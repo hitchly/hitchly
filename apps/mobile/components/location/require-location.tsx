@@ -3,6 +3,7 @@ import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
@@ -63,8 +64,13 @@ export const RequireLocation = ({
     saveAddressMutation.mutate(data);
   };
 
-  if (isLoading) return null;
-
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
   if (profile?.profile?.defaultAddress) {
     return <>{children}</>;
   }

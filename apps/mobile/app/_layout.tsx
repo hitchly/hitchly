@@ -18,7 +18,16 @@ import { AppThemeProvider } from "../context/theme-context";
 import { authClient } from "../lib/auth-client";
 import { trpc, trpcClient } from "../lib/trpc";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    // Setting some default options for queries, reducing unnecessary refetches
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  },
+});
 
 const MyLightTheme = {
   ...DefaultTheme,
