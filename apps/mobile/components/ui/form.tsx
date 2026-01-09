@@ -148,6 +148,7 @@ export function ControlledLocationInput({
               longitude: match.longitude,
             };
           } catch (e) {
+            console.error("Error in geocoding:", e);
             return null;
           }
         })
@@ -161,7 +162,7 @@ export function ControlledLocationInput({
       setResults(unique);
       setShowDropdown(unique.length > 0);
     } catch (e) {
-      // Silent fail
+      console.error("Location search error:", e);
     } finally {
       setIsSearching(false);
     }

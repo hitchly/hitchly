@@ -14,7 +14,7 @@ export const locationRouter = router({
         speed: z.number().nullable().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async () => {
       return { success: true };
     }),
   saveDefaultAddress: protectedProcedure

@@ -54,7 +54,8 @@ export default function Verify() {
         router.replace("/(auth)/sign-in");
       }
     } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred");
+      console.error("Unexpected Sign Up Error:", err);
+      Alert.alert("Error", "An unexpected error occurred during verification");
     } finally {
       setLoading(false);
     }
@@ -71,6 +72,7 @@ export default function Verify() {
       if (error) Alert.alert("Error", error.message);
       else Alert.alert("Sent", `A new code has been sent to ${email}`);
     } catch (err) {
+      console.error("Resend Code Error:", err);
       Alert.alert("Error", "Could not resend code");
     } finally {
       setLoading(false);

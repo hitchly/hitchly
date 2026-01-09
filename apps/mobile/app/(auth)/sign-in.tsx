@@ -6,11 +6,9 @@ import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 import { ControlledInput, SubmitButton } from "../../components/ui/form";
 import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 
 export default function SignIn() {
-  const { colors } = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +59,11 @@ export default function SignIn() {
         }
       );
     } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred");
+      console.error("Unexpected Sign In Error:", err);
+      Alert.alert(
+        "Login Failed",
+        "An unexpected error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }

@@ -6,12 +6,10 @@ import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 import { ControlledInput, SubmitButton } from "../../components/ui/form";
 import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 
 export default function SignUp() {
   const router = useRouter();
-  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const { control, handleSubmit } = useForm<SignUpInput>({
@@ -47,7 +45,11 @@ export default function SignUp() {
         }
       );
     } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred during sign up");
+      console.error("Unexpected Sign Up Error:", err);
+      Alert.alert(
+        "Registration Failed",
+        "An unexpected error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }
