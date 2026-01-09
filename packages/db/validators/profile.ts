@@ -31,6 +31,13 @@ export const updateVehicleSchema = createInsertSchema(vehicles, {
   updatedAt: true,
 });
 
+export const saveAddressSchema = z.object({
+  address: z.string().min(5, "Address must be at least 5 characters"),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export type SaveAddressInput = z.infer<typeof saveAddressSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>;

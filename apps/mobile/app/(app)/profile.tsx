@@ -5,10 +5,12 @@ import type {
   UpdateVehicleInput,
 } from "@hitchly/db/validators/profile";
 import * as Location from "expo-location";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +19,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,6 +30,10 @@ import {
 } from "../../components/profile/profile-forms";
 import { Card, InfoCard, InfoRow } from "../../components/ui/card";
 import { Chip, LoadingSkeleton } from "../../components/ui/display";
+import {
+  ControlledLocationInput,
+  SubmitButton,
+} from "../../components/ui/form";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
@@ -35,12 +42,146 @@ type ModalState =
   | { type: "profile"; initialData: UpdateProfileInput }
   | { type: "preferences"; initialData: UpdatePreferencesInput }
   | { type: "vehicle"; initialData: UpdateVehicleInput }
+  | { type: "location"; initialData: { address: string } }
   | null;
 
-// Helper to format coordinates (e.g., 43.26 N, 79.92 W)
 const formatCoord = (val: number, type: "lat" | "long") => {
   const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
   return `${Math.abs(val).toFixed(4)}° ${dir}`;
+};
+
+const LocationForm = ({
+  initialAddress,
+  onSuccess,
+}: {
+  initialAddress: string;
+  onSuccess: () => void;
+}) => {
+  const theme = useTheme();
+
+  // 1. Setup Form with Watch
+  const { control, handleSubmit, setValue, watch } = useForm({
+    defaultValues: {
+      address: initialAddress,
+      latitude: 0,
+      longitude: 0,
+    },
+  });
+
+  // 2. Watch Coordinates for Verification
+  const [lat, long] = watch(["latitude", "longitude"]);
+  // If coordinates are 0, it means the user modified text but hasn't selected a valid place yet
+  const isVerified = lat !== 0 && long !== 0;
+
+  const mutation = trpc.location.saveDefaultAddress.useMutation({
+    onSuccess: () => onSuccess(),
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  // 3. Logic: Use GPS
+  const handleUseGPS = async () => {
+    setLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission denied",
+          "Enable location services to use this feature."
+        );
+        setLoading(false);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({});
+      const [place] = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+
+      if (place) {
+        const formatted = [
+          place.name !== place.street ? place.name : null,
+          place.street,
+          place.city,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        // Set Address AND Coords -> Becomes Verified
+        setValue("address", formatted);
+        setValue("latitude", loc.coords.latitude);
+        setValue("longitude", loc.coords.longitude);
+      }
+    } catch (e) {
+      Alert.alert("Error", "Could not fetch location");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    // Double check safety
+    if (data.latitude === 0 || data.longitude === 0) {
+      Alert.alert(
+        "Invalid Address",
+        "Please select a valid address from the list."
+      );
+      return;
+    }
+
+    mutation.mutate({
+      address: data.address,
+      latitude: data.latitude,
+      longitude: data.longitude,
+    });
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={{ gap: 16 }}>
+        {/* Controlled Input with Verification Logic */}
+        <ControlledLocationInput
+          control={control}
+          name="address"
+          label="Address"
+          placeholder="1280 Main St W, Hamilton"
+          // A. User types manually -> RESET coords -> Button Disabled
+          onTextChange={() => {
+            setValue("latitude", 0);
+            setValue("longitude", 0);
+          }}
+          // B. User selects from dropdown -> SET coords -> Button Enabled
+          onSelect={(d) => {
+            setValue("latitude", d.lat);
+            setValue("longitude", d.long);
+          }}
+        />
+
+        <TouchableOpacity
+          style={styles.gpsRow}
+          onPress={handleUseGPS}
+          disabled={loading}
+        >
+          <Ionicons name="navigate-circle" size={20} color={theme.primary} />
+          <Text style={{ color: theme.primary, fontWeight: "600" }}>
+            Use Current Location
+          </Text>
+        </TouchableOpacity>
+
+        <SubmitButton
+          title={isVerified ? "Save Address" : "Select an Address"}
+          onPress={handleSubmit(onSubmit)}
+          isPending={mutation.isPending || loading}
+          disabled={!isVerified} // Enforce selection
+        />
+      </View>
+    </TouchableWithoutFeedback>
+  );
 };
 
 export default function ProfileScreen() {
@@ -59,24 +200,17 @@ export default function ProfileScreen() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // --- New Location State ---
-  const [locationInfo, setLocationInfo] = useState<{
-    address: string;
-    coords: string;
-  } | null>(null);
-
   // 2. Handlers
   const handleCloseModal = () => setModalState(null);
 
-  // Refresh both Profile data AND Location
   const handleRefresh = async () => {
-    await Promise.all([refetch(), fetchLocation()]);
+    await refetch();
   };
 
   const onSuccess = () => {
     utils.profile.getMe.invalidate();
     handleCloseModal();
-    Alert.alert("Success", "Profile updated successfully.");
+    Alert.alert("Success", "Updated successfully.");
   };
 
   const handleSignOut = async () => {
@@ -85,41 +219,6 @@ export default function ProfileScreen() {
       fetchOptions: { onSuccess: () => console.log("Signed out") },
     });
   };
-
-  // --- Location Fetcher ---
-  const fetchLocation = async () => {
-    try {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== "granted") return;
-
-      const loc = await Location.getCurrentPositionAsync({});
-
-      // Reverse Geocode to get readable address
-      const reverse = await Location.reverseGeocodeAsync({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
-
-      const place = reverse[0];
-      // Construct readable string: "City, Region" or "Street, City"
-      const parts = [place?.street, place?.city, place?.region].filter(Boolean);
-
-      const address = parts.length > 0 ? parts.join(", ") : "Unknown Address";
-      const coords = `${formatCoord(loc.coords.latitude, "lat")}, ${formatCoord(
-        loc.coords.longitude,
-        "long"
-      )}`;
-
-      setLocationInfo({ address, coords });
-    } catch (e) {
-      console.log("Failed to fetch location for profile", e);
-    }
-  };
-
-  // Fetch location on mount
-  useEffect(() => {
-    fetchLocation();
-  }, []);
 
   // 3. Modal Openers
   const openProfileModal = () => {
@@ -160,11 +259,34 @@ export default function ProfileScreen() {
     });
   };
 
+  const openLocationModal = () => {
+    setModalState({
+      type: "location",
+      initialData: {
+        address: userRecord?.profile?.defaultAddress ?? "",
+      },
+    });
+  };
+
   // 4. Derived State
   const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile?.appRole || ""
   );
+
+  // Derive Location Display Data directly from DB record
+  const locationDisplay = userRecord?.profile?.defaultAddress
+    ? {
+        address: userRecord.profile.defaultAddress,
+        coords:
+          userRecord.profile.defaultLat && userRecord.profile.defaultLong
+            ? `${formatCoord(
+                userRecord.profile.defaultLat,
+                "lat"
+              )}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
+            : "Coordinates pending",
+      }
+    : null;
 
   if (isLoading) return <LoadingSkeleton text="Loading Profile..." />;
 
@@ -239,13 +361,14 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        {/* --- NEW LOCATION CARD --- */}
         <InfoCard
-          title="Current Location"
-          empty={!locationInfo}
-          emptyText="Location unavailable"
+          title="Address"
+          onEdit={openLocationModal}
+          empty={!locationDisplay}
+          emptyText="Set your primary pickup address."
+          actionLabel="Edit Address"
         >
-          {locationInfo && (
+          {locationDisplay && (
             <View style={styles.locationContainer}>
               <View
                 style={[
@@ -257,7 +380,7 @@ export default function ProfileScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.locationAddress, { color: theme.text }]}>
-                  {locationInfo.address}
+                  {locationDisplay.address}
                 </Text>
                 <Text
                   style={[
@@ -265,7 +388,7 @@ export default function ProfileScreen() {
                     { color: theme.textSecondary },
                   ]}
                 >
-                  {locationInfo.coords}
+                  {locationDisplay.coords}
                 </Text>
               </View>
             </View>
@@ -428,13 +551,17 @@ export default function ProfileScreen() {
                 {modalState?.type === "profile" && "Edit Profile"}
                 {modalState?.type === "preferences" && "Edit Preferences"}
                 {modalState?.type === "vehicle" && "Edit Vehicle"}
+                {modalState?.type === "location" && "Edit Address"}
               </Text>
               <TouchableOpacity onPress={handleCloseModal}>
                 <Ionicons name="close" size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {modalState?.type === "profile" && (
                 <ProfileForm
                   initialData={modalState.initialData}
@@ -453,6 +580,12 @@ export default function ProfileScreen() {
                   onSuccess={onSuccess}
                 />
               )}
+              {modalState?.type === "location" && (
+                <LocationForm
+                  initialAddress={modalState.initialData.address}
+                  onSuccess={onSuccess}
+                />
+              )}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -461,7 +594,7 @@ export default function ProfileScreen() {
   );
 }
 
-// --- Styles (Structural only, Colors moved to Theme) ---
+// --- Styles ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
@@ -480,8 +613,6 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 32, fontWeight: "bold", color: "#fff" },
   name: { fontSize: 24, fontWeight: "800" },
   email: { fontSize: 14, marginBottom: 8 },
-
-  // Badge
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -492,12 +623,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   badgeText: { fontSize: 13, fontWeight: "600" },
-
-  // Containers
   row: { flexDirection: "row", justifyContent: "space-between" },
   chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-
-  // NEW: Location Styling
   locationContainer: { flexDirection: "row", alignItems: "center", gap: 12 },
   iconBox: {
     width: 40,
@@ -511,8 +638,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
   },
-
-  // Vehicle Specifics
   vehicleRow: { flexDirection: "row", alignItems: "center" },
   vehicleIcon: {
     width: 48,
@@ -534,8 +659,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   seatText: { fontSize: 12, fontWeight: "600" },
-
-  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -554,8 +677,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalTitle: { fontSize: 20, fontWeight: "bold" },
-
-  // Sign Out
   signOutBtn: {
     marginHorizontal: 16,
     marginTop: 24,
@@ -565,4 +686,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   signOutText: { fontSize: 16, fontWeight: "600" },
+  inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 8 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    height: 80, // multiline feel
+    textAlignVertical: "top",
+  },
+  gpsRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  saveBtn: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 12,
+  },
 });

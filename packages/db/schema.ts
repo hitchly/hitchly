@@ -107,6 +107,11 @@ export const profiles = pgTable("profiles", {
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date()),
+
+  // Default Location
+  defaultAddress: text("default_address"),
+  defaultLat: doublePrecision("default_lat"),
+  defaultLong: doublePrecision("default_long"),
 });
 
 export const preferences = pgTable("preferences", {

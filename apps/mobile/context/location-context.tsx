@@ -15,24 +15,27 @@ export const LocationProvider = ({
     let subscriber: Location.LocationSubscription | null = null;
 
     const startWatching = async () => {
+      // 1. Check permission, but DO NOT REQUEST it here.
+      // The UI component handles the request. We only track if already granted.
       const { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== "granted") return;
 
-      subscriber = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000, // Update every 5 seconds
-          distanceInterval: 10, // Or every 20 meters
-        },
-        (loc) => {
-          updateLocation.mutate({
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-            heading: loc.coords.heading,
-            speed: loc.coords.speed,
-          });
-        }
-      );
+      if (status === "granted") {
+        subscriber = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 10000, // Slow down to 10s to save battery
+            distanceInterval: 50,
+          },
+          (loc) => {
+            updateLocation.mutate({
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              heading: loc.coords.heading,
+              speed: loc.coords.speed,
+            });
+          }
+        );
+      }
     };
 
     startWatching();
@@ -40,7 +43,7 @@ export const LocationProvider = ({
     return () => {
       if (subscriber) subscriber.remove();
     };
-  }, [updateLocation]);
+  }, [updateLocation]); // Run once on mount
 
   return (
     <LocationContext.Provider value={{}}>{children}</LocationContext.Provider>

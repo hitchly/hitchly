@@ -1,5 +1,5 @@
-import { db } from "@hitchly/db";
-import { userLocations } from "@hitchly/db/schema";
+import { db, saveAddressSchema } from "@hitchly/db";
+import { profiles } from "@hitchly/db/schema";
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 
@@ -14,26 +14,27 @@ export const locationRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.userId!;
-
-      // Upsert: Try to insert, if conflict on userId, update instead
+      return { success: true };
+    }),
+  saveDefaultAddress: protectedProcedure
+    .input(saveAddressSchema)
+    .mutation(async ({ ctx, input }) => {
       await db
-        .insert(userLocations)
+        .insert(profiles)
         .values({
-          userId,
-          latitude: input.latitude,
-          longitude: input.longitude,
-          heading: input.heading || 0,
-          speed: input.speed || 0,
-          updatedAt: new Date(),
+          userId: ctx.userId!,
+          defaultAddress: input.address,
+          defaultLat: input.latitude,
+          defaultLong: input.longitude,
+          appRole: "rider",
+          universityRole: "student",
         })
         .onConflictDoUpdate({
-          target: userLocations.userId,
+          target: profiles.userId,
           set: {
-            latitude: input.latitude,
-            longitude: input.longitude,
-            heading: input.heading || 0,
-            speed: input.speed || 0,
+            defaultAddress: input.address,
+            defaultLat: input.latitude,
+            defaultLong: input.longitude,
             updatedAt: new Date(),
           },
         });
