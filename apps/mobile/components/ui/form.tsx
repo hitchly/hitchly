@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatLocationData } from "@hitchly/utils";
 import * as Location from "expo-location";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Controller } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -22,15 +23,17 @@ interface ControlledInputProps extends TextInputProps {
   control: any;
   name: string;
   label: string;
+  multiline?: boolean;
 }
 
 export function ControlledInput({
   control,
   name,
   label,
+  multiline,
   ...props
 }: ControlledInputProps) {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
 
   return (
     <Controller
@@ -53,13 +56,14 @@ export function ControlledInput({
                 borderColor: error ? colors.error : colors.border,
                 ...(error ? { backgroundColor: colors.errorBackground } : {}),
               },
-              props.multiline && styles.textArea,
+              multiline && styles.textArea,
             ]}
             onBlur={onBlur}
             onChangeText={onChange}
             value={value?.toString() || ""}
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
+            multiline={multiline}
             {...props}
           />
           {error && (
@@ -100,52 +104,10 @@ export function ControlledLocationInput({
   onSelect,
   onTextChange,
 }: ControlledLocationInputProps) {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
   const [results, setResults] = useState<LocationResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // Helper: Format Expo Location Data
-  const formatLocationData = (
-    loc: Location.LocationGeocodedAddress
-  ): { title: string; subtitle: string; full: string } | null => {
-    let streetLine = loc.street || "";
-    const streetNumber =
-      loc.streetNumber ||
-      (loc.name && !isNaN(Number(loc.name)) ? loc.name : "");
-
-    if (streetNumber && !streetLine.startsWith(streetNumber)) {
-      streetLine = `${streetNumber} ${streetLine}`;
-    }
-
-    streetLine = streetLine.trim();
-    if (!streetLine) return null;
-
-    const regionParts = [loc.city, loc.region, loc.isoCountryCode].filter(
-      Boolean
-    );
-    const regionLine = regionParts.join(", ");
-
-    const isPOI =
-      loc.name &&
-      isNaN(Number(loc.name)) &&
-      loc.name !== loc.street &&
-      loc.name !== streetLine;
-
-    let title = "";
-    let subtitle = "";
-
-    if (isPOI) {
-      title = loc.name!;
-      subtitle = `${streetLine}, ${regionLine}`;
-    } else {
-      title = streetLine;
-      subtitle = regionLine;
-    }
-
-    const full = isPOI ? `${title}, ${subtitle}` : `${title}, ${regionLine}`;
-    return { title, subtitle, full };
-  };
 
   const handleSearch = async (query: string) => {
     if (!query || query.length < 5) {
@@ -226,7 +188,8 @@ export function ControlledLocationInput({
                 },
               ]}
               value={value}
-              onChangeText={(text) => {
+              onChangeText={(text: string) => {
+                // Fixed implicit 'any'
                 onChange(text);
                 if (onTextChange) onTextChange(text);
                 if (text.length > 4) handleSearch(text);
@@ -324,7 +287,7 @@ export function ControlledNumberSelector({
   max,
 }: any) {
   const options = Array.from({ length: max - min + 1 }, (_, i) => i + min);
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <Controller
@@ -386,7 +349,7 @@ export function ControlledSegmentedControl({
   label,
   options,
 }: any) {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <Controller
@@ -445,7 +408,7 @@ export function ControlledSegmentedControl({
 
 // --- 5. Chip Group ---
 export function ControlledChipGroup({ control, name, label, options }: any) {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <Controller
@@ -501,7 +464,7 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
 
 // --- 6. Switch ---
 export function ControlledSwitch({ control, name, label }: any) {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <Controller

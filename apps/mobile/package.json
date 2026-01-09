@@ -17,6 +17,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.3",
     "@hitchly/db": "workspace:*",
+    "@hitchly/utils": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@react-navigation/bottom-tabs": "^7.8.1",
     "@react-navigation/elements": "^2.8.1",

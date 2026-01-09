@@ -13,7 +13,6 @@ export default function LandingPage() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.content}>
-        {/* Branding */}
         <Text style={[styles.title, { color: colors.text }]}>
           Welcome to Hitchly
         </Text>
@@ -21,7 +20,6 @@ export default function LandingPage() {
           McMaster&apos;s Ridesharing Platform
         </Text>
 
-        {/* Actions */}
         <View style={styles.buttonContainer}>
           <Link href="/(auth)/sign-in" asChild>
             <Button title="Sign In" variant="primary" />

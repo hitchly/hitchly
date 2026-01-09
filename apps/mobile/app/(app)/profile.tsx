@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCoordinatePair } from "@hitchly/utils";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,7 +12,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import {
   EditModalState,
   EditProfileModal,
@@ -21,11 +21,6 @@ import { Chip, LoadingSkeleton } from "../../components/ui/display";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
-
-const formatCoord = (val: number, type: "lat" | "long") => {
-  const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
-  return `${Math.abs(val).toFixed(4)}° ${dir}`;
-};
 
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
@@ -67,10 +62,10 @@ export default function ProfileScreen() {
         address: userRecord.profile.defaultAddress,
         coords:
           userRecord.profile.defaultLat && userRecord.profile.defaultLong
-            ? `${formatCoord(
+            ? formatCoordinatePair(
                 userRecord.profile.defaultLat,
-                "lat"
-              )}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
+                userRecord.profile.defaultLong
+              )
             : "Coordinates pending",
       }
     : null;

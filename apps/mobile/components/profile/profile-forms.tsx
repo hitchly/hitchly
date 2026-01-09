@@ -104,7 +104,7 @@ export function PreferencesForm({
   initialData: UpdatePreferencesInput;
   onSuccess: () => void;
 }) {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
   const { control, handleSubmit } = useForm<UpdatePreferencesInput>({
     defaultValues: initialData,
     resolver: zodResolver(updatePreferencesSchema),
@@ -211,7 +211,7 @@ export function LocationForm({
   initialData: SaveAddressInput;
   onSuccess: () => void;
 }) {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
 
   const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
     resolver: zodResolver(saveAddressSchema),

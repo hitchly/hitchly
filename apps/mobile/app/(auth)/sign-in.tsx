@@ -1,7 +1,7 @@
 import { SignInInput, signInSchema } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 import { ControlledInput, SubmitButton } from "../../components/ui/form";

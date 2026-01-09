@@ -42,7 +42,7 @@ export const EditProfileModal = ({
   onClose,
   onSuccess,
 }: EditProfileModalProps) => {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
 
   if (!state) return null;
 

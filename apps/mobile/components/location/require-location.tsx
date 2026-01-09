@@ -25,7 +25,7 @@ export const RequireLocation = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
   const utils = trpc.useUtils();
 
   const { data: profile, isLoading } = trpc.profile.getMe.useQuery();

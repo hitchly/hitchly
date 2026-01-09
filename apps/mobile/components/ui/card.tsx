@@ -16,7 +16,7 @@ interface CardProps {
 }
 
 export const Card = ({ children, style }: CardProps) => {
-  const { colors } = useTheme(); // Updated: Destructure colors
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }, style]}>
@@ -42,7 +42,7 @@ export const InfoCard = ({
   emptyText,
   actionLabel = "Add Info",
 }: InfoCardProps) => {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <Card>
@@ -91,7 +91,7 @@ export const InfoRow = ({
   fullWidth,
   capitalize,
 }: InfoRowProps) => {
-  const { colors } = useTheme(); // Updated
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.infoItem, fullWidth && { width: "100%" }]}>

@@ -10,12 +10,7 @@ import { trpc } from "../../lib/trpc";
 export default function HomeScreen() {
   const { colors } = useTheme();
 
-  const { data, isLoading, error, refetch, isRefetching } =
-    trpc.health.ping.useQuery();
-
-  const handleRefresh = async () => {
-    await refetch();
-  };
+  const { data, isLoading, error } = trpc.health.ping.useQuery();
 
   const isOnline = !!data && !error;
 

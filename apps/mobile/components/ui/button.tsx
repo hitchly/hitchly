@@ -32,8 +32,8 @@ export function Button({
   const variants = {
     primary: {
       container: { backgroundColor: colors.primary, borderWidth: 0 },
-      text: { color: "#fff" },
-      indicator: "#fff",
+      text: { color: colors.text },
+      indicator: colors.text,
     },
     secondary: {
       container: {
