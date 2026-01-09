@@ -1,29 +1,112 @@
-// apps/mobile/app/index.tsx
+import Ionicons from "@expo/vector-icons/Ionicons";
+import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { Card } from "../../components/ui/card";
+import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";
 
 export default function HomeScreen() {
-  const { data, isLoading, error } = trpc.health.ping.useQuery();
+  const { colors } = useTheme();
 
-  if (isLoading) return <ActivityIndicator />;
-  if (error) return <Text>Error: {error.message}</Text>;
+  const { data, isLoading, error, refetch, isRefetching } =
+    trpc.health.ping.useQuery();
+
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
+  const isOnline = !!data && !error;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home Feed</Text>
-      <Text style={styles.subtitle}>Welcome to the protected application!</Text>
-      <Text>Server says: {data?.message}</Text>
-    </View>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top", "left", "right"]}
+    >
+      <Card>
+        <View style={[styles.cardHeader, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            System Status
+          </Text>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: isOnline
+                  ? colors.successBackground
+                  : colors.errorBackground,
+                borderColor: isOnline ? colors.success : colors.error,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: isOnline ? colors.success : colors.error },
+              ]}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                { color: isOnline ? colors.success : colors.error },
+              ]}
+            >
+              {isLoading ? "Checking..." : isOnline ? "Online" : "Offline"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statusContent}>
+          {isLoading ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : error ? (
+            <View style={styles.messageRow}>
+              <Ionicons name="warning-outline" size={20} color={colors.error} />
+              <Text style={[styles.messageText, { color: colors.text }]}>
+                {error.message}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.messageRow}>
+              <Ionicons
+                name="server-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.messageText, { color: colors.text }]}>
+                Server says: &quot;{data?.message}&quot;
+              </Text>
+            </View>
+          )}
+        </View>
+      </Card>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
+  container: { flex: 1 },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#fff",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  title: { fontSize: 22, fontWeight: "bold" },
-  subtitle: { marginTop: 10, color: "gray" },
+  cardTitle: { fontSize: 16, fontWeight: "600" },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  statusText: { fontSize: 12, fontWeight: "600" },
+  statusContent: { paddingVertical: 8 },
+  messageRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  messageText: { fontSize: 16, fontWeight: "500" },
 });

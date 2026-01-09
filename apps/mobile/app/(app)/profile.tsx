@@ -16,13 +16,12 @@ import {
   EditModalState,
   EditProfileModal,
 } from "../../components/profile/edit-profile-modal";
-import { Card, InfoCard, InfoRow } from "../../components/ui/card";
+import { InfoCard, InfoRow } from "../../components/ui/card";
 import { Chip, LoadingSkeleton } from "../../components/ui/display";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
-// Helper
 const formatCoord = (val: number, type: "lat" | "long") => {
   const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
   return `${Math.abs(val).toFixed(4)}° ${dir}`;
@@ -31,8 +30,6 @@ const formatCoord = (val: number, type: "lat" | "long") => {
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
-
-  // 1. Destructure simplified theme
   const { colors, fonts } = useTheme();
 
   const {
@@ -95,283 +92,287 @@ export default function ProfileScreen() {
           />
         }
       >
-        {/* --- HEADER --- */}
-        <Card style={{ alignItems: "center" }}>
-          <View
-            style={[
-              styles.avatar,
-              { backgroundColor: colors.primary, borderColor: colors.surface },
-            ]}
-          >
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
-          <Text style={[styles.name, { color: colors.text }]}>
-            {session?.user?.name}
-          </Text>
-          <Text style={[styles.email, { color: colors.textSecondary }]}>
-            {session?.user?.email}
-          </Text>
-
-          <View
-            style={[
-              styles.badge,
-              session?.user?.emailVerified
-                ? {
-                    backgroundColor: colors.successBackground,
-                    borderColor: colors.success,
-                  }
-                : {
-                    backgroundColor: colors.warningBackground,
-                    borderColor: colors.warning,
-                  },
-            ]}
-          >
-            <Ionicons
-              name={
-                session?.user?.emailVerified
-                  ? "checkmark-circle"
-                  : "alert-circle"
-              }
-              size={16}
-              color={
-                session?.user?.emailVerified ? colors.success : colors.warning
-              }
-            />
-            <Text
+        <View style={styles.headerContainer}>
+          <View style={styles.profileHero}>
+            <View
               style={[
-                styles.badgeText,
+                styles.avatarContainer,
                 {
-                  color: session?.user?.emailVerified
-                    ? colors.success
-                    : colors.warning,
+                  backgroundColor: colors.primary,
+                  borderColor: colors.surface,
+                  shadowColor: colors.primary,
                 },
               ]}
             >
-              {session?.user?.emailVerified ? "Verified" : "Not Verified"}
-            </Text>
-          </View>
-        </Card>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
 
-        {/* --- ADDRESS --- */}
-        <InfoCard
-          title="Address"
-          onEdit={() =>
-            setModalState({
-              type: "location",
-              initialData: {
-                address: userRecord?.profile?.defaultAddress ?? "",
-                latitude: userRecord?.profile?.defaultLat ?? 0,
-                longitude: userRecord?.profile?.defaultLong ?? 0,
-              },
-            })
-          }
-          empty={!locationDisplay}
-          emptyText="Set your primary pickup address."
-          actionLabel="Edit Address"
-        >
-          {locationDisplay && (
-            <View style={styles.locationContainer}>
-              <View
+            <Text style={[styles.heroName, { color: colors.text }]}>
+              {session?.user?.name}
+            </Text>
+            <Text style={[styles.heroEmail, { color: colors.textSecondary }]}>
+              {session?.user?.email}
+            </Text>
+
+            <View
+              style={[
+                styles.verificationPill,
+                session?.user?.emailVerified
+                  ? { backgroundColor: colors.successBackground }
+                  : { backgroundColor: colors.warningBackground },
+              ]}
+            >
+              <Ionicons
+                name={
+                  session?.user?.emailVerified
+                    ? "shield-checkmark"
+                    : "alert-circle"
+                }
+                size={14}
+                color={
+                  session?.user?.emailVerified ? colors.success : colors.warning
+                }
+              />
+              <Text
                 style={[
-                  styles.iconBox,
-                  { backgroundColor: colors.primaryLight },
+                  styles.verificationText,
+                  {
+                    color: session?.user?.emailVerified
+                      ? colors.success
+                      : colors.warning,
+                  },
                 ]}
               >
-                <Ionicons name="location" size={24} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.locationAddress, { color: colors.text }]}>
-                  {locationDisplay.address}
-                </Text>
-                <Text
-                  style={[
-                    styles.locationCoords,
-                    { color: colors.textSecondary, fontFamily: fonts.mono },
-                  ]}
-                >
-                  {locationDisplay.coords}
-                </Text>
-              </View>
+                {session?.user?.emailVerified
+                  ? "Verified Student"
+                  : "Verification Pending"}
+              </Text>
             </View>
-          )}
-        </InfoCard>
+          </View>
+        </View>
 
-        {/* --- PROFILE INFO --- */}
-        <InfoCard
-          title="About Me"
-          onEdit={() =>
-            setModalState({
-              type: "profile",
-              initialData: {
-                bio: userRecord?.profile?.bio ?? "",
-                faculty: userRecord?.profile?.faculty ?? "",
-                year: userRecord?.profile?.year ?? 1,
-                appRole: userRecord?.profile?.appRole ?? "rider",
-                universityRole:
-                  userRecord?.profile?.universityRole ?? "student",
-              },
-            })
-          }
-          empty={!userRecord?.profile}
-          emptyText="Complete your profile to start riding."
-        >
-          {userRecord?.profile && (
-            <View style={{ gap: 16 }}>
-              <InfoRow
-                label="Bio"
-                value={userRecord.profile.bio || "No bio set"}
-                fullWidth
-              />
-              <View style={styles.row}>
-                <InfoRow
-                  label="Faculty"
-                  value={userRecord.profile.faculty || "-"}
-                />
-                <InfoRow
-                  label="Year"
-                  value={userRecord.profile.year?.toString() || "-"}
-                />
-              </View>
-              <View style={styles.row}>
-                <InfoRow
-                  label="University Role"
-                  value={userRecord.profile.universityRole}
-                  capitalize
-                />
-                <InfoRow
-                  label="App Role"
-                  value={userRecord.profile.appRole}
-                  capitalize
-                />
-              </View>
-            </View>
-          )}
-        </InfoCard>
-
-        {/* --- PREFERENCES --- */}
-        <InfoCard
-          title="Ride Preferences"
-          onEdit={() =>
-            setModalState({
-              type: "preferences",
-              initialData: {
-                music: userRecord?.preferences?.music ?? true,
-                chatty: userRecord?.preferences?.chatty ?? true,
-                pets: userRecord?.preferences?.pets ?? false,
-                smoking: userRecord?.preferences?.smoking ?? false,
-              },
-            })
-          }
-          empty={!userRecord?.preferences}
-          emptyText="Set your ride comfort settings."
-        >
-          {userRecord?.preferences && (
-            <View style={styles.chipContainer}>
-              <Chip
-                icon="musical-notes"
-                label="Music"
-                active={userRecord.preferences.music}
-              />
-              <Chip
-                icon="chatbubbles"
-                label="Chatty"
-                active={userRecord.preferences.chatty}
-              />
-              <Chip
-                icon="paw"
-                label="Pets"
-                active={userRecord.preferences.pets}
-              />
-              <Chip
-                icon="flame"
-                label="Smoking"
-                active={userRecord.preferences.smoking}
-              />
-            </View>
-          )}
-        </InfoCard>
-
-        {/* --- VEHICLE --- */}
-        {isDriver && (
+        <View style={styles.cardsContainer}>
           <InfoCard
-            title="Vehicle Details"
+            title="Address"
             onEdit={() =>
               setModalState({
-                type: "vehicle",
+                type: "location",
                 initialData: {
-                  make: userRecord?.vehicle?.make ?? "",
-                  model: userRecord?.vehicle?.model ?? "",
-                  color: userRecord?.vehicle?.color ?? "",
-                  plate: userRecord?.vehicle?.plate ?? "",
-                  seats: userRecord?.vehicle?.seats ?? 4,
+                  address: userRecord?.profile?.defaultAddress ?? "",
+                  latitude: userRecord?.profile?.defaultLat ?? 0,
+                  longitude: userRecord?.profile?.defaultLong ?? 0,
                 },
               })
             }
-            empty={!userRecord?.vehicle}
-            emptyText="Add your vehicle to start driving."
-            actionLabel="Add Vehicle"
+            empty={!locationDisplay}
+            emptyText="Set your primary pickup address."
+            actionLabel="Edit Address"
           >
-            {userRecord?.vehicle && (
-              <View style={styles.vehicleRow}>
+            {locationDisplay && (
+              <View style={styles.locationContainer}>
                 <View
                   style={[
-                    styles.vehicleIcon,
+                    styles.iconBox,
                     { backgroundColor: colors.primaryLight },
                   ]}
                 >
-                  <Ionicons name="car-sport" size={24} color={colors.primary} />
+                  <Ionicons name="location" size={24} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.vehicleName, { color: colors.text }]}>
-                    {userRecord.vehicle.color} {userRecord.vehicle.make}{" "}
-                    {userRecord.vehicle.model}
+                  <Text
+                    style={[styles.locationAddress, { color: colors.text }]}
+                  >
+                    {locationDisplay.address}
                   </Text>
                   <Text
                     style={[
-                      styles.vehiclePlate,
+                      styles.locationCoords,
                       { color: colors.textSecondary, fontFamily: fonts.mono },
                     ]}
                   >
-                    {userRecord.vehicle.plate}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.seatBadge,
-                    { backgroundColor: colors.background },
-                  ]}
-                >
-                  <Text
-                    style={[styles.seatText, { color: colors.textSecondary }]}
-                  >
-                    {userRecord.vehicle.seats} Seats
+                    {locationDisplay.coords}
                   </Text>
                 </View>
               </View>
             )}
           </InfoCard>
-        )}
 
-        {/* --- SIGN OUT --- */}
-        <TouchableOpacity
-          style={[
-            styles.signOutBtn,
-            { borderColor: colors.error, backgroundColor: colors.surface },
-          ]}
-          onPress={handleSignOut}
-          disabled={isSigningOut}
-        >
-          {isSigningOut ? (
-            <ActivityIndicator color={colors.error} />
-          ) : (
-            <Text style={[styles.signOutText, { color: colors.error }]}>
-              Sign Out
-            </Text>
+          <InfoCard
+            title="About Me"
+            onEdit={() =>
+              setModalState({
+                type: "profile",
+                initialData: {
+                  bio: userRecord?.profile?.bio ?? "",
+                  faculty: userRecord?.profile?.faculty ?? "",
+                  year: userRecord?.profile?.year ?? 1,
+                  appRole: userRecord?.profile?.appRole ?? "rider",
+                  universityRole:
+                    userRecord?.profile?.universityRole ?? "student",
+                },
+              })
+            }
+            empty={!userRecord?.profile}
+            emptyText="Complete your profile to start riding."
+          >
+            {userRecord?.profile && (
+              <View style={{ gap: 16 }}>
+                <InfoRow
+                  label="Bio"
+                  value={userRecord.profile.bio || "No bio set"}
+                  fullWidth
+                />
+                <View style={styles.row}>
+                  <InfoRow
+                    label="Faculty"
+                    value={userRecord.profile.faculty || "-"}
+                  />
+                  <InfoRow
+                    label="Year"
+                    value={userRecord.profile.year?.toString() || "-"}
+                  />
+                </View>
+                <View style={styles.row}>
+                  <InfoRow
+                    label="University Role"
+                    value={userRecord.profile.universityRole}
+                    capitalize
+                  />
+                  <InfoRow
+                    label="App Role"
+                    value={userRecord.profile.appRole}
+                    capitalize
+                  />
+                </View>
+              </View>
+            )}
+          </InfoCard>
+
+          <InfoCard
+            title="Ride Preferences"
+            onEdit={() =>
+              setModalState({
+                type: "preferences",
+                initialData: {
+                  music: userRecord?.preferences?.music ?? true,
+                  chatty: userRecord?.preferences?.chatty ?? true,
+                  pets: userRecord?.preferences?.pets ?? false,
+                  smoking: userRecord?.preferences?.smoking ?? false,
+                },
+              })
+            }
+            empty={!userRecord?.preferences}
+            emptyText="Set your ride comfort settings."
+          >
+            {userRecord?.preferences && (
+              <View style={styles.chipContainer}>
+                <Chip
+                  icon="musical-notes"
+                  label="Music"
+                  active={userRecord.preferences.music}
+                />
+                <Chip
+                  icon="chatbubbles"
+                  label="Chatty"
+                  active={userRecord.preferences.chatty}
+                />
+                <Chip
+                  icon="paw"
+                  label="Pets"
+                  active={userRecord.preferences.pets}
+                />
+                <Chip
+                  icon="flame"
+                  label="Smoking"
+                  active={userRecord.preferences.smoking}
+                />
+              </View>
+            )}
+          </InfoCard>
+
+          {isDriver && (
+            <InfoCard
+              title="Vehicle Details"
+              onEdit={() =>
+                setModalState({
+                  type: "vehicle",
+                  initialData: {
+                    make: userRecord?.vehicle?.make ?? "",
+                    model: userRecord?.vehicle?.model ?? "",
+                    color: userRecord?.vehicle?.color ?? "",
+                    plate: userRecord?.vehicle?.plate ?? "",
+                    seats: userRecord?.vehicle?.seats ?? 4,
+                  },
+                })
+              }
+              empty={!userRecord?.vehicle}
+              emptyText="Add your vehicle to start driving."
+              actionLabel="Add Vehicle"
+            >
+              {userRecord?.vehicle && (
+                <View style={styles.vehicleRow}>
+                  <View
+                    style={[
+                      styles.vehicleIcon,
+                      { backgroundColor: colors.primaryLight },
+                    ]}
+                  >
+                    <Ionicons
+                      name="car-sport"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.vehicleName, { color: colors.text }]}>
+                      {userRecord.vehicle.color} {userRecord.vehicle.make}{" "}
+                      {userRecord.vehicle.model}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.vehiclePlate,
+                        { color: colors.textSecondary, fontFamily: fonts.mono },
+                      ]}
+                    >
+                      {userRecord.vehicle.plate}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.seatBadge,
+                      { backgroundColor: colors.background },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.seatText, { color: colors.textSecondary }]}
+                    >
+                      {userRecord.vehicle.seats} Seats
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </InfoCard>
           )}
-        </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.signOutBtn,
+              { borderColor: colors.error, backgroundColor: colors.surface },
+            ]}
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? (
+              <ActivityIndicator color={colors.error} />
+            ) : (
+              <Text style={[styles.signOutText, { color: colors.error }]}>
+                Sign Out
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
-      {/* --- EXTRACTED EDIT MODAL --- */}
       <EditProfileModal
         state={modalState}
         onClose={handleCloseModal}
@@ -384,31 +385,72 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    marginBottom: 24,
+  },
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  profileHero: {
+    alignItems: "center",
+  },
+  avatarContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    position: "relative",
+  },
+  avatarText: { fontSize: 40, fontWeight: "bold", color: "#fff" },
+  avatarEditBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  avatarText: { fontSize: 32, fontWeight: "bold", color: "#fff" },
-  name: { fontSize: 24, fontWeight: "800" },
-  email: { fontSize: 14, marginBottom: 8 },
-  badge: {
+  heroName: {
+    fontSize: 26,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  heroEmail: { fontSize: 15, marginBottom: 12 },
+  verificationPill: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1,
     gap: 6,
   },
-  badgeText: { fontSize: 13, fontWeight: "600" },
+  verificationText: { fontSize: 13, fontWeight: "600" },
+  cardsContainer: {
+    gap: 6,
+  },
   row: { flexDirection: "row", justifyContent: "space-between" },
   chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   locationContainer: { flexDirection: "row", alignItems: "center", gap: 12 },
@@ -440,7 +482,7 @@ const styles = StyleSheet.create({
   seatText: { fontSize: 12, fontWeight: "600" },
   signOutBtn: {
     marginHorizontal: 16,
-    marginTop: 24,
+    marginTop: 12,
     paddingVertical: 16,
     borderWidth: 1,
     borderRadius: 14,

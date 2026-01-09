@@ -6,6 +6,7 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         tabBarShowLabel: false,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
