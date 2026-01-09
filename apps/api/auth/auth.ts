@@ -3,14 +3,14 @@ import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";
-import { sendOTPEmail } from "../lib/email";
+import { emailClient } from "../lib/email";
 
 export const auth = betterAuth({
   plugins: [
     expo(),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        await sendOTPEmail(email, otp);
+        await emailClient.sendOtp(email, otp);
       },
       sendVerificationOnSignUp: true,
     }),
