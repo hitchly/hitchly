@@ -9,7 +9,8 @@
     ".": "./index.ts",
     "./schema": "./schema.ts",
     "./config": "./drizzle.config.ts",
-    "./validators/profile": "./validators/profile.ts"
+    "./validators/profile": "./validators/profile.ts",
+    "./client": "./client.ts"
   },
   "typesVersions": {
     "*": {

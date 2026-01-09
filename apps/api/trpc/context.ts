@@ -1,5 +1,5 @@
 // apps/api/trpc/context.ts
-import { db } from "@hitchly/db";
+import { db } from "@hitchly/db/client";
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../auth/auth";

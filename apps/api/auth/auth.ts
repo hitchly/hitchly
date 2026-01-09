@@ -1,5 +1,5 @@
 import { expo } from "@better-auth/expo";
-import { db } from "@hitchly/db";
+import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins";

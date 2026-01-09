@@ -1,5 +1,6 @@
-import { db, saveAddressSchema } from "@hitchly/db";
+import { db } from "@hitchly/db/client";
 import { profiles } from "@hitchly/db/schema";
+import { saveAddressSchema } from "@hitchly/db/validators/profile";
 import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 

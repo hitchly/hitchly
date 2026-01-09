@@ -1,4 +1,4 @@
-import { eq } from "@hitchly/db";
+import { eq } from "@hitchly/db/client";
 import { preferences, profiles, users, vehicles } from "@hitchly/db/schema";
 import {
   updatePreferencesSchema,
