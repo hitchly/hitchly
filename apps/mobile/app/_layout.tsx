@@ -49,7 +49,6 @@ function RootNavigator() {
   const colorScheme = useColorScheme();
   const isAuthenticated = !!session;
 
-  // 1. Define the Main Stack separate from the wrapper logic
   const MainStack = (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!isAuthenticated}>
@@ -68,10 +67,6 @@ function RootNavigator() {
     >
       <AppThemeProvider>
         <View style={{ flex: 1 }}>
-          {/* 2. Conditional Wrapping:
-             Only enforce location requirements if the user is logged in.
-             This prevents the permission screen from blocking the Login page.
-          */}
           {isAuthenticated ? (
             <RequireLocation>
               <LocationProvider>{MainStack}</LocationProvider>
