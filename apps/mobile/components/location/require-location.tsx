@@ -1,4 +1,6 @@
+import { useGPSLocation } from "@/hooks/use-gps-location";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -13,9 +15,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { useGPSLocation } from "@/hooks/use-gps-location";
-import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";
 import { ControlledLocationInput, SubmitButton } from "../ui/form";

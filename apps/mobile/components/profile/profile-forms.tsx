@@ -1,31 +1,31 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { StyleSheet, View } from "react-native";
-import { useTheme } from "../../context/theme-context";
-import { trpc } from "../../lib/trpc";
-
-// Validators
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
+  saveAddressSchema,
   updatePreferencesSchema,
   updateProfileSchema,
   updateVehicleSchema,
+  type SaveAddressInput,
   type UpdatePreferencesInput,
   type UpdateProfileInput,
   type UpdateVehicleInput,
-} from "@hitchly/db/validators/profile";
-
-// UI Components
+} from "@hitchly/db";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../../context/theme-context";
+import { useGPSLocation } from "../../hooks/use-gps-location";
+import { trpc } from "../../lib/trpc";
 import {
   ControlledChipGroup,
   ControlledInput,
+  ControlledLocationInput,
   ControlledNumberSelector,
   ControlledSegmentedControl,
   ControlledSwitch,
   SubmitButton,
 } from "../ui/form";
 
-// --- 1. Profile Form ---
 export function ProfileForm({
   initialData,
   onSuccess,
@@ -97,7 +97,6 @@ export function ProfileForm({
   );
 }
 
-// --- 2. Preferences Form ---
 export function PreferencesForm({
   initialData,
   onSuccess,
@@ -105,7 +104,7 @@ export function PreferencesForm({
   initialData: UpdatePreferencesInput;
   onSuccess: () => void;
 }) {
-  const theme = useTheme(); // Theme Hook
+  const theme = useTheme();
   const { control, handleSubmit } = useForm<UpdatePreferencesInput>({
     defaultValues: initialData,
     resolver: zodResolver(updatePreferencesSchema),
@@ -115,7 +114,6 @@ export function PreferencesForm({
 
   return (
     <View style={styles.container}>
-      {/* Updated to use theme background for the grouped list look */}
       <View style={[styles.switchList, { backgroundColor: theme.background }]}>
         <ControlledSwitch control={control} name="music" label="Play Music" />
         <ControlledSwitch control={control} name="chatty" label="Chatty" />
@@ -135,7 +133,6 @@ export function PreferencesForm({
   );
 }
 
-// --- 3. Vehicle Form ---
 export function VehicleForm({
   initialData,
   onSuccess,
@@ -207,8 +204,91 @@ export function VehicleForm({
   );
 }
 
+export function LocationForm({
+  initialData,
+  onSuccess,
+}: {
+  initialData: SaveAddressInput;
+  onSuccess: () => void;
+}) {
+  const theme = useTheme();
+
+  const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
+    resolver: zodResolver(saveAddressSchema),
+    defaultValues: {
+      address: initialData.address,
+      latitude: initialData.latitude ?? 0,
+      longitude: initialData.longitude ?? 0,
+    },
+  });
+
+  const [lat, long] = watch(["latitude", "longitude"]);
+  const isVerified = lat !== 0 && long !== 0;
+
+  const mutation = trpc.location.saveDefaultAddress.useMutation({
+    onSuccess: () => onSuccess(),
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const { getLocation, isGeocoding } = useGPSLocation((loc) => {
+    setValue("address", loc.address);
+    setValue("latitude", loc.latitude);
+    setValue("longitude", loc.longitude);
+  });
+
+  const onSubmit = (data: SaveAddressInput) => {
+    if (!isVerified) {
+      Alert.alert(
+        "Invalid Address",
+        "Please select a valid address from the list."
+      );
+      return;
+    }
+    mutation.mutate(data);
+  };
+
+  return (
+    <View style={styles.container}>
+      <ControlledLocationInput
+        control={control}
+        name="address"
+        label="Address"
+        placeholder="1280 Main St W, Hamilton"
+        onTextChange={() => {
+          setValue("latitude", 0);
+          setValue("longitude", 0);
+        }}
+        onSelect={(d) => {
+          setValue("latitude", d.lat);
+          setValue("longitude", d.long);
+        }}
+      />
+
+      <TouchableOpacity
+        style={styles.gpsRow}
+        onPress={getLocation}
+        disabled={isGeocoding}
+      >
+        <Ionicons name="navigate-circle" size={20} color={theme.primary} />
+        <Text style={[styles.gpsText, { color: theme.primary }]}>
+          Use Current Location
+        </Text>
+      </TouchableOpacity>
+
+      <SubmitButton
+        title={isVerified ? "Save Address" : "Select an Address"}
+        onPress={handleSubmit(onSubmit)}
+        isPending={mutation.isPending || isGeocoding}
+        disabled={!isVerified || isGeocoding}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { gap: 20 },
   row: { flexDirection: "row", justifyContent: "space-between" },
   switchList: { borderRadius: 12, padding: 8 },
+  gpsRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  gpsText: { marginLeft: 8, fontWeight: "600" },
 });

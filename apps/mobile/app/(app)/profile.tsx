@@ -1,187 +1,30 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import type {
-  UpdatePreferencesInput,
-  UpdateProfileInput,
-  UpdateVehicleInput,
-} from "@hitchly/db/validators/profile";
-import * as Location from "expo-location";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import {
   ActivityIndicator,
   Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  PreferencesForm,
-  ProfileForm,
-  VehicleForm,
-} from "../../components/profile/profile-forms";
+  EditModalState,
+  EditProfileModal,
+} from "../../components/profile/edit-profile-modal";
 import { Card, InfoCard, InfoRow } from "../../components/ui/card";
 import { Chip, LoadingSkeleton } from "../../components/ui/display";
-import {
-  ControlledLocationInput,
-  SubmitButton,
-} from "../../components/ui/form";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
-type ModalState =
-  | { type: "profile"; initialData: UpdateProfileInput }
-  | { type: "preferences"; initialData: UpdatePreferencesInput }
-  | { type: "vehicle"; initialData: UpdateVehicleInput }
-  | { type: "location"; initialData: { address: string } }
-  | null;
-
 const formatCoord = (val: number, type: "lat" | "long") => {
   const dir = type === "lat" ? (val > 0 ? "N" : "S") : val > 0 ? "E" : "W";
   return `${Math.abs(val).toFixed(4)}° ${dir}`;
-};
-
-const LocationForm = ({
-  initialAddress,
-  onSuccess,
-}: {
-  initialAddress: string;
-  onSuccess: () => void;
-}) => {
-  const theme = useTheme();
-
-  // 1. Setup Form with Watch
-  const { control, handleSubmit, setValue, watch } = useForm({
-    defaultValues: {
-      address: initialAddress,
-      latitude: 0,
-      longitude: 0,
-    },
-  });
-
-  // 2. Watch Coordinates for Verification
-  const [lat, long] = watch(["latitude", "longitude"]);
-  // If coordinates are 0, it means the user modified text but hasn't selected a valid place yet
-  const isVerified = lat !== 0 && long !== 0;
-
-  const mutation = trpc.location.saveDefaultAddress.useMutation({
-    onSuccess: () => onSuccess(),
-    onError: (err) => Alert.alert("Error", err.message),
-  });
-
-  const [loading, setLoading] = useState(false);
-
-  // 3. Logic: Use GPS
-  const handleUseGPS = async () => {
-    setLoading(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission denied",
-          "Enable location services to use this feature."
-        );
-        setLoading(false);
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({});
-      const [place] = await Location.reverseGeocodeAsync({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
-
-      if (place) {
-        const formatted = [
-          place.name !== place.street ? place.name : null,
-          place.street,
-          place.city,
-        ]
-          .filter(Boolean)
-          .join(", ");
-
-        // Set Address AND Coords -> Becomes Verified
-        setValue("address", formatted);
-        setValue("latitude", loc.coords.latitude);
-        setValue("longitude", loc.coords.longitude);
-      }
-    } catch (e) {
-      Alert.alert("Error", "Could not fetch location");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: {
-    address: string;
-    latitude: number;
-    longitude: number;
-  }) => {
-    // Double check safety
-    if (data.latitude === 0 || data.longitude === 0) {
-      Alert.alert(
-        "Invalid Address",
-        "Please select a valid address from the list."
-      );
-      return;
-    }
-
-    mutation.mutate({
-      address: data.address,
-      latitude: data.latitude,
-      longitude: data.longitude,
-    });
-  };
-
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={{ gap: 16 }}>
-        {/* Controlled Input with Verification Logic */}
-        <ControlledLocationInput
-          control={control}
-          name="address"
-          label="Address"
-          placeholder="1280 Main St W, Hamilton"
-          // A. User types manually -> RESET coords -> Button Disabled
-          onTextChange={() => {
-            setValue("latitude", 0);
-            setValue("longitude", 0);
-          }}
-          // B. User selects from dropdown -> SET coords -> Button Enabled
-          onSelect={(d) => {
-            setValue("latitude", d.lat);
-            setValue("longitude", d.long);
-          }}
-        />
-
-        <TouchableOpacity
-          style={styles.gpsRow}
-          onPress={handleUseGPS}
-          disabled={loading}
-        >
-          <Ionicons name="navigate-circle" size={20} color={theme.primary} />
-          <Text style={{ color: theme.primary, fontWeight: "600" }}>
-            Use Current Location
-          </Text>
-        </TouchableOpacity>
-
-        <SubmitButton
-          title={isVerified ? "Save Address" : "Select an Address"}
-          onPress={handleSubmit(onSubmit)}
-          isPending={mutation.isPending || loading}
-          disabled={!isVerified} // Enforce selection
-        />
-      </View>
-    </TouchableWithoutFeedback>
-  );
 };
 
 export default function ProfileScreen() {
@@ -189,7 +32,6 @@ export default function ProfileScreen() {
   const utils = trpc.useUtils();
   const theme = useTheme();
 
-  // 1. Fetch Data
   const {
     data: userRecord,
     isLoading,
@@ -197,15 +39,10 @@ export default function ProfileScreen() {
     isRefetching,
   } = trpc.profile.getMe.useQuery();
 
-  const [modalState, setModalState] = useState<ModalState>(null);
+  const [modalState, setModalState] = useState<EditModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // 2. Handlers
   const handleCloseModal = () => setModalState(null);
-
-  const handleRefresh = async () => {
-    await refetch();
-  };
 
   const onSuccess = () => {
     utils.profile.getMe.invalidate();
@@ -220,70 +57,17 @@ export default function ProfileScreen() {
     });
   };
 
-  // 3. Modal Openers
-  const openProfileModal = () => {
-    setModalState({
-      type: "profile",
-      initialData: {
-        bio: userRecord?.profile?.bio ?? "",
-        faculty: userRecord?.profile?.faculty ?? "",
-        year: userRecord?.profile?.year ?? 1,
-        appRole: userRecord?.profile?.appRole ?? "rider",
-        universityRole: userRecord?.profile?.universityRole ?? "student",
-      },
-    });
-  };
-
-  const openPreferencesModal = () => {
-    setModalState({
-      type: "preferences",
-      initialData: {
-        music: userRecord?.preferences?.music ?? true,
-        chatty: userRecord?.preferences?.chatty ?? true,
-        pets: userRecord?.preferences?.pets ?? false,
-        smoking: userRecord?.preferences?.smoking ?? false,
-      },
-    });
-  };
-
-  const openVehicleModal = () => {
-    setModalState({
-      type: "vehicle",
-      initialData: {
-        make: userRecord?.vehicle?.make ?? "",
-        model: userRecord?.vehicle?.model ?? "",
-        color: userRecord?.vehicle?.color ?? "",
-        plate: userRecord?.vehicle?.plate ?? "",
-        seats: userRecord?.vehicle?.seats ?? 4,
-      },
-    });
-  };
-
-  const openLocationModal = () => {
-    setModalState({
-      type: "location",
-      initialData: {
-        address: userRecord?.profile?.defaultAddress ?? "",
-      },
-    });
-  };
-
-  // 4. Derived State
   const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile?.appRole || ""
   );
 
-  // Derive Location Display Data directly from DB record
   const locationDisplay = userRecord?.profile?.defaultAddress
     ? {
         address: userRecord.profile.defaultAddress,
         coords:
           userRecord.profile.defaultLat && userRecord.profile.defaultLong
-            ? `${formatCoord(
-                userRecord.profile.defaultLat,
-                "lat"
-              )}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
+            ? `${formatCoord(userRecord.profile.defaultLat, "lat")}, ${formatCoord(userRecord.profile.defaultLong, "long")}`
             : "Coordinates pending",
       }
     : null;
@@ -300,7 +84,7 @@ export default function ProfileScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={handleRefresh}
+            onRefresh={refetch}
             tintColor={theme.primary}
           />
         }
@@ -325,14 +109,8 @@ export default function ProfileScreen() {
             style={[
               styles.badge,
               session?.user?.emailVerified
-                ? {
-                    backgroundColor: theme.successBackground,
-                    borderColor: theme.success,
-                  }
-                : {
-                    backgroundColor: theme.warningBackground,
-                    borderColor: theme.warning,
-                  },
+                ? styles.badgeSuccess
+                : styles.badgeWarning,
             ]}
           >
             <Ionicons
@@ -363,7 +141,16 @@ export default function ProfileScreen() {
 
         <InfoCard
           title="Address"
-          onEdit={openLocationModal}
+          onEdit={() =>
+            setModalState({
+              type: "location",
+              initialData: {
+                address: userRecord?.profile?.defaultAddress ?? "",
+                latitude: userRecord?.profile?.defaultLat ?? 0,
+                longitude: userRecord?.profile?.defaultLong ?? 0,
+              },
+            })
+          }
           empty={!locationDisplay}
           emptyText="Set your primary pickup address."
           actionLabel="Edit Address"
@@ -397,7 +184,19 @@ export default function ProfileScreen() {
 
         <InfoCard
           title="About Me"
-          onEdit={openProfileModal}
+          onEdit={() =>
+            setModalState({
+              type: "profile",
+              initialData: {
+                bio: userRecord?.profile?.bio ?? "",
+                faculty: userRecord?.profile?.faculty ?? "",
+                year: userRecord?.profile?.year ?? 1,
+                appRole: userRecord?.profile?.appRole ?? "rider",
+                universityRole:
+                  userRecord?.profile?.universityRole ?? "student",
+              },
+            })
+          }
           empty={!userRecord?.profile}
           emptyText="Complete your profile to start riding."
         >
@@ -436,7 +235,17 @@ export default function ProfileScreen() {
 
         <InfoCard
           title="Ride Preferences"
-          onEdit={openPreferencesModal}
+          onEdit={() =>
+            setModalState({
+              type: "preferences",
+              initialData: {
+                music: userRecord?.preferences?.music ?? true,
+                chatty: userRecord?.preferences?.chatty ?? true,
+                pets: userRecord?.preferences?.pets ?? false,
+                smoking: userRecord?.preferences?.smoking ?? false,
+              },
+            })
+          }
           empty={!userRecord?.preferences}
           emptyText="Set your ride comfort settings."
         >
@@ -469,7 +278,18 @@ export default function ProfileScreen() {
         {isDriver && (
           <InfoCard
             title="Vehicle Details"
-            onEdit={openVehicleModal}
+            onEdit={() =>
+              setModalState({
+                type: "vehicle",
+                initialData: {
+                  make: userRecord?.vehicle?.make ?? "",
+                  model: userRecord?.vehicle?.model ?? "",
+                  color: userRecord?.vehicle?.color ?? "",
+                  plate: userRecord?.vehicle?.plate ?? "",
+                  seats: userRecord?.vehicle?.seats ?? 4,
+                },
+              })
+            }
             empty={!userRecord?.vehicle}
             emptyText="Add your vehicle to start driving."
             actionLabel="Add Vehicle"
@@ -533,68 +353,16 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <Modal
-        visible={!!modalState}
-        animationType="slide"
-        transparent
-        onRequestClose={handleCloseModal}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View
-            style={[styles.modalContent, { backgroundColor: theme.surface }]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                {modalState?.type === "profile" && "Edit Profile"}
-                {modalState?.type === "preferences" && "Edit Preferences"}
-                {modalState?.type === "vehicle" && "Edit Vehicle"}
-                {modalState?.type === "location" && "Edit Address"}
-              </Text>
-              <TouchableOpacity onPress={handleCloseModal}>
-                <Ionicons name="close" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {modalState?.type === "profile" && (
-                <ProfileForm
-                  initialData={modalState.initialData}
-                  onSuccess={onSuccess}
-                />
-              )}
-              {modalState?.type === "preferences" && (
-                <PreferencesForm
-                  initialData={modalState.initialData}
-                  onSuccess={onSuccess}
-                />
-              )}
-              {modalState?.type === "vehicle" && (
-                <VehicleForm
-                  initialData={modalState.initialData}
-                  onSuccess={onSuccess}
-                />
-              )}
-              {modalState?.type === "location" && (
-                <LocationForm
-                  initialAddress={modalState.initialData.address}
-                  onSuccess={onSuccess}
-                />
-              )}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <EditProfileModal
+        state={modalState}
+        onClose={handleCloseModal}
+        onSuccess={onSuccess}
+      />
     </SafeAreaView>
   );
 }
 
-// --- Styles ---
+// --- Simplified Styles ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
@@ -622,6 +390,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 6,
   },
+  badgeSuccess: { backgroundColor: "#e6f4ea", borderColor: "#c6e7ce" },
+  badgeWarning: { backgroundColor: "#fff3e0", borderColor: "#ffe0b2" },
   badgeText: { fontSize: 13, fontWeight: "600" },
   row: { flexDirection: "row", justifyContent: "space-between" },
   chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -653,30 +423,8 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
     marginTop: 2,
   },
-  seatBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
+  seatBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   seatText: { fontSize: 12, fontWeight: "600" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: "85%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  modalTitle: { fontSize: 20, fontWeight: "bold" },
   signOutBtn: {
     marginHorizontal: 16,
     marginTop: 24,
@@ -686,20 +434,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   signOutText: { fontSize: 16, fontWeight: "600" },
-  inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    height: 80, // multiline feel
-    textAlignVertical: "top",
-  },
-  gpsRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  saveBtn: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 12,
-  },
 });
