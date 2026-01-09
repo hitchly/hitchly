@@ -51,9 +51,9 @@ export const OnboardingLayout = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, padding: 24, justifyContent: "center" },
+  content: { flex: 1, padding: 24 },
   header: { alignItems: "center", marginBottom: 32 },
-  title: { fontSize: 24, fontWeight: "bold", marginTop: 16, marginBottom: 8 },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 8 },
   subtitle: { fontSize: 16, textAlign: "center", lineHeight: 22 },
   form: { width: "100%" },
 });
