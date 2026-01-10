@@ -3,12 +3,13 @@
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./",
     "types": ["node"],
     "skipLibCheck": true,
     "noEmitOnError": false,
-    "strict": true
+    "strict": true,
+    "module": "EsNext",
+    "moduleResolution": "Bundler"
   },
   "exclude": ["node_modules"],
-  "include": [".", "../../eslint.config.mjs"]
+  "include": ["."]
 }

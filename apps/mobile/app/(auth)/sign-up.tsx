@@ -1,132 +1,95 @@
+import { SignUpInput, signUpSchema } from "@hitchly/db";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert } from "react-native";
+import { ControlledInput, SubmitButton } from "../../components/ui/form";
+import { OnboardingLayout } from "../../components/ui/screen-layout";
 import { authClient } from "../../lib/auth-client";
 
 export default function SignUp() {
   const router = useRouter();
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async () => {
-    // Basic client-side validation
-    if (!name || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
+  const { control, handleSubmit } = useForm<SignUpInput>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
 
+  const onSubmit = async (data: SignUpInput) => {
     setLoading(true);
 
     try {
       await authClient.signUp.email(
         {
-          email,
-          password,
-          name,
+          email: data.email,
+          password: data.password,
+          name: data.name,
         },
         {
           onSuccess: (ctx) => {
-            // The Root Layout (useSession) will detect the new session automatically
-            // and redirect the user to the (app) folder.
             console.log("Sign up successful", ctx);
-            // Success! The server has already emailed the code.
-            // Navigate to Verify and pass the email so they don't have to re-type it.
             router.push({
               pathname: "/verify",
-              params: { email: email, password: password }, // Pass password for auto-login after verification
+              params: { email: data.email, password: data.password },
             });
           },
           onError: (ctx) => {
-            // ctx.error.message will contain your "Only @mcmaster.ca emails" error
             Alert.alert("Registration Failed", ctx.error.message);
           },
         }
       );
     } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred during sign up");
+      console.error("Unexpected Sign Up Error:", err);
+      Alert.alert(
+        "Registration Failed",
+        "An unexpected error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Jane Doe"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
+    <OnboardingLayout
+      title="Create Account"
+      subtitle="Join the McMaster carpooling community."
+    >
+      <ControlledInput
+        control={control}
+        name="name"
+        label="Full Name"
+        placeholder="Jane Doe"
+        autoCapitalize="words"
+      />
 
-        <Text style={styles.label}>Email (McMaster Only)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="jane@mcmaster.ca"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+      <ControlledInput
+        control={control}
+        name="email"
+        label="McMaster Email"
+        placeholder="jane@mcmaster.ca"
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+      <ControlledInput
+        control={control}
+        name="password"
+        label="Password"
+        placeholder="••••••••"
+        secureTextEntry
+      />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSignUp}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
+      <SubmitButton
+        title="Create Account"
+        onPress={handleSubmit(onSubmit)}
+        isPending={loading}
+      />
+    </OnboardingLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-  form: { marginTop: 24 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
-  },
-  button: {
-    backgroundColor: "#28a745", // Green to distinguish Sign Up from Sign In
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-});

@@ -1,54 +1,52 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from "react-native";
 
-const tintColorLight = "#0a7ea4";
-const tintColorDark = "#fff";
+const maroon = "#7A003C";
+const maroonLight = "#FFF0F5";
+const greyBackground = "#F5F7FA";
 
 export const Colors = {
   light: {
     text: "#11181C",
-    background: "#fff",
-    tint: tintColorLight,
+    textSecondary: "#687076",
+    background: greyBackground,
+    surface: "#ffffff",
+    tint: maroon,
+    primary: maroon,
+    primaryLight: maroonLight,
+    border: "#eeeeee",
+    error: "#EF4444",
+    errorBackground: "#FEF2F2",
+    success: "#065F46",
+    successBackground: "#ECFDF5",
+    warning: "#92400E",
+    warningBackground: "#FFFBEB",
     icon: "#687076",
     tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
+    tabIconSelected: maroon,
   },
   dark: {
     text: "#ECEDEE",
+    textSecondary: "#9BA1A6",
     background: "#151718",
-    tint: tintColorDark,
+    surface: "#232628",
+    tint: "#fff",
+    primary: "#E8C4D0",
+    primaryLight: "#3e1a26",
+    border: "#3E4347",
+    error: "#F87171",
+    errorBackground: "#450a0a",
+    success: "#34D399",
+    successBackground: "#064e3b",
+    warning: "#FBBF24",
+    warningBackground: "#451a03",
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
+    tabIconSelected: "#fff",
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: "ui-monospace",
-  },
-  default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded:
-      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Fonts = {
+  regular: Platform.select({ ios: "System", android: "sans-serif" }),
+  bold: Platform.select({ ios: "System", android: "sans-serif-medium" }),
+  mono: Platform.select({ ios: "Courier", android: "monospace" }),
+};

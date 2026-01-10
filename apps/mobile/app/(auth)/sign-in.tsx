@@ -1,42 +1,38 @@
+import { SignInInput, signInSchema } from "@hitchly/db";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert } from "react-native";
+import { ControlledInput, SubmitButton } from "../../components/ui/form";
+import { OnboardingLayout } from "../../components/ui/screen-layout";
 import { authClient } from "../../lib/auth-client";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
-      return;
-    }
+  const { control, handleSubmit } = useForm<SignInInput>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
+  const onSubmit = async (data: SignInInput) => {
     setLoading(true);
     try {
       await authClient.signIn.email(
         {
-          email,
-          password,
+          email: data.email,
+          password: data.password,
         },
         {
           onSuccess: () => {
-            // Root Layout detects session change
-            // router.replace('/'); // Optional: explicit redirect if needed
+            // Root Layout handles redirect automatically
           },
           onError: async (ctx) => {
-            // Check for unverified email error
             if (
               ctx.error.code === "EMAIL_NOT_VERIFIED" ||
               ctx.error.message.includes("verified")
@@ -47,16 +43,14 @@ export default function SignIn() {
                 [{ text: "OK" }]
               );
 
-              // 1. Resend the OTP
               await authClient.emailOtp.sendVerificationOtp({
-                email,
+                email: data.email,
                 type: "email-verification",
               });
 
-              // 2. Redirect to Verify screen
               router.push({
                 pathname: "/verify",
-                params: { email }, // Pass email to next screen
+                params: { email: data.email, password: data.password },
               });
             } else {
               Alert.alert("Login Failed", ctx.error.message);
@@ -65,69 +59,40 @@ export default function SignIn() {
         }
       );
     } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred");
+      console.error("Unexpected Sign In Error:", err);
+      Alert.alert(
+        "Login Failed",
+        "An unexpected error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="jane@example.com"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+    <OnboardingLayout title="Sign In" subtitle="Welcome back to Hitchly.">
+      <ControlledInput
+        control={control}
+        name="email"
+        label="McMaster Email"
+        placeholder="jane@mcmaster.ca"
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+      <ControlledInput
+        control={control}
+        name="password"
+        label="Password"
+        placeholder="••••••••"
+        secureTextEntry
+      />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSignIn}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
+      <SubmitButton
+        title="Sign In"
+        onPress={handleSubmit(onSubmit)}
+        isPending={loading}
+      />
+    </OnboardingLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 24 },
-  form: { marginTop: 24 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-});

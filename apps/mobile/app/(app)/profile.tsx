@@ -1,209 +1,487 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCoordinatePair } from "@hitchly/utils";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  EditModalState,
+  EditProfileModal,
+} from "../../components/profile/edit-profile-modal";
+import { InfoCard, InfoRow } from "../../components/ui/card";
+import { Chip, LoadingSkeleton } from "../../components/ui/display";
+import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
+import { trpc } from "../../lib/trpc";
 
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
+  const utils = trpc.useUtils();
+  const { colors, fonts } = useTheme();
+
+  const {
+    data: userRecord,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = trpc.profile.getMe.useQuery();
+
+  const [modalState, setModalState] = useState<EditModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleCloseModal = () => setModalState(null);
+
+  const onSuccess = () => {
+    utils.profile.getMe.invalidate();
+    handleCloseModal();
+    Alert.alert("Success", "Updated successfully.");
+  };
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            console.log("Sign out successful");
-          },
-        },
-      });
-    } catch (err) {
-      Alert.alert("Error", "Failed to sign out");
-      setIsSigningOut(false);
-    }
+    await authClient.signOut({
+      fetchOptions: { onSuccess: () => console.log("Signed out") },
+    });
   };
 
-  const user = session?.user;
-  const isVerified = user?.emailVerified; // Check verification status
+  const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
+  const isDriver = ["driver", "both"].includes(
+    userRecord?.profile?.appRole || ""
+  );
 
-  // Generate initials for avatar
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U";
+  const locationDisplay = userRecord?.profile?.defaultAddress
+    ? {
+        address: userRecord.profile.defaultAddress,
+        coords:
+          userRecord.profile.defaultLat && userRecord.profile.defaultLong
+            ? formatCoordinatePair(
+                userRecord.profile.defaultLat,
+                userRecord.profile.defaultLong
+              )
+            : "Coordinates pending",
+      }
+    : null;
+
+  if (isLoading) return <LoadingSkeleton text="Loading Profile..." />;
 
   return (
-    <View style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          {user?.image ? (
-            <Text>Image here</Text>
-          ) : (
-            <Text style={styles.avatarText}>{initials}</Text>
-          )}
-        </View>
-
-        <Text style={styles.name}>{user?.name || "User"}</Text>
-        <Text style={styles.email}>{user?.email || "No email"}</Text>
-
-        {/* Dynamic Verified Badge */}
-        <View
-          style={[
-            styles.badge,
-            isVerified ? styles.badgeSuccess : styles.badgeWarning,
-          ]}
-        >
-          <Ionicons
-            name={isVerified ? "checkmark-circle" : "alert-circle"}
-            size={16}
-            color={isVerified ? "#006400" : "#8B4500"}
-            style={{ marginRight: 4 }}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+      edges={["top", "left", "right"]}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={colors.primary}
           />
-          <Text
-            style={[
-              styles.badgeText,
-              isVerified ? styles.textSuccess : styles.textWarning,
-            ]}
-          >
-            {isVerified ? "Verified Student" : "Not Verified"}
-          </Text>
-        </View>
-      </View>
-
-      {/* Actions Section */}
-      <View style={styles.actionSection}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => Alert.alert("Edit", "Edit Profile logic here")}
-        >
-          <Ionicons name="pencil" size={20} color="#333" style={styles.icon} />
-          <Text style={styles.actionText}>Edit Profile</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => Alert.alert("Settings", "Settings logic here")}
-        >
-          <Ionicons
-            name="settings"
-            size={20}
-            color="#333"
-            style={styles.icon}
-          />
-          <Text style={styles.actionText}>Settings</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Sign Out Button */}
-      <TouchableOpacity
-        style={styles.signOutButton}
-        onPress={handleSignOut}
-        disabled={isSigningOut}
+        }
       >
-        {isSigningOut ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.signOutText}>Sign Out</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+        <View style={styles.headerContainer}>
+          <View style={styles.profileHero}>
+            <View
+              style={[
+                styles.avatarContainer,
+                {
+                  backgroundColor: colors.primary,
+                  borderColor: colors.surface,
+                  shadowColor: colors.primary,
+                },
+              ]}
+            >
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
+
+            <Text style={[styles.heroName, { color: colors.text }]}>
+              {session?.user?.name}
+            </Text>
+            <Text style={[styles.heroEmail, { color: colors.textSecondary }]}>
+              {session?.user?.email}
+            </Text>
+
+            <View
+              style={[
+                styles.verificationPill,
+                session?.user?.emailVerified
+                  ? { backgroundColor: colors.successBackground }
+                  : { backgroundColor: colors.warningBackground },
+              ]}
+            >
+              <Ionicons
+                name={
+                  session?.user?.emailVerified
+                    ? "shield-checkmark"
+                    : "alert-circle"
+                }
+                size={14}
+                color={
+                  session?.user?.emailVerified ? colors.success : colors.warning
+                }
+              />
+              <Text
+                style={[
+                  styles.verificationText,
+                  {
+                    color: session?.user?.emailVerified
+                      ? colors.success
+                      : colors.warning,
+                  },
+                ]}
+              >
+                {session?.user?.emailVerified
+                  ? "Verified Student"
+                  : "Verification Pending"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.cardsContainer}>
+          <InfoCard
+            title="Address"
+            onEdit={() =>
+              setModalState({
+                type: "location",
+                initialData: {
+                  address: userRecord?.profile?.defaultAddress ?? "",
+                  latitude: userRecord?.profile?.defaultLat ?? 0,
+                  longitude: userRecord?.profile?.defaultLong ?? 0,
+                },
+              })
+            }
+            empty={!locationDisplay}
+            emptyText="Set your primary pickup address."
+            actionLabel="Edit Address"
+          >
+            {locationDisplay && (
+              <View style={styles.locationContainer}>
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons name="location" size={24} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.locationAddress, { color: colors.text }]}
+                  >
+                    {locationDisplay.address}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.locationCoords,
+                      { color: colors.textSecondary, fontFamily: fonts.mono },
+                    ]}
+                  >
+                    {locationDisplay.coords}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </InfoCard>
+
+          <InfoCard
+            title="About Me"
+            onEdit={() =>
+              setModalState({
+                type: "profile",
+                initialData: {
+                  bio: userRecord?.profile?.bio ?? "",
+                  faculty: userRecord?.profile?.faculty ?? "",
+                  year: userRecord?.profile?.year ?? 1,
+                  appRole: userRecord?.profile?.appRole ?? "rider",
+                  universityRole:
+                    userRecord?.profile?.universityRole ?? "student",
+                },
+              })
+            }
+            empty={!userRecord?.profile}
+            emptyText="Complete your profile to start riding."
+          >
+            {userRecord?.profile && (
+              <View style={{ gap: 16 }}>
+                <InfoRow
+                  label="Bio"
+                  value={userRecord.profile.bio || "No bio set"}
+                  fullWidth
+                />
+                <View style={styles.row}>
+                  <InfoRow
+                    label="Faculty"
+                    value={userRecord.profile.faculty || "-"}
+                  />
+                  <InfoRow
+                    label="Year"
+                    value={userRecord.profile.year?.toString() || "-"}
+                  />
+                </View>
+                <View style={styles.row}>
+                  <InfoRow
+                    label="University Role"
+                    value={userRecord.profile.universityRole}
+                    capitalize
+                  />
+                  <InfoRow
+                    label="App Role"
+                    value={userRecord.profile.appRole}
+                    capitalize
+                  />
+                </View>
+              </View>
+            )}
+          </InfoCard>
+
+          <InfoCard
+            title="Ride Preferences"
+            onEdit={() =>
+              setModalState({
+                type: "preferences",
+                initialData: {
+                  music: userRecord?.preferences?.music ?? true,
+                  chatty: userRecord?.preferences?.chatty ?? true,
+                  pets: userRecord?.preferences?.pets ?? false,
+                  smoking: userRecord?.preferences?.smoking ?? false,
+                },
+              })
+            }
+            empty={!userRecord?.preferences}
+            emptyText="Set your ride comfort settings."
+          >
+            {userRecord?.preferences && (
+              <View style={styles.chipContainer}>
+                <Chip
+                  icon="musical-notes"
+                  label="Music"
+                  active={userRecord.preferences.music}
+                />
+                <Chip
+                  icon="chatbubbles"
+                  label="Chatty"
+                  active={userRecord.preferences.chatty}
+                />
+                <Chip
+                  icon="paw"
+                  label="Pets"
+                  active={userRecord.preferences.pets}
+                />
+                <Chip
+                  icon="flame"
+                  label="Smoking"
+                  active={userRecord.preferences.smoking}
+                />
+              </View>
+            )}
+          </InfoCard>
+
+          {isDriver && (
+            <InfoCard
+              title="Vehicle Details"
+              onEdit={() =>
+                setModalState({
+                  type: "vehicle",
+                  initialData: {
+                    make: userRecord?.vehicle?.make ?? "",
+                    model: userRecord?.vehicle?.model ?? "",
+                    color: userRecord?.vehicle?.color ?? "",
+                    plate: userRecord?.vehicle?.plate ?? "",
+                    seats: userRecord?.vehicle?.seats ?? 4,
+                  },
+                })
+              }
+              empty={!userRecord?.vehicle}
+              emptyText="Add your vehicle to start driving."
+              actionLabel="Add Vehicle"
+            >
+              {userRecord?.vehicle && (
+                <View style={styles.vehicleRow}>
+                  <View
+                    style={[
+                      styles.vehicleIcon,
+                      { backgroundColor: colors.primaryLight },
+                    ]}
+                  >
+                    <Ionicons
+                      name="car-sport"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.vehicleName, { color: colors.text }]}>
+                      {userRecord.vehicle.color} {userRecord.vehicle.make}{" "}
+                      {userRecord.vehicle.model}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.vehiclePlate,
+                        { color: colors.textSecondary, fontFamily: fonts.mono },
+                      ]}
+                    >
+                      {userRecord.vehicle.plate}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.seatBadge,
+                      { backgroundColor: colors.background },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.seatText, { color: colors.textSecondary }]}
+                    >
+                      {userRecord.vehicle.seats} Seats
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </InfoCard>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.signOutBtn,
+              { borderColor: colors.error, backgroundColor: colors.surface },
+            ]}
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? (
+              <ActivityIndicator color={colors.error} />
+            ) : (
+              <Text style={[styles.signOutText, { color: colors.error }]}>
+                Sign Out
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      <EditProfileModal
+        state={modalState}
+        onClose={handleCloseModal}
+        onSuccess={onSuccess}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-
-  // Header
-  header: {
-    backgroundColor: "#fff",
+  safeArea: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    marginBottom: 24,
+  },
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginBottom: 24,
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  profileHero: {
+    alignItems: "center",
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#7A003C", // McMaster Maroon
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
-    shadowColor: "#000",
+    borderWidth: 4,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    position: "relative",
   },
-  avatarText: { fontSize: 36, fontWeight: "bold", color: "#fff" },
-  name: { fontSize: 24, fontWeight: "700", color: "#333", marginBottom: 4 },
-  email: { fontSize: 16, color: "#666", marginBottom: 12 },
-
-  // Badges
-  badge: {
+  avatarText: { fontSize: 40, fontWeight: "bold", color: "#fff" },
+  avatarEditBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  heroName: {
+    fontSize: 26,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  heroEmail: { fontSize: 15, marginBottom: 12 },
+  verificationPill: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1,
+    gap: 6,
   },
-  badgeSuccess: {
-    backgroundColor: "#e6f4ea", // Light Green
-    borderColor: "#c6e7ce",
+  verificationText: { fontSize: 13, fontWeight: "600" },
+  cardsContainer: {
+    gap: 6,
   },
-  badgeWarning: {
-    backgroundColor: "#fff3e0", // Light Orange
-    borderColor: "#ffe0b2",
-  },
-  badgeText: { fontSize: 13, fontWeight: "600" },
-  textSuccess: { color: "#006400" }, // Dark Green
-  textWarning: { color: "#8B4500" }, // Dark Orange
-
-  // Actions
-  actionSection: {
-    marginTop: 24,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-  actionButton: {
-    flexDirection: "row",
+  row: { flexDirection: "row", justifyContent: "space-between" },
+  chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  locationContainer: { flexDirection: "row", alignItems: "center", gap: 12 },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    justifyContent: "center",
   },
-  icon: { width: 30 },
-  actionText: { flex: 1, fontSize: 16, color: "#333" },
-
-  // Sign Out
-  signOutButton: {
-    margin: 24,
-    backgroundColor: "#ff3b30",
-    padding: 16,
+  locationAddress: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
+  locationCoords: { fontSize: 13 },
+  vehicleRow: { flexDirection: "row", alignItems: "center" },
+  vehicleIcon: {
+    width: 48,
+    height: 48,
     borderRadius: 12,
+    justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#ff3b30",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    marginRight: 12,
   },
-  signOutText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  vehicleName: { fontSize: 16, fontWeight: "700" },
+  vehiclePlate: { fontSize: 13, marginTop: 2 },
+  seatBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  seatText: { fontSize: 12, fontWeight: "600" },
+  signOutBtn: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  signOutText: { fontSize: 16, fontWeight: "600" },
 });

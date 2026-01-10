@@ -1,5 +1,5 @@
 {
-  "name": "@hitchly/utils",
+  "name": "@hitchly/emails",
   "version": "0.0.0",
   "private": true,
   "main": "./index.ts",
@@ -8,16 +8,13 @@
   "exports": {
     ".": "./index.ts"
   },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./index.ts"
-      ]
-    }
-  },
   "scripts": {
     "test": "vitest"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.3"
+  }
 }

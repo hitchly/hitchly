@@ -1,9 +1,11 @@
 import { router } from "../trpc";
 import { healthRouter } from "./health";
-import { userRouter } from "./user";
+import { locationRouter } from "./location";
+import { profileRouter } from "./profile";
 
 export const appRouter = router({
-  user: userRouter,
+  profile: profileRouter,
+  location: locationRouter,
   health: healthRouter,
 });
 
