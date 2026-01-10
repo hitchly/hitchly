@@ -90,6 +90,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      drizzle-kit:
+        specifier: ^0.31.8
+        version: 0.31.8
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
@@ -259,9 +262,6 @@ importers:
 
   packages/db:
     dependencies:
-      drizzle-kit:
-        specifier: ^0.31.6
-        version: 0.31.8
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@types/pg@8.16.0)(kysely@0.28.9)(pg@8.16.3)
