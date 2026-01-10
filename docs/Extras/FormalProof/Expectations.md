@@ -1,1 +1,1 @@
-Follow mathematics courses for expectations.  Should discuss with the course instructor.
+Follow mathematics courses for expectations. Should discuss with the course instructor.

@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{float}
 \hypersetup{
     colorlinks,
     citecolor=blue,
@@ -43,11 +44,15 @@
 
 \section{Revision History}
 
-\begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
-\toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+{\bf Date} & {\bf Developer} & {\bf Notes} \\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+November 1st & Aidan Froggatt & Completed Section 11 \\
+November 12th & Hamzah Rawasia & Completed Sections 6 and 8 \\
+November 12th & Swesan Pathmanathan & Completed Sections 5 and 7 \\
+November 13th & Burhan Kharodawala & Completed Sections 3, 4, and 10 \\
+November 13th & Sarim Zia & Completed Sections 9, 10, and 12 \\
 \bottomrule
 \end{tabularx}
 
@@ -74,7 +79,6 @@ This section records information for easy reference.
   SRS & Software Requirements Specification\\
   \progname & Explanation of program name\\
   UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
   \bottomrule
 \end{tabular}\\
 
@@ -157,16 +161,14 @@ adapted here is called design for
 change.
 
 \begin{description}
-\item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
-  hardware on which the software is running.
-\item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchingAlgorithm}:] \textbf{Matching Algorithm:} The matching algorithm focuses on 
+the goal of finding the best available drivers for the riders. This algorithm takes into account the user's location, timetable, time, and distance. For instance, it matches a rider with a driver that has the same timetable and lives in the same area. The current algorithm will be simply based on these four parameters, and it will have to change in the future to consider more parameters to increase its efficiency and accuracy. Moreover, subtle changes to the algorithm may also be expected for further optimization of its complexity and speed. 
+\item[\refstepcounter{acnum} \actheacnum \label{acUserInterface}:] \textbf{User Interface:} As the application proceeds to go through its initial phase of development and use, usability testing is expected to be done to ensure user satisfaction. As the users provide feedback, changes will be made to the user interface in the future phases of development. Moreover, even after that, changes will be made based on accessibility requirements in the future. The layout and navigation are the two main things from the user interaction that would need the most changes as per user's feedback.   
+\item[\refstepcounter{acnum} \actheacnum \label{acDB}:] \textbf{Database Schema:} As the app updates with new features, the current method of analytics may change. New parameters would be considered for the matching algorithm, and new features may be added based on future user needs. Therefore, changes may need to be made to the database schemas
+\item[\refstepcounter{acnum} \actheacnum \label{acPayment}:] \textbf{Payment Processing:} Additional payment processors and pricing formulas will be used to determine the price estimate for drivers. An addition of parameters to estimate the cost would cause the algorithms to change.  
+\item[\refstepcounter{acnum} \actheacnum \label{acDevEnvioremnt}:] \textbf{Development Environment:} Changes could be made to the CI/CD configuration to improve the reliability and stability of the system.
 \end{description}
 
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -178,23 +180,54 @@ will potentially need to be modified. Hence, it is not intended that these
 decisions will be changed.
 
 \begin{description}
-\item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucDevices}:] \textbf{Devices:} Hitchly is an application that is developed for mobile devices only. A version that is compatible to run on a desktop is an unlikely change as it requires major changes to the software design. 
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucLanguage}:] \textbf{Language Support:} The application is primarily based on the English language. Adding additional languages to the interface would require a major design decision.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucProgramming}:] \textbf{Programming Language and Technologies:} The core of this application is supposed to be developed using React Native, Typescript, and SQL. Making changes to how the application is developed is an unlikely change as it requires a change in the entire design of the application.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucVerification}:] \textbf{Verification Requirement:} This app is strictly restricted for McMaster affiliated users as the entire concept of this application is designed for them. It is not subject to removal. Verification of the users will be their McMaster affiliated email.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
 
-This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
-below, which are leaves in the hierarchy tree, are the modules that will
-actually be implemented.
+This section provides an overview of the modular design for Hitchly.  
+The hierarchy follows the principle of information hiding, where each module  
+encapsulates a design decision that may change independently.  
+Only the leaf modules shown in Table~\ref{TblMH} are implemented.
 
 \begin{description}
-\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
-\end{description}
 
+\item[\textbf{5.1 Hardware-Hiding Modules}]  
+There are no hardware-hiding modules in this design.  
+Hitchly relies on high-level framework APIs (Expo, React Native),  
+so no direct hardware abstraction is required.
+
+\item[\textbf{5.2 Behaviour-Hiding Modules}]  
+These modules implement the user-visible behaviour of the application.  
+They hide workflow logic, API interactions, and data handling that support  
+Hitchly’s core features.
+
+\begin{itemize}
+  \item M1: Authentication \& Verification Module
+  \item M2: User Profile Module
+  \item M3: Route \& Trip Module
+  \item M4: Matching Module
+  \item M5: Scheduling Module
+  \item M6: Notification Module
+  \item M7: Rating \& Feedback Module
+  \item M8: Safety \& Reporting Module
+  \item M9: Payment \& Cost Estimation Module
+  \item M10: Admin \& Moderation Module
+\end{itemize}
+
+\item[\textbf{5.3 Software-Decision Modules}]  
+These modules encapsulate internal logic, algorithms,  
+and implementation decisions not visible to users.
+
+\begin{itemize}
+  \item M11: Pricing Module
+  \item M12: Database Module
+\end{itemize}
+
+\end{description}
 
 \begin{table}[h!]
 \centering
@@ -202,29 +235,30 @@ actually be implemented.
 \toprule
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
-
-{Hardware-Hiding Module} & ~ \\
+Hardware-Hiding Module & None\\
 \midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding Module} & ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\ 
-& ?\\
+\multirow{10}{0.3\textwidth}{Behaviour-Hiding Module}
+& M1: Authentication \& Verification Module\\
+& M2: User Profile Module\\
+& M3: Route \& Trip Module\\
+& M4: Matching Module\\
+& M5: Scheduling Module\\
+& M6: Notification Module\\
+& M7: Rating \& Feedback Module\\
+& M8: Safety \& Reporting Module\\
+& M9: Payment \& Cost Estimation Module\\
+& M10: Admin \& Moderation Module\\
 \midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision Module} & {?}\\
-& ?\\
-& ?\\
+\multirow{2}{0.3\textwidth}{Software-Decision Module}
+& M11: Pricing Module\\
+& M12: Database Module\\
 \bottomrule
-
 \end{tabular}
 \caption{Module Hierarchy}
 \label{TblMH}
 \end{table}
+
+
 
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
@@ -232,80 +266,167 @@ The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
 between requirements and modules is listed in Table~\ref{TblRT}.
 
-\wss{The intention of this section is to document decisions that are made
-  ``between'' the requirements and the design.  To satisfy some requirements,
-  design decisions need to be made.  Rather than make these decisions implicit,
-  they are explicitly recorded here.  For instance, if a program has security
-  requirements, a specific design decision may be made to satisfy those
-  requirements with a password.}
-
 \section{Module Decomposition} \label{SecMD}
 
-Modules are decomposed according to the principle of ``information hiding''
-proposed by \citet{ParnasEtAl1984}. The \emph{Secrets} field in a module
-decomposition is a brief statement of the design decision hidden by the
-module. The \emph{Services} field specifies \emph{what} the module will do
-without documenting \emph{how} to do it. For each module, a suggestion for the
-implementing software is given under the \emph{Implemented By} title. If the
-entry is \emph{OS}, this means that the module is provided by the operating
-system or by standard programming language libraries.  \emph{\progname{}} means the
-module will be implemented by the \progname{} software.
+\begingroup
+\setlength{\parindent}{0pt}
 
-Only the leaf modules in the hierarchy have to be implemented. If a dash
-(\emph{--}) is shown, this means that the module is not a leaf and will not have
-to be implemented.
+Modules are decomposed according to the principle of information hiding
+\citep{ParnasEtAl1984}.  
+Each module’s \textit{Secrets} describes the internal design decision that is
+intentionally hidden from other modules, while the \textit{Services} field specifies
+\textit{what} the module provides without revealing \textit{how} the service is implemented.  
+The \textit{Frontend UI}, \textit{API Logic}, and \textit{Database Models} indicate 
+how each module is realized across the system’s architecture.  
+\textit{Implemented By} identifies the technologies used, and 
+\textit{Type of Module} classifies each module as a Behaviour-Hiding or 
+Software-Decision module according to Section~\ref{SecMH}.  
+Only the leaf modules are included.
 
-\subsection{Hardware Hiding Modules (\mref{mHH})}
+% ---------------------------------------------------------
+% BEHAVIOUR-HIDING MODULES
+% ---------------------------------------------------------
+\subsection*{Behaviour-Hiding Modules}
 
-\begin{description}
-\item[Secrets:]The data structure and algorithm used to implement the virtual
-  hardware.
-\item[Services:]Serves as a virtual hardware used by the rest of the
-  system. This module provides the interface between the hardware and the
-  software. So, the system can use it to display outputs or to accept inputs.
-\item[Implemented By:] OS
-\end{description}
+\subsubsection*{M1: Authentication \& Verification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Token/session strategy, email-verification workflow, and credential-validation logic.
+  \item \textbf{Services:} Allows users to register, log in, and verify McMaster email accounts.
+  \item \textbf{Frontend UI:} Login screens, signup forms, verification code UI.
+  \item \textbf{API Logic:} \texttt{authRouter} (login, register, verify), session helpers, Zod validation.
+  \item \textbf{Database Models:} \texttt{User} table (email, password hash, verified flag, session tokens).
+  \item \textbf{Implemented By:} React Native (Expo) + tRPC backend with Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\subsection{Behaviour-Hiding Module}
+\subsubsection*{M2: User Profile Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Role-assignment logic and profile-preference storage design.
+  \item \textbf{Services:} Provides profile editing, preferences, and vehicle data management.
+  \item \textbf{Frontend UI:} Profile page, edit forms, vehicle info inputs.
+  \item \textbf{API Logic:} \texttt{userRouter} for CRUD operations, preference update flow.
+  \item \textbf{Database Models:} \texttt{User}, \texttt{Vehicle}, \texttt{Preference}.
+  \item \textbf{Implemented By:} React Native UI + tRPC + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\begin{description}
-\item[Secrets:]The contents of the required behaviours.
-\item[Services:]Includes programs that provide externally visible behaviour of
-  the system as specified in the software requirements specification (SRS)
-  documents. This module serves as a communication layer between the
-  hardware-hiding module and the software decision module. The programs in this
-  module will need to change if there are changes in the SRS.
-\item[Implemented By:] --
-\end{description}
+\subsubsection*{M3: Route \& Trip Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Trip-storage schema, route normalization, and time formatting.
+  \item \textbf{Services:} Allows users to create, list, and cancel trips.
+  \item \textbf{Frontend UI:} Trip creation form, trip list UI, route selection screen.
+  \item \textbf{API Logic:} \texttt{tripRouter} for trip creation, querying, and deletion.
+  \item \textbf{Database Models:} \texttt{Trip} table (origin, destination, time, seat count).
+  \item \textbf{Implemented By:} React Native + tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\subsubsection{Input Format Module (\mref{mInput})}
+\subsubsection*{M4: Matching Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Scoring algorithm, distance/time weighting, and Strategy Pattern implementation.
+  \item \textbf{Services:} Computes driver–rider compatibility and returns ordered match results.
+  \item \textbf{Frontend UI:} Swipe-based card UI, match results list.
+  \item \textbf{API Logic:} \texttt{matchmakingRouter}, MatchEngine (Strategy Pattern).
+  \item \textbf{Database Models:} \texttt{Match}, \texttt{Swipe}.
+  \item \textbf{Implemented By:} Node.js backend (tRPC) + algorithm utilities + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\begin{description}
-\item[Secrets:]The format and structure of the input data.
-\item[Services:]Converts the input data into the data structure used by the
-  input parameters module.
-\item[Implemented By:] [Your Program Name Here]
-\item[Type of Module:] [Record, Library, Abstract Object, or Abstract Data Type]
-  [Information to include for leaf modules in the decomposition by secrets tree.]
-\end{description}
+\subsubsection*{M5: Scheduling Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Recurring-trip generation algorithm and time-window parsing.
+  \item \textbf{Services:} Creates recurring or one-time schedules linked to trips.
+  \item \textbf{Frontend UI:} Time picker, recurring toggle, calendar UI.
+  \item \textbf{API Logic:} Schedule parser and recurring schedule generator.
+  \item \textbf{Database Models:} \texttt{Schedule} table.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\subsubsection{Etc.}
+\subsubsection*{M6: Notification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Push-token handling and asynchronous event queue logic.
+  \item \textbf{Services:} Sends push notifications for matches, cancellations, and reminders.
+  \item \textbf{Frontend UI:} In-app notification center, Expo push integration.
+  \item \textbf{API Logic:} Notification service with event emitters.
+  \item \textbf{Database Models:} \texttt{Notification} table.
+  \item \textbf{Implemented By:} Expo Push Service + tRPC backend dispatcher.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
+\subsubsection*{M7: Rating \& Feedback Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Reputation computation and weighting logic.
+  \item \textbf{Services:} Enables users to submit ratings and text feedback after trips.
+  \item \textbf{Frontend UI:} Post-ride rating screen.
+  \item \textbf{API Logic:} \texttt{ratingRouter}.
+  \item \textbf{Database Models:} \texttt{Rating} table (linked to \texttt{Match}).
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\subsection{Software Decision Module}
+\subsubsection*{M8: Safety \& Reporting Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Incident-flagging thresholds and safety-response workflow.
+  \item \textbf{Services:} Allows reporting of unsafe behaviour and stores incidents for admin review.
+  \item \textbf{Frontend UI:} Report button, safety resources screen.
+  \item \textbf{API Logic:} Report submission via \texttt{reportRouter}.
+  \item \textbf{Database Models:} \texttt{Report}.
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\begin{description}
-\item[Secrets:] The design decision based on mathematical theorems, physical
-  facts, or programming considerations. The secrets of this module are
-  \emph{not} described in the SRS.
-\item[Services:] Includes data structure and algorithms used in the system that
-  do not provide direct interaction with the user. 
-  % Changes in these modules are more likely to be motivated by a desire to
-  % improve performance than by externally imposed changes.
-\item[Implemented By:] --
-\end{description}
+\subsubsection*{M9: Payment \& Cost Estimation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Fare-calculation logic and mock-payment validation.
+  \item \textbf{Services:} Estimates ride cost and records payment confirmations.
+  \item \textbf{Frontend UI:} Fare display, confirmation screen.
+  \item \textbf{API Logic:} \texttt{paymentRouter}.
+  \item \textbf{Database Models:} \texttt{Payment}, \texttt{Transaction}.
+  \item \textbf{Implemented By:} tRPC backend + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
 
-\subsubsection{Etc.}
+\subsubsection*{M10: Admin \& Moderation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Moderation rules, flagging thresholds, and admin-only access logic.
+  \item \textbf{Services:} Allows admins to review reports, ban users, and view platform stats.
+  \item \textbf{Frontend UI:} Admin dashboard (optional).
+  \item \textbf{API Logic:} \texttt{adminRouter}.
+  \item \textbf{Database Models:} Admin logs, flagged users.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+% ---------------------------------------------------------
+% SOFTWARE-DECISION MODULES
+% ---------------------------------------------------------
+\subsection*{Software-Decision Modules}
+
+\subsubsection*{M11: Pricing Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Fuel-rate constants, distance multipliers, and fare model.
+  \item \textbf{Services:} Computes estimated trip price using distance and conditions.
+  \item \textbf{Frontend UI:} Fare estimate displayed in trip preview.
+  \item \textbf{API Logic:} Cost-calculation service reused by M9.
+  \item \textbf{Database Models:} Pricing configuration constants.
+  \item \textbf{Implemented By:} Node.js backend utilities + shared pricing helpers.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\subsubsection*{M12: Database Module}
+\begin{itemize}
+  \item \textbf{Secrets:} ORM mapping, schema decisions, and migration strategy.
+  \item \textbf{Services:} Provides access to all persistent data models via a centralized DB client.
+  \item \textbf{Frontend UI:} None.
+  \item \textbf{API Logic:} Prisma client configuration and model exports.
+  \item \textbf{Database Models:} All tables (User, Trip, Match, Schedule, etc.).
+  \item \textbf{Implemented By:} Prisma ORM + PostgreSQL.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\endgroup
+
 
 \section{Traceability Matrix} \label{SecTM}
 
@@ -320,17 +441,44 @@ requirements and between the modules and the anticipated changes.
 \toprule
 \textbf{Req.} & \textbf{Modules}\\
 \midrule
-R1 & \mref{mHH}, \mref{mInput}, \mref{mParams}, \mref{mControl}\\
-R2 & \mref{mInput}, \mref{mParams}\\
-R3 & \mref{mVerify}\\
-R4 & \mref{mOutput}, \mref{mControl}\\
-R5 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R6 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R7 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R8 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R9 & \mref{mVerifyOut}\\
-R10 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}\\
-R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
+FR211 & M4, M3, M5, M10\\
+FR212 & M4, M5, M10\\
+FR213 & M4, M2\\
+FR214 & M4, M2, M5\\
+NFR211 & M4, M10\\
+NFR212 & M4, M1, M10\\
+FR221 & M5, M3, M10\\
+FR222 & M5, M6\\
+FR223 & M5, M6, M9\\
+FR224 & M6, M5\\
+NFR221 & M10, M5\\
+NFR222 & M6, M5, M10\\
+FR231 & M1, M2\\
+FR232 & M1, M10\\
+FR233 & M8, M3, M6\\
+FR234 & M8, M2, M12\\
+NFR231 & M1, M10\\
+NFR232 & M1, M10, M12\\
+FR241 & M11, M5, M3\\
+FR242 & M9\\
+FR243 & M9\\
+FR244 & M10, M9\\
+NFR241 & M9\\
+NFR242 & M9\\
+FR251 & M2, M1\\
+FR252 & M10, M2\\
+FR253 & M10, M2, M3\\
+FR254 & M2, M4\\
+NFR251 & M2, M1\\
+NFR252 & M2, M10\\
+FR261 & M7, M2\\
+FR262 & M8, M12\\
+FR263 & M7, M5, M4\\
+FR264 & M7, M2\\
+NFR261 & M7, M12\\
+
+
+
 \bottomrule
 \end{tabular}
 \caption{Trace Between Requirements and Modules}
@@ -343,18 +491,11 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 \toprule
 \textbf{AC} & \textbf{Modules}\\
 \midrule
-\acref{acHardware} & \mref{mHH}\\
-\acref{acInput} & \mref{mInput}\\
-\acref{acParams} & \mref{mParams}\\
-\acref{acVerify} & \mref{mVerify}\\
-\acref{acOutput} & \mref{mOutput}\\
-\acref{acVerifyOut} & \mref{mVerifyOut}\\
-\acref{acODEs} & \mref{mODEs}\\
-\acref{acEnergy} & \mref{mEnergy}\\
-\acref{acControl} & \mref{mControl}\\
-\acref{acSeqDS} & \mref{mSeqDS}\\
-\acref{acSolver} & \mref{mSolver}\\
-\acref{acPlot} & \mref{mPlot}\\
+\acref{acMatchingAlgorithm} & M4, M2, M5\\
+\acref{acUserInterface} & M1, M2, M3, M4, M5, M6, M7, M8, M9, M11, M12\\
+\acref{acDB} & M10\\
+\acref{acPayment} & M9, M11\\
+\acref{acDevEnvioremnt} & N/A (External Process)\\
 \bottomrule
 \end{tabular}
 \caption{Trace Between Anticipated Changes and Modules}
@@ -362,40 +503,124 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 \end{table}
 
 \section{Use Hierarchy Between Modules} \label{SecUse}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
+  \caption{Use hierarchy among modules}
+  \label{FigUH}
+  \end{figure}
 
-In this section, the uses hierarchy between modules is
-provided. \citet{Parnas1978} said of two programs A and B that A {\em uses} B if
-correct execution of B may be necessary for A to complete the task described in
-its specification. That is, A {\em uses} B if there exist situations in which
-the correct functioning of A depends upon the availability of a correct
-implementation of B.  Figure \ref{FigUH} illustrates the use relation between
-the modules. It can be seen that the graph is a directed acyclic graph
-(DAG). Each level of the hierarchy offers a testable and usable subset of the
-system, and modules in the higher level of the hierarchy are essentially simpler
-because they use modules from the lower levels.
-
-\wss{The uses relation is not a data flow diagram.  In the code there will often
-be an import statement in module A when it directly uses module B.  Module B
-provides the services that module A needs.  The code for module A needs to be
-able to see these services (hence the import statement).  Since the uses
-relation is transitive, there is a use relation without an import, but the
-arrows in the diagram typically correspond to the presence of import statement.}
-
-\wss{If module A uses module B, the arrow is directed from A to B.}
+\section{User Interfaces}
+This section provides an overview of the important screens of the application.
 
 \begin{figure}[H]
 \centering
-%\includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
-\caption{Use hierarchy among modules}
-\label{FigUH}
+\includegraphics[width=0.3\textwidth]{figure/Login Screen.png}
+\caption{Main Login Screen}
 \end{figure}
 
-%\section*{References}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Register Screen.png}
+\caption{Register Screen}
+\end{figure}
 
-\section{User Interfaces}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Register-2.png}
+\caption{Verification Screen}
+\end{figure}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Register-3.png}
+\caption{Upload Schedule Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Register-3 (1).png}
+\caption{Select User Type Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Profile.png}
+\caption{User Prompted to Add Profile Information}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Selection (1).png}
+\caption{Home Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Drive-Selection.png}
+\caption{Switch to Driver Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Selection.png}
+\caption{Switch to Rider Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Drive-Connection.png}
+\caption{Driver Connection Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Connection.png}
+\caption{Rider Connection Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Connection (2).png}
+\caption{Matched Rider List Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Connection (1).png}
+\caption{Matched Driver List Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Connection (3).png}
+\caption{No Matches Found Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Passenger-Connection (3).png}
+\caption{No Matches Found Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Driver-navigation.png}
+\caption{Driver Navigation Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Passenger-pickup-wait.png}
+\caption{Rider Wait Screen}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{figure/Home-Drive-Connection (1).png}
+\caption{Cost Estimation Screen}
+\end{figure}
+
 
 \section{Design of Communication Protocols}
 
@@ -503,10 +728,129 @@ reliability, and sustainability for McMaster commuters.
 
 
 \section{Timeline}
+The following timeline details our implementation for Rev 0. Each task is broken down to the module level. Each tasks has roles and responsibilities defined along with estimated development duration.
+\begin{table}[h!]
+  \centering
+  \caption{Phase 1}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+  
+  Creating Hitchly Wireframes for UI & M2 & Done & Burhan, Sarim \\
+  \hline
 
-\wss{Schedule of tasks and who is responsible}
+  Make initial version of matching algorithm & M4 & Done & Hamzah, Sarim \\
+  \hline
 
-\wss{You can point to GitHub if this information is included there}
+  Set up authentication and application bones & M1 & Done & Aidan \\
+  \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 2: Front End and User Roles}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Develop login, registration, and session flows & M1 & Weeks 14--16 & Aidan \\
+  \hline
+
+  Build user profile screens and preferences interface & M2 & Weeks 14--16 & Swesan \\
+  \hline
+
+  Create upload, settings, and account management pages & M2 & Weeks 14--16 & Burhan \\
+  \hline
+
+  Build navigation, layouts, and key frontend components & M2 & Weeks 14--16 & Hamzah \\
+  \hline
+
+  Integrate basic user-to-database connections for profile initialization & M12 & Weeks 15--17 & Sarim \\
+  \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 3: Core Ride-Share Logic and Trip Flow}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Implement matching algorithm and rider–driver compatibility logic 
+  & M4 & Weeks 18--21 & Sarim, Hamzah \\
+  \hline
+
+  Build Routing \& Trip creation (origin, destination, seat count) 
+  & M3 & Weeks 18--21 & Burhan \\
+  \hline
+
+  Implement Scheduling module (recurring rides, time windows) 
+  & M5 & Weeks 19--22 & Aidan \\
+  \hline
+
+  Integrate Payment \& Cost estimation (distance, time, pricing model) 
+  & M9 & Weeks 20--22 & Swesan \\
+  \hline
+
+  Build Pricing module (fare calculations, dynamic pricing rules) 
+  & M11 & Weeks 20--23 & Swesan \\
+  \hline
+
+  Add Rating \& Feedback system for both riders and drivers 
+  & M7 & Weeks 21--23 & Sarim \\
+  \hline
+
+  Implement Admin \& Moderation tools (flagging, dispute handling) 
+  & M10 & Weeks 22--24 & Burhan, Aidan \\
+  \hline
+
+  Build Notification module (push/in-app updates for trips) 
+  & M6 & Weeks 21--24 & Hamzah \\
+  \hline
+
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{Phase 4: Safety, Database Integration, and Finalization}
+  \begin{tabularx}{\textwidth}{|X|c|c|c|}
+  \hline
+  \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
+  \hline
+
+  Implement Safety \& Reporting module (incident reports, flagging) 
+  & M8 & Weeks 24--26 & Burhan \\
+  \hline
+
+  Complete full Database Module integration across all features 
+  & M12 & Weeks 24--27 & Aidan, Sarim \\
+  \hline
+
+  Perform end-to-end testing of all ride flows 
+  & M1--M12 & Weeks 25--28 & All \\
+  \hline
+
+  Optimize performance, resolve bugs, and finalize UI polish 
+  & M1--M12 & Weeks 26--29 & All \\
+  \hline
+
+  Prepare release build, documentation, and deployment setup 
+  & M1--M12 & Weeks 28--30 & All \\
+  \hline
+
+  \end{tabularx}
+\end{table}
+
+
+    
+
+\clearpage
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}

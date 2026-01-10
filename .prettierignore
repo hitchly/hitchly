@@ -1,0 +1,14 @@
+dist
+.next
+.expo
+
+*.log
+*.pdf
+*.aux
+*.toc
+*.out
+*.bbl
+*.blg
+
+coverage
+.turbo

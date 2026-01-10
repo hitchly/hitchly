@@ -1,3 +1,4 @@
+import "dotenv/config";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { toNodeHandler } from "better-auth/node";
 import express, { Express } from "express";
@@ -8,21 +9,33 @@ import { appRouter } from "./trpc/routers";
 export function createServer(): Express {
   const app = express();
 
-  app.all("/api/auth/", toNodeHandler(auth));
+  // -------------------------------
+  // better-auth middleware
+  // -------------------------------
+  app.all("/api/auth/*splat", toNodeHandler(auth));
 
-  app.use(express.json());
-
+  // -------------------------------
+  // tRPC middleware
+  // -------------------------------
   app.use(
     "/trpc",
     trpcExpress.createExpressMiddleware({
       router: appRouter,
       createContext,
-    }),
+    })
   );
 
+  // -------------------------------
+  // Health check
+  // -------------------------------
   app.get("/", (_req, res) => {
     res.send("🚀 API is alive! Auth → /api/auth/*  tRPC → /trpc");
   });
 
   return app;
 }
+
+const port = process.env.PORT || 3000;
+const server = createServer();
+
+server.listen(port, () => {});

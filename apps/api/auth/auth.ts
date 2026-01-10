@@ -1,9 +1,21 @@
+import { expo } from "@better-auth/expo";
+import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { env } from "../config/env";
-import { db } from "../db";
+import { emailOTP } from "better-auth/plugins";
+import { emailClient } from "../lib/email";
 
 export const auth = betterAuth({
+  plugins: [
+    expo(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp }) {
+        await emailClient.sendOtp(email, otp);
+      },
+      sendVerificationOnSignUp: true,
+    }),
+  ],
+
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
@@ -11,6 +23,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
     validateSignUpInput(input: {
       email: string;
       password?: string;
@@ -23,5 +36,12 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [env.origins.client],
+  trustedOrigins: [
+    process.env.CLIENT_ORIGIN ?? "http://localhost:3000", // Keep your existing web client
+    "mobile://", // The scheme you defined in auth-client.ts
+    "exp://", // Generic Expo scheme
+    "http://192.168.2.13:8081", // The Metro bundler origin
+    // Allow wildcards for dev IPs if needed:
+    "http://192.168.2.13:*",
+  ],
 });

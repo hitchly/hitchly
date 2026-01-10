@@ -1,10 +1,12 @@
 import { router } from "../trpc";
-import { userRouter } from "./user";
-import { matchmakingRouter } from "./matchmaking";
+import { healthRouter } from "./health";
+import { locationRouter } from "./location";
+import { profileRouter } from "./profile";
 
 export const appRouter = router({
-  user: userRouter,
-  matchmaking: matchmakingRouter,
+  profile: profileRouter,
+  location: locationRouter,
+  health: healthRouter,
 });
 
 export type AppRouter = typeof appRouter;
