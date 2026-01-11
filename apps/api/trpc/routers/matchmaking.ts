@@ -4,7 +4,7 @@ import {
   findAndRankMatches,
   type RiderProfile,
 } from "../../services/matchmaking_service";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { publicProcedure, router } from "../trpc";
 
 const locationSchema = z.object({
   lat: z.number(),
@@ -69,8 +69,6 @@ export const matchmakingRouter = router({
           status: "pending",
         })
         .returning();
-
-      console.log(`✅ Ride Request Created: ${newRequest[0].id}`);
       return { success: true, requestId: newRequest[0].id };
     }),
 });
