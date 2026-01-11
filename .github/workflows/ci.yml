@@ -235,7 +235,7 @@ jobs:
           fi
 
   ci:
-    name: CI Status
+    name: CI
     runs-on: ubuntu-latest
     if: always()
     needs:
