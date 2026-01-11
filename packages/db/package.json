@@ -11,6 +11,9 @@
     "./config": "./drizzle.config.ts",
     "./client": "./client.ts"
   },
+  "scripts": {
+    "test": "vitest"
+  },
   "typesVersions": {
     "*": {
       "*": [
@@ -25,6 +28,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
-    "@types/pg": "^8.15.6"
+    "@types/pg": "^8.15.6",
+    "dotenv": "^17.2.3",
+    "vitest": "^1.6.1"
   }
 }
