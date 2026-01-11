@@ -31,7 +31,7 @@ async function getRouteDetails(
   origin: Location,
   destination: Location,
   waypoints: Location[] = [],
-  departureTime: Date,
+  departureTime: Date
 ) {
   try {
     const response = await mapsClient.directions({
@@ -64,7 +64,7 @@ async function getRouteDetails(
 
 export async function getDetourAndRideDetails(
   driver: DriverProfile,
-  rider: RiderProfile,
+  rider: RiderProfile
 ) {
   const targetArrivalTime = getFutureDateTime(driver.plannedArrivalTime);
 
@@ -74,14 +74,14 @@ export async function getDetourAndRideDetails(
   const now = new Date();
 
   const departureTime = new Date(
-    Math.max(predictiveDepartureTime.getTime(), now.getTime()),
+    Math.max(predictiveDepartureTime.getTime(), now.getTime())
   );
 
   const originalRoute = await getRouteDetails(
     driver.origin,
     driver.destination,
     [],
-    departureTime,
+    departureTime
   );
 
   const newWaypoints = [rider.origin];
@@ -89,7 +89,7 @@ export async function getDetourAndRideDetails(
     driver.origin,
     driver.destination,
     newWaypoints,
-    departureTime,
+    departureTime
   );
 
   const detourTimeInSeconds =
@@ -99,7 +99,7 @@ export async function getDetourAndRideDetails(
     rider.origin,
     driver.destination,
     [],
-    departureTime,
+    departureTime
   );
   const rideDistanceKm = riderRoute.totalDistanceMeters / 1000;
   const rideDurationSeconds = riderRoute.totalDurationSeconds;
