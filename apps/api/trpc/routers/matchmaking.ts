@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { rideRequests } from "@hitchly/db/schema"; // Access the database
 import {
   findAndRankMatches,
   type RiderProfile,
@@ -10,51 +11,66 @@ const locationSchema = z.object({
   lng: z.number(),
 });
 
-// const preferencesSchema = z.object({
-//   weightSchedule: z.number().min(0).default(1.0),
-//   weightLocation: z.number().min(0).default(1.0),
-//   weightCost: z.number().min(0).default(1.0),
-//   weightComfort: z.number().min(0).default(1.0),
-// });
-
 const riderProfileSchema = z.object({
   id: z.string(),
   city: z.string(),
   origin: locationSchema,
   destination: locationSchema,
   desiredArrivalTime: z.string().regex(/^\d{2}:\d{2}$/),
-
   maxOccupancy: z.number().int().min(1),
   preference: z.enum(["default", "costPriority", "comfortPriority"]).optional(),
 });
 
+// Input for the Booking Mutation
+const requestRideSchema = z.object({
+  rideId: z.string(),
+  riderId: z.string(),
+  seatsRequested: z.number().min(1).default(1),
+});
+
 export const matchmakingRouter = router({
+  // 1. The Query (Finding Matches)
   findMatches: publicProcedure
     .input(riderProfileSchema)
     .query(async ({ input }) => {
       const rider: RiderProfile = input;
-
       const matches = await findAndRankMatches(rider);
 
-      console.log(
-        `\n--- Matchmaking Results for Rider ${rider.id} (${rider.city}) ---`,
-      );
-      console.table(
-        matches.map((m) => ({
-          Driver: m.driverId,
-          // If you added the city field, keep it short:
-          Location: m.driver.city,
-          Score: m.totalScore.toFixed(2), // Was "Total Score"
-          Sched: m.scores.schedule.toFixed(2), // Was "Schedule (s)"
-          Loc: m.scores.location.toFixed(2), // Was "Location (s)"
-          Cost: m.scores.cost.toFixed(2), // Was "Cost (s)"
-          Comf: m.scores.comfort.toFixed(2), // Was "Comfort (s)"
-          $$: `$${m.details.estimatedCost.toFixed(2)}`, // Rounded to whole dollar to save space
-          Detour: `${m.details.detourMinutes.toFixed(0)}m`, // Shortened header & value
-        })),
-      );
-      console.log("----------------------------------------------\n");
+      // Filter & Limit for UI
+      const validMatches = matches.filter((m) => m.matchPercentage > 40);
+      const topMatches = validMatches.slice(0, 20);
 
-      return matches;
+      // Add UI helper labels
+      return topMatches.map((m) => ({
+        ...m,
+        uiLabel:
+          m.matchPercentage >= 85
+            ? "Great Match"
+            : m.matchPercentage >= 70
+              ? "Good Match"
+              : "Fair Match",
+      }));
+    }),
+
+  // 2. The Mutation (Booking a Ride)
+  requestRide: publicProcedure
+    .input(requestRideSchema)
+    .mutation(async ({ ctx, input }) => {
+      // In a real app, you would verify if the ride exists and has seats here.
+      // For now, we insert the request directly.
+
+      const newRequest = await ctx.db
+        .insert(rideRequests)
+        .values({
+          id: `req_${Date.now()}`, // Simple ID generation
+          rideId: input.rideId,
+          riderId: input.riderId,
+          seatsRequested: input.seatsRequested,
+          status: "pending",
+        })
+        .returning();
+
+      console.log(`✅ Ride Request Created: ${newRequest[0].id}`);
+      return { success: true, requestId: newRequest[0].id };
     }),
 });
