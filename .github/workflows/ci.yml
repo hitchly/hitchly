@@ -19,9 +19,6 @@ jobs:
       latex: ${{ steps.filter.outputs.latex }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -32,207 +29,94 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'turbo.json'
               - 'tsconfig.json'
-              - '.eslintrc*'
-              - '.prettierrc*'
             latex:
               - 'docs/**/*.tex'
               - 'refs/**/*.bib'
 
-  install:
-    name: Install Dependencies
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          STORE_PATH=$(pnpm store path --silent)
-          echo "STORE_PATH=$STORE_PATH" >> $GITHUB_ENV
-          echo "store_path=$STORE_PATH" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.store_path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+  # --- CODE JOBS ---
+  # These will now ONLY run if code files changed
 
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
-    needs: [detect-changes, install]
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Type check
-        run: pnpm type-check
+      - uses: ./.github/actions/setup
+      - run: pnpm type-check
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: [detect-changes, install]
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm lint
+      - uses: ./.github/actions/setup
+      - run: pnpm lint
 
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
-    needs: [detect-changes, install]
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Check formatting
-        run: pnpm format:check || (echo "Code is not formatted. Run 'pnpm format' to fix." && exit 1)
+      - uses: ./.github/actions/setup
+      - run: pnpm format:check || (echo "Run 'pnpm format' to fix." && exit 1)
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [detect-changes, install]
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm build
+      - uses: ./.github/actions/setup
+      - run: pnpm build
 
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: [detect-changes, install]
-    if: needs.detect-changes.outputs.code == 'true' || github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.code == 'true'
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: hitchly_db
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hitchly_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
+      - name: Push DB Schema
+        run: pnpm --filter api db:push
       - name: Test
         run: pnpm test
+
+  # --- LATEX JOBS ---
+  # These will now ONLY run if .tex files changed
 
   latex-lint:
     name: LaTeX Lint
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.latex == 'true'
     steps:
       - uses: actions/checkout@v4
       - name: Install ChkTeX
@@ -243,64 +127,38 @@ jobs:
         run: |
           SKIP_FILES="Common.tex Comments.tex"
           ERROR_FOUND=0
-          
           find docs -name "*.tex" -type f | while read texfile; do
             filename=$(basename "$texfile")
-            
-            # Skip include files
-            if echo "$SKIP_FILES" | grep -q "$filename"; then
-              continue
-            fi
-            
-            # Check if file has \documentclass (standalone document)
+            if echo "$SKIP_FILES" | grep -q "$filename"; then continue; fi
             if grep -q "\\documentclass" "$texfile"; then
               echo "Linting: $texfile"
-              # Run ChkTeX with non-zero exit on errors, but allow warnings
-              chktex -q -n24 -n13 -n8 "$texfile" || {
-                echo "ERROR: ChkTeX found issues in $texfile"
-                ERROR_FOUND=1
-              }
+              chktex -q -n24 -n13 -n8 "$texfile" || { echo "ERROR: ChkTeX found issues in $texfile"; ERROR_FOUND=1; }
             fi
           done
-          
-          if [ $ERROR_FOUND -eq 1 ]; then
-            echo "One or more LaTeX files have linting errors"
-            exit 1
-          fi
+          if [ $ERROR_FOUND -eq 1 ]; then echo "One or more LaTeX files have linting errors"; exit 1; fi
 
   latex-format-check:
     name: LaTeX Format Check
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.latex == 'true'
     steps:
       - uses: actions/checkout@v4
       - name: Install LaTeX and latexindent
         run: |
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-extra perl
-          # latexindent comes with texlive-latex-extra
       - name: Check LaTeX formatting
         run: |
           SKIP_FILES="Common.tex Comments.tex"
           ERROR_FOUND=0
-          
           find docs -name "*.tex" -type f | while read texfile; do
             filename=$(basename "$texfile")
-            
-            # Skip include files
-            if echo "$SKIP_FILES" | grep -q "$filename"; then
-              continue
-            fi
-            
-            # Check if file has \documentclass (standalone document)
+            if echo "$SKIP_FILES" | grep -q "$filename"; then continue; fi
             if grep -q "\\documentclass" "$texfile"; then
               echo "Checking formatting: $texfile"
-              # Create temporary file for formatted output
               TEMP_FILE=$(mktemp)
               latexindent -w -c "$texfile" -o "$TEMP_FILE" 2>/dev/null || true
-              
-              # Compare original and formatted (ignoring whitespace-only differences)
               if ! diff -q -w "$texfile" "$TEMP_FILE" > /dev/null 2>&1; then
                 echo "ERROR: $texfile is not properly formatted"
                 echo "Run: latexindent -w $texfile"
@@ -309,18 +167,13 @@ jobs:
               rm -f "$TEMP_FILE"
             fi
           done
-          
-          if [ $ERROR_FOUND -eq 1 ]; then
-            echo "One or more LaTeX files are not properly formatted"
-            echo "Run 'latexindent -w <file>' to format them"
-            exit 1
-          fi
+          if [ $ERROR_FOUND -eq 1 ]; then echo "One or more LaTeX files are not properly formatted"; exit 1; fi
 
   latex-compile:
     name: LaTeX Compilation
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.latex == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -339,146 +192,68 @@ jobs:
           - projMngmnt
     steps:
       - uses: actions/checkout@v4
-
       - name: Install LaTeX packages
         run: |
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra texlive-science
-
       - name: Compile LaTeX in ${{ matrix.directory }}
         working-directory: docs/${{ matrix.directory }}
         run: |
-          # Files to skip (include files, not standalone documents)
           SKIP_FILES="Common.tex Comments.tex"
-          
-          # Find all .tex files in this directory
           find . -maxdepth 1 -name "*.tex" -type f | while read texfile; do
             filename=$(basename "$texfile")
-            
-            # Skip include files
-            if echo "$SKIP_FILES" | grep -q "$filename"; then
-              echo "Skipping include file: $filename"
-              continue
-            fi
-            
-            # Check if file has \documentclass (standalone document)
+            if echo "$SKIP_FILES" | grep -q "$filename"; then echo "Skipping include file: $filename"; continue; fi
             if grep -q "\\documentclass" "$texfile"; then
               echo "Compiling: $filename"
-              
-              # Check if file has bibliography commands
               if grep -qE '\\bibliography\{|\\bibliographystyle\{' "$texfile"; then
-                echo "  Document has bibliography, running full compilation with bibtex"
-                # First pass to generate .aux file
-                echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || {
-                  # Check if PDF was generated despite errors
-                  if [ -f "${filename%.tex}.pdf" ]; then
-                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 1)"
-                  else
-                    echo "ERROR: pdflatex failed on $filename (pass 1) - no PDF generated"
-                    exit 1
-                  fi
-                }
-                # Run bibtex ONLY if .aux file exists AND has actual citations
+                echo "  Running full compilation with bibtex"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pass 1 failed"; exit 1; }
                 if [ -f "${filename%.tex}.aux" ] && grep -qE '\\citation\{' "${filename%.tex}.aux" 2>/dev/null; then
-                  echo "    Running bibtex (citations found) on $filename"
-                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || { echo "ERROR: bibtex failed on $filename"; exit 1; }
-                else
-                  echo "    Skipping bibtex (no citations found) for $filename"
+                  bibtex "${filename%.tex}" 2>&1 | grep -v "I found no" || { echo "ERROR: bibtex failed"; exit 1; }
                 fi
-                # Run pdflatex again for references and bibliography
-                echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || {
-                  if [ -f "${filename%.tex}.pdf" ]; then
-                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 2)"
-                  else
-                    echo "ERROR: pdflatex failed on $filename (pass 2) - no PDF generated"
-                    exit 1
-                  fi
-                }
-                echo "    Running pdflatex (pass 3) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || {
-                  if [ -f "${filename%.tex}.pdf" ]; then
-                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 3)"
-                  else
-                    echo "ERROR: pdflatex failed on $filename (pass 3) - no PDF generated"
-                    exit 1
-                  fi
-                }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pass 2 failed"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pass 3 failed"; exit 1; }
               else
-                echo "  Document has no bibliography, running simple compilation"
-                # Simple compilation without bibtex (2 passes for cross-references)
-                echo "    Running pdflatex (pass 1) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || {
-                  if [ -f "${filename%.tex}.pdf" ]; then
-                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 1)"
-                  else
-                    echo "ERROR: pdflatex failed on $filename (pass 1) - no PDF generated"
-                    exit 1
-                  fi
-                }
-                echo "    Running pdflatex (pass 2) on $filename"
-                pdflatex -interaction=nonstopmode "$filename" || {
-                  if [ -f "${filename%.tex}.pdf" ]; then
-                    echo "    WARNING: pdflatex reported errors but PDF was generated for $filename (pass 2)"
-                  else
-                    echo "ERROR: pdflatex failed on $filename (pass 2) - no PDF generated"
-                    exit 1
-                  fi
-                }
+                echo "  Running simple compilation"
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pass 1 failed"; exit 1; }
+                pdflatex -interaction=nonstopmode "$filename" || { echo "ERROR: pass 2 failed"; exit 1; }
               fi
             fi
           done
 
   latex-compile-check:
-    name: LaTeX Compilation
+    name: LaTeX Compilation Check
     runs-on: ubuntu-latest
     needs: [detect-changes, latex-compile]
-    if: (needs.detect-changes.outputs.latex == 'true' || github.event_name == 'push') && always()
+    if: (needs.detect-changes.outputs.latex == 'true') && always()
     steps:
       - name: Check LaTeX compilation status
         run: |
           if [ "${{ needs.latex-compile.result }}" != "success" ]; then
             echo "One or more LaTeX directories failed to compile"
-            echo "Check the individual LaTeX Compilation (directory) jobs for details"
             exit 1
           fi
-          echo "All LaTeX directories compiled successfully"
 
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [detect-changes, install, type-check, lint, format-check, build, test, latex-lint, latex-format-check, latex-compile-check]
     if: always()
+    needs:
+      [
+        type-check,
+        lint,
+        format-check,
+        build,
+        test,
+        latex-lint,
+        latex-format-check,
+        latex-compile-check,
+      ]
     steps:
-      - name: Check all CI jobs
+      - name: Check Status
         run: |
-          failed_jobs=()
-          
-          # Code-related jobs (only check if code changed or push event)
-          if [ "${{ needs.detect-changes.outputs.code }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
-            [ "${{ needs.install.result }}" != "success" ] && [ "${{ needs.install.result }}" != "skipped" ] && failed_jobs+=("Install Dependencies")
-            [ "${{ needs.type-check.result }}" != "success" ] && [ "${{ needs.type-check.result }}" != "skipped" ] && failed_jobs+=("Type Check")
-            [ "${{ needs.lint.result }}" != "success" ] && [ "${{ needs.lint.result }}" != "skipped" ] && failed_jobs+=("Lint")
-            [ "${{ needs.format-check.result }}" != "success" ] && [ "${{ needs.format-check.result }}" != "skipped" ] && failed_jobs+=("Format Check")
-            [ "${{ needs.build.result }}" != "success" ] && [ "${{ needs.build.result }}" != "skipped" ] && failed_jobs+=("Build")
-            [ "${{ needs.test.result }}" != "success" ] && [ "${{ needs.test.result }}" != "skipped" ] && failed_jobs+=("Test")
-          fi
-          
-          # LaTeX-related jobs (only check if LaTeX changed or push event)
-          if [ "${{ needs.detect-changes.outputs.latex }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
-            [ "${{ needs.latex-lint.result }}" != "success" ] && [ "${{ needs.latex-lint.result }}" != "skipped" ] && failed_jobs+=("LaTeX Lint")
-            [ "${{ needs.latex-format-check.result }}" != "success" ] && [ "${{ needs.latex-format-check.result }}" != "skipped" ] && failed_jobs+=("LaTeX Format Check")
-            [ "${{ needs.latex-compile-check.result }}" != "success" ] && [ "${{ needs.latex-compile-check.result }}" != "skipped" ] && failed_jobs+=("LaTeX Compilation")
-          fi
-          
-          if [ ${#failed_jobs[@]} -gt 0 ]; then
-            echo "❌ The following CI jobs failed:"
-            printf '  - %s\n' "${failed_jobs[@]}"
-            echo ""
-            echo "Please check the individual job logs for details."
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ One or more jobs failed."
             exit 1
           fi
-          
-          echo "✅ All CI checks passed successfully!"
-
+          echo "✅ All checks passed."

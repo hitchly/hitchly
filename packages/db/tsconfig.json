@@ -13,5 +13,5 @@
       "@hitchly/db/*": ["../db"]
     }
   },
-  "include": ["."]
+  "include": [".", "../../apps/api/drizzle.config.ts"]
 }

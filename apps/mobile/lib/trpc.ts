@@ -3,16 +3,12 @@ import { createTRPCReact } from "@trpc/react-query";
 import type { AppRouter } from "api/trpc/routers";
 import { authClient } from "./auth-client";
 
-const getBaseUrl = () => {
-  return "http://192.168.2.13:3000";
-};
-
 export const trpc = createTRPCReact<AppRouter>();
 
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: `${getBaseUrl()}/trpc`,
+      url: `${process.env.EXPO_PUBLIC_API_URL}/trpc`,
 
       async headers() {
         const headers = new Map<string, string>();
