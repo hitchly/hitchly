@@ -4,8 +4,8 @@ import { TRPCError } from "@trpc/server";
 
 import { db } from "@hitchly/db/client";
 import { eq } from "@hitchly/db/client";
-import { admins, reports, users, userAnalytics } from "@hitchly/db/schema";
-import { count, desc } from "drizzle-orm";
+import { admins, reports, users } from "@hitchly/db/schema";
+import { count } from "drizzle-orm";
 
 export const adminRouter = router({
   getAnalytics: publicProcedure
@@ -85,7 +85,7 @@ export const adminRouter = router({
         .where(eq(reports.targetUserId, input.targetUserId));
 
       if (warnings[0].count >= 3) {
-        console.log(`User ${input.targetUserId} should be BANNED.`);
+        console.warn(`User ${input.targetUserId} should be BANNED.`);
       }
 
       return { success: true };
