@@ -8,7 +8,11 @@
     "dev": "tsx watch server.ts",
     "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
     "test": "vitest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
   },
   "jest": {
     "preset": "ts-jest",
@@ -48,6 +52,7 @@
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.3",
     "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
     "esbuild": "^0.25.12",
     "esbuild-register": "^3.6.0",
     "eslint": "^9.39.1",
