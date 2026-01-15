@@ -3,12 +3,20 @@ import { createTRPCReact } from "@trpc/react-query";
 import type { AppRouter } from "api/trpc/routers";
 import { authClient } from "./auth-client";
 
+const getBaseUrl = () => {
+  // Use environment variable if set, otherwise fallback to localhost
+  // For Expo testing:
+  // - iOS Simulator / Android Emulator / Web: Use localhost
+  // - Physical Device: Use your computer's local IP address
+  return process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+};
+
 export const trpc = createTRPCReact<AppRouter>();
 
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: `${process.env.EXPO_PUBLIC_API_URL}/trpc`,
+      url: `${getBaseUrl()}/trpc`,
 
       async headers() {
         const headers = new Map<string, string>();

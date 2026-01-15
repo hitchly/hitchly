@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
@@ -6,6 +7,7 @@ import {
   Text,
   View,
   Button,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
@@ -17,6 +19,7 @@ import { authClient } from "../../lib/auth-client";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
 
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id || "";
@@ -99,6 +102,17 @@ export default function HomeScreen() {
           </Link>
         </View>
       )}
+
+      <Card style={styles.tripCard}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.primary }]}
+          onPress={() => router.push("/trips")}
+        >
+          <Text style={[styles.buttonText, { color: colors.background }]}>
+            View Trips
+          </Text>
+        </TouchableOpacity>
+      </Card>
     </SafeAreaView>
   );
 }
@@ -127,4 +141,15 @@ const styles = StyleSheet.create({
   statusContent: { paddingVertical: 8 },
   messageRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   messageText: { fontSize: 16, fontWeight: "500" },
+  tripCard: { marginTop: 16 },
+  button: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
