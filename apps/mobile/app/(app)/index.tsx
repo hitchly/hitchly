@@ -21,10 +21,9 @@ export default function HomeScreen() {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id || "";
 
-  const adminCheck = trpc.admin.amIAdmin.useQuery(
-    { adminId: userId },
-    { enabled: !!userId }
-  );
+  const adminCheck = trpc.admin.amIAdmin.useQuery(undefined, {
+    enabled: !!userId,
+  });
 
   const { data, isLoading, error } = trpc.health.ping.useQuery();
 

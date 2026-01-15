@@ -1,80 +1,88 @@
-import { router, publicProcedure } from "../trpc";
+import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
 import { db } from "@hitchly/db/client";
 import { eq } from "@hitchly/db/client";
-import { admins, reports, users } from "@hitchly/db/schema";
+import { reports, users } from "@hitchly/db/schema";
 import { count } from "drizzle-orm";
 
 export const adminRouter = router({
-  getAnalytics: publicProcedure
-    .input(z.object({ adminId: z.string() }))
-    .query(async ({ input }) => {
-      const admin = await db.query.admins.findFirst({
-        where: eq(admins.userId, input.adminId),
-      });
-      if (!admin) throw new TRPCError({ code: "UNAUTHORIZED" });
+  getAnalytics: protectedProcedure.query(async ({ ctx }) => {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, ctx.userId!),
+      columns: { role: true },
+    });
 
-      const userCount = await db.select({ value: count() }).from(users);
-      const reportsCount = await db.select({ value: count() }).from(reports);
+    if (user?.role !== "admin") {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
 
-      return {
-        totalUsers: userCount[0].value,
-        activeUsers: 1, // Placeholder
-        totalRides: 0, // Placeholder
-        reportsCount: reportsCount[0].value,
-      };
-    }),
+    const userCount = await db.select({ value: count() }).from(users);
+    const reportsCount = await db.select({ value: count() }).from(reports);
 
-  getAllUsers: publicProcedure
-    .input(z.object({ adminId: z.string() }))
-    .query(async ({ input }) => {
-      const admin = await db.query.admins.findFirst({
-        where: eq(admins.userId, input.adminId),
-      });
-      if (!admin) throw new TRPCError({ code: "UNAUTHORIZED" });
+    return {
+      totalUsers: userCount[0].value,
+      activeUsers: 1,
+      totalRides: 0,
+      reportsCount: reportsCount[0].value,
+    };
+  }),
 
-      return await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          image: users.image,
-          strikeCount: count(reports.id),
-        })
-        .from(users)
-        .leftJoin(reports, eq(reports.targetUserId, users.id))
-        .groupBy(users.id)
-        .limit(50);
-    }),
+  getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, ctx.userId!),
+      columns: { role: true },
+    });
 
-  amIAdmin: publicProcedure
-    .input(z.object({ adminId: z.string() }))
-    .query(async ({ input }) => {
-      const admin = await db.query.admins.findFirst({
-        where: eq(admins.userId, input.adminId),
-      });
-      return { isAdmin: !!admin };
-    }),
+    if (user?.role !== "admin") {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
 
-  warnUser: publicProcedure
+    return await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+        strikeCount: count(reports.id),
+      })
+      .from(users)
+      .leftJoin(reports, eq(reports.targetUserId, users.id))
+      .groupBy(users.id)
+      .limit(50);
+  }),
+
+  amIAdmin: protectedProcedure.query(async ({ ctx }) => {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, ctx.userId!),
+      columns: { role: true },
+    });
+
+    return { isAdmin: user?.role === "admin" };
+  }),
+
+  warnUser: protectedProcedure
     .input(
       z.object({
-        adminId: z.string(),
         targetUserId: z.string(),
         reason: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
-      const admin = await db.query.admins.findFirst({
-        where: eq(admins.userId, input.adminId),
+    .mutation(async ({ ctx, input }) => {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, ctx.userId!),
+        columns: { role: true },
       });
-      if (!admin) throw new TRPCError({ code: "UNAUTHORIZED" });
 
+      if (user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      // Add the warning report
       await db.insert(reports).values({
         targetUserId: input.targetUserId,
-        adminId: admin.id,
+        adminId: ctx.userId!,
         reason: input.reason,
         type: "warning",
       });
@@ -84,8 +92,20 @@ export const adminRouter = router({
         .from(reports)
         .where(eq(reports.targetUserId, input.targetUserId));
 
-      if (warnings[0].count >= 3) {
-        console.warn(`User ${input.targetUserId} should be BANNED.`);
+      const totalStrikes = warnings[0].count;
+
+      if (totalStrikes >= 3) {
+        console.warn(
+          `User ${input.targetUserId} has reached 3 strikes. Executing BAN.`
+        );
+
+        await db
+          .update(users)
+          .set({
+            banned: true,
+            banReason: "Excessive strikes (3+ warnings)",
+          })
+          .where(eq(users.id, input.targetUserId));
       }
 
       return { success: true };

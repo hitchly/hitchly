@@ -106,4 +106,15 @@ export const profileRouter = router({
 
       return { success: true };
     }),
+  getBanStatus: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.db.query.users.findFirst({
+      where: eq(users.id, ctx.userId!),
+      columns: { banned: true, banReason: true },
+    });
+
+    return {
+      isBanned: user?.banned || false,
+      reason: user?.banReason || "Violation of Terms",
+    };
+  }),
 });

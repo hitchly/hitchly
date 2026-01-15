@@ -21,19 +21,19 @@ export default function AdminDashboard() {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id || "";
 
-  const statsQuery = trpc.admin.getAnalytics.useQuery(
-    { adminId: userId },
-    { enabled: !!userId }
-  );
-  const usersQuery = trpc.admin.getAllUsers.useQuery(
-    { adminId: userId },
-    { enabled: !!userId }
-  );
+  const statsQuery = trpc.admin.getAnalytics.useQuery(undefined, {
+    enabled: !!userId,
+  });
+
+  const usersQuery = trpc.admin.getAllUsers.useQuery(undefined, {
+    enabled: !!userId,
+  });
 
   const warnMutation = trpc.admin.warnUser.useMutation({
     onSuccess: () => {
       Alert.alert("Success", "User has been warned.");
       statsQuery.refetch();
+      usersQuery.refetch();
     },
     onError: (err) => {
       Alert.alert("Error", err.message || "Failed to warn user.");
@@ -52,7 +52,6 @@ export default function AdminDashboard() {
           onPress: (reason?: string) => {
             if (!reason) return;
             warnMutation.mutate({
-              adminId: userId,
               targetUserId: targetId,
               reason: reason,
             });

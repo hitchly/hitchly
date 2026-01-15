@@ -35,6 +35,10 @@ export const users = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+  role: text("role").default("user"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
 
 export const sessions = pgTable("sessions", {
@@ -188,18 +192,6 @@ export const usersRelations = relations(users, ({ one }) => ({
   }),
 }));
 
-//ADMIN TABLE
-
-export const admins = pgTable("admins", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id")
-    .references(() => users.id)
-    .notNull(),
-  role: text("role").default("superadmin"),
-  permissions: jsonb("permissions"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // 2. REPORTS TABLE
 // Stores the warnings/bans
 export const reports = pgTable("reports", {
@@ -207,7 +199,7 @@ export const reports = pgTable("reports", {
   targetUserId: text("target_user_id")
     .references(() => users.id)
     .notNull(),
-  adminId: integer("admin_id").references(() => admins.id), // Must be an admin to report
+  adminId: text("admin_id").references(() => users.id),
   reason: text("reason"),
   type: text("type").default("warning"),
   timestamp: timestamp("timestamp").defaultNow(),

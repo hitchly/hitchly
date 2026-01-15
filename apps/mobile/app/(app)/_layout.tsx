@@ -1,7 +1,25 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
+import { useEffect } from "react";
+import { authClient } from "../../lib/auth-client";
+import { trpc } from "../../lib/trpc";
 
 export default function AppLayout() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
+    enabled: !!session?.user?.id,
+    refetchOnMount: true,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (banCheck.data?.isBanned) {
+      router.replace("/banned");
+    }
+  }, [banCheck.data?.isBanned]);
+
   return (
     <Tabs
       screenOptions={{
