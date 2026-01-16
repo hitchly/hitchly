@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import {
   MAX_SEATS,
@@ -8,12 +8,13 @@ import {
   users,
 } from "../../db/schema";
 import { protectedProcedure, router } from "../trpc";
+import { TRPCError } from "@trpc/server";
 
 // Zod schemas for validation
 const createTripInputSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
-  departureTime: z.date(),
+  departureTime: z.coerce.date(),
   availableSeats: z.number().int().min(1).max(MAX_SEATS),
 });
 
@@ -22,8 +23,8 @@ const updateTripInputSchema = createTripInputSchema.partial();
 const tripFiltersSchema = z.object({
   userId: z.string().optional(),
   status: z.enum(["pending", "active", "completed", "cancelled"]).optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
 });
 
 // Helper functions
@@ -92,7 +93,7 @@ export const tripRouter = router({
       });
 
       // Generate trip ID
-      const tripId = `trip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const tripId = crypto.randomUUID();
 
       // Create trip
       const [trip] = await ctx.db
@@ -280,5 +281,397 @@ export const tripRouter = router({
         );
 
       return { success: true, trip: cancelledTrip };
+    }),
+
+  // ============================================
+  // TRIP REQUEST ENDPOINTS
+  // ============================================
+
+  createTripRequest: protectedProcedure
+    .input(z.object({ tripId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const riderId = ctx.userId!;
+
+      // Get trip and validate
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId))
+        .limit(1);
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      // Validate rider is not the driver
+      if (trip.driverId === riderId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot request to join your own trip",
+        });
+      }
+
+      // Validate trip has available seats
+      if (trip.availableSeats <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This trip has no available seats",
+        });
+      }
+
+      // Validate trip status
+      if (trip.status !== "pending" && trip.status !== "active") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You can only request to join pending or active trips",
+        });
+      }
+
+      // Check for existing request
+      const [existingRequest] = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.riderId, riderId),
+            or(
+              eq(tripRequests.status, "pending"),
+              eq(tripRequests.status, "accepted")
+            )
+          )
+        )
+        .limit(1);
+
+      if (existingRequest) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "You already have a pending or accepted request for this trip",
+        });
+      }
+
+      // Create trip request
+      const requestId = crypto.randomUUID();
+      const [request] = await ctx.db
+        .insert(tripRequests)
+        .values({
+          id: requestId,
+          tripId: input.tripId,
+          riderId,
+          status: "pending",
+        })
+        .returning();
+
+      return request;
+    }),
+
+  getTripRequests: protectedProcedure
+    .input(
+      z.object({
+        tripId: z.string().optional(),
+        riderId: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.userId!;
+      const conditions = [];
+
+      if (input.tripId) {
+        // Driver viewing requests for their trip
+        const [trip] = await ctx.db
+          .select()
+          .from(trips)
+          .where(eq(trips.id, input.tripId))
+          .limit(1);
+
+        if (!trip) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Trip not found",
+          });
+        }
+
+        if (trip.driverId !== userId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only view requests for your own trips",
+          });
+        }
+
+        conditions.push(eq(tripRequests.tripId, input.tripId));
+      } else if (input.riderId) {
+        // Viewing requests by a specific rider (must be self)
+        if (input.riderId !== userId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only view your own requests",
+          });
+        }
+        conditions.push(eq(tripRequests.riderId, input.riderId));
+      } else {
+        // Default: get requests for current user's trips (if driver) or own requests (if rider)
+        // For simplicity, return user's own requests
+        conditions.push(eq(tripRequests.riderId, userId));
+      }
+
+      const requests = await ctx.db
+        .select({
+          id: tripRequests.id,
+          tripId: tripRequests.tripId,
+          riderId: tripRequests.riderId,
+          status: tripRequests.status,
+          createdAt: tripRequests.createdAt,
+          updatedAt: tripRequests.updatedAt,
+          trip: trips,
+          rider: users,
+        })
+        .from(tripRequests)
+        .where(and(...conditions))
+        .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+        .leftJoin(users, eq(tripRequests.riderId, users.id))
+        .orderBy(tripRequests.createdAt);
+
+      return requests;
+    }),
+
+  acceptTripRequest: protectedProcedure
+    .input(z.object({ requestId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const driverId = ctx.userId!;
+
+      // Get request with trip
+      const [request] = await ctx.db
+        .select({
+          request: tripRequests,
+          trip: trips,
+        })
+        .from(tripRequests)
+        .where(eq(tripRequests.id, input.requestId))
+        .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+        .limit(1);
+
+      if (!request || !request.trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip request not found",
+        });
+      }
+
+      // Validate driver owns the trip
+      if (request.trip.driverId !== driverId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only accept requests for your own trips",
+        });
+      }
+
+      // Validate request is pending
+      if (request.request.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only accept pending requests",
+        });
+      }
+
+      // Validate trip has available seats
+      if (request.trip.availableSeats <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Trip has no available seats",
+        });
+      }
+
+      // Update request status
+      const [acceptedRequest] = await ctx.db
+        .update(tripRequests)
+        .set({
+          status: "accepted",
+          updatedAt: new Date(),
+        })
+        .where(eq(tripRequests.id, input.requestId))
+        .returning();
+
+      // Decrement available seats
+      await ctx.db
+        .update(trips)
+        .set({
+          availableSeats: request.trip.availableSeats - 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(trips.id, request.trip.id));
+
+      return acceptedRequest;
+    }),
+
+  rejectTripRequest: protectedProcedure
+    .input(z.object({ requestId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const driverId = ctx.userId!;
+
+      // Get request with trip
+      const [request] = await ctx.db
+        .select({
+          request: tripRequests,
+          trip: trips,
+        })
+        .from(tripRequests)
+        .where(eq(tripRequests.id, input.requestId))
+        .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+        .limit(1);
+
+      if (!request || !request.trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip request not found",
+        });
+      }
+
+      // Validate driver owns the trip
+      if (request.trip.driverId !== driverId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only reject requests for your own trips",
+        });
+      }
+
+      // Validate request is pending
+      if (request.request.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only reject pending requests",
+        });
+      }
+
+      // Update request status
+      const [rejectedRequest] = await ctx.db
+        .update(tripRequests)
+        .set({
+          status: "rejected",
+          updatedAt: new Date(),
+        })
+        .where(eq(tripRequests.id, input.requestId))
+        .returning();
+
+      return rejectedRequest;
+    }),
+
+  cancelTripRequest: protectedProcedure
+    .input(z.object({ requestId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const riderId = ctx.userId!;
+
+      // Get request with trip
+      const [request] = await ctx.db
+        .select({
+          request: tripRequests,
+          trip: trips,
+        })
+        .from(tripRequests)
+        .where(eq(tripRequests.id, input.requestId))
+        .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+        .limit(1);
+
+      if (!request || !request.trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip request not found",
+        });
+      }
+
+      // Validate rider owns the request
+      if (request.request.riderId !== riderId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only cancel your own requests",
+        });
+      }
+
+      // Validate request can be cancelled
+      if (request.request.status === "cancelled") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Request is already cancelled",
+        });
+      }
+
+      const wasAccepted = request.request.status === "accepted";
+
+      // Update request status
+      const [cancelledRequest] = await ctx.db
+        .update(tripRequests)
+        .set({
+          status: "cancelled",
+          updatedAt: new Date(),
+        })
+        .where(eq(tripRequests.id, input.requestId))
+        .returning();
+
+      // If request was accepted, increment available seats
+      if (wasAccepted) {
+        await ctx.db
+          .update(trips)
+          .set({
+            availableSeats: request.trip.availableSeats + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(trips.id, request.trip.id));
+      }
+
+      return cancelledRequest;
+    }),
+
+  getAvailableTrips: protectedProcedure
+    .input(
+      z.object({
+        startDate: z.coerce.date().optional(),
+        endDate: z.coerce.date().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const riderId = ctx.userId!;
+
+      // Get all pending/active trips
+      const conditions = [
+        or(eq(trips.status, "pending"), eq(trips.status, "active")),
+        ne(trips.driverId, riderId), // Exclude trips where user is the driver
+        gte(trips.availableSeats, 1), // Only trips with available seats
+      ];
+
+      if (input?.startDate) {
+        conditions.push(gte(trips.departureTime, input.startDate));
+      }
+
+      if (input?.endDate) {
+        conditions.push(lte(trips.departureTime, input.endDate));
+      }
+
+      const allTrips = await ctx.db
+        .select()
+        .from(trips)
+        .where(and(...conditions))
+        .orderBy(trips.departureTime);
+
+      // Get existing requests by this rider
+      const existingRequests = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.riderId, riderId),
+            or(
+              eq(tripRequests.status, "pending"),
+              eq(tripRequests.status, "accepted")
+            )
+          )
+        );
+
+      const existingTripIds = new Set(existingRequests.map((r) => r.tripId));
+
+      // Filter out trips where rider already has a pending/accepted request
+      return allTrips.filter((trip) => !existingTripIds.has(trip.id));
     }),
 });
