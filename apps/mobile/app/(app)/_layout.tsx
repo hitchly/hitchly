@@ -19,6 +19,15 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="matchmaking"
+        options={{
+          title: "Find Ride",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="search" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

@@ -216,10 +216,9 @@ export const rides = pgTable("rides", {
   destAddress: text("dest_address"),
 
   startTime: timestamp("start_time").notNull(),
-  estimatedDuration: integer("estimated_duration"),
 
   maxSeats: integer("max_seats").notNull(),
-  pricePerSeat: doublePrecision("price_per_seat").notNull(),
+  bookedSeats: integer("booked_seats").default(0).notNull(),
 
   status: rideStatusEnum("status").default("scheduled").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -235,8 +234,11 @@ export const rideRequests = pgTable("ride_requests", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
+  // Pickup location for this rider
+  pickupLat: doublePrecision("pickup_lat").notNull(),
+  pickupLng: doublePrecision("pickup_lng").notNull(),
+
   status: requestStatusEnum("status").default("pending").notNull(),
-  seatsRequested: integer("seats_requested").default(1).notNull(),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
