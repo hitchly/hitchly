@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,14 +11,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { useTheme } from "../../../context/theme-context";
-import { authClient } from "../../../lib/auth-client";
-import { trpc } from "../../../lib/trpc";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { useTheme } from "../../context/theme-context";
+import { authClient } from "../../lib/auth-client";
+import { trpc } from "../../lib/trpc";
+import { useRouter } from "expo-router";
 
-export default function TripRequestsScreen() {
-  const { tripId } = useLocalSearchParams<{ tripId?: string }>();
+export default function RequestsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { data: session } = authClient.useSession();
@@ -27,51 +26,63 @@ export default function TripRequestsScreen() {
   const utils = trpc.useUtils();
 
   // Get all trips for the user to determine if they're a driver
-  const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
-    enabled: !!userId && !tripId,
-  });
+  const { data: driverTrips, isLoading: isLoadingTrips } =
+    trpc.trip.getTrips.useQuery(undefined, { enabled: !!userId });
 
-  // Get requests - filter by tripId if provided
-  // If no tripId, get all requests for driver's trips (as driver) or own requests (as rider)
+  // Determine if user is a driver
+  const isDriver = (driverTrips?.length || 0) > 0;
+
+  // Get requests - if driver, we'll need to fetch for each trip
+  // For now, get first trip's requests as a placeholder - we'll need to aggregate
+  const firstTripId = driverTrips?.[0]?.id;
+
   const {
-    data: requestsData,
-    isLoading,
-    refetch,
-    isRefetching,
+    data: firstTripRequests,
+    isLoading: isLoadingFirstTrip,
+    refetch: refetchFirstTrip,
   } = trpc.trip.getTripRequests.useQuery(
-    tripId ? { tripId } : { riderId: userId },
-    { enabled: !!userId }
+    { tripId: firstTripId || "" },
+    { enabled: !!userId && !!firstTripId && isDriver }
   );
 
-  // Get all requests for driver's trips if user is a driver and viewing all requests
-  const { data: driverRequestsData } = trpc.trip.getTripRequests.useQuery(
-    { tripId: driverTrips?.[0]?.id || "" },
-    {
-      enabled:
-        !!userId &&
-        !tripId &&
-        !!driverTrips &&
-        driverTrips &&
-        driverTrips.length > 0,
-    }
+  // Get rider requests (requests made by user)
+  const {
+    data: riderRequests,
+    isLoading: isLoadingRiderRequests,
+    refetch: refetchRiderRequests,
+    isRefetching: isRefetchingRiderRequests,
+  } = trpc.trip.getTripRequests.useQuery(
+    { riderId: userId },
+    { enabled: !!userId && !isDriver }
   );
+
+  const isLoading =
+    isLoadingTrips ||
+    (isDriver && isLoadingFirstTrip) ||
+    (!isDriver && isLoadingRiderRequests);
+  const isRefetching = isRefetchingRiderRequests;
+
+  // For drivers: fetch requests for all trips (simplified - showing first trip's requests)
+  // TODO: Implement proper aggregation for all trips
+  const allDriverRequests = useMemo(() => {
+    if (!isDriver) return [];
+    // For now, return first trip's requests - in production, aggregate all trips
+    return firstTripRequests || [];
+  }, [firstTripRequests, isDriver]);
 
   // Determine if user is viewing as driver or rider
-  const isDriverView =
-    tripId !== undefined || (driverTrips && driverTrips.length > 0);
-
-  // If driver viewing all requests, we need to get requests for all their trips
-  const requests = tripId
-    ? requestsData || []
-    : isDriverView
-      ? requestsData || [] // This will need to be enhanced to get all driver trip requests
-      : requestsData || [];
+  const isDriverView = (driverTrips?.length || 0) > 0;
+  const requests = isDriverView ? allDriverRequests : riderRequests || [];
 
   const acceptRequest = trpc.trip.acceptTripRequest.useMutation({
     onSuccess: () => {
       utils.trip.getTripRequests.invalidate();
       utils.trip.getTripById.invalidate();
-      utils.trip.getAvailableTrips.invalidate();
+      if (isDriver) {
+        refetchFirstTrip();
+      } else {
+        refetchRiderRequests();
+      }
       Alert.alert("Success", "Request accepted successfully");
     },
     onError: (error) => {
@@ -82,6 +93,9 @@ export default function TripRequestsScreen() {
   const rejectRequest = trpc.trip.rejectTripRequest.useMutation({
     onSuccess: () => {
       utils.trip.getTripRequests.invalidate();
+      if (isDriver) {
+        refetchFirstTrip();
+      }
       Alert.alert("Success", "Request rejected");
     },
     onError: (error) => {
@@ -92,14 +106,22 @@ export default function TripRequestsScreen() {
   const cancelRequest = trpc.trip.cancelTripRequest.useMutation({
     onSuccess: () => {
       utils.trip.getTripRequests.invalidate();
+      refetchRiderRequests();
       utils.trip.getTripById.invalidate();
-      utils.trip.getAvailableTrips.invalidate();
       Alert.alert("Success", "Request cancelled");
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
     },
   });
+
+  const handleRefetch = () => {
+    if (isDriver) {
+      refetchFirstTrip();
+    } else {
+      refetchRiderRequests();
+    }
+  };
 
   const formatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
@@ -145,22 +167,15 @@ export default function TripRequestsScreen() {
       edges={["top", "left", "right"]}
     >
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>
           {isDriverView ? "Trip Requests" : "My Requests"}
         </Text>
-        <View style={styles.backButton} />
       </View>
 
       {requests.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons
-            name="document-outline"
+            name="chatbubbles-outline"
             size={64}
             color={colors.textSecondary}
           />
@@ -180,13 +195,13 @@ export default function TripRequestsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={refetch}
+              onRefresh={handleRefetch}
               tintColor={colors.primary}
             />
           }
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
-            const request = item; // The item itself is the request
+            const request = item;
             const trip = item.trip;
             const rider = item.rider;
 
@@ -194,7 +209,10 @@ export default function TripRequestsScreen() {
               <Card style={styles.requestCard}>
                 {/* Trip Info */}
                 {trip && (
-                  <View style={styles.tripInfo}>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/trips/${trip.id}`)}
+                    style={styles.tripInfo}
+                  >
                     <View style={styles.routeRow}>
                       <Text style={[styles.routeText, { color: colors.text }]}>
                         {trip.origin}
@@ -227,7 +245,7 @@ export default function TripRequestsScreen() {
                         {trip.availableSeats !== 1 ? "s" : ""} available
                       </Text>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 )}
 
                 {/* Rider/Driver Info */}
@@ -361,15 +379,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
   },
   title: {
     fontSize: 28,

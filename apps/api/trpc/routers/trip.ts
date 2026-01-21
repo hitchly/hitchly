@@ -114,15 +114,22 @@ export const tripRouter = router({
 
   /**
    * Get trips with optional filters
+   * By default, returns trips for the current user (driver)
    */
   getTrips: protectedProcedure
     .input(tripFiltersSchema.optional())
     .query(async ({ ctx, input }) => {
       const conditions = [];
 
-      if (input?.userId) {
-        conditions.push(eq(trips.driverId, input.userId));
+      // Filter by userId if provided, otherwise filter by current user
+      const userId = input?.userId ?? ctx.userId!;
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User ID is required",
+        });
       }
+      conditions.push(eq(trips.driverId, userId));
 
       if (input?.status) {
         conditions.push(eq(trips.status, input.status));

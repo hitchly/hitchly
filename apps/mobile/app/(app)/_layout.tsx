@@ -40,8 +40,25 @@ const AppRoutes = () => {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="home" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "home" : "home-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: "Requests",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              color={color}
+            />
           ),
         }}
       />
@@ -58,8 +75,12 @@ const AppRoutes = () => {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="person" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "person" : "person-outline"}
+              color={color}
+            />
           ),
         }}
       />

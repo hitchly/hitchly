@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { trpc } from "../../../lib/trpc";
 
 export default function TripsScreen() {
@@ -59,7 +60,7 @@ export default function TripsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>My Trips</Text>
         <TouchableOpacity
@@ -125,7 +126,7 @@ export default function TripsScreen() {
           ))
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
