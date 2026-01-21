@@ -32,8 +32,8 @@ describe("Profile Router", () => {
 
   const createCaller = (isAuthenticated = true) => {
     const ctx = {
-      req: {} as any,
-      res: {} as any,
+      req: new Request("http://localhost"),
+      resHeaders: new Headers(),
       db: mockDb as any,
       userId: isAuthenticated ? "user-123" : undefined,
     };

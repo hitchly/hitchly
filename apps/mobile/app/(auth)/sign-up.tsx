@@ -32,8 +32,7 @@ export default function SignUp() {
           name: data.name,
         },
         {
-          onSuccess: (ctx) => {
-            console.log("Sign up successful", ctx);
+          onSuccess: () => {
             router.push({
               pathname: "/verify",
               params: { email: data.email, password: data.password },
