@@ -1,0 +1,155 @@
+\section{Matching Module} \label{sec:matching_module}
+
+\subsection{Module}
+The Matching Module is the core algorithmic engine of Hitchly.  
+It is responsible for generating ranked matches between riders and drivers based on route proximity, time compatibility, and ride preferences.  
+This module applies the \textbf{Strategy Pattern} to maintain flexibility, allowing future replacement or enhancement of the scoring algorithm (e.g., machine learning or context-aware scoring).  
+Its outputs drive the swipe-based interface, where users browse and select potential ride matches.
+
+\paragraph{Frontend}
+Implemented in the Expo mobile app, the frontend presents matches as interactive swipeable cards in a Tinder-style interface.  
+Key features include:
+\begin{itemize}
+    \item Swipe gestures for liking or passing on potential matches.
+    \item Real-time display of top recommended drivers or riders with route, time, and compatibility score.
+    \item API integration through tRPC hooks (e.g., \texttt{useGetMatches}, \texttt{useSubmitSwipe}).
+    \item Visual match indicators such as “Good Match” or percentage score badges.
+    \item Smooth animations and immediate feedback for mutual matches.
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements the matchmaking logic within the Express/tRPC API, encapsulated in a dedicated service class (\texttt{MatchEngine}).  
+The design follows the Strategy Pattern to keep scoring algorithms modular.  
+Primary responsibilities include:
+\begin{itemize}
+    \item Retrieving candidate users and associated trips from the database.
+    \item Filtering incompatible pairs by hard constraints: verified McMaster email, opposite roles, overlapping time windows, and nearby routes.
+    \item Applying a scoring strategy (default: WeightedMatchStrategy) that computes a match score (0-100) using normalized factors.
+    \item Sorting and returning the highest-scoring results to the frontend.
+    \item Storing swipe actions and updating mutual matches.
+\end{itemize}
+The backend exposes tRPC endpoints such as \texttt{findMatchesForUser}, \texttt{submitSwipe}, and \texttt{getMatchResults}.
+
+\paragraph{Data}
+The data layer maintains persistent records of matches, swipes, and scoring metrics within PostgreSQL via Drizzle ORM.  
+Key tables include:
+\begin{itemize}
+    \item \texttt{matches} --- stores confirmed mutual matches (rider <-> driver) with timestamp and score.
+    \item \texttt{swipes} --- records all swipe actions for analytics and recommender tuning.
+    \item \texttt{match\_history} --- archives past matches for feedback and trust scoring.
+\end{itemize}
+Foreign keys link match records to both users and trips, ensuring referential integrity.
+
+\subsection{Uses}
+This module connects directly with:
+\begin{itemize}
+    \item \textbf{Route \& Trip Module} - provides trip data (origin, destination, departure time)
+    \item \textbf{User Profile Module} - provides preference data and reliability rating.
+    \item \textbf{Swipe Interaction Frontend} - renders and collects swipe input.
+    \item \textbf{Notification Module} - notifies users upon mutual matches.
+\end{itemize}
+It is the computational bridge between trip listings and user engagement, supporting Hitchly's key matchmaking feature.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_CANDIDATES = 20} - limits results per query.
+    \item \texttt{MATCH\_THRESHOLD = 0.3} - minimum normalized score (30\%) to display.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{findMatchesForUser()} & userId & RankedMatchList & NotFoundError \\
+\texttt{submitSwipe()} & userId, targetId, swipeType & Confirmation & ValidationError \\
+\texttt{getMatchResults()} & userId & MatchSummary & NotFoundError \\
+\texttt{computeScore()} & rider, driver & Float (0-100) & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{candidatePool} - list of drivers or riders retrieved for a user.
+    \item \texttt{activeStrategy} - reference to the current scoring algorithm.
+    \item \texttt{matchResults} - ordered list of potential matches with scores.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Active network connection for API queries.
+    \item Database connection for retrieving and updating match data.
+    \item Access to external map service for route distance calculations.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item Each user has an active, verified profile with trip data available.
+    \item Distance and time calculations are performed via a reliable geocoding API.
+    \item Only verified McMaster users participate in matching.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{findMatchesForUser()}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item $\text{candidatePool} := \text{retrieveCandidates}(\text{userId})$
+        \item $\text{filteredCandidates} := \text{applyFilters}(\text{candidatePool})$
+        \item $\text{scoredMatches} := \text{map}(\text{computeScore}, \text{filteredCandidates})$
+        \item $\text{matchResults} := \text{sort}(\text{scoredMatches}, \text{descending})$
+        \item $\text{matchResults} := \text{take}(\text{matchResults}, \text{MAX\_CANDIDATES})$
+    \end{itemize}
+    \item \textbf{output:} Returns $\text{matchResults}$ (ranked list of matches with normalized scores).
+    \item \textbf{exception:} NotFoundError if no eligible candidates exist (when $\text{candidatePool} = \emptyset$ or $\text{filteredCandidates} = \emptyset$).
+\end{itemize}
+
+\texttt{submitSwipe()}:
+\begin{itemize}
+    \item \textbf{transition:} Records user's swipe action. If swipe is mutual (both users swiped ``like''), creates new match and updates $\text{matchResults}$ by adding the new match record.
+    \item \textbf{output:} Confirmation of swipe or new match event.
+    \item \textbf{exception:} ValidationError for invalid input or unauthorized user.
+\end{itemize}
+
+\texttt{getMatchResults()}:
+\begin{itemize}
+    \item \textbf{transition:} None (read-only operation).
+    \item \textbf{output:} Returns $\text{matchResults}$ (list of confirmed mutual matches).
+    \item \textbf{exception:} NotFoundError if no matches found ($\text{matchResults} = \emptyset$).
+\end{itemize}
+
+\texttt{computeScore()}:
+\begin{itemize}
+    \item \textbf{transition:} Uses $\text{activeStrategy}$ to compute weighted match score. No modification to module state variables.
+    \item \textbf{output:} Floating-point score between 0 and 100 computed using the formula in the Formal Specification section.
+    \item \textbf{exception:} AlgorithmError if scoring function fails (e.g., $\text{activeStrategy}$ is undefined).
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{applyFilters(user, candidate)} - evaluates eligibility constraints (status="scheduled", seat availability, compatibility dealbreakers).
+    \item \texttt{calculateWeightedScore(rider, driver)} - computes weighted sum using factors (default preset):
+    \begin{itemize}
+        \item Schedule score (weight 2.0) - time compatibility
+        \item Location score (weight 2.0) - route/detour compatibility
+        \item Cost score (weight 1.5) - cost attractiveness
+        \item Comfort score (weight 0.5) - seat availability
+        \item Compatibility score (weight 1.0) - preference matching
+    \end{itemize}
+    \item \texttt{normalizeScore(raw)} - scales raw score (0-7.0) into [0, 100] using formula: $\min(100, \lfloor(\text{rawScore} / 7.0) \times 100\rfloor)$.
+\end{itemize}
+
+% ============================================================
+% Scheduling Module
+% ============================================================

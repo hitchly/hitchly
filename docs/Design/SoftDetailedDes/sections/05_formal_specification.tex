@@ -1,0 +1,93 @@
+\section{Formal Specification} \label{SecFormalSpec}
+
+This section provides the formal mathematical specification for the Matching Module (Section~\ref{sec:matching_module}). The Matching Module is used for formal specification as it contains the most complex algorithmic logic in the system, specifically the matchmaking algorithm that pairs riders with drivers based on multiple weighted factors. The formal specification includes a finite state machine model of the matching process and discrete mathematics definitions of the scoring algorithm and filtering predicates.
+
+The matching process is formally specified using a finite state machine and discrete mathematics. The finite state machine models the execution flow of the \texttt{findMatchesForUser} operation, while the discrete mathematics specification defines the scoring algorithm and filtering predicates.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\textwidth]{matching_fsm.pdf}
+\caption{Finite State Machine for Matching Process}
+\label{fig:matching_fsm}
+\end{figure}
+
+The finite state machine in Figure~\ref{fig:matching_fsm} defines the states and transitions for the matching process:
+
+\begin{itemize}
+    \item \textbf{INITIAL}: Starting state when \texttt{findMatchesForUser(userId)} is called
+    \item \textbf{RETRIEVING\_CANDIDATES}: Retrieving potential matches from the database
+    \item \textbf{FILTERING}: Applying hard constraints (role, distance, time window)
+    \item \textbf{SCORING}: Computing compatibility scores for filtered candidates
+    \item \textbf{RANKING}: Sorting matches by score in descending order
+    \item \textbf{COMPLETE}: Final state with ranked match list ready for return
+    \item \textbf{ERROR}: Error state when no candidates found or exception occurs
+\end{itemize}
+
+State transitions are defined as follows:
+\begin{align*}
+\text{INITIAL} &\xrightarrow{\text{userId provided}} \text{RETRIEVING\_CANDIDATES} \\
+&\quad \text{action: } \text{candidatePool} := \text{retrieveCandidates(userId)} \\
+\text{RETRIEVING\_CANDIDATES} &\xrightarrow{\text{candidates found}} \text{FILTERING} \\
+&\quad \text{action: } \text{filteredCandidates} := \text{applyFilters(candidatePool)} \\
+\text{RETRIEVING\_CANDIDATES} &\xrightarrow{\text{no candidates}} \text{ERROR} \\
+&\quad \text{action: } \text{throw NotFoundError} \\
+\text{FILTERING} &\xrightarrow{\text{filtered exist}} \text{SCORING} \\
+&\quad \text{action: } \text{scoredMatches} := \text{map(computeScore, filteredCandidates)} \\
+\text{FILTERING} &\xrightarrow{\text{no valid}} \text{ERROR} \\
+&\quad \text{action: } \text{throw NotFoundError} \\
+\text{SCORING} &\xrightarrow{\text{scores computed}} \text{RANKING} \\
+&\quad \text{action: } \text{matchResults} := \text{sort(scoredMatches, descending)} \\
+\text{RANKING} &\xrightarrow{\text{ranking complete}} \text{COMPLETE} \\
+&\quad \text{action: } \text{matchResults} := \text{take}(\text{matchResults}, \text{MAX\_CANDIDATES})
+\end{align*}
+
+The candidate filtering is formally specified using set theory. Let $R$ be the set of all rides, and let $r_r$ be the rider request. The set of candidate rides is defined as:
+
+\begin{align}
+\text{Candidates} = \{r \in R \mid &\text{status}(r) = \text{``scheduled''} \land \nonumber \\
+&\text{maxSeats}(r) \geq r_r.\text{maxOccupancy} \land \nonumber \\
+&\text{availableSeats}(r) \geq r_r.\text{maxOccupancy}\}
+\end{align}
+
+The filtered candidates set excludes rides with compatibility dealbreakers:
+
+\begin{align}
+\text{Filtered} = \{c \in \text{Candidates} \mid &\text{compatibilityScore}(c, r_r) > 0\}
+\end{align}
+
+The scoring function \texttt{computeScore} is formally defined as a weighted sum of normalized factors. For the default preference preset, the weights are:
+
+\begin{align}
+\text{rawScore}(r, d) = &2.0 \times \text{scheduleScore}(r.\text{desiredArrivalTime}, d.\text{startTime}) + \nonumber \\
+&2.0 \times \text{locationScore}(r.\text{origin}, r.\text{destination}, d.\text{origin}, d.\text{destination}) + \nonumber \\
+&1.5 \times \text{costScore}(r.\text{estimatedCost}, \text{minCost}) + \nonumber \\
+&0.5 \times \text{comfortScore}(d.\text{currentPassengers}, d.\text{maxSeats}, r.\text{maxOccupancy}) + \nonumber \\
+&1.0 \times \text{compatibilityScore}(r.\text{prefs}, d.\text{prefs})
+\end{align}
+
+where each factor function maps to the interval $[0, 1]$:
+
+\begin{itemize}
+    \item $\text{scheduleScore}: \text{string} \times \text{string} \rightarrow [0, 1]$ --- Computes time compatibility based on desired arrival time and driver departure time. Returns 1.0 if driver departs 0-20 minutes after rider's desired time, decreasing linearly for larger differences.
+    \item $\text{locationScore}: \text{Location} \times \text{Location} \times \text{Location} \times \text{Location} \rightarrow [0, 1]$ --- Computes route compatibility based on detour time. Returns 1.0 if detour is within tolerance, decreasing exponentially for excess detour time.
+    \item $\text{costScore}: \mathbb{R} \times \mathbb{R} \rightarrow [0, 1]$ --- Computes cost attractiveness relative to minimum cost among all candidates. Lower cost relative to minimum yields higher score.
+    \item $\text{comfortScore}: \mathbb{N} \times \mathbb{N} \times \mathbb{N} \rightarrow [0, 1]$ --- Computes seat availability comfort. Returns 0.0 if insufficient seats, otherwise $1.0 - \text{currentPassengers} / \text{maxSeats}$.
+    \item $\text{compatibilityScore}: \text{PreferenceData} \times \text{PreferenceData} \rightarrow [0, 1]$ --- Computes preference compatibility. Returns 0.0 for dealbreakers (smoking, pets mismatches), otherwise computes soft matching score based on music and chatty preferences.
+\end{itemize}
+
+The raw score is normalized to a percentage (0-100) using the maximum theoretical score:
+
+\begin{align}
+\text{normalizeScore}(\text{rawScore}) = \min\left(100, \left\lfloor\frac{\text{rawScore}}{7.0} \times 100\right\rfloor\right)
+\end{align}
+
+where the maximum theoretical score is 7.0 (sum of all weights: $2.0 + 2.0 + 1.5 + 0.5 + 1.0 = 7.0$).
+
+The final ranked match list is constructed by filtering matches above the threshold, sorting by normalized score, and taking the top candidates:
+
+\begin{align}
+\text{validMatches} &= \{m \in \text{scoredMatches} \mid \text{normalizeScore}(m.\text{rawScore}) \geq \text{MATCH\_THRESHOLD} \times 100\} \nonumber \\
+\text{matchResults} &= \text{take}(\text{sort}(\text{validMatches}, \text{descending}), \text{MAX\_CANDIDATES})
+\end{align}
+
+where $\text{MATCH\_THRESHOLD} = 0.3$ (30\% minimum match percentage), $\text{MAX\_CANDIDATES} = 20$, $\text{sort}(S, \text{descending})$ returns sequence $S$ sorted by normalized score in descending order, and $\text{take}(S, n)$ returns the first $n$ elements of sequence $S$.

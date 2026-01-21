@@ -1,0 +1,85 @@
+\section{Notification Module}
+
+\subsection{Module}
+The Notification Module handles system alerts including match notifications, trip updates, and reminders.
+
+\paragraph{Frontend}
+Implemented via Expo Notifications.
+
+UI responsibilities:
+\begin{itemize}
+    \item Requesting push permission
+    \item Displaying notification center
+    \item Handling tap events
+\end{itemize}
+
+Frontend integration:
+\begin{itemize}
+    \item \texttt{useRegisterPushToken}
+    \item \texttt{useGetNotifications}
+\end{itemize}
+
+\paragraph{Backend}
+Backend procedures manage dispatch and retrieval:
+\begin{itemize}
+    \item Storing device push tokens
+    \item Sending push messages via Expo Push API
+    \item Queueing async notification events
+    \item Procedures: \texttt{sendNotification}, \texttt{markAsRead}
+\end{itemize}
+
+\paragraph{Data}
+\begin{itemize}
+    \item \texttt{notifications} --- stored messages
+    \item \texttt{push\_tokens} --- device tokens
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item Matching Module --- notifies mutual matches
+    \item Scheduling Module --- sends reminders
+    \item Trip Module --- alerts cancellations
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{sendNotification()} & userId, message & Confirmation & DeliveryError \\
+\texttt{getNotifications()} & userId & NotificationList & NotFoundError \\
+\texttt{markAsRead()} & notificationId & Confirmation & UnauthorizedError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{queuedNotifications}
+    \item \texttt{readStatus}
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Expo Push Service
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{formatNotificationPayload}
+    \item \texttt{enqueueNotification}
+\end{itemize}
+
+
+% ============================================================
+% 6.7 Rating & Feedback Module
+% ============================================================

@@ -1,0 +1,127 @@
+\section{Database Module}
+
+\subsection{Module}
+This module is responsible for handling all database-related functionalities and ensuring smooth communication between the database servers for retrieving and updating data. This includes user information, ride details, transaction logs, etc. 
+
+\paragraph{Frontend}
+N/A
+
+\paragraph{Backend}
+The backend layer of this module handles CRUD operations for core system entities and manages communication between the application and the database for smooth retrieval and update of application data. 
+
+\paragraph{Data}
+This layer will store a schema of tables used across multiple modules. This includes: 
+\begin{itemize}
+    \item \textbf{User Table:} This stores all critical profile information of the user.
+    \item \textbf{Ride Table:} This stores all critical ride details.
+    \item \textbf{Payment Table:} This stores the user transactions for each ride.
+    \item \textbf{Safety Report Table:} This stores all user safety reports.
+    \item \textbf{Admin Table:} This stores the user's role details.
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item \textbf{User Profile Module:} This is used to retrieve and store user profile details.
+    \item \textbf{Route \& Trip Module:} This is used to retrieve and store trip details like cost, ID, etc.
+    \item \textbf{Payment Module:} This is used to retrieve and store user's transaction details.
+    \item \textbf{Safety and Reporting Module:} This is used to retrieve and store user reports.
+    \item \textbf{Admin Module:} This is used to retrieve and store admin details.
+\end{itemize}
+
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{max\_connect  = 30}  
+    This is the maximum number of database connections at a time. 
+    \item \texttt{max\_attempt = 4}  
+    Maximum attempts made to connect to db before the connection fails. 
+    \item \texttt{max\_DB\_session = 30}  
+    30 minutes limit before the session times out.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{addRecord()} & tablename, data & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{updateRecord()} & tablename, data, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{deleteRecord()} & tablename, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{getRecord()} & tablename, data\_condition & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{getAllRecords()} & tablename & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{DBConnections: List<connections>} --- List of active database connections.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Secure HTTPS connection to API.
+    \item Secure API connection and communication the database server.
+    \item Secure connection to local/cloud backup services for data backup.    
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The Postgress database is avaiable and securely stores data.
+    \item The database has sufficient storage capacity.
+    \item The database automatically runs its data backup services to ensure that no data is lost.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{addRecord()}:
+\begin{itemize}
+    \item \textbf{transition:} A new entry is added to the specified table.
+    \item \textbf{output:} Bool (True or False, depending on the state of the transition).
+    \item \textbf{exception:} NotFoundError (table not found), InvalidDataFormatException, DBTimeoutException.
+\end{itemize}
+
+\texttt{updateRecord()}:
+\begin{itemize}
+    \item \textbf{transition:} An existing entry is updated in the specified table.
+    \item \textbf{output:} Bool (True or False, depending on the state of the transition).
+    \item \textbf{exception:} NotFoundError (table or entry not found), InvalidDataFormatException, DBTimeoutException.
+\end{itemize}
+
+\texttt{deleteRecord()}:
+\begin{itemize}
+    \item \textbf{transition:} An existing entry is deleted in the specified table.
+    \item \textbf{output:} Bool (True or False, depending on the state of the transition).
+    \item \textbf{exception:} NotFoundError (table or entry not found), InvalidDataFormatException, DBTimeoutException.
+\end{itemize}
+
+\texttt{getRecord()}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns a list of indicated records.
+    \item \textbf{exception:} NotFoundError (table not found), DBTimeoutException.
+\end{itemize}
+
+\texttt{getAllRecords()}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns a list of all records.
+    \item \textbf{exception:} NotFoundError (table not found), DBTimeoutException.
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{db\_connect(): bool} --- This is to initialize a connection with the database service.
+    \item \texttt{checkFormat(): bool} --- This function checks if the inserted data aligns with the specified schema.
+\end{itemize}
+
+% -------

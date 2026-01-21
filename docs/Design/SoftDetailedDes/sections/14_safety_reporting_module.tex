@@ -1,0 +1,75 @@
+\section{Safety \& Reporting Module}
+
+\subsection{Module}
+This module manages user-submitted safety reports and flags, assisting platform moderation.
+
+\paragraph{Frontend}
+Includes:
+\begin{itemize}
+    \item Report User form
+    \item Safety resources page
+\end{itemize}
+
+Hooks:
+\begin{itemize}
+    \item \texttt{useSubmitReport}
+\end{itemize}
+
+\paragraph{Backend}
+Backend responsibilities:
+\begin{itemize}
+    \item Validating and storing incident reports
+    \item Assigning severity scores
+    \item Procedures: \texttt{submitReport}, \texttt{resolveReport}
+\end{itemize}
+
+\paragraph{Data}
+Tables include:
+\begin{itemize}
+    \item \texttt{reports}
+    \item \texttt{safety\_flags}
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item Admin \& Moderation Module
+    \item Notification Module
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{submitReport()} & reportData & Confirmation & ValidationError \\
+\texttt{getReports()} & userId/adminId & ReportList & UnauthorizedError \\
+\texttt{resolveReport()} & reportId, action & Confirmation & PermissionError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{pendingReports}
+    \item \texttt{userSafetyStatus}
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{categorizeSeverity}
+    \item \texttt{flagUser}
+    \item \texttt{closeReport}
+\end{itemize}
+
+
+
+%------
