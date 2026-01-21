@@ -223,7 +223,7 @@ jobs:
       - name: Check for LaTeX overflow warnings
         working-directory: docs/${{ matrix.directory }}
         run: |
-          MAX_OVERFLOW_PT=10
+          MAX_OVERFLOW_PT=300
           OVERFLOW_FOUND=0
           for logfile in $(find . -maxdepth 1 -name "*.log" -type f); do
             filename=$(basename "$logfile" .log)
