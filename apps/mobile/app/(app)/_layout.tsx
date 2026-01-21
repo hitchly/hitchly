@@ -1,7 +1,9 @@
+import { RequireLocation } from "@/components/location/require-location";
+import { LocationProvider } from "@/context/location-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 
-export default function AppLayout() {
+const AppRoutes = () => {
   return (
     <Tabs
       screenOptions={{
@@ -28,5 +30,15 @@ export default function AppLayout() {
         }}
       />
     </Tabs>
+  );
+};
+
+export default function AppLayout() {
+  return (
+    <RequireLocation>
+      <LocationProvider>
+        <AppRoutes />
+      </LocationProvider>
+    </RequireLocation>
   );
 }

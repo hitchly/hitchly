@@ -1,19 +1,9 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider as NavigationThemeProvider,
-} from "@react-navigation/native";
+import { ThemeProvider as NavigationThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  View,
-  useColorScheme,
-} from "react-native";
-import { RequireLocation } from "../components/location/require-location";
-import { Colors } from "../constants/theme";
-import { LocationProvider } from "../context/location-context";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { useColorScheme } from "react-native";
+import { NavTheme } from "../constants/theme";
 import { AppThemeProvider } from "../context/theme-context";
 import { authClient } from "../lib/auth-client";
 import { trpc, trpcClient } from "../lib/trpc";
@@ -21,105 +11,52 @@ import { trpc, trpcClient } from "../lib/trpc";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      retry: 2,
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      staleTime: 1000 * 60 * 5,
     },
   },
 });
 
-const MyLightTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: Colors.light.primary,
-    background: Colors.light.background,
-    card: Colors.light.surface,
-    text: Colors.light.text,
-    border: Colors.light.border,
-  },
-};
-
-const MyDarkTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: Colors.dark.primary,
-    background: Colors.dark.background,
-    card: Colors.dark.surface,
-    text: Colors.dark.text,
-    border: Colors.dark.border,
-  },
-};
-
-function RootNavigator() {
+function AppContent() {
   const { data: session, isPending } = authClient.useSession();
+
+  const segments = useSegments();
+  const router = useRouter();
+
   const colorScheme = useColorScheme();
+  const currentNavTheme =
+    colorScheme === "dark" ? NavTheme.dark : NavTheme.light;
 
-  const isAuthenticated = !!session;
-  const showSplash = isPending && !session;
+  useEffect(() => {
+    if (isPending) return;
 
-  const MainStack = (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!isAuthenticated}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
+    const inAuthGroup = segments[0] === "(auth)";
 
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-    </Stack>
-  );
+    if (!session && !inAuthGroup) {
+      router.replace("/(auth)");
+    } else if (session && inAuthGroup) {
+      router.replace("/(app)");
+    }
+  }, [session, isPending, segments, router]);
 
   return (
-    <NavigationThemeProvider
-      value={colorScheme === "dark" ? MyDarkTheme : MyLightTheme}
-    >
+    <NavigationThemeProvider value={currentNavTheme}>
       <AppThemeProvider>
-        <View style={{ flex: 1 }}>
-          {isAuthenticated ? (
-            <RequireLocation>
-              <LocationProvider>{MainStack}</LocationProvider>
-            </RequireLocation>
-          ) : (
-            MainStack
-          )}
-          {showSplash && (
-            <View
-              style={[
-                styles.loadingOverlay,
-                { backgroundColor: colorScheme === "dark" ? "#000" : "#fff" },
-              ]}
-            >
-              <ActivityIndicator
-                size="large"
-                color={
-                  Colors[(colorScheme ?? "light") as "light" | "dark"].primary
-                }
-              />
-            </View>
-          )}
-        </View>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+        </Stack>
       </AppThemeProvider>
     </NavigationThemeProvider>
   );
 }
 
-export default function App() {
+export default function RootLayout() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <RootNavigator />
+        <AppContent />
       </QueryClientProvider>
     </trpc.Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 999,
-  },
-});

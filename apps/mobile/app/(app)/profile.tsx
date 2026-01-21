@@ -47,9 +47,7 @@ export default function ProfileScreen() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    await authClient.signOut({
-      fetchOptions: { onSuccess: () => console.log("Signed out") },
-    });
+    await authClient.signOut();
   };
 
   const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
