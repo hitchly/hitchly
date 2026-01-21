@@ -1,12 +1,13 @@
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
 import "dotenv/config";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { auth } from "./auth/auth";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
+import type { TRPCError } from "@trpc/server";
 
 const app = new Hono();
 
@@ -15,7 +16,7 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: (origin) => {
+    origin: (origin: string | undefined): string | undefined => {
       // Allow local development from Expo return origin directly to allow, or return null to block
       return origin || "";
     },
@@ -25,7 +26,7 @@ app.use(
   })
 );
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
+app.on(["POST", "GET"], "/api/auth/*", (c: Context) => {
   return auth.handler(c.req.raw);
 });
 
@@ -34,7 +35,13 @@ app.use(
   trpcServer({
     router: appRouter,
     createContext,
-    onError: ({ path, error }) => {
+    onError: ({
+      path,
+      error,
+    }: {
+      path: string | undefined;
+      error: TRPCError;
+    }) => {
       console.error(
         `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`
       );
@@ -42,12 +49,12 @@ app.use(
   })
 );
 
-app.onError((err, c) => {
+app.onError((err: Error, c: Context) => {
   console.error("🔥 Server Error:", err);
   return c.json({ error: "Internal Server Error", message: err.message }, 500);
 });
 
-app.get("/", (c) => {
+app.get("/", (c: Context) => {
   return c.text("🚀 Hitchly API is running on Hono!");
 });
 
