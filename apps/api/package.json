@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "@hitchly/db": "workspace:*",
     "@hitchly/emails": "workspace:*",
     "@hono/node-server": "^1.19.9",

@@ -185,3 +185,64 @@ export const usersRelations = relations(users, ({ one }) => ({
     references: [vehicles.userId],
   }),
 }));
+
+export const rideStatusEnum = pgEnum("ride_status", [
+  "scheduled",
+  "in_progress",
+  "completed",
+  "cancelled",
+]);
+
+export const requestStatusEnum = pgEnum("request_status", [
+  "pending",
+  "accepted",
+  "rejected",
+  "cancelled",
+]);
+
+// 1. The Trip (Driver Only)
+export const rides = pgTable("rides", {
+  id: text("id").primaryKey(),
+  driverId: text("driver_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  originLat: doublePrecision("origin_lat").notNull(),
+  originLng: doublePrecision("origin_lng").notNull(),
+  originAddress: text("origin_address"),
+
+  destLat: doublePrecision("dest_lat").notNull(),
+  destLng: doublePrecision("dest_lng").notNull(),
+  destAddress: text("dest_address"),
+
+  startTime: timestamp("start_time").notNull(),
+
+  maxSeats: integer("max_seats").notNull(),
+  bookedSeats: integer("booked_seats").default(0).notNull(),
+
+  status: rideStatusEnum("status").default("scheduled").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 2. The Booking (Riders link here)
+export const rideRequests = pgTable("ride_requests", {
+  id: text("id").primaryKey(),
+  rideId: text("ride_id")
+    .notNull()
+    .references(() => rides.id, { onDelete: "cascade" }),
+  riderId: text("rider_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Pickup location for this rider
+  pickupLat: doublePrecision("pickup_lat").notNull(),
+  pickupLng: doublePrecision("pickup_lng").notNull(),
+
+  status: requestStatusEnum("status").default("pending").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
