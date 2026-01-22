@@ -1,0 +1,98 @@
+\section{Admin/Moderation Module}
+
+\subsection{Module}
+This module handles the distribution of user roles and management of admin controls. This also controls and monitors activity and ensures strict policy enforcement.
+
+\paragraph{Frontend}
+This layer is responsible for providing an admin dashboard with flagged content, user complaints, user roles, and application analytics. 
+
+\paragraph{Backend}
+This layer is responsible for handling communication with RESTAPI endpoints using AdminRouter to manage user accounts and rides. Additionally, it runs the logic for handling role-based authentication. 
+
+\paragraph{Data}
+\begin{itemize}
+    \item \textbf{Admin Table:} This would include profile information about admin.
+    \item \textbf{Ride Table:} This would include information about users with warnings/bans.
+    \item \textbf{User Analytics Table:} This includes a dataset of user and application statistics.
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item \textbf{Database Module:} This is used to retrieve and store pricing details.
+    \item \textbf{Authentication \& Verification Module:} This is used to manage admin login and permissions.
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize} 
+    \item \texttt{warning\_threshold= 3}  
+    Maximum warnings before putting an account ban.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{warn\_user()} & user\_ID, reason & Bool (check if user is successfully warned) & NotFoundError, InsufficientAdminPrivileges \\
+\texttt{get\_Reports()} & None & Returns a dataset of user reports & NotFoundError, InsufficientAdminPrivileges \\
+\texttt{get\_analytics()} & None & Returns a dataset of user and application statistics & NotFoundError, InsufficientAdminPrivileges \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+N/A
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Secure HTTPS connection to API.
+    \item Secure API connection for stable admin controls and management.  
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item All admin permissions function properly. 
+    \item All database services are full functional and stable.
+    \item All API connections are functional and stable.
+\end{itemize}
+
+
+\paragraph{Access Routine Semantics}
+
+\texttt{warn\_user()}:
+\begin{itemize}
+    \item \textbf{transition:} Adds a new record with a warning in the reports table.
+    \item \textbf{output:} Bool (check if user is successfully warned).
+    \item \textbf{exception:} NotFoundError (user\_ID not found), InsufficientAdminPrivileges.
+\end{itemize}
+
+\texttt{get\_Reports()}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns a dataset of user reports.
+    \item \textbf{exception:} NotFoundError (empty dataset), InsufficientAdminPrivileges.
+\end{itemize}
+
+\texttt{get\_analytics()}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns a dataset of user and application statistics.
+    \item \textbf{exception:} NotFoundError (empty dataset), InsufficientAdminPrivileges.
+\end{itemize}
+
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{check\_privilege(admin\_ID, endpoint): bool} --- This function validates admin privileges and returns a bool to indicate whether they have sufficient privileges or not.
+\end{itemize}
+
+%-------------------

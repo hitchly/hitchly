@@ -1,0 +1,102 @@
+\section{Payment Module}
+
+\subsection{Module}
+This module is responsible for handling in-app user payments. The implementation of this module will be done through Stripe. This acts as a payment gateway to ensure a secure transaction and successful payment.  
+
+\paragraph{Frontend}
+The frontend of this application will be implemented using the Expo Client Application. A payment screen would display a form to fill out the required information for processing the payment. This includes the user's full name, mailing address, payment method, and payment information (i.e., Credit Card Number, etc.). For other methods of payment (i.e., Google Pay, PayPal, etc.), the frontend will be implemented to manage redirection. Upon a successful transaction, the user can select an option to go back to the home screen.  
+
+\paragraph{Backend}
+The backend will receive the inputs from frontend and validate the user and ride data. It is then responsible for processing the payment via calling payment gateway API to authorize the payment method and details. It will open a secure session to process the payment and get the state (i.e., payment successful, processing, error) to display as the output. Lastly, this component will ensure that the transaction is recorded in the database and that receipts have been sent to the user's emails.  
+
+\paragraph{Data}
+The database component is responsible for storing the user's payment history, ride details, and transaction information.  
+
+\subsection{Uses}
+This module ensures secure access to Hitchly by verifying each user's McMaster University affiliation.  
+It interacts directly with:
+\begin{itemize}
+    \item \textbf{User Profile Module:} This is used to retrieve user profile details for verification. 
+    \item \textbf{Route \& Trip Module:} This is used to retrieve trip details like cost, ID, etc.
+    \item \textbf{Database Module:} This is used to store trip transaction details into the database.  
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{max\_attempt = 4}  
+    Maximum attempts to make a transaction before they have to wait for 30 minutes. 
+    \item \texttt{max\_session = 25}  
+    Maximum allowed time (in minutes) for a session to process the payment before it throws a processing error. 
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{init\_payment()} & user\_id, ride\_id & Boolean~(verified or unverified) & NotFoundError \\
+\texttt{process\_payment()} & payment\_id, payment\_method & payment\_status & ExpiredSessionError \\
+\texttt{get\_paymentRecord()} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{current\_amount: float} --- holds the current amount for the transaction.
+    \item \texttt{session\_token: string} --- holds the current amount for the transaction.
+    \item \texttt{sessionState: object} --- holds session metadata for frontend persistence.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Secure HTTPS connection to API.
+    \item Secure API connection to payment gateways.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The users won't intentionally input expired or invalid credentials.
+    \item The API connection is secure and stable throughout the payment process.
+    \item The payment gateways will handle user's confidential information securely.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{init\_payment()}:
+\begin{itemize}
+    \item \textbf{transition:} None
+    \item \textbf{output:} Bool (user verified for the specific ride or not)
+    \item \textbf{exception:} NotFoundError, user or ride not found.
+\end{itemize}
+
+\texttt{Process\_payment()}:
+\begin{itemize}
+    \item \textbf{transition:} Initializes connection with the API.
+    \item \textbf{output:} Returns whether the payment is succesful, processing or failed.
+    \item \textbf{exception:} ExpiredSessionError if the session fails to process the payment due to session limits.
+\end{itemize}
+
+\texttt{get\_paymentRecord()}:
+\begin{itemize}
+    \item \textbf{transition:} Creates a payment record.
+    \item \textbf{output:} List of payment records.
+    \item \textbf{exception:} NotFoundError if one of the required parameters is missing.
+\end{itemize}
+
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{generateVerificationToken(): string} --- Creates a cryptographically secure token.
+\end{itemize}
+
+%----

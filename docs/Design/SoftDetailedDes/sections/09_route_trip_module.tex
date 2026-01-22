@@ -1,0 +1,166 @@
+\section{Route \& Trip Module}
+
+\subsection{Module}
+The Route \& Trip Module manages trip creation, storage, and retrieval for both drivers and riders.  
+It enables users to post, view, and manage trip listings that include origin, destination, departure time, and available seats.  
+This module provides the core data used by the Matching Module to pair drivers and riders based on spatial and temporal compatibility.
+
+\paragraph{Frontend}
+Implemented within the Expo mobile application, the frontend presents interactive screens and forms that allow users to create, browse, and manage trips.  
+Key features include:
+\begin{itemize}
+    \item Trip creation form with origin, destination, date, and time pickers.
+    \item Real-time map visualization of routes using a mapping API (e.g., Google Maps SDK).
+    \item List and detail views for upcoming, active, and completed trips.
+    \item Seat selection and trip cancellation interfaces for drivers.
+    \item Integration with tRPC hooks such as \texttt{useCreateTrip} and \texttt{useGetTrips}.
+    \item Validation feedback for missing fields or invalid time ranges.
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements business logic and trip operations through tRPC endpoints.  
+It is responsible for managing trip lifecycle states and validating trip details before persistence.  
+Primary responsibilities include:
+\begin{itemize}
+    \item Exposing API endpoints for trip creation, retrieval, and deletion.
+    \item Validating trip parameters (valid coordinates, available seats, future departure time).
+    \item Associating trips with authenticated users via BetterAuth sessions.
+    \item Handling role-based permissions (drivers can create trips, riders can request rides).
+    \item Broadcasting trip updates to relevant modules (Matching, Scheduling).
+\end{itemize}
+Typical procedures include \texttt{createTrip}, \texttt{getTrips}, and \texttt{cancelTrip}.
+
+\paragraph{Data}
+Trip data is persisted in the PostgreSQL database via Drizzle ORM.  
+The schema supports relational integrity between users, trips, and matches.  
+Primary tables include:
+\begin{itemize}
+    \item \texttt{trips} --- stores trip metadata: origin, destination, time, seats, and driver ID.
+    \item \texttt{trip\_requests} --- records ride requests by riders awaiting confirmation.
+    \item \texttt{routes} --- optional table caching route geometry and distance metrics.
+\end{itemize}
+Each record maintains timestamps for creation and modification, and all inserts are validated against foreign key constraints referencing the \texttt{users} table.
+
+\subsection{Uses}
+This module is used by both drivers and riders to manage travel logistics.  
+It interacts directly with:
+\begin{itemize}
+    \item \textbf{User Profile Module} - links trips to driver and rider profiles.
+    \item \textbf{Matching Module} - provides trip data for route and schedule-based matching.
+    \item \textbf{Scheduling Module} - integrates recurring trips and time management.
+    \item \textbf{Notification Module} - triggers updates for trip confirmations or cancellations.
+\end{itemize}
+It serves as the foundation for dynamic route pairing and trip coordination within the Hitchly system.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_SEATS = 5} - Maximum allowable seats per trip.
+    \item \texttt{TIME\_WINDOW\_MIN = 15} - Minimum departure buffer in minutes.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{createTrip()} & TripData & TripRecord & ValidationError \\
+\texttt{getTrips()} & userId, filters & TripList & NotFoundError \\
+\texttt{cancelTrip()} & tripId & Confirmation & UnauthorizedError \\
+\texttt{updateTrip()} & tripId, UpdatedFields & UpdatedTripRecord & ValidationError \\
+\texttt{getTripById()} & tripId & TripRecord & NotFoundError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{activeTrips} - the current list of trips posted by the authenticated driver.
+    \item \texttt{tripRequests} - ride requests awaiting driver approval.
+    \item \texttt{tripCache} - locally cached trip data for offline viewing.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Mobile device GPS for route mapping.
+    \item Network connection for fetching and updating trip data.
+    \item PostgreSQL database via Drizzle ORM for persistent storage.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The user is authenticated and verified before creating or editing a trip.
+    \item The map service API key and geocoding are correctly configured.
+    \item All database migrations have been applied prior to runtime.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{createTrip()}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Creates new trip record from TripData input
+        \item $\text{activeTrips} := \text{activeTrips} \cup \{\text{newTrip}\}$
+        \item Inserts new trip entry into the database associated with the user
+        \item Updates $\text{tripCache}$ with the new trip record
+    \end{itemize}
+    \item \textbf{output:} Returns the newly created trip record from $\text{activeTrips}$.
+    \item \textbf{exception:} ValidationError if trip data invalid or incomplete.
+\end{itemize}
+
+\texttt{getTrips()}:
+\begin{itemize}
+    \item \textbf{transition:} None (read-only operation).
+    \item \textbf{output:} Returns filtered subset of $\text{activeTrips}$ or $\text{tripCache}$ based on userId and filters. If network available, reads from database and updates $\text{tripCache}$; otherwise returns from $\text{tripCache}$.
+    \item \textbf{exception:} NotFoundError if no trips exist for criteria ($\text{activeTrips} = \emptyset$ for given filters).
+\end{itemize}
+
+\texttt{updateTrip()}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Locates trip in $\text{activeTrips}$ by tripId
+        \item Updates the trip entry in $\text{activeTrips}$ with new fields from UpdatedFields
+        \item Modifies corresponding entry in database
+        \item Updates $\text{tripCache}$ with modified trip record
+    \end{itemize}
+    \item \textbf{output:} Returns updated trip record from $\text{activeTrips}$.
+    \item \textbf{exception:} ValidationError on invalid field or unauthorized edit (trip not found in $\text{activeTrips}$ for current user).
+\end{itemize}
+
+\texttt{cancelTrip()}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Locates trip in $\text{activeTrips}$ by tripId
+        \item $\text{activeTrips} := \text{activeTrips} \setminus \{\text{canceledTrip}\}$
+        \item Marks trip as canceled in database (status := canceled)
+        \item Removes trip from $\text{tripCache}$
+        \item Notifies dependent modules (Matching, Notification) of cancellation
+    \end{itemize}
+    \item \textbf{output:} Returns confirmation of cancellation.
+    \item \textbf{exception:} UnauthorizedError if user lacks permission (trip not in $\text{activeTrips}$ for current user).
+\end{itemize}
+
+\texttt{getTripById()}:
+\begin{itemize}
+    \item \textbf{transition:} None (read-only operation).
+    \item \textbf{output:} Returns specific trip details by ID. Searches $\text{activeTrips}$ first, then $\text{tripCache}$ if not found. If network available and not in cache, queries database and updates $\text{tripCache}$.
+    \item \textbf{exception:} NotFoundError if ID does not exist (trip not found in $\text{activeTrips}$, $\text{tripCache}$, or database).
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{calculateRouteDistance(origin, destination)} - Computes estimated distance and duration.
+    \item \texttt{validateTripInput(tripData)} - Ensures all required fields and constraints are satisfied.
+    \item \texttt{filterTripsByTime(trips, window)} - Returns only those trips within a certain time range.
+\end{itemize}

@@ -1,0 +1,50 @@
+\section{Introduction}
+
+Decomposing a system into modules is a commonly accepted approach to developing
+software.  A module is a work assignment for a programmer or programming
+team~\citep{ParnasEtAl1984}.  We advocate a decomposition
+based on the principle of information hiding~\citep{Parnas1972a}.  This
+principle supports design for change, because the ``secrets'' that each module
+hides represent likely future changes.  Design for change is valuable in SC,
+where modifications are frequent, especially during initial development as the
+solution space is explored.  
+
+Our design follows the rules layed out by \citet{ParnasEtAl1984}, as follows:
+\begin{itemize}
+\item System details that are likely to change independently should be the
+  secrets of separate modules.
+\item Each data structure is implemented in only one module.
+\item Any other program that requires information stored in a module's data
+  structures must obtain it by calling access programs belonging to that module.
+\end{itemize}
+
+After completing the first stage of the design, the Software Requirements
+Specification (SRS), the Module Guide (MG) is developed~\citep{ParnasEtAl1984}. The MG
+specifies the modular structure of the system and is intended to allow both
+designers and maintainers to easily identify the parts of the software.  The
+potential readers of this document are as follows:
+
+\begin{itemize}
+\item New project members: This document can be a guide for a new project member
+  to easily understand the overall structure and quickly find the
+  relevant modules they are searching for.
+\item Maintainers: The hierarchical structure of the module guide improves the
+  maintainers' understanding when they need to make changes to the system. It is
+  important for a maintainer to update the relevant sections of the document
+  after changes have been made.
+\item Designers: Once the module guide has been written, it can be used to
+  check for consistency, feasibility, and flexibility. Designers can verify the
+  system in various ways, such as consistency among modules, feasibility of the
+  decomposition, and flexibility of the design.
+\end{itemize}
+
+The rest of the document is organized as follows. Section
+\ref{SecChange} lists the anticipated and unlikely changes of the software
+requirements. Section \ref{SecMH} summarizes the module decomposition that
+was constructed according to the likely changes. Section \ref{SecConnection}
+specifies the connections between the software requirements and the
+modules. Section \ref{SecMD} gives a detailed description of the
+modules. Section \ref{SecTM} includes two traceability matrices. One checks
+the completeness of the design against the requirements provided in the SRS. The
+other shows the relation between anticipated changes and the modules. Section
+\ref{SecUse} describes the use relation between modules.

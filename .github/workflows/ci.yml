@@ -220,6 +220,40 @@ jobs:
               fi
             fi
           done
+      - name: Check for LaTeX overflow warnings
+        working-directory: docs/${{ matrix.directory }}
+        run: |
+          MAX_OVERFLOW_PT=300
+          OVERFLOW_FOUND=0
+          for logfile in $(find . -maxdepth 1 -name "*.log" -type f); do
+            filename=$(basename "$logfile" .log)
+            echo "Checking overflow warnings in: $logfile"
+            OVERFLOWS=$(grep -E "Overfull \\\\hbox" "$logfile" || true)
+            if [ -n "$OVERFLOWS" ]; then
+              echo "Found overflow warnings in $filename.log:"
+              echo "$OVERFLOWS" | head -20
+              # Extract overflow amounts and check if any exceed threshold
+              # Use awk to parse the overflow amount and compare
+              EXCEEDING=$(echo "$OVERFLOWS" | grep -oE "[0-9]+\\.[0-9]+pt too wide" | sed 's/pt too wide//' | awk -v max="$MAX_OVERFLOW_PT" '$1+0 > max' || true)
+              if [ -n "$EXCEEDING" ]; then
+                echo "::error file=$logfile::Found overflow(s) exceeding ${MAX_OVERFLOW_PT}pt threshold:"
+                echo "$EXCEEDING" | while read amount; do
+                  echo "  - ${amount}pt overflow detected"
+                done
+                OVERFLOW_FOUND=1
+              else
+                OVERFLOW_COUNT=$(echo "$OVERFLOWS" | wc -l)
+                echo "  Found $OVERFLOW_COUNT overflow(s), all within acceptable threshold (<= ${MAX_OVERFLOW_PT}pt)"
+              fi
+            else
+              echo "  No overflow warnings found"
+            fi
+          done
+          if [ $OVERFLOW_FOUND -eq 1 ]; then
+            echo "::error::LaTeX overflow warnings exceed ${MAX_OVERFLOW_PT}pt threshold. Please fix margin issues."
+            exit 1
+          fi
+          echo "✅ All overflow warnings are within acceptable limits"
 
   latex-compile-check:
     name: LaTeX Compilation Check

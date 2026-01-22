@@ -1,0 +1,102 @@
+\section{Pricing Module}
+
+\subsection{Module}
+This module handles the initial cost estimation functionality of the application. 
+
+\paragraph{Frontend}
+This layer provides the UI for displaying the factors influencing the price per ride, along with a price estimation for it. It dynamically updates the price as new rides join the ride for a specific ride. 
+
+\paragraph{Backend}
+This layer provides the algorithm to use those factors and accurately calculate the cost estimation for each rider for a given trip. It interacts with the Google Maps API to fetch location and distance values. Additionally, it sends this data to the payment module for processing the final payment for each rider. 
+
+\paragraph{Data}
+The database component is responsible for storing the following table:
+\begin{itemize}
+    \item \textbf{Pricing Table:} Contains data related to pricing as per the parameters.
+    \item \textbf{Ride Table:} Contains data related to ride details.
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item \textbf{User Profile Module:} This is used to retrieve the user type.
+    \item \textbf{Database Module:} This is used to retrieve and store pricing details.
+    \item \textbf{Route \& Trip Module:} This is used to retrieve and store trip details like cost, ID, etc.
+    \item \textbf{Payment Module:} The final cost estimation from this module is sent to the payment module.
+\end{itemize}
+
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize} 
+    \item \texttt{max\_session\_time = 30}  
+    30 minutes limit before the API session times out.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{get\_ride\_summary()} & rideID & ride\_summary & NotFoundError \\
+\texttt{estimate\_cost()} & start\_location, end\_location, rider\_count & fare\_estimate & InvalidLocationException, APITimeOutException \\
+\texttt{update\_fare()} & new\_rider\_count & updated\_fare & APITimeOutException \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+N/A
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Secure HTTPS connection to API.
+    \item Secure Maps API connection for accurate estimation of travel time and distance.
+    \item Secure API connections to get daily fuel rates.    
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The external API services function properly with minimal downtime. 
+    \item The fuel estimates online are accurate.
+    \item The internet connection stays stable during the cost estimation process.
+\end{itemize}
+
+
+\paragraph{Access Routine Semantics}
+
+\texttt{get\_ride\_summary()}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns a ride summary object.
+    \item \textbf{exception:} NotFoundError (ride not found).
+\end{itemize}
+
+\texttt{estimate\_cost()}:
+\begin{itemize}
+    \item \textbf{transition:} Retrieves information from API and updates database tables.
+    \item \textbf{output:} Fare\_estimate, returns an estimated price value.
+    \item \textbf{exception:} InvalidLocationException, APITimeOutException.
+\end{itemize}
+
+\texttt{update\_fare()}:
+\begin{itemize}
+    \item \textbf{transition:} Retrieves information from API and updates database tables.
+    \item \textbf{output:} Updated\_fare, returns an estimated price value.
+    \item \textbf{exception:} APITimeOutException.
+\end{itemize}
+
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{validate\_parameters(start\_location, end\_location, rider\_count): bool} --- Check if the values are not negative and are valid inputs.
+\end{itemize}
+
+%----------

@@ -1,0 +1,61 @@
+\section{Notation}
+
+The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
+with the addition that template modules have been adapted from
+\cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
+\citet{HoffmanAndStrooper1995}.  For instance, the symbol := is used for a
+multiple assignment statement and conditional rules follow the form $(c_1
+\Rightarrow r_1 | c_2 \Rightarrow r_2 | ... | c_n \Rightarrow r_n )$.
+
+The following table summarizes the primitive data types used by \progname. 
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\noindent 
+\begin{tabular}{l l p{5.5cm}} 
+\toprule 
+\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
+\midrule
+character & char & a single symbol or digit\\
+integer & $\mathbb{Z}$ & a number without a fractional component in (-$\infty$, $\infty$) \\
+natural number & $\mathbb{N}$ & a number without a fractional component in [1, $\infty$) \\
+real & $\mathbb{R}$ & any number in (-$\infty$, $\infty$)\\
+\bottomrule
+\end{tabular} 
+\end{center}
+
+\noindent
+The specification of \progname \ uses some derived data types: sequences, strings, and
+tuples. Sequences are lists filled with elements of the same data type. Strings
+are sequences of characters. Tuples contain a list of values, potentially of
+different types. In addition, \progname \ uses functions, which
+are defined by the data types of their inputs and outputs. Local functions are
+described by giving their type signature followed by their specification.
+
+\noindent
+The following enumerated and composite types are used throughout the specification:
+
+\begin{itemize}
+    \item \textbf{Role} = \{rider, driver, both\} --- User role enumeration
+    \item \textbf{Day} = \{Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\} --- Day of week enumeration
+    \item \textbf{TripStatus} = \{pending, active, completed, canceled\} --- Trip state enumeration
+    \item \textbf{SwipeType} = \{like, pass\} --- Swipe action enumeration
+    \item \textbf{Location} = (latitude: $\mathbb{R}$, longitude: $\mathbb{R}$) --- Geographic coordinates
+    \item \textbf{UserRecord} = (userId: $\mathbb{N}$, name: string, email: string, role: Role, faculty: string, year: $\mathbb{N}$, bio: string, profileImageUrl: string, verified: bool) --- Complete user profile
+    \item \textbf{UpdatedRecord} = UserRecord --- Updated user profile (same structure as UserRecord)
+    \item \textbf{PreferenceData} = (userId: $\mathbb{N}$, quietRide: bool, musicPreference: string, smokingAllowed: bool, maxDetour: $\mathbb{R}$) --- User ride preferences
+    \item \textbf{UpdatedPreference} = PreferenceData --- Updated preferences (same structure as PreferenceData)
+    \item \textbf{TripRecord} = (tripId: $\mathbb{N}$, driverId: $\mathbb{N}$, origin: Location, destination: Location, departureTime: $\mathbb{R}$, availableSeats: $\mathbb{N}$, status: TripStatus) --- Complete trip information
+    \item \textbf{TripList} = seq of TripRecord --- Sequence of trip records
+    \item \textbf{TripData} = (origin: Location, destination: Location, departureTime: $\mathbb{R}$, availableSeats: $\mathbb{N}$) --- Trip creation input
+    \item \textbf{UpdatedFields} = (origin?: Location, destination?: Location, departureTime?: $\mathbb{R}$, availableSeats?: $\mathbb{N}$) --- Optional trip update fields (all fields optional)
+    \item \textbf{UpdatedTripRecord} = TripRecord --- Updated trip record (same structure as TripRecord)
+    \item \textbf{ScheduleRecord} = (scheduleId: $\mathbb{N}$, userId: $\mathbb{N}$, daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Recurring schedule definition
+    \item \textbf{ScheduleList} = seq of ScheduleRecord --- Sequence of schedule records
+    \item \textbf{scheduleData} = (daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Schedule creation input
+    \item \textbf{MatchRecord} = (matchId: $\mathbb{N}$, riderId: $\mathbb{N}$, driverId: $\mathbb{N}$, tripId: $\mathbb{N}$, score: $\mathbb{R}$, timestamp: $\mathbb{R}$) --- Match result with compatibility score
+    \item \textbf{RankedMatchList} = seq of MatchRecord --- Sequence of match records ordered by score (descending)
+    \item \textbf{SwipeRecord} = (swipeId: $\mathbb{N}$, userId: $\mathbb{N}$, targetId: $\mathbb{N}$, swipeType: SwipeType, timestamp: $\mathbb{R}$) --- User swipe action record
+    \item \textbf{MatchSummary} = (mutualMatches: seq of MatchRecord, pendingSwipes: seq of SwipeRecord) --- Complete match status for a user
+    \item \textbf{Confirmation} = bool --- Operation success confirmation
+\end{itemize}

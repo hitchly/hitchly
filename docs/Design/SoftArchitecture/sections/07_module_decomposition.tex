@@ -1,0 +1,160 @@
+\section{Module Decomposition} \label{SecMD}
+
+\begingroup
+\setlength{\parindent}{0pt}
+
+Modules are decomposed according to the principle of information hiding
+\citep{ParnasEtAl1984}.  
+Each module’s \textit{Secrets} describes the internal design decision that is
+intentionally hidden from other modules, while the \textit{Services} field specifies
+\textit{what} the module provides without revealing \textit{how} the service is implemented.  
+The \textit{Frontend UI}, \textit{API Logic}, and \textit{Database Models} indicate 
+how each module is realized across the system’s architecture.  
+\textit{Implemented By} identifies the technologies used, and 
+\textit{Type of Module} classifies each module as a Behaviour-Hiding or 
+Software-Decision module according to Section~\ref{SecMH}.  
+Only the leaf modules are included.
+
+% ---------------------------------------------------------
+% BEHAVIOUR-HIDING MODULES
+% ---------------------------------------------------------
+\subsection*{Behaviour-Hiding Modules}
+
+\subsubsection*{M1: Authentication \& Verification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Token/session strategy, email-verification workflow, and credential-validation logic.
+  \item \textbf{Services:} Allows users to register, log in, and verify McMaster email accounts.
+  \item \textbf{Frontend UI:} Login screens, signup forms, verification code UI.
+  \item \textbf{API Logic:} \texttt{authRouter} (login, register, verify), session helpers, Zod validation.
+  \item \textbf{Database Models:} \texttt{User} table (email, password hash, verified flag, session tokens).
+  \item \textbf{Implemented By:} React Native (Expo) + tRPC backend with Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M2: User Profile Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Role-assignment logic and profile-preference storage design.
+  \item \textbf{Services:} Provides profile editing, preferences, and vehicle data management.
+  \item \textbf{Frontend UI:} Profile page, edit forms, vehicle info inputs.
+  \item \textbf{API Logic:} \texttt{userRouter} for CRUD operations, preference update flow.
+  \item \textbf{Database Models:} \texttt{User}, \texttt{Vehicle}, \texttt{Preference}.
+  \item \textbf{Implemented By:} React Native UI + tRPC + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M3: Route \& Trip Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Trip-storage schema, route normalization, and time formatting.
+  \item \textbf{Services:} Allows users to create, list, and cancel trips.
+  \item \textbf{Frontend UI:} Trip creation form, trip list UI, route selection screen.
+  \item \textbf{API Logic:} \texttt{tripRouter} for trip creation, querying, and deletion.
+  \item \textbf{Database Models:} \texttt{Trip} table (origin, destination, time, seat count).
+  \item \textbf{Implemented By:} React Native + tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M4: Matching Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Scoring algorithm, distance/time weighting, and Strategy Pattern implementation.
+  \item \textbf{Services:} Computes driver–rider compatibility and returns ordered match results.
+  \item \textbf{Frontend UI:} Swipe-based card UI, match results list.
+  \item \textbf{API Logic:} \texttt{matchmakingRouter}, MatchEngine (Strategy Pattern).
+  \item \textbf{Database Models:} \texttt{Match}, \texttt{Swipe}.
+  \item \textbf{Implemented By:} Node.js backend (tRPC) + algorithm utilities + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M5: Scheduling Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Recurring-trip generation algorithm and time-window parsing.
+  \item \textbf{Services:} Creates recurring or one-time schedules linked to trips.
+  \item \textbf{Frontend UI:} Time picker, recurring toggle, calendar UI.
+  \item \textbf{API Logic:} Schedule parser and recurring schedule generator.
+  \item \textbf{Database Models:} \texttt{Schedule} table.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M6: Notification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Push-token handling and asynchronous event queue logic.
+  \item \textbf{Services:} Sends push notifications for matches, cancellations, and reminders.
+  \item \textbf{Frontend UI:} In-app notification center, Expo push integration.
+  \item \textbf{API Logic:} Notification service with event emitters.
+  \item \textbf{Database Models:} \texttt{Notification} table.
+  \item \textbf{Implemented By:} Expo Push Service + tRPC backend dispatcher.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M7: Rating \& Feedback Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Reputation computation and weighting logic.
+  \item \textbf{Services:} Enables users to submit ratings and text feedback after trips.
+  \item \textbf{Frontend UI:} Post-ride rating screen.
+  \item \textbf{API Logic:} \texttt{ratingRouter}.
+  \item \textbf{Database Models:} \texttt{Rating} table (linked to \texttt{Match}).
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M8: Safety \& Reporting Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Incident-flagging thresholds and safety-response workflow.
+  \item \textbf{Services:} Allows reporting of unsafe behaviour and stores incidents for admin review.
+  \item \textbf{Frontend UI:} Report button, safety resources screen.
+  \item \textbf{API Logic:} Report submission via \texttt{reportRouter}.
+  \item \textbf{Database Models:} \texttt{Report}.
+  \item \textbf{Implemented By:} React Native + tRPC + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M9: Payment \& Cost Estimation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Fare-calculation logic and mock-payment validation.
+  \item \textbf{Services:} Estimates ride cost and records payment confirmations.
+  \item \textbf{Frontend UI:} Fare display, confirmation screen.
+  \item \textbf{API Logic:} \texttt{paymentRouter}.
+  \item \textbf{Database Models:} \texttt{Payment}, \texttt{Transaction}.
+  \item \textbf{Implemented By:} tRPC backend + Prisma ORM.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M10: Admin \& Moderation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Moderation rules, flagging thresholds, and admin-only access logic.
+  \item \textbf{Services:} Allows admins to review reports, ban users, and view platform stats.
+  \item \textbf{Frontend UI:} Admin dashboard (optional).
+  \item \textbf{API Logic:} \texttt{adminRouter}.
+  \item \textbf{Database Models:} Admin logs, flagged users.
+  \item \textbf{Implemented By:} tRPC backend + Prisma.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+% ---------------------------------------------------------
+% SOFTWARE-DECISION MODULES
+% ---------------------------------------------------------
+\subsection*{Software-Decision Modules}
+
+\subsubsection*{M11: Pricing Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Fuel-rate constants, distance multipliers, and fare model.
+  \item \textbf{Services:} Computes estimated trip price using distance and conditions.
+  \item \textbf{Frontend UI:} Fare estimate displayed in trip preview.
+  \item \textbf{API Logic:} Cost-calculation service reused by M9.
+  \item \textbf{Database Models:} Pricing configuration constants.
+  \item \textbf{Implemented By:} Node.js backend utilities + shared pricing helpers.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\subsubsection*{M12: Database Module}
+\begin{itemize}
+  \item \textbf{Secrets:} ORM mapping, schema decisions, and migration strategy.
+  \item \textbf{Services:} Provides access to all persistent data models via a centralized DB client.
+  \item \textbf{Frontend UI:} None.
+  \item \textbf{API Logic:} Prisma client configuration and model exports.
+  \item \textbf{Database Models:} All tables (User, Trip, Match, Schedule, etc.).
+  \item \textbf{Implemented By:} Prisma ORM + PostgreSQL.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\endgroup
