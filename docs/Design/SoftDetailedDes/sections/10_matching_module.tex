@@ -1,42 +1,42 @@
 \section{Matching Module} \label{sec:matching_module}
 
 \subsection{Module}
-The Matching Module is the core algorithmic engine of Hitchly.  
-It is responsible for generating ranked matches between riders and drivers based on route proximity, time compatibility, and ride preferences.  
-This module applies the \textbf{Strategy Pattern} to maintain flexibility, allowing future replacement or enhancement of the scoring algorithm (e.g., machine learning or context-aware scoring).  
-Its outputs drive the swipe-based interface, where users browse and select potential ride matches.
+The Matching Module is the core algorithmic engine of the system. 
+It is responsible for generating ranked matches between riders and drivers based on route proximity, time compatibility, and ride preferences. 
+This module applies the \textbf{Strategy Pattern} to maintain flexibility, allowing future replacement or enhancement of the scoring algorithm (e.g., machine learning or context-aware scoring). 
+Its outputs drive the user interface, where users browse and select potential ride matches.
 
 \paragraph{Frontend}
-Implemented in the Expo mobile app, the frontend presents matches as interactive swipeable cards in a Tinder-style interface.  
+Implemented in the client application, the frontend presents matches as interactive cards in a sequential interface. 
 Key features include:
 \begin{itemize}
-    \item Swipe gestures for liking or passing on potential matches.
+    \item Input gestures for accepting or passing on potential matches.
     \item Real-time display of top recommended drivers or riders with route, time, and compatibility score.
-    \item API integration through tRPC hooks (e.g., \texttt{useGetMatches}, \texttt{useSubmitSwipe}).
-    \item Visual match indicators such as “Good Match” or percentage score badges.
-    \item Smooth animations and immediate feedback for mutual matches.
+    \item API integration through remote procedure calls.
+    \item Visual match indicators such as qualitative labels or percentage score badges.
+    \item Immediate visual feedback for mutual matches.
 \end{itemize}
 
 \paragraph{Backend}
-The backend implements the matchmaking logic within the Express/tRPC API, encapsulated in a dedicated service class (\texttt{MatchEngine}).  
-The design follows the Strategy Pattern to keep scoring algorithms modular.  
+The backend implements the matchmaking logic within the application server, encapsulated in a dedicated service component. 
+The design follows the Strategy Pattern to keep scoring algorithms modular. 
 Primary responsibilities include:
 \begin{itemize}
-    \item Retrieving candidate users and associated trips from the database.
-    \item Filtering incompatible pairs by hard constraints:\linebreak verified McMaster email,\linebreak opposite roles, overlapping time windows,\linebreak and nearby routes.
+    \item Retrieving candidate users and associated trips from the persistence layer.
+    \item Filtering incompatible pairs by hard constraints: verified institutional email, opposite roles, overlapping time windows, and nearby routes.
     \item Applying a scoring strategy (default: WeightedMatchStrategy) that computes a match score (0--100) using normalized factors.
-    \item Sorting and returning the highest-scoring results to the frontend.
-    \item Storing swipe actions and updating mutual matches.
+    \item Sorting and returning the highest-scoring results to the client.
+    \item Storing selection actions and updating mutual matches.
 \end{itemize}
-The backend exposes tRPC endpoints such as \texttt{findMatchesForUser}, \texttt{submitSwipe}, and \texttt{getMatchResults}.
+The backend exposes endpoints for finding matches, submitting selections, and retrieving confirmed results.
 
 \paragraph{Data}
-The data layer maintains persistent records of matches, swipes, and scoring metrics within PostgreSQL via Drizzle ORM.  
-Key tables include:
+The data layer maintains persistent records of matches, interactions, and scoring metrics within the relational database. 
+Key entities include:
 \begin{itemize}
-    \item \texttt{matches} --- stores confirmed mutual matches (rider <-> driver) with timestamp and score.
-    \item \texttt{swipes} --- records all swipe actions for analytics and recommender tuning.
-    \item \texttt{match\_history} --- archives past matches for feedback and trust scoring.
+    \item \texttt{MatchEntity} --- stores confirmed mutual matches (rider <-> driver) with timestamp and score.
+    \item \texttt{InteractionEntity} --- records all user decisions (accept/pass) for analytics and recommender tuning.
+    \item \texttt{MatchHistoryEntity} --- archives past matches for feedback and trust scoring.
 \end{itemize}
 Foreign keys link match records to both users and trips, ensuring referential integrity.
 
@@ -57,6 +57,7 @@ The state machines are designed to be:
 The implementation-level FSM contains additional transitions for error handling, retries, and recovery paths that ensure runtime correctness. For clarity, the documented state machines present simplified conceptual models that focus on the primary workflow, while the runtime FSM enforces all edge cases. This separation follows best practices in formal specification, where abstraction aids understanding while implementation ensures robustness.
 \fussy
 
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.95\linewidth]{matching_fsm.pdf}
@@ -73,6 +74,7 @@ The Matching FSM (Figure~\ref{fig:matching_fsm}) models the core match discovery
     \item Presenting matches or indicating no matches found
 \end{itemize}
 
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.95\linewidth]{request_fsm.pdf}
@@ -87,6 +89,7 @@ The Request FSM (Figure~\ref{fig:request_fsm}) models the ride request lifecycle
     \item Processing accepted requests
     \item Confirming matches or handling cancellations
 \end{itemize}
+
 
 \begin{figure}[ht]
 \centering
@@ -114,7 +117,7 @@ The Matching FSM handles the core match discovery and ranking process:
     \item \textbf{Searching for Matches}: Retrieving potential candidates from database.
     \item \textbf{Applying Hard Constraints}: Filtering candidates using non-negotiable rules:
     \begin{itemize}
-        \item Verified McMaster email
+        \item Verified institutional email
         \item Opposite role (rider $\leftrightarrow$ driver)
         \item Overlapping time windows
         \item Nearby / overlapping routes
@@ -225,10 +228,10 @@ This module connects directly with:
 \begin{itemize}
     \item \textbf{Route \& Trip Module} - provides trip data (origin, destination, departure time)
     \item \textbf{User Profile Module} - provides preference data and reliability rating.
-    \item \textbf{Swipe Interaction Frontend} - renders and collects swipe input.
+    \item \textbf{Client Interaction Layer} - renders and collects user selection input.
     \item \textbf{Notification Module} - notifies users upon mutual matches.
 \end{itemize}
-It is the computational bridge between trip listings and user engagement,\linebreak supporting Hitchly's key matchmaking feature.
+It is the computational bridge between trip listings and user engagement,\linebreak supporting the key matchmaking feature.
 
 \subsection{Syntax}
 
@@ -247,12 +250,12 @@ It is the computational bridge between trip listings and user engagement,\linebr
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{findMatchesForUser()} & userId, request & RankedMatchList & NotFoundError \\
-\texttt{requestRide()} & rideId, pickupLat, pickupLng & Confirmation & NotFoundError, BadRequestError \\
-\texttt{acceptRequest()} & requestId & Confirmation & NotFoundError, BadRequestError, ForbiddenError \\
-\texttt{cancelRequest()} & requestId & Confirmation & NotFoundError, ForbiddenError \\
-\texttt{getMatchResults()} & userId & MatchSummary & None \\
-\texttt{computeScore()} & rider, driver & Float (0-100) & AlgorithmError \\
+\texttt{findMatchesForUser} & userId: $\mathbb{N}$, request: RequestData & RankedMatchList & NotFound \\
+\texttt{requestRide} & rideId: $\mathbb{N}$, pickup: Location & Confirmation & NotFound, BadRequest \\
+\texttt{acceptRequest} & requestId: $\mathbb{N}$ & Confirmation & NotFound, BadRequest, Forbidden \\
+\texttt{cancelRequest} & requestId: $\mathbb{N}$ & Confirmation & NotFound, Forbidden \\
+\texttt{getMatchResults} & userId: $\mathbb{N}$ & MatchSummary & None \\
+\texttt{computeScore} & rider: UserRecord, driver: UserRecord & Score: $\mathbb{R}$ & AlgorithmError \\
 \bottomrule
 \end{tabular}
 }
@@ -266,27 +269,27 @@ It is the computational bridge between trip listings and user engagement,\linebr
 The module state is defined by the current state machine state and associated data:
 
 \begin{itemize}
-    \item \texttt{moduleState} $\in \{\text{UNINITIALIZED}, \text{INITIALIZING}, \text{READY}, \text{PROCESSING}, \text{IDLE}, \text{ERROR}, \text{SHUTDOWN}\}$\linebreak --- Current lifecycle state
-    \item \texttt{operationState} $\in \text{MatchStates} \cup \text{RequestStates} \cup \text{AcceptStates}$\linebreak $\cup \text{CancelStates} \cup \text{ResultsStates}$\linebreak --- Current operation state,\linebreak where each set contains the states for the respective operation
-    \item \texttt{candidatePool} - list of drivers or riders retrieved for a user\linebreak (valid in states: QUERYING\_RIDES, VALIDATING\_CANDIDATES, COMPUTING\_ROUTES, SCORING\_CANDIDATES)
-    \item \texttt{activeStrategy} - reference to the current scoring algorithm\linebreak (valid when $\text{moduleState} \in \{\text{READY}, \text{PROCESSING}\}$)
-    \item \texttt{matchResults} - ordered list of potential matches with scores\linebreak (valid in states: RANKING\_MATCHES, MATCH\_COMPLETE)
-    \item \texttt{operationQueue} - queue of pending operations\linebreak (valid when moduleState = READY or PROCESSING)
-    \item \texttt{currentOperation} - currently executing operation\linebreak (valid when moduleState = PROCESSING)
+    \item \texttt{ModuleState} $\in \{\text{UNINITIALIZED}, \text{INITIALIZING}, \text{READY}, \text{PROCESSING}, \text{IDLE}, \text{ERROR}, \text{SHUTDOWN}\}$\linebreak --- Current lifecycle state
+    \item \texttt{OperationState} $\in \text{MatchStates} \cup \text{RequestStates} \cup \text{AcceptStates}$\linebreak $\cup \text{CancelStates} \cup \text{ResultsStates}$\linebreak --- Current operation state,\linebreak where each set contains the states for the respective operation
+    \item \texttt{CandidatePool} - Set of Candidate Records (drivers or riders)\linebreak (valid in states: QUERYING\_RIDES, VALIDATING\_CANDIDATES, COMPUTING\_ROUTES, SCORING\_CANDIDATES)
+    \item \texttt{ActiveStrategy} - reference to the current scoring algorithm\linebreak (valid when $\text{ModuleState} \in \{\text{READY}, \text{PROCESSING}\}$)
+    \item \texttt{MatchResults} - ordered sequence of potential matches with scores\linebreak (valid in states: RANKING\_MATCHES, MATCH\_COMPLETE)
+    \item \texttt{OperationQueue} - queue of pending operations\linebreak (valid when ModuleState = READY or PROCESSING)
+    \item \texttt{CurrentOperation} - currently executing operation\linebreak (valid when ModuleState = PROCESSING)
 \end{itemize}
 
 \paragraph{Environment Variables}
 \begin{itemize}
-    \item Active network connection for API queries.
-    \item Database connection for retrieving and updating match data.
-    \item Access to external map service for route distance calculations.
+    \item Active network connection for queries.
+    \item Persistence layer connection for retrieving and updating match data.
+    \item Access to external mapping service for route distance calculations.
 \end{itemize}
 
 \paragraph{Assumptions}
 \begin{itemize}
     \item Each user has an active, verified profile with trip data available.
-    \item Distance and time calculations are performed via a reliable geocoding API.
-    \item Only verified McMaster users participate in matching.
+    \item Distance and time calculations are performed via a reliable geocoding service.
+    \item Only verified institutional users participate in matching.
 \end{itemize}
 
 \paragraph{Access Routine Semantics}
@@ -295,7 +298,7 @@ All access routines are specified as state machine transitions. Each routine tra
 
 \texttt{findMatchesForUser(userId)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \land \text{userId} \in \mathbb{N} \land \text{userId} > 0$
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{userId} \in \mathbb{N} \land \text{userId} > 0$
     \item \textbf{state transition sequence:}
     \begin{align*}
     \text{READY} &\xrightarrow{\text{findMatchesForUser(userId)}} \text{PROCESSING} \\
@@ -303,9 +306,9 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{MATCH\_INITIAL} &\xrightarrow{} \text{FETCHING\_PREFERENCES} \\
     &\quad \text{action: } \text{riderPrefs} := \text{queryPreferences(userId)} \\
     \text{FETCHING\_PREFERENCES} &\xrightarrow{} \text{QUERYING\_RIDES} \\
-    &\quad \text{action: } \text{candidatePool} := \text{retrieveCandidates(userId)} \\
+    &\quad \text{action: } \text{CandidatePool} := \text{retrieveCandidates(userId)} \\
     \text{QUERYING\_RIDES} &\xrightarrow{} \text{VALIDATING\_CANDIDATES} \\
-    &\quad \text{action: } \text{validCandidates} := \{r \in \text{candidatePool} \mid \text{availableSeats}(r) \geq \text{request.maxOccupancy}\} \\
+    &\quad \text{action: } \text{validCandidates} := \{r \in \text{CandidatePool} \mid \text{availableSeats}(r) \geq \text{request.maxOccupancy}\} \\
     \text{VALIDATING\_CANDIDATES} &\xrightarrow{} \text{COMPUTING\_ROUTES} \\
     &\quad \text{action: } \forall c \in \text{validCandidates}: \text{routeDetails}[c] := \text{getDetourAndRideDetails}(c, \text{request}) \\
     \text{COMPUTING\_ROUTES} &\xrightarrow{} \text{SCORING\_CANDIDATES} \\
@@ -313,20 +316,20 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{SCORING\_CANDIDATES} &\xrightarrow{} \text{FILTERING\_THRESHOLD} \\
     &\quad \text{action: } \text{validMatches} := \{m \in \text{scoredMatches} \mid \text{normalizeScore}(m.\text{rawScore}) \geq \text{MATCH\_THRESHOLD} \times 100\} \\
     \text{FILTERING\_THRESHOLD} &\xrightarrow{} \text{RANKING\_MATCHES} \\
-    &\quad \text{action: } \text{matchResults} := \text{sort}(\text{validMatches}, \text{descending}) \\
+    &\quad \text{action: } \text{MatchResults} := \text{sort}(\text{validMatches}, \text{descending}) \\
     \text{RANKING\_MATCHES} &\xrightarrow{} \text{MATCH\_COMPLETE} \\
-    &\quad \text{action: } \text{matchResults} := \text{take}(\text{matchResults}, \text{MAX\_CANDIDATES}) \\
+    &\quad \text{action: } \text{MatchResults} := \text{take}(\text{MatchResults}, \text{MAX\_CANDIDATES}) \\
     \text{MATCH\_COMPLETE} &\xrightarrow{} \text{IDLE} \\
     \text{IDLE} &\xrightarrow{} \text{READY}
     \end{align*}
-    \item \textbf{postcondition:} $\text{moduleState} = \text{READY} \land \text{matchResults} \neq \text{null} \land |\text{matchResults}| \leq \text{MAX\_CANDIDATES}$\linebreak where $\text{MAX\_CANDIDATES} = 20$
-    \item \textbf{output:} Returns $\text{matchResults}$ (ranked list of matches with normalized scores).
-    \item \textbf{exception:} If transition to MATCH\_ERROR occurs: NotFoundError\linebreak (when $\text{candidatePool} = \emptyset$ or $\text{validCandidates} = \emptyset$ or $\text{validMatches} = \emptyset$).\linebreak Error recovery transitions to READY state.
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{MatchResults} \neq \text{null} \land |\text{MatchResults}| \leq \text{MAX\_CANDIDATES}$\linebreak where $\text{MAX\_CANDIDATES} = 20$
+    \item \textbf{output:} Returns $\text{MatchResults}$ (ranked list of matches with normalized scores).
+    \item \textbf{exception:} If transition to MATCH\_ERROR occurs: NotFound\linebreak (when $\text{CandidatePool} = \emptyset$ or $\text{validCandidates} = \emptyset$ or $\text{validMatches} = \emptyset$).\linebreak Error recovery transitions to READY state.
 \end{itemize}
 
 \texttt{requestRide(rideId, pickupLat, pickupLng)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \land \text{rideId} \neq \text{null}$\linebreak $\land \text{pickupLat}, \text{pickupLng} \in \mathbb{R}$
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{rideId} \neq \text{null}$\linebreak $\land \text{pickupLat}, \text{pickupLng} \in \mathbb{R}$
     \item \textbf{state transition sequence:}
     \begin{align*}
     \text{READY} &\xrightarrow{\text{requestRide}} \text{PROCESSING} \\
@@ -341,14 +344,14 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{CREATING\_REQUEST} &\xrightarrow{} \text{REQUEST\_COMPLETE} \\
     \text{REQUEST\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
     \end{align*}
-    \item \textbf{postcondition:} $\text{moduleState} = \text{READY} \land \exists r \in \text{rideRequests}:$\linebreak $r.\text{id} = \text{requestId} \land r.\text{status} = \text{"pending"}$
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \exists r \in \text{rideRequests}:$\linebreak $r.\text{id} = \text{requestId} \land r.\text{status} = \text{"pending"}$
     \item \textbf{output:} Confirmation with requestId.
-    \item \textbf{exception:} If transition to REQUEST\_ERROR occurs: NotFoundError (ride not found) or BadRequestError (ride full).
+    \item \textbf{exception:} If transition to REQUEST\_ERROR occurs: NotFound (ride not found) or BadRequest (ride full).
 \end{itemize}
 
 \texttt{acceptRequest(requestId)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \land \text{requestId} \neq \text{null}$
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{requestId} \neq \text{null}$
     \item \textbf{state transition sequence:}
     \begin{align*}
     \text{READY} &\xrightarrow{\text{acceptRequest}} \text{PROCESSING} \\
@@ -367,14 +370,14 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{INCREMENTING\_SEATS} &\xrightarrow{} \text{ACCEPT\_COMPLETE} \\
     \text{ACCEPT\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
     \end{align*}
-    \item \textbf{postcondition:} $\text{moduleState} = \text{READY} \land \text{request.status} = \text{"accepted"}$\linebreak $\land \text{ride.bookedSeats} = \text{ride.bookedSeats}_{\text{old}} + 1$
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{request.status} = \text{"accepted"}$\linebreak $\land \text{ride.bookedSeats} = \text{ride.bookedSeats}_{\text{old}} + 1$
     \item \textbf{output:} Success confirmation.
-    \item \textbf{exception:} If transition to ACCEPT\_ERROR occurs: NotFoundError, BadRequestError, or ForbiddenError.
+    \item \textbf{exception:} If transition to ACCEPT\_ERROR occurs: NotFound, BadRequest, or Forbidden.
 \end{itemize}
 
 \texttt{cancelRequest(requestId)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \land \text{requestId} \neq \text{null}$
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{requestId} \neq \text{null}$
     \item \textbf{state transition sequence:}
     \begin{align*}
     \text{READY} &\xrightarrow{\text{cancelRequest}} \text{PROCESSING} \\
@@ -390,14 +393,14 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{DECREMENTING\_SEATS} &\xrightarrow{} \text{CANCEL\_COMPLETE} \\
     \text{CANCEL\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
     \end{align*}
-    \item \textbf{postcondition:} $\text{moduleState} = \text{READY} \land \text{request.status} = \text{"cancelled"}$
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{request.status} = \text{"cancelled"}$
     \item \textbf{output:} Success confirmation.
-    \item \textbf{exception:} If transition to CANCEL\_ERROR occurs: NotFoundError or ForbiddenError.
+    \item \textbf{exception:} If transition to CANCEL\_ERROR occurs: NotFound or Forbidden.
 \end{itemize}
 
 \texttt{getMatchResults(userId)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \land \text{userId} \in \mathbb{N}$
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{userId} \in \mathbb{N}$
     \item \textbf{state transition sequence:}
     \begin{align*}
     \text{READY} &\xrightarrow{\text{getMatchResults}} \text{PROCESSING} \\
@@ -412,17 +415,17 @@ All access routines are specified as state machine transitions. Each routine tra
     \text{FETCHING\_DRIVERS} &\xrightarrow{} \text{RESULTS\_COMPLETE} \\
     \text{RESULTS\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
     \end{align*}
-    \item \textbf{postcondition:} $\text{moduleState} = \text{READY} \land \text{results} \neq \text{null}$
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{results} \neq \text{null}$
     \item \textbf{output:} Returns list of confirmed mutual matches (may be empty).
     \item \textbf{exception:} None (returns empty list if no matches found).
 \end{itemize}
 
 \texttt{computeScore(rider, driver)}:
 \begin{itemize}
-    \item \textbf{precondition:} $\text{moduleState} = \text{READY} \lor (\text{moduleState} = \text{PROCESSING}$\linebreak $\land \text{operationState} = \text{SCORING\_CANDIDATES})$
-    \item \textbf{transition:} Pure function, no state modification. Computes score using activeStrategy.
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \lor (\text{ModuleState} = \text{PROCESSING}$\linebreak $\land \text{OperationState} = \text{SCORING\_CANDIDATES})$
+    \item \textbf{transition:} Pure function, no state modification. Computes score using ActiveStrategy.
     \item \textbf{output:} Floating-point score between 0 and 100 computed as\linebreak $\text{normalizeScore}(\text{rawScore}(r, d))$ where $\text{rawScore}$ is defined by Equation~(3)\linebreak and $\text{normalizeScore}$ is defined by Equation~(4).
-    \item \textbf{exception:} AlgorithmError if scoring function fails (e.g., $\text{activeStrategy}$ is undefined).
+    \item \textbf{exception:} AlgorithmError if scoring function fails (e.g., $\text{ActiveStrategy}$ is undefined).
 \end{itemize}
 
 \paragraph{Local Functions}
@@ -440,6 +443,3 @@ All access routines are specified as state machine transitions. Each routine tra
 \end{itemize}
 
 \fussy
-% ============================================================
-% Scheduling Module
-% ============================================================

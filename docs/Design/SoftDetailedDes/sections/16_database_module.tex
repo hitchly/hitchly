@@ -50,11 +50,11 @@ This layer will store a schema of tables used across multiple modules. This incl
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{addRecord()} & tablename, data & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
-\texttt{updateRecord()} & tablename, data, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
-\texttt{deleteRecord()} & tablename, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
-\texttt{getRecord()} & tablename, data\_condition & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
-\texttt{getAllRecords()} & tablename & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{addRecord} & tablename, data & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{updateRecord} & tablename, data, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{deleteRecord} & tablename, record\_id & Boolean & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{getRecord} & tablename, data\_condition & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
+\texttt{getAllRecords} & tablename & List of data records & NotFoundError, InvalidDataFormatException, DBTimeoutException \\
 \bottomrule
 \end{tabular}
 }
@@ -83,35 +83,35 @@ This layer will store a schema of tables used across multiple modules. This incl
 
 \paragraph{Access Routine Semantics}
 
-\texttt{addRecord()}:
+\texttt{addRecord}:
 \begin{itemize}
     \item \textbf{transition:} A new entry is added to the specified table.
     \item \textbf{output:} Bool (True or False, depending on the state of the transition).
     \item \textbf{exception:} NotFoundError (table not found), InvalidDataFormatException, DBTimeoutException.
 \end{itemize}
 
-\texttt{updateRecord()}:
+\texttt{updateRecord}:
 \begin{itemize}
     \item \textbf{transition:} An existing entry is updated in the specified table.
     \item \textbf{output:} Bool (True or False, depending on the state of the transition).
     \item \textbf{exception:} NotFoundError (table or entry not found), InvalidDataFormatException, DBTimeoutException.
 \end{itemize}
 
-\texttt{deleteRecord()}:
+\texttt{deleteRecord}:
 \begin{itemize}
     \item \textbf{transition:} An existing entry is deleted in the specified table.
     \item \textbf{output:} Bool (True or False, depending on the state of the transition).
     \item \textbf{exception:} NotFoundError (table or entry not found), InvalidDataFormatException, DBTimeoutException.
 \end{itemize}
 
-\texttt{getRecord()}:
+\texttt{getRecord}:
 \begin{itemize}
     \item \textbf{transition:} None.
     \item \textbf{output:} Returns a list of indicated records.
     \item \textbf{exception:} NotFoundError (table not found), DBTimeoutException.
 \end{itemize}
 
-\texttt{getAllRecords()}:
+\texttt{getAllRecords}:
 \begin{itemize}
     \item \textbf{transition:} None.
     \item \textbf{output:} Returns a list of all records.
@@ -120,8 +120,8 @@ This layer will store a schema of tables used across multiple modules. This incl
 
 \paragraph{Local Functions}
 \begin{itemize}
-    \item \texttt{db\_connect(): bool} --- This is to initialize a connection with the database service.
-    \item \texttt{checkFormat(): bool} --- This function checks if the inserted data aligns with the specified schema.
+    \item \texttt{db\_connect: bool} --- This is to initialize a connection with the database service.
+    \item \texttt{checkFormat: bool} --- This function checks if the inserted data aligns with the specified schema.
 \end{itemize}
 
 % -------
