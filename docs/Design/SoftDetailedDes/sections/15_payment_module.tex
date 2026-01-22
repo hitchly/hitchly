@@ -40,9 +40,9 @@ It interacts directly with:
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{init\_payment()} & user\_id, ride\_id & Boolean~(verified or unverified) & NotFoundError \\
-\texttt{process\_payment()} & payment\_id, payment\_method & payment\_status & ExpiredSessionError \\
-\texttt{get\_paymentRecord()} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
+\texttt{init\_payment} & user\_id, ride\_id & Boolean~(verified or unverified) & NotFoundError \\
+\texttt{process\_payment} & payment\_id, payment\_method & payment\_status & ExpiredSessionError \\
+\texttt{get\_paymentRecord} & payment\_id, user\_id, ride\_id & paymentRecord & NotFoundError \\
 \bottomrule
 \end{tabular}
 }
@@ -72,21 +72,21 @@ It interacts directly with:
 
 \paragraph{Access Routine Semantics}
 
-\texttt{init\_payment()}:
+\texttt{init\_payment}:
 \begin{itemize}
     \item \textbf{transition:} None
     \item \textbf{output:} Bool (user verified for the specific ride or not)
     \item \textbf{exception:} NotFoundError, user or ride not found.
 \end{itemize}
 
-\texttt{Process\_payment()}:
+\texttt{Process\_payment}:
 \begin{itemize}
     \item \textbf{transition:} Initializes connection with the API.
     \item \textbf{output:} Returns whether the payment is succesful, processing or failed.
     \item \textbf{exception:} ExpiredSessionError if the session fails to process the payment due to session limits.
 \end{itemize}
 
-\texttt{get\_paymentRecord()}:
+\texttt{get\_paymentRecord}:
 \begin{itemize}
     \item \textbf{transition:} Creates a payment record.
     \item \textbf{output:} List of payment records.
@@ -96,7 +96,7 @@ It interacts directly with:
 
 \paragraph{Local Functions}
 \begin{itemize}
-    \item \texttt{generateVerificationToken(): string} --- Creates a cryptographically secure token.
+    \item \texttt{generateVerificationToken: string} --- Creates a cryptographically secure token.
 \end{itemize}
 
 %----

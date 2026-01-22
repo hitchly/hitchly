@@ -1,26 +1,27 @@
 \section{Design of Communication Protocols}
 
 This section describes the design of the communication protocols implemented in Hitchly.
-Communication occurs primarily between the client‐side mobile application (developed
-with React Native / Expo) and the backend server (implemented with Node.js, Express,
-and tRPC).  The system also integrates third-party APIs for geolocation and notifications.
+Communication occurs primarily between the client-side mobile application and the backend 
+server infrastructure. The system also integrates third-party interfaces for geolocation 
+and external notification services.
 
 \subsection{11.1 Overall Architecture}
 
 All communication between the mobile client and the backend follows a request–response
-model over HTTPS, ensuring confidentiality and integrity.  Data is serialized in JSON
-format and transferred through REST and type-safe tRPC endpoints.  The architecture
-adopts a modular service-based design to support scalability and maintainability:
+model over secure transport channels, ensuring confidentiality and integrity. Data is 
+serialized into a structured format and transferred through defined API endpoints. 
+The architecture adopts a modular service-based design to support scalability and 
+maintainability:
 
 \begin{itemize}
-  \item \textbf{Frontend (Client):} React Native app that sends authenticated requests
-  to backend endpoints via HTTPS using the tRPC client.
-  \item \textbf{Backend (Server):} Express server exposing routes through the tRPC API layer.
-  It validates and processes incoming requests, interacts with the PostgreSQL database
-  through Drizzle ORM, and returns structured JSON responses.
-  \item \textbf{External Services:} Mapping and geolocation (Google Maps / Mapbox API),
-  Expo Push Notification Service for alerts, and optional OAuth verification via McMaster
-  SSO (for email validation).
+  \item \textbf{Frontend (Client):} Mobile application interface that sends authenticated 
+  requests to backend endpoints via secure transport protocols.
+  \item \textbf{Backend (Server):} Server-side application exposing routes through an 
+  API layer. It validates and processes incoming requests, interacts with the 
+  persistence layer, and returns structured responses.
+  \item \textbf{External Services:} Interfaces for mapping and geolocation data, 
+  push notification services for alerts, and identity verification providers 
+  (e.g., institutional SSO for email validation).
 \end{itemize}
 
 \subsection{11.2 Communication Flow}
@@ -28,15 +29,15 @@ adopts a modular service-based design to support scalability and maintainability
 A typical data exchange involves the following sequence:
 
 \begin{enumerate}
-  \item The user performs an action in the mobile application (e.g., requests a ride,
+  \item The user initiates an action in the mobile application (e.g., requests a ride,
   updates schedule, or rates a driver).
-  \item The frontend constructs a tRPC call encapsulating the action data and attaches
-  the user’s JWT authentication token in the header.
-  \item The server authenticates the request, validates input schemas, and executes the
-  corresponding service logic.
-  \item The backend queries or updates PostgreSQL through Drizzle ORM and returns a
-  success or error payload to the client.
-  \item The client updates its UI state using React Query based on the received data.
+  \item The frontend constructs a remote procedure call encapsulating the action data 
+  and attaches the user’s authentication credentials in the header.
+  \item The server authenticates the request, validates input schemas against defined 
+  contracts, and executes the corresponding service logic.
+  \item The backend queries or updates the persistence layer and returns a success 
+  or error payload to the client.
+  \item The client updates its local state and user interface based on the received data.
 \end{enumerate}
 
 \subsection{11.3 API Endpoints and Message Types}
@@ -44,24 +45,25 @@ A typical data exchange involves the following sequence:
 Hitchly’s backend exposes the following logical API groups:
 
 \begin{itemize}
-  \item \textbf{Auth API:} Handles user registration, login, McMaster email verification,
-  and token refresh.  Exchanges encrypted credentials and JWT tokens.
+  \item \textbf{Auth API:} Handles user registration, login, institutional email verification,
+  and session management. Exchanges encrypted credentials and session tokens.
   \item \textbf{User API:} Manages user profiles, schedules, and preferences.
-  \item \textbf{Matching API:} Accepts commute data, performs matching algorithm, and
-  returns ranked ride offers.
+  \item \textbf{Matching API:} Accepts commute parameters, executes the matching algorithm, 
+  and returns ranked ride offers.
   \item \textbf{Trip API:} Records completed trips, generates summaries, and calculates
   cost-sharing.
-  \item \textbf{Rating API:} Sends and retrieves ratings and reviews.
-  \item \textbf{Notification API:} Uses Expo Push Notification service to deliver trip
-  confirmations, cancellations, and updates in real time.
+  \item \textbf{Rating API:} Submits and retrieves reputation scores and text reviews.
+  \item \textbf{Notification API:} Interfaces with external push services to deliver trip
+  confirmations, cancellations, and real-time updates.
 \end{itemize}
 
-All messages follow the JSON structure:
+All messages follow a standardized structure containing the operation status, payload data, 
+and metadata:
 \begin{verbatim}
 {
   "status": "success",
   "data": { ... },
-  "timestamp": "2025-01-03T12:00:00Z"
+  "timestamp": "YYYY-MM-DDTHH:MM:SSZ"
 }
 \end{verbatim}
 
@@ -70,17 +72,17 @@ All messages follow the JSON structure:
 Security and reliability are ensured through:
 
 \begin{itemize}
-  \item \textbf{Transport Security:} HTTPS with TLS 1.3 and HSTS enforcement.
-  \item \textbf{Authentication:} JWT Bearer tokens included in headers of all authorized
-  requests.
-  \item \textbf{Input Validation:} All incoming payloads validated using Zod schemas in
-  tRPC to prevent injection or malformed data.
+  \item \textbf{Transport Security:} Encryption in transit using TLS standards.
+  \item \textbf{Authentication:} Bearer tokens or equivalent session credentials included 
+  in headers of all authorized requests.
+  \item \textbf{Input Validation:} All incoming payloads are validated against strict 
+  schemas to prevent injection attacks or malformed data.
   \item \textbf{Error Handling:} Standardized error codes with human-readable messages
   returned to the client.
-  \item \textbf{Rate Limiting:} Express middleware limits excessive requests to prevent
-  abuse.
-  \item \textbf{Retry Mechanism:} Client-side React Query retries transient network
-  failures automatically.
+  \item \textbf{Rate Limiting:} Middleware limits excessive requests to prevent abuse 
+  and ensure service availability.
+  \item \textbf{Retry Mechanism:} Client-side logic automatically retries transient 
+  network failures to improve resilience.
 \end{itemize}
 
 \subsection{11.5 Design Considerations}
@@ -88,16 +90,16 @@ Security and reliability are ensured through:
 The communication design of Hitchly emphasizes the following principles:
 
 \begin{itemize}
-  \item \textbf{Consistency:} Shared TypeScript types across frontend and backend
-  guarantee end-to-end type safety through tRPC.
-  \item \textbf{Extensibility:} Additional endpoints (e.g., payment API or advanced analytics)
-  can be introduced without modifying existing client modules.
-  \item \textbf{Scalability:} The stateless REST/tRPC design supports horizontal scaling
-  of the Express server behind a load balancer.
-  \item \textbf{Low Latency:} JSON over HTTPS is lightweight; caching of common responses
-  and asynchronous notification delivery minimize perceived delay.
+  \item \textbf{Consistency:} Shared type definitions across frontend and backend 
+  guarantee end-to-end type safety and contract adherence.
+  \item \textbf{Extensibility:} Additional endpoints (e.g., payment interfaces or advanced 
+  analytics) can be introduced without modifying existing client modules.
+  \item \textbf{Scalability:} The stateless architectural design supports horizontal scaling 
+  of the application server.
+  \item \textbf{Low Latency:} Lightweight message serialization and asynchronous 
+  notification delivery minimize perceived user delay.
 \end{itemize}
 
 This design ensures secure, efficient, and maintainable communication between Hitchly’s
 mobile application, backend, and external services, supporting its goals of safety,
-reliability, and sustainability for McMaster commuters.
+reliability, and sustainability for commuters.

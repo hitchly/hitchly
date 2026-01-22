@@ -1,160 +1,139 @@
-\section{Module Decomposition} \label{SecMD}
+\section{Authentication \& Verification Module}
 
-\begingroup
-\setlength{\parindent}{0pt}
+\subsection{Module}
+The Authentication \& Verification Module manages user identity creation, secure login, and institutional email verification for all system users.
+This module is implemented using a secure \textbf{Authentication Framework}, which provides end-to-end session management, credential validation, and token-based verification. 
+It ensures that only users with verified institutional emails (e.g., \texttt{@mcmaster.ca}) can access the system's features.
 
-Modules are decomposed according to the principle of information hiding
-\citep{ParnasEtAl1984}.  
-Each module’s \textit{Secrets} describes the internal design decision that is
-intentionally hidden from other modules, while the \textit{Services} field specifies
-\textit{what} the module provides without revealing \textit{how} the service is implemented.  
-The \textit{Frontend UI}, \textit{API Logic}, and \textit{Database Models} indicate 
-how each module is realized across the system’s architecture.  
-\textit{Implemented By} identifies the technologies used, and 
-\textit{Type of Module} classifies each module as a Behaviour-Hiding or 
-Software-Decision module according to Section~\ref{SecMH}.  
-Only the leaf modules are included.
-
-% ---------------------------------------------------------
-% BEHAVIOUR-HIDING MODULES
-% ---------------------------------------------------------
-\subsection*{Behaviour-Hiding Modules}
-
-\subsubsection*{M1: Authentication \& Verification Module}
+\paragraph{Frontend}
+The frontend component is integrated into the client application. 
+It provides the user interface flow for login, signup, and verification. 
+User input is collected through secure forms and transmitted to the backend via remote procedure calls. 
+The frontend handles the following:
 \begin{itemize}
-  \item \textbf{Secrets:} Token/session strategy, email-verification workflow, and credential-validation logic.
-  \item \textbf{Services:} Allows users to register, log in, and verify McMaster email accounts.
-  \item \textbf{Frontend UI:} Login screens, signup forms, verification code UI.
-  \item \textbf{API Logic:} \texttt{authRouter} (login, register, verify), session helpers, Zod validation.
-  \item \textbf{Database Models:} \texttt{User} table (email, password hash, verified flag, session tokens).
-  \item \textbf{Implemented By:} React Native (Expo) + tRPC backend with Prisma ORM.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item Displays login and signup screens.
+    \item Manages form validation and field state.
+    \item Invokes authentication client hooks for session management.
+    \item Handles redirection and session persistence after successful login.
+    \item Presents error messages for invalid credentials or unverified accounts.
 \end{itemize}
 
-\subsubsection*{M2: User Profile Module}
+\paragraph{Backend}
+The backend is implemented in the application server using the framework's server-side SDK. 
+It manages credential validation, session tokens, domain enforcement, and email verification logic.
+Key backend operations include:
 \begin{itemize}
-  \item \textbf{Secrets:} Role-assignment logic and profile-preference storage design.
-  \item \textbf{Services:} Provides profile editing, preferences, and vehicle data management.
-  \item \textbf{Frontend UI:} Profile page, edit forms, vehicle info inputs.
-  \item \textbf{API Logic:} \texttt{userRouter} for CRUD operations, preference update flow.
-  \item \textbf{Database Models:} \texttt{User}, \texttt{Vehicle}, \texttt{Preference}.
-  \item \textbf{Implemented By:} React Native UI + tRPC + Prisma.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item Configuring the identity provider for the API.
+    \item Enforcing allowed email domains during registration.
+    \item Generating and validating secure verification tokens.
+    \item Managing persistent user sessions through secure tokens.
+    \item Integrating with the email service for verification links.
 \end{itemize}
 
-\subsubsection*{M3: Route \& Trip Module}
+\paragraph{Data}
+The data layer persists authentication and verification information within the relational database managed by the persistence layer.
+The module automatically provisions and maintains required entities:
 \begin{itemize}
-  \item \textbf{Secrets:} Trip-storage schema, route normalization, and time formatting.
-  \item \textbf{Services:} Allows users to create, list, and cancel trips.
-  \item \textbf{Frontend UI:} Trip creation form, trip list UI, route selection screen.
-  \item \textbf{API Logic:} \texttt{tripRouter} for trip creation, querying, and deletion.
-  \item \textbf{Database Models:} \texttt{Trip} table (origin, destination, time, seat count).
-  \item \textbf{Implemented By:} React Native + tRPC backend + Prisma.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \texttt{UserIdentity} --- stores credentials, roles, and verification state.
+    \item \texttt{SessionStore} --- stores active user sessions with expiry timestamps.
+    \item \texttt{VerificationTokens} --- tracks issued and redeemed email verification tokens.
+\end{itemize}
+Data integrity is enforced by unique constraints on email addresses and transactional updates during verification.
+
+\subsection{Uses}
+This module ensures secure access to the system by verifying each user's institutional affiliation. 
+It interacts directly with:
+\begin{itemize}
+    \item \textbf{Frontend UI:} collects credentials and displays verification flows.
+    \item \textbf{API Layer:} provides endpoints for signup, login, logout, and verification.
+    \item \textbf{Database:} persists user and session data.
+\end{itemize}
+All other modules depend on this component to validate user identity before allowing access to protected features.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{ALLOWED\_DOMAIN = "@mcmaster.ca"}  
+    Restricts signup to allowed institutional domains.
+    \item \texttt{SESSION\_EXPIRY = 86400}  
+    Sets the maximum lifetime (in seconds) for user sessions.
 \end{itemize}
 
-\subsubsection*{M4: Matching Module}
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{registerUser} & name: string, email: string, password: string & token: string & DuplicateEmail, InvalidDomain \\
+\texttt{loginUser} & email: string, password: string & session: string & InvalidCredentials \\
+\texttt{verifyEmail} & token: string & success: bool & ExpiredToken \\
+\texttt{logoutUser} & session: string & success: bool & InvalidSession \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
 \begin{itemize}
-  \item \textbf{Secrets:} Scoring algorithm, distance/time weighting, and Strategy Pattern implementation.
-  \item \textbf{Services:} Computes driver–rider compatibility and returns ordered match results.
-  \item \textbf{Frontend UI:} Swipe-based card UI, match results list.
-  \item \textbf{API Logic:} \texttt{matchmakingRouter}, MatchEngine (Strategy Pattern).
-  \item \textbf{Database Models:} \texttt{Match}, \texttt{Swipe}.
-  \item \textbf{Implemented By:} Node.js backend (tRPC) + algorithm utilities + Prisma ORM.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \texttt{Users}: Set of \texttt{UserRecord} --- The collection of all registered users and their states.
+    \item \texttt{Sessions}: Set of \texttt{SessionRecord} --- The collection of currently active sessions.
+    \item \texttt{PendingVerifications}: Set of (token: string, email: string) --- Map of active verification tokens.
 \end{itemize}
 
-\subsubsection*{M5: Scheduling Module}
+\paragraph{Environment Variables}
 \begin{itemize}
-  \item \textbf{Secrets:} Recurring-trip generation algorithm and time-window parsing.
-  \item \textbf{Services:} Creates recurring or one-time schedules linked to trips.
-  \item \textbf{Frontend UI:} Time picker, recurring toggle, calendar UI.
-  \item \textbf{API Logic:} Schedule parser and recurring schedule generator.
-  \item \textbf{Database Models:} \texttt{Schedule} table.
-  \item \textbf{Implemented By:} tRPC backend + Prisma.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item User input device (keyboard, network interface).
+    \item Secure transport channel (HTTPS).
+    \item External Email Service (for delivery of verification codes).
 \end{itemize}
 
-\subsubsection*{M6: Notification Module}
+\paragraph{Assumptions}
 \begin{itemize}
-  \item \textbf{Secrets:} Push-token handling and asynchronous event queue logic.
-  \item \textbf{Services:} Sends push notifications for matches, cancellations, and reminders.
-  \item \textbf{Frontend UI:} In-app notification center, Expo push integration.
-  \item \textbf{API Logic:} Notification service with event emitters.
-  \item \textbf{Database Models:} \texttt{Notification} table.
-  \item \textbf{Implemented By:} Expo Push Service + tRPC backend dispatcher.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item Users possess valid institutional email accounts.
+    \item The persistence layer is initialized and reachable.
+    \item Network connectivity is stable during the authentication handshake.
 \end{itemize}
 
-\subsubsection*{M7: Rating \& Feedback Module}
+\paragraph{Access Routine Semantics}
+
+\noindent \texttt{registerUser(name, email, password)}:
 \begin{itemize}
-  \item \textbf{Secrets:} Reputation computation and weighting logic.
-  \item \textbf{Services:} Enables users to submit ratings and text feedback after trips.
-  \item \textbf{Frontend UI:} Post-ride rating screen.
-  \item \textbf{API Logic:} \texttt{ratingRouter}.
-  \item \textbf{Database Models:} \texttt{Rating} table (linked to \texttt{Match}).
-  \item \textbf{Implemented By:} React Native + tRPC + Prisma ORM.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \textbf{transition:} Adds a new entry to \texttt{Users} with \texttt{verified = false}. Generates a unique token $t$ and adds $(t, email)$ to \texttt{PendingVerifications}.
+    \item \textbf{output:} Returns $t$ (to be sent via email).
+    \item \textbf{exception:} \texttt{DuplicateEmail} if email $\in$ \texttt{Users}. \texttt{InvalidDomain} if email does not end with \texttt{ALLOWED\_DOMAIN}.
 \end{itemize}
 
-\subsubsection*{M8: Safety \& Reporting Module}
+\noindent \texttt{loginUser(email, password)}:
 \begin{itemize}
-  \item \textbf{Secrets:} Incident-flagging thresholds and safety-response workflow.
-  \item \textbf{Services:} Allows reporting of unsafe behaviour and stores incidents for admin review.
-  \item \textbf{Frontend UI:} Report button, safety resources screen.
-  \item \textbf{API Logic:} Report submission via \texttt{reportRouter}.
-  \item \textbf{Database Models:} \texttt{Report}.
-  \item \textbf{Implemented By:} React Native + tRPC + Prisma.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \textbf{transition:} Verifies credentials against \texttt{Users}. If valid, creates a new session $s$ and adds to \texttt{Sessions}.
+    \item \textbf{output:} Returns session token $s$.
+    \item \textbf{exception:} \texttt{InvalidCredentials} if email not found or password hash mismatch.
 \end{itemize}
 
-\subsubsection*{M9: Payment \& Cost Estimation Module}
+\noindent \texttt{verifyEmail(token)}:
 \begin{itemize}
-  \item \textbf{Secrets:} Fare-calculation logic and mock-payment validation.
-  \item \textbf{Services:} Estimates ride cost and records payment confirmations.
-  \item \textbf{Frontend UI:} Fare display, confirmation screen.
-  \item \textbf{API Logic:} \texttt{paymentRouter}.
-  \item \textbf{Database Models:} \texttt{Payment}, \texttt{Transaction}.
-  \item \textbf{Implemented By:} tRPC backend + Prisma ORM.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \textbf{transition:} Checks if $token \in$ \texttt{PendingVerifications}. If found, sets corresponding user in \texttt{Users} to \texttt{verified = true} and removes token from \texttt{PendingVerifications}.
+    \item \textbf{output:} \texttt{true} on success.
+    \item \textbf{exception:} \texttt{ExpiredToken} if token not found or time-to-live exceeded.
 \end{itemize}
 
-\subsubsection*{M10: Admin \& Moderation Module}
+\noindent \texttt{logoutUser(session)}:
 \begin{itemize}
-  \item \textbf{Secrets:} Moderation rules, flagging thresholds, and admin-only access logic.
-  \item \textbf{Services:} Allows admins to review reports, ban users, and view platform stats.
-  \item \textbf{Frontend UI:} Admin dashboard (optional).
-  \item \textbf{API Logic:} \texttt{adminRouter}.
-  \item \textbf{Database Models:} Admin logs, flagged users.
-  \item \textbf{Implemented By:} tRPC backend + Prisma.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+    \item \textbf{transition:} Removes $session$ from \texttt{Sessions}.
+    \item \textbf{output:} \texttt{true}.
+    \item \textbf{exception:} \texttt{InvalidSession} if session is not active.
 \end{itemize}
 
-% ---------------------------------------------------------
-% SOFTWARE-DECISION MODULES
-% ---------------------------------------------------------
-\subsection*{Software-Decision Modules}
-
-\subsubsection*{M11: Pricing Module}
+\paragraph{Local Functions}
 \begin{itemize}
-  \item \textbf{Secrets:} Fuel-rate constants, distance multipliers, and fare model.
-  \item \textbf{Services:} Computes estimated trip price using distance and conditions.
-  \item \textbf{Frontend UI:} Fare estimate displayed in trip preview.
-  \item \textbf{API Logic:} Cost-calculation service reused by M9.
-  \item \textbf{Database Models:} Pricing configuration constants.
-  \item \textbf{Implemented By:} Node.js backend utilities + shared pricing helpers.
-  \item \textbf{Type of Module:} Software-Decision Module.
+    \item \texttt{generateVerificationToken(): string} --- Generates a cryptographically secure random string.
+    \item \texttt{validateEmailDomain(email: string): boolean} --- Returns ($email$ endsWith \texttt{ALLOWED\_DOMAIN}).
+    \item \texttt{hashPassword(password: string): string} --- Applies a one-way cryptographic hash function to the input.
 \end{itemize}
-
-\subsubsection*{M12: Database Module}
-\begin{itemize}
-  \item \textbf{Secrets:} ORM mapping, schema decisions, and migration strategy.
-  \item \textbf{Services:} Provides access to all persistent data models via a centralized DB client.
-  \item \textbf{Frontend UI:} None.
-  \item \textbf{API Logic:} Prisma client configuration and model exports.
-  \item \textbf{Database Models:} All tables (User, Trip, Match, Schedule, etc.).
-  \item \textbf{Implemented By:} Prisma ORM + PostgreSQL.
-  \item \textbf{Type of Module:} Software-Decision Module.
-\end{itemize}
-
-\endgroup

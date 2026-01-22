@@ -1,63 +1,63 @@
 \section{User Profile Module}
 
 \subsection{Module}
-The User Profile Module manages all personal and contextual information about a Hitchly user.  
-It allows students, alumni, and faculty to view and edit their personal data, preferences, and role (rider, driver, or both).  
-This module integrates directly with the Authentication \& Verification Module for identity linkage and with the Matching Module to supply accurate data for matchmaking.
+The User Profile Module manages all personal and contextual information about system users. 
+It allows students, alumni, and faculty to view and edit their personal data, preferences, and role assignment (rider, driver, or both). 
+This module integrates directly with the Authentication \& Verification Module for identity linkage and with the Matching Module to supply accurate attribute data for compatibility scoring.
 
 \paragraph{Frontend}
-The frontend portion resides in the Expo mobile application.  
-It provides interfaces for profile creation, editing, and display, implemented using shared UI components.  
+The frontend portion resides in the client application. 
+It provides interfaces for profile creation, editing, and data visualization, implemented using modular UI components. 
 Key features include:
 \begin{itemize}
-    \item Editable profile screen showing name, faculty, year, and role.
-    \item Driver-specific section for vehicle information (make, model, seats).
-    \item Preference selection for quiet/chatty rides, music, and other comfort options.
-    \item Integration with camera/gallery for optional profile photo upload.
-    \item Form validation and error messaging for incomplete or invalid fields.
-    \item Communication with backend via tRPC hooks (e.g., \texttt{useGetUser}, \texttt{useUpdateUser}).
+    \item Editable profile screen showing personal attributes, faculty affiliation, and role.
+    \item Driver-specific section for vehicle information (capacity, specifications).
+    \item Preference configuration for ride comfort options (e.g., conversation, music).
+    \item Integration with device media services for optional profile photo management.
+    \item Input validation and error messaging for data integrity.
+    \item Communication with the backend via secure remote procedure calls.
 \end{itemize}
 
 \paragraph{Backend}
-The backend implements the business logic and data orchestration using Express and tRPC.  
-It exposes endpoints for retrieving, updating, and deleting user data.  
+The backend implements the business logic and data orchestration layers. 
+It exposes endpoints for retrieving, updating, and deleting user data entities. 
 Main responsibilities include:
 \begin{itemize}
-    \item Providing tRPC procedures such as \texttt{getUserProfile}, \texttt{updateUserProfile}, and \texttt{deleteUser}.
-    \item Validating incoming payloads using Zod schemas for type safety.
-    \item Enforcing access control through session validation from BetterAuth.
-    \item Maintaining referential integrity with linked tables (e.g., trips, ratings).
-    \item Broadcasting profile updates to dependent modules (e.g., Matching, Analytics).
+    \item Providing interface methods for profile retrieval and modification.
+    \item Validating incoming data payloads against strict schema definitions.
+    \item Enforcing access control through session validation.
+    \item Maintaining referential integrity with linked entities (e.g., trips, ratings).
+    \item Broadcasting profile state changes to dependent modules.
 \end{itemize}
 
 \paragraph{Data}
-The data layer defines persistent entities stored in PostgreSQL via Drizzle ORM.  
-Key tables include:
+The data layer defines persistent entities stored in the relational database management system. 
+Key entities include:
 \begin{itemize}
-    \item \texttt{users} --- stores user metadata such as name, role, faculty, and profile image URL.
-    \item \texttt{vehicles} --- stores driver vehicle details and capacity.
-    \item \texttt{preferences} --- stores personal ride preferences and settings.
+    \item \texttt{UserEntity} --- stores metadata such as name, role, faculty, and resource locators.
+    \item \texttt{VehicleEntity} --- stores driver vehicle details and seating capacity.
+    \item \texttt{PreferenceEntity} --- stores personal ride preferences and configuration settings.
 \end{itemize}
-All tables use foreign-key constraints to maintain one-to-one or one-to-many relationships with user records.  
-Schema migrations ensure consistent structure across environments.
+All entities utilize foreign-key constraints to maintain cardinality relationships with user records. 
+Schema migrations ensure consistent structure across deployment environments.
 
 \subsection{Uses}
-This module is used to manage user data required across the entire Hitchly system.  
+This module is used to manage user data required across the entire system. 
 It interacts with:
 \begin{itemize}
     \item \textbf{Authentication \& Verification Module} - links verified user identity to profile records.
     \item \textbf{Matching Module} - provides profile and preference data for scoring algorithms.
-    \item \textbf{Trip Management Module} - associates user profiles with created or joined trips.
+    \item \textbf{Route \& Trip Module} - associates user profiles with created or joined trips.
     \item \textbf{Rating \& Feedback Module} - aggregates ride feedback to display reliability metrics.
 \end{itemize}
-Through these integrations, the module forms the foundation of personalization and trust within Hitchly.
+Through these integrations, the module forms the foundation of personalization and trust within the system.
 
 \subsection{Syntax}
 
 \paragraph{Exported Constants}
 \begin{itemize}
-    \item \texttt{MAX\_BIO\_LENGTH = 250} - Limits user biography text.
-    \item \texttt{DEFAULT\_ROLE = "rider"} - Assigned when a user first registers.
+    \item \texttt{MAX\_BIO\_LENGTH = 250} - Character limit for user biography text.
+    \item \texttt{DEFAULT\_ROLE = Role.Rider} - Default role assigned upon registration.
 \end{itemize}
 
 \paragraph{Exported Access Programs}
@@ -69,11 +69,11 @@ Through these integrations, the module forms the foundation of personalization a
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{getUserProfile()} & userId & UserRecord & NotFoundError \\
-\texttt{updateUserProfile()} & userId, ProfileData & UpdatedRecord & ValidationError \\
-\texttt{deleteUser()} & userId & Confirmation & UnauthorizedError \\
-\texttt{getUserPreferences()} & userId & PreferenceData & NotFoundError \\
-\texttt{updatePreferences()} & userId, PreferenceData & UpdatedPreference & ValidationError \\
+\texttt{getUserProfile} & userId: $\mathbb{N}$ & UserRecord & NotFound \\
+\texttt{updateUserProfile} & userId: $\mathbb{N}$, data: UpdatedRecord & UserRecord & ValidationFailed \\
+\texttt{deleteUser} & userId: $\mathbb{N}$ & Confirmation & Unauthorized \\
+\texttt{getUserPreferences} & userId: $\mathbb{N}$ & PreferenceData & NotFound \\
+\texttt{updatePreferences} & userId: $\mathbb{N}$, data: UpdatedPreference & PreferenceData & ValidationFailed \\
 \bottomrule
 \end{tabular}
 }
@@ -83,58 +83,58 @@ Through these integrations, the module forms the foundation of personalization a
 
 \paragraph{State Variables}
 \begin{itemize}
-    \item \texttt{userProfile} - Stores the current user information in application state.
-    \item \texttt{preferences} - Represents the user's ride comfort and behavior choices.
-    \item \texttt{vehicleData} - Contains driver-specific car details for eligible users.
+    \item \texttt{Profiles}: Map of ($\mathbb{N} \rightarrow$ UserRecord) --- The collection of all user profiles indexed by userId.
+    \item \texttt{Preferences}: Map of ($\mathbb{N} \rightarrow$ PreferenceData) --- The collection of user preferences indexed by userId.
+    \item \texttt{Vehicles}: Map of ($\mathbb{N} \rightarrow$ VehicleData) --- The collection of vehicle details indexed by driver userId.
 \end{itemize}
 
 \paragraph{Environment Variables}
 \begin{itemize}
-    \item Mobile UI components and device storage for temporary profile caching.
-    \item Active API connection through HTTPS/tRPC.
-    \item Database connection via Drizzle ORM.
+    \item Client input interface (form data).
+    \item Secure transport channel (HTTPS).
+    \item Persistence layer connection.
 \end{itemize}
 
 \paragraph{Assumptions}
 \begin{itemize}
-    \item The user is authenticated and verified before modifying profile data.
-    \item The database schema has been migrated to include required tables.
-    \item Frontend validation is performed prior to API submission.
+    \item The user is authenticated and identity is verified before modifying profile data.
+    \item The persistence layer schema matches the entity definitions.
+    \item Basic input formatting (sanitization) is performed by the interface layer.
 \end{itemize}
 
 \paragraph{Access Routine Semantics}
 
-\texttt{getUserProfile()}:
+\noindent \texttt{getUserProfile(userId)}:
 \begin{itemize}
-    \item \textbf{transition:} None (read-only).
-    \item \textbf{output:} Returns the user's profile record.
-    \item \textbf{exception:} NotFoundError if record absent.
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns $Profiles[userId]$.
+    \item \textbf{exception:} \texttt{NotFound} if $userId \notin Profiles$.
 \end{itemize}
 
-\texttt{updateUserProfile()}:
+\noindent \texttt{updateUserProfile(userId, data)}:
 \begin{itemize}
-    \item \textbf{transition:} Updates profile fields in database.
-    \item \textbf{output:} Returns updated record.
-    \item \textbf{exception:} ValidationError for invalid input or missing fields.
+    \item \textbf{transition:} $Profiles[userId] := Profiles[userId] \cup data$ (fields in $data$ overwrite existing).
+    \item \textbf{output:} Returns updated $Profiles[userId]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ violates schema constraints.
 \end{itemize}
 
-\texttt{updatePreferences()}:
+\noindent \texttt{updatePreferences(userId, data)}:
 \begin{itemize}
-    \item \textbf{transition:} Rewrites preference entries linked to user ID.
-    \item \textbf{output:} Confirmation of successful update.
-    \item \textbf{exception:} ValidationError on schema violation.
+    \item \textbf{transition:} $Preferences[userId] := data$.
+    \item \textbf{output:} Returns $Preferences[userId]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ contains invalid preference options.
 \end{itemize}
 
-\texttt{deleteUser()}:
+\noindent \texttt{deleteUser(userId)}:
 \begin{itemize}
-    \item \textbf{transition:} Removes user and related data (soft delete or cascade).
-    \item \textbf{output:} Success confirmation.
-    \item \textbf{exception:} UnauthorizedError if requester lacks privilege.
+    \item \textbf{transition:} Removes $userId$ from $Profiles$, $Preferences$, and $Vehicles$.
+    \item \textbf{output:} \texttt{true}.
+    \item \textbf{exception:} \texttt{Unauthorized} if the requestor does not have ownership or administrative privileges.
 \end{itemize}
 
 \paragraph{Local Functions}
 \begin{itemize}
-    \item \texttt{sanitizeProfileInput(data)} - Removes disallowed fields and formats strings.
-    \item \texttt{mergePreferenceDefaults(prefs)} - Applies default values for missing preference options.
-    \item \texttt{calculateReliabilityScore(userId)} - Computes user trust metric from ratings and trip history.
+    \item \texttt{sanitizeProfileInput(data: UserRecord): UserRecord} --- Strips disallowed characters and formatting.
+    \item \texttt{mergePreferenceDefaults(prefs: PreferenceData): PreferenceData} --- Fills missing fields with system defaults.
+    \item \texttt{calculateReliabilityScore(userId: $\mathbb{N}$): $\mathbb{R}$} --- Computes trust metric based on historical interaction data.
 \end{itemize}

@@ -63,10 +63,10 @@ Tables:
 \toprule
 Name & In & Out & Exceptions \\
 \midrule
-\texttt{createSchedule()} & scheduleData & ScheduleRecord & ValidationError \\
-\texttt{getUserSchedules()} & userId & ScheduleList & NotFoundError \\
-\texttt{cancelSchedule()} & scheduleId & Confirmation & UnauthorizedError \\
-\texttt{generateFutureTrips()} & scheduleId & TripList & AlgorithmError \\
+\texttt{createSchedule} & scheduleData & ScheduleRecord & ValidationError \\
+\texttt{getUserSchedules} & userId & ScheduleList & NotFoundError \\
+\texttt{cancelSchedule} & scheduleId & Confirmation & UnauthorizedError \\
+\texttt{generateFutureTrips} & scheduleId & TripList & AlgorithmError \\
 \bottomrule
 \end{tabular}
 }
@@ -96,7 +96,7 @@ Name & In & Out & Exceptions \\
 
 \paragraph{Access Routine Semantics}
 
-\texttt{createSchedule()}:
+\texttt{createSchedule}:
 \begin{itemize}
     \item \textbf{transition:} 
     \begin{itemize}
@@ -109,14 +109,14 @@ Name & In & Out & Exceptions \\
     \item \textbf{exception:} ValidationError if schedule data invalid (invalid days, past time, etc.).
 \end{itemize}
 
-\texttt{getUserSchedules()}:
+\texttt{getUserSchedules}:
 \begin{itemize}
     \item \textbf{transition:} None (read-only operation).
     \item \textbf{output:} Returns filtered subset of $\text{userSchedules}$ for the given userId.
     \item \textbf{exception:} NotFoundError if no schedules exist for userId ($\text{userSchedules} = \emptyset$ for given userId).
 \end{itemize}
 
-\texttt{cancelSchedule()}:
+\texttt{cancelSchedule}:
 \begin{itemize}
     \item \textbf{transition:} 
     \begin{itemize}
@@ -129,13 +129,13 @@ Name & In & Out & Exceptions \\
     \item \textbf{exception:} UnauthorizedError if user lacks permission (schedule not in $\text{userSchedules}$ for current user).
 \end{itemize}
 
-\texttt{generateFutureTrips()}:
+\texttt{generateFutureTrips}:
 \begin{itemize}
     \item \textbf{transition:} 
     \begin{itemize}
         \item Locates schedule in $\text{userSchedules}$ by scheduleId
         \item Retrieves corresponding recurrence rule from $\text{activeRules}$
-        \item Uses $\text{nextOccurrence}()$ to compute future trip dates based on active rule
+        \item Uses $\text{nextOccurrence}$ to compute future trip dates based on active rule
         \item Generates trip entries for each future occurrence (up to MAX\_RECURRING\_YEARS)
         \item Creates trip entries via Trip Module's \texttt{createTrip} procedure
     \end{itemize}

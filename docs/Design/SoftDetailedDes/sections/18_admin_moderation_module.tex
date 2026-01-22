@@ -39,9 +39,9 @@ This layer is responsible for handling communication with RESTAPI endpoints usin
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{warn\_user()} & user\_ID, reason & Bool (check if user is successfully warned) & NotFoundError, InsufficientAdminPrivileges \\
-\texttt{get\_Reports()} & None & Returns a dataset of user reports & NotFoundError, InsufficientAdminPrivileges \\
-\texttt{get\_analytics()} & None & Returns a dataset of user and application statistics & NotFoundError, InsufficientAdminPrivileges \\
+\texttt{warn\_user} & user\_ID, reason & Bool (check if user is successfully warned) & NotFoundError, InsufficientAdminPrivileges \\
+\texttt{get\_Reports} & None & Returns a dataset of user reports & NotFoundError, InsufficientAdminPrivileges \\
+\texttt{get\_analytics} & None & Returns a dataset of user and application statistics & NotFoundError, InsufficientAdminPrivileges \\
 \bottomrule
 \end{tabular}
 }
@@ -68,21 +68,21 @@ N/A
 
 \paragraph{Access Routine Semantics}
 
-\texttt{warn\_user()}:
+\texttt{warn\_user}:
 \begin{itemize}
     \item \textbf{transition:} Adds a new record with a warning in the reports table.
     \item \textbf{output:} Bool (check if user is successfully warned).
     \item \textbf{exception:} NotFoundError (user\_ID not found), InsufficientAdminPrivileges.
 \end{itemize}
 
-\texttt{get\_Reports()}:
+\texttt{get\_Reports}:
 \begin{itemize}
     \item \textbf{transition:} None.
     \item \textbf{output:} Returns a dataset of user reports.
     \item \textbf{exception:} NotFoundError (empty dataset), InsufficientAdminPrivileges.
 \end{itemize}
 
-\texttt{get\_analytics()}:
+\texttt{get\_analytics}:
 \begin{itemize}
     \item \textbf{transition:} None.
     \item \textbf{output:} Returns a dataset of user and application statistics.
