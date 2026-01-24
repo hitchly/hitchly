@@ -83,6 +83,30 @@ async function getRouteDetails(
   }
 }
 
+export async function geocodeAddress(address: string): Promise<Location> {
+  try {
+    const response = await mapsClient.geocode({
+      params: {
+        address,
+        key: env.google.apiKey,
+      },
+    });
+
+    if (response.data.results.length === 0) {
+      throw new Error(`No results found for address: ${address}`);
+    }
+
+    const location = response.data.results[0].geometry.location;
+    return {
+      lat: location.lat,
+      lng: location.lng,
+    };
+  } catch (error: any) {
+    console.error(`Geocoding error for address "${address}":`, error);
+    throw error;
+  }
+}
+
 export async function getDetourAndRideDetails(
   driverTrip: DriverRouteInfo,
   rider: NewRiderInfo

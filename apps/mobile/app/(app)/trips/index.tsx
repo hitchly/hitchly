@@ -19,6 +19,10 @@ export default function TripsScreen() {
     isRefetching,
   } = trpc.trip.getTrips.useQuery();
 
+  // Filter out cancelled trips
+  const activeTrips =
+    trips?.filter((trip) => trip.status !== "cancelled") || [];
+
   const formatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleDateString("en-US", {
@@ -80,7 +84,7 @@ export default function TripsScreen() {
           />
         }
       >
-        {!trips || trips.length === 0 ? (
+        {!activeTrips || activeTrips.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No trips found</Text>
             <Text style={styles.emptySubtext}>
@@ -88,7 +92,7 @@ export default function TripsScreen() {
             </Text>
           </View>
         ) : (
-          trips.map((trip) => (
+          activeTrips.map((trip) => (
             <TouchableOpacity
               key={trip.id}
               style={styles.tripCard}

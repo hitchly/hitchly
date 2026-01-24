@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavTheme } from "../constants/theme";
 import { AppThemeProvider } from "../context/theme-context";
 import { authClient } from "../lib/auth-client";
@@ -40,14 +41,16 @@ function AppContent() {
   }, [session, isPending, segments, router]);
 
   return (
-    <NavigationThemeProvider value={currentNavTheme}>
-      <AppThemeProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-        </Stack>
-      </AppThemeProvider>
-    </NavigationThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationThemeProvider value={currentNavTheme}>
+        <AppThemeProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(app)" />
+          </Stack>
+        </AppThemeProvider>
+      </NavigationThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

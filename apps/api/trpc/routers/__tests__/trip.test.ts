@@ -47,7 +47,7 @@ const createMockDb = () => {
 // Mock context
 const createMockContext = (userId?: string, db?: any): Context => ({
   req: {} as any,
-  res: {} as any,
+  resHeaders: new Headers(),
   db: db || createMockDb(),
   userId,
 });

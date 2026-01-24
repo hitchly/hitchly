@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,11 @@ import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 import { useRouter } from "expo-router";
+import {
+  SwipeDeck,
+  RiderCard,
+  type TripRequestWithDetails,
+} from "../../components/swipe";
 
 export default function RequestsScreen() {
   const router = useRouter();
@@ -24,17 +29,26 @@ export default function RequestsScreen() {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
   const utils = trpc.useUtils();
+  const [viewMode, setViewMode] = useState<"list" | "swipe">("list");
 
-  // Get all trips for the user to determine if they're a driver
+  // Get user profile to determine role
+  const { data: userProfile, isLoading: isLoadingProfile } =
+    trpc.profile.getMe.useQuery(undefined, { enabled: !!userId });
+
+  const appRole = userProfile?.profile?.appRole || "rider";
+  const isDriver = appRole === "driver";
+
+  // Get all trips for the user (only if driver)
   const { data: driverTrips, isLoading: isLoadingTrips } =
-    trpc.trip.getTrips.useQuery(undefined, { enabled: !!userId });
+    trpc.trip.getTrips.useQuery(undefined, { enabled: !!userId && isDriver });
 
-  // Determine if user is a driver
-  const isDriver = (driverTrips?.length || 0) > 0;
+  // Filter out cancelled trips
+  const activeDriverTrips =
+    driverTrips?.filter((trip) => trip.status !== "cancelled") || [];
 
   // Get requests - if driver, we'll need to fetch for each trip
   // For now, get first trip's requests as a placeholder - we'll need to aggregate
-  const firstTripId = driverTrips?.[0]?.id;
+  const firstTripId = activeDriverTrips?.[0]?.id;
 
   const {
     data: firstTripRequests,
@@ -57,6 +71,7 @@ export default function RequestsScreen() {
   );
 
   const isLoading =
+    isLoadingProfile ||
     isLoadingTrips ||
     (isDriver && isLoadingFirstTrip) ||
     (!isDriver && isLoadingRiderRequests);
@@ -71,8 +86,22 @@ export default function RequestsScreen() {
   }, [firstTripRequests, isDriver]);
 
   // Determine if user is viewing as driver or rider
-  const isDriverView = (driverTrips?.length || 0) > 0;
+  const isDriverView = isDriver;
   const requests = isDriverView ? allDriverRequests : riderRequests || [];
+
+  // Filter out requests for cancelled trips
+  const filteredRequests = requests.filter((req) => {
+    if (!req.trip) return false;
+    return req.trip.status !== "cancelled";
+  });
+
+  // Filter pending requests for swipe view
+  const pendingRequests = useMemo(() => {
+    if (!isDriverView) return [];
+    return filteredRequests.filter(
+      (req) => req.status === "pending"
+    ) as TripRequestWithDetails[];
+  }, [filteredRequests, isDriverView]);
 
   const acceptRequest = trpc.trip.acceptTripRequest.useMutation({
     onSuccess: () => {
@@ -170,9 +199,27 @@ export default function RequestsScreen() {
         <Text style={[styles.title, { color: colors.text }]}>
           {isDriverView ? "Trip Requests" : "My Requests"}
         </Text>
+        {isDriverView && pendingRequests.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setViewMode(viewMode === "list" ? "swipe" : "list")}
+            style={[
+              styles.toggleButton,
+              { backgroundColor: colors.primaryLight },
+            ]}
+          >
+            <Ionicons
+              name={viewMode === "list" ? "swap-horizontal" : "list"}
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={[styles.toggleText, { color: colors.primary }]}>
+              {viewMode === "list" ? "Swipe Mode" : "List Mode"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {requests.length === 0 ? (
+      {filteredRequests.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons
             name="chatbubbles-outline"
@@ -188,9 +235,65 @@ export default function RequestsScreen() {
               : "You haven't requested any rides yet"}
           </Text>
         </View>
+      ) : isDriverView && viewMode === "swipe" && pendingRequests.length > 0 ? (
+        <>
+          <View style={styles.swipeContainer}>
+            <SwipeDeck
+              data={pendingRequests}
+              renderCard={(request) => <RiderCard request={request} />}
+              onSwipeLeft={(request) => {
+                rejectRequest.mutate({ requestId: request.id });
+              }}
+              onSwipeRight={(request) => {
+                acceptRequest.mutate({ requestId: request.id });
+              }}
+              onCardTap={(request) => {
+                Alert.alert(
+                  "Request Details",
+                  `Rider: ${request.rider?.name || request.rider?.email || "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`
+                );
+              }}
+              onDeckEmpty={() => {
+                setViewMode("list");
+                Alert.alert(
+                  "All Caught Up",
+                  "You've reviewed all pending requests."
+                );
+              }}
+            />
+          </View>
+          <View style={styles.instructionsContainer}>
+            <View style={styles.instructionRow}>
+              <Ionicons name="close-circle" size={24} color={colors.error} />
+              <Text
+                style={[
+                  styles.instructionText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Swipe left to reject
+              </Text>
+            </View>
+            <View style={styles.instructionRow}>
+              <Ionicons
+                name="checkmark-circle"
+                size={24}
+                color={colors.success}
+              />
+              <Text
+                style={[
+                  styles.instructionText,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Swipe right to accept
+              </Text>
+            </View>
+          </View>
+        </>
       ) : (
         <FlatList
-          data={requests}
+          data={filteredRequests}
           keyExtractor={(item) => item.id}
           refreshControl={
             <RefreshControl
@@ -473,5 +576,39 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  toggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+    marginTop: 8,
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  swipeContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  instructionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  instructionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  instructionText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });

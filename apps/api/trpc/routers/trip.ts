@@ -442,7 +442,11 @@ export const tripRouter = router({
         .leftJoin(users, eq(tripRequests.riderId, users.id))
         .orderBy(tripRequests.createdAt);
 
-      return requests;
+      // Filter out requests for cancelled trips or trips that don't exist
+      return requests.filter((req) => {
+        if (!req.trip) return false;
+        return req.trip.status !== "cancelled";
+      });
     }),
 
   acceptTripRequest: protectedProcedure

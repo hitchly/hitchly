@@ -18,6 +18,7 @@ import { trpc } from "../../../lib/trpc";
 
 export default function CreateTripScreen() {
   const router = useRouter();
+  const utils = trpc.useUtils();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [departureDateTime, setDepartureDateTime] = useState(
@@ -28,10 +29,12 @@ export default function CreateTripScreen() {
 
   const createTrip = trpc.trip.createTrip.useMutation({
     onSuccess: () => {
+      // Invalidate trips query to refresh the list
+      utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Trip created successfully!", [
         {
           text: "OK",
-          onPress: () => router.back(),
+          onPress: () => router.push("/trips"),
         },
       ]);
     },

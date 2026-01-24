@@ -10,6 +10,7 @@ import { trpc } from "../../lib/trpc";
 const AppRoutes = () => {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { data: userProfile } = trpc.profile.getMe.useQuery();
 
   const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
     enabled: !!session?.user?.id,
@@ -22,6 +23,14 @@ const AppRoutes = () => {
       router.replace("/banned");
     }
   }, [banCheck.data?.isBanned, router]);
+
+  const appRole = userProfile?.profile?.appRole || "rider";
+  const isDriver = appRole === "driver";
+  const isRider = appRole === "rider";
+
+  // Determine which screen to show for discover tab
+  const discoverScreenName = isDriver ? "requests" : "matchmaking";
+
   if (banCheck.isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -31,19 +40,28 @@ const AppRoutes = () => {
   }
   return (
     <Tabs
+      initialRouteName={discoverScreenName}
       screenOptions={{
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         headerShown: false,
+        tabBarActiveTintColor: "#7A003C",
+        tabBarInactiveTintColor: "#687076",
+        tabBarStyle: {
+          borderTopWidth: 1,
+          borderTopColor: "#eeeeee",
+        },
       }}
     >
+      {/* Discover/Passengers tab - role-aware */}
       <Tabs.Screen
-        name="index"
+        name="matchmaking"
         options={{
-          title: "Home",
+          title: isRider ? "Discover" : undefined,
+          href: isRider ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               size={28}
-              name={focused ? "home" : "home-outline"}
+              name={focused ? "search" : "search-outline"}
               color={color}
             />
           ),
@@ -52,25 +70,33 @@ const AppRoutes = () => {
       <Tabs.Screen
         name="requests"
         options={{
-          title: "Requests",
+          title: isDriver ? "Passengers" : undefined,
+          href: isDriver ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               size={28}
-              name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              name={focused ? "people" : "people-outline"}
               color={color}
             />
           ),
         }}
       />
+      {/* My Trips tab - only visible for drivers */}
       <Tabs.Screen
-        name="matchmaking"
+        name="trips/index"
         options={{
-          title: "Find Ride",
-          tabBarIcon: ({ color }) => (
-            <Ionicons size={28} name="search" color={color} />
+          title: "My Trips",
+          href: isDriver ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "car" : "car-outline"}
+              color={color}
+            />
           ),
         }}
       />
+      {/* Profile tab */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -82,6 +108,37 @@ const AppRoutes = () => {
               color={color}
             />
           ),
+        }}
+      />
+      {/* Hide unused screens and nested routes from tab bar */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/create"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/requests-swipe"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/requests"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

@@ -22,8 +22,10 @@ const rideSearchSchema = z.object({
   desiredArrivalTime: z
     .string()
     .regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
+  desiredDate: z.coerce.date().optional(),
   maxOccupancy: z.number().int().min(1).default(1),
   preference: z.enum(["default", "costPriority", "comfortPriority"]).optional(),
+  includeDummyMatches: z.boolean().default(false).optional(),
 });
 
 const requestRideSchema = z.object({
@@ -42,8 +44,10 @@ export const matchmakingRouter = router({
         origin: input.origin,
         destination: input.destination,
         desiredArrivalTime: input.desiredArrivalTime,
+        desiredDate: input.desiredDate,
         maxOccupancy: input.maxOccupancy,
         preference: input.preference,
+        includeDummyMatches: input.includeDummyMatches,
       };
 
       // Call the matchmaking service to find and rank matches

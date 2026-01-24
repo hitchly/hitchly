@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +16,7 @@ import { trpc } from "../../../lib/trpc";
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
 
@@ -28,10 +28,13 @@ export default function TripDetailScreen() {
 
   const cancelTrip = trpc.trip.cancelTrip.useMutation({
     onSuccess: () => {
+      // Invalidate trips query to refresh the list
+      utils.trip.getTrips.invalidate();
+      utils.trip.getTripRequests.invalidate();
       Alert.alert("Success", "Trip cancelled successfully", [
         {
           text: "OK",
-          onPress: () => router.back(),
+          onPress: () => router.push("/trips"),
         },
       ]);
     },

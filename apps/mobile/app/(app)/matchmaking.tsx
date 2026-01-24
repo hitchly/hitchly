@@ -1,50 +1,43 @@
 import {
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Alert,
-  Modal,
-  Image,
   ScrollView,
   View,
   Text,
-  TextProps,
   TextInput,
+  Animated,
 } from "react-native";
 import { trpc } from "@/lib/trpc";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/theme-context";
+import { useRouter } from "expo-router";
+import { SwipeDeck, TripCard, type RideMatch } from "../../components/swipe";
+import { DatePickerComponent } from "../../components/ui/date-picker";
 
 // McMaster University coordinates (default destination)
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 
-// Type for ride match from API
-type RideMatch = {
-  rideId: string;
-  driverId: string;
-  name: string;
-  profilePic: string;
-  vehicle: string;
-  rating: number;
-  bio: string;
-  matchPercentage: number;
-  uiLabel: string;
-  details: {
-    estimatedCost: number;
-    detourMinutes: number;
-    arrivalAtPickup: string;
-    availableSeats: number;
-  };
-};
-
 export default function Matchmaking() {
-  const { colors, fonts } = useTheme();
-  const [selectedMatch, setSelectedMatch] = useState<RideMatch | null>(null);
+  const { colors } = useTheme();
+  const router = useRouter();
   const [desiredArrivalTime, setDesiredArrivalTime] = useState("09:00");
+  const [desiredDate, setDesiredDate] = useState<Date | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [includeDummyMatches, setIncludeDummyMatches] = useState(false);
+  const toggleAnim = useRef(new Animated.Value(0)).current;
+  const utils = trpc.useUtils();
+
+  useEffect(() => {
+    Animated.timing(toggleAnim, {
+      toValue: includeDummyMatches ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [includeDummyMatches, toggleAnim]);
 
   // Get user profile with default location
   const { data: userProfile, isLoading: profileLoading } =
@@ -60,19 +53,30 @@ export default function Matchmaking() {
           },
           destination: MCMASTER_COORDS,
           desiredArrivalTime,
+          desiredDate: desiredDate || undefined,
           maxOccupancy: 1,
           preference: "costPriority" as const,
+          includeDummyMatches,
         }
       : null;
 
+  // Refetch matches when toggle changes (if search has been performed)
+  useEffect(() => {
+    if (hasSearched && searchParams) {
+      utils.matchmaking.findMatches.invalidate();
+    }
+  }, [includeDummyMatches, hasSearched, searchParams, utils]);
+
   // Only fetch matches if user has location set and has clicked search
+  // Include includeDummyMatches in the query key to refetch when toggle changes
   const matchesQuery = trpc.matchmaking.findMatches.useQuery(searchParams!, {
     enabled: !!searchParams && hasSearched,
+    // Refetch when toggle changes to ensure fresh results
+    refetchOnMount: true,
   });
 
-  const requestMutation = trpc.matchmaking.requestRide.useMutation({
+  const requestRideMutation = trpc.matchmaking.requestRide.useMutation({
     onSuccess: () => {
-      setSelectedMatch(null);
       Alert.alert(
         "Request Sent",
         "The driver has been notified of your request!"
@@ -83,13 +87,35 @@ export default function Matchmaking() {
     },
   });
 
-  const handleRequestRide = () => {
-    if (!selectedMatch || !searchParams) return;
-    requestMutation.mutate({
-      rideId: selectedMatch.rideId,
+  const handleSwipeRight = (match: RideMatch) => {
+    // Use matchmaking.requestRide (uses rideId from rides table)
+    // Pickup location is the rider's origin (where they want to be picked up)
+    if (!searchParams) {
+      Alert.alert("Error", "Search parameters not available");
+      return;
+    }
+    requestRideMutation.mutate({
+      rideId: match.rideId,
       pickupLat: searchParams.origin.lat,
       pickupLng: searchParams.origin.lng,
     });
+  };
+
+  const handleSwipeLeft = () => {
+    // Just discard, no action needed
+  };
+
+  const handleCardTap = (match: RideMatch) => {
+    // Navigate to trip details
+    router.push(`/(app)/trips/${match.rideId}`);
+  };
+
+  const handleDeckEmpty = () => {
+    // Could fetch more matches here if pagination is supported
+    Alert.alert(
+      "No More Matches",
+      "You've seen all available rides. Try adjusting your search criteria."
+    );
   };
 
   const handleSearch = () => {
@@ -223,6 +249,21 @@ export default function Matchmaking() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Date
+              </Text>
+              <DatePickerComponent
+                value={desiredDate || new Date()}
+                onChange={(date) => setDesiredDate(date)}
+                minimumDate={new Date()}
+                backgroundColor={colors.background}
+                borderColor={colors.border}
+                textColor={colors.text}
+                iconColor={colors.primary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Desired Arrival Time
               </Text>
               <TextInput
@@ -239,6 +280,57 @@ export default function Matchmaking() {
                 placeholder="HH:MM"
                 placeholderTextColor={colors.textSecondary}
               />
+            </View>
+
+            {/* Dummy Matches Toggle */}
+            <View style={styles.inputGroup}>
+              <View
+                style={[
+                  styles.toggleContainer,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.toggleLabelContainer}>
+                  <Ionicons
+                    name="flask-outline"
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={[styles.toggleLabel, { color: colors.text }]}>
+                    Include Test Matches
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleSwitch,
+                    {
+                      backgroundColor: includeDummyMatches
+                        ? colors.primary
+                        : colors.border,
+                    },
+                  ]}
+                  onPress={() => setIncludeDummyMatches(!includeDummyMatches)}
+                >
+                  <Animated.View
+                    style={[
+                      styles.toggleThumb,
+                      {
+                        transform: [
+                          {
+                            translateX: toggleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 22],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -300,7 +392,11 @@ export default function Matchmaking() {
           </Text>
           <TouchableOpacity
             style={[styles.secondaryButton, { borderColor: colors.primary }]}
-            onPress={() => setHasSearched(false)}
+            onPress={() => {
+              setHasSearched(false);
+              setDesiredDate(null);
+              setIncludeDummyMatches(false);
+            }}
           >
             <Text
               style={[styles.secondaryButtonText, { color: colors.primary }]}
@@ -313,262 +409,68 @@ export default function Matchmaking() {
     );
   }
 
-  // --- STATE 6: RESULTS LIST ---
+  // --- STATE 6: SWIPE DECK ---
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Available Rides
+          Swipe to Match
         </Text>
         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-          {matchesQuery.data.length} rides found for {desiredArrivalTime}
+          {matchesQuery.data.length} rides found
+          {desiredDate
+            ? ` for ${desiredDate.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })} at ${desiredArrivalTime}`
+            : ` for ${desiredArrivalTime}`}
         </Text>
-        <TouchableOpacity onPress={() => setHasSearched(false)}>
+        <TouchableOpacity
+          onPress={() => {
+            setHasSearched(false);
+            setDesiredDate(null);
+            setIncludeDummyMatches(false);
+          }}
+        >
           <Text style={[styles.linkText, { color: colors.primary }]}>
             New Search
           </Text>
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={matchesQuery.data}
-        keyExtractor={(item) => item.rideId}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.rideCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            activeOpacity={0.9}
-            onPress={() => setSelectedMatch(item)}
+      <View style={styles.swipeContainer}>
+        <SwipeDeck
+          data={matchesQuery.data}
+          renderCard={(match) => <TripCard match={match} />}
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          onCardTap={handleCardTap}
+          onDeckEmpty={handleDeckEmpty}
+        />
+      </View>
+
+      {/* Swipe instructions */}
+      <View style={styles.instructionsContainer}>
+        <View style={styles.instructionRow}>
+          <Ionicons name="close-circle" size={24} color={colors.error} />
+          <Text
+            style={[styles.instructionText, { color: colors.textSecondary }]}
           >
-            <View style={styles.rideCardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.driverName, { color: colors.text }]}>
-                  {item.name}
-                </Text>
-                <Text
-                  style={[styles.vehicleText, { color: colors.textSecondary }]}
-                >
-                  {item.vehicle}
-                </Text>
-              </View>
-              <Text style={[styles.priceText, { color: colors.text }]}>
-                ${item.details.estimatedCost.toFixed(2)}
-              </Text>
-            </View>
-
-            <View style={styles.rideCardFooter}>
-              <View
-                style={[
-                  styles.matchBadge,
-                  { backgroundColor: colors.primaryLight },
-                ]}
-              >
-                <Text
-                  style={[styles.matchBadgeText, { color: colors.primary }]}
-                >
-                  {item.matchPercentage}% Match
-                </Text>
-              </View>
-              <View style={styles.seatsInfo}>
-                <Ionicons
-                  name="person"
-                  size={14}
-                  color={colors.textSecondary}
-                />
-                <Text
-                  style={[styles.seatsText, { color: colors.textSecondary }]}
-                >
-                  {item.details.availableSeats} seats
-                </Text>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={colors.textSecondary}
-              />
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-
-      {/* --- DETAILS MODAL --- */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={!!selectedMatch}
-        onRequestClose={() => setSelectedMatch(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: colors.surface }]}
-          >
-            <TouchableOpacity
-              style={styles.closeHandleArea}
-              onPress={() => setSelectedMatch(null)}
-            >
-              <View
-                style={[styles.dragHandle, { backgroundColor: colors.border }]}
-              />
-            </TouchableOpacity>
-
-            {selectedMatch && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
-              >
-                <View style={styles.profileHeader}>
-                  {selectedMatch.profilePic ? (
-                    <Image
-                      source={{ uri: selectedMatch.profilePic }}
-                      style={styles.profileImage}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.avatarCircle,
-                        { backgroundColor: colors.primary },
-                      ]}
-                    >
-                      <Text style={styles.avatarText}>
-                        {selectedMatch.name.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  <Text
-                    style={[styles.modalDriverName, { color: colors.text }]}
-                  >
-                    {selectedMatch.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.ratingBadge,
-                      { backgroundColor: colors.background },
-                    ]}
-                  >
-                    <Ionicons name="star" size={14} color={colors.warning} />
-                    <Text style={[styles.ratingText, { color: colors.text }]}>
-                      {selectedMatch.rating}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  style={[
-                    styles.statsContainer,
-                    { backgroundColor: colors.background },
-                  ]}
-                >
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Price
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      ${selectedMatch.details.estimatedCost.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statDivider,
-                      { backgroundColor: colors.border },
-                    ]}
-                  />
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Departs
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      {selectedMatch.details.arrivalAtPickup}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statDivider,
-                      { backgroundColor: colors.border },
-                    ]}
-                  />
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Match
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.primary }]}>
-                      {selectedMatch.matchPercentage}%
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.infoSection}>
-                  <Text
-                    style={[styles.infoLabel, { color: colors.textSecondary }]}
-                  >
-                    Vehicle
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {selectedMatch.vehicle}
-                  </Text>
-                </View>
-
-                <View style={styles.infoSection}>
-                  <Text
-                    style={[styles.infoLabel, { color: colors.textSecondary }]}
-                  >
-                    Available Seats
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {selectedMatch.details.availableSeats} seats available
-                  </Text>
-                </View>
-
-                {selectedMatch.bio && (
-                  <View style={styles.infoSection}>
-                    <Text
-                      style={[
-                        styles.infoLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      About
-                    </Text>
-                    <Text style={[styles.infoValue, { color: colors.text }]}>
-                      {selectedMatch.bio}
-                    </Text>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[
-                    styles.primaryButton,
-                    { backgroundColor: colors.primary, marginTop: 24 },
-                  ]}
-                  onPress={handleRequestRide}
-                >
-                  <Text style={styles.primaryButtonText}>Request Ride</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            )}
-          </View>
+            Swipe left to pass
+          </Text>
         </View>
-      </Modal>
+        <View style={styles.instructionRow}>
+          <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+          <Text
+            style={[styles.instructionText, { color: colors.textSecondary }]}
+          >
+            Swipe right to request
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -688,128 +590,60 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // List
-  listContent: { padding: 16 },
-  rideCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  rideCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  rideCardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  driverName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  vehicleText: { fontSize: 14 },
-  priceText: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  matchBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  matchBadgeText: {
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  seatsInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  // Swipe container
+  swipeContainer: {
     flex: 1,
-  },
-  seatsText: { fontSize: 13 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: "85%",
-    paddingHorizontal: 24,
-    paddingTop: 10,
-  },
-  closeHandleArea: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
-  profileHeader: { alignItems: "center", marginBottom: 24, marginTop: 8 },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    paddingVertical: 20,
   },
-  profileImage: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    marginBottom: 12,
+  instructionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  modalDriverName: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  ratingBadge: {
+  instructionRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    gap: 8,
   },
-  ratingText: {
-    fontWeight: "600",
+  instructionText: {
     fontSize: 14,
+    fontWeight: "500",
   },
-  statsContainer: {
+  toggleContainer: {
     flexDirection: "row",
-    padding: 16,
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
     borderRadius: 12,
-    marginBottom: 24,
+    padding: 14,
   },
-  statBox: { alignItems: "center", flex: 1 },
-  statDivider: { width: 1 },
-  statLabel: { fontSize: 12, marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: "700" },
-  infoSection: { marginBottom: 20 },
-  infoLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  toggleLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  infoValue: { fontSize: 16, lineHeight: 24 },
+  toggleLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  toggleSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    padding: 2,
+    justifyContent: "center",
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    transform: [{ translateX: 0 }],
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 22 }],
+  },
 });

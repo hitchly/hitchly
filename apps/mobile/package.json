@@ -28,7 +28,7 @@
     "@trpc/react-query": "^11.7.1",
     "@trpc/server": "^11.7.1",
     "better-auth": "^1.4.10",
-    "expo": "~54.0.31",
+    "expo": "~54.0.32",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
