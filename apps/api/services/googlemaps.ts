@@ -1,6 +1,17 @@
 import { Client } from "@googlemaps/google-maps-services-js";
 import { env } from "../config/env";
 
+// Verify API key is loaded at startup
+if (!env.google.apiKey) {
+  console.error(
+    "ERROR: GOOGLE_MAPS_API_KEY is not set in environment variables!"
+  );
+} else {
+  console.log(
+    `Google Maps API Key loaded: ${env.google.apiKey.substring(0, 10)}...`
+  );
+}
+
 export type Location = {
   lat: number;
   lng: number;
@@ -83,25 +94,126 @@ async function getRouteDetails(
   }
 }
 
-export async function geocodeAddress(address: string): Promise<Location> {
+export async function geocodeAddress(
+  address: string
+): Promise<Location | null> {
+  // #region agent log - declare LOG_ENDPOINT at function scope
+  const LOG_ENDPOINT =
+    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+  // #endregion agent log
+
   try {
+    const apiKey = env.google.apiKey;
+    // #region agent log
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "googlemaps.ts:86",
+        message: "Geocoding address",
+        data: {
+          address,
+          apiKeySet: !!apiKey,
+          apiKeyLength: apiKey?.length ?? 0,
+          apiKeyPrefix: apiKey?.substring(0, 10) ?? "none",
+          expectedKey: "AIzaSyC0BL",
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "I",
+      }),
+    }).catch(() => {});
+    // #endregion agent log
+
     const response = await mapsClient.geocode({
       params: {
         address,
-        key: env.google.apiKey,
+        key: apiKey,
       },
     });
 
     if (response.data.results.length === 0) {
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "googlemaps.ts:130",
+          message: "Geocoding returned no results",
+          data: {
+            address,
+            status: response.status,
+            statusText: response.statusText,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "I",
+        }),
+      }).catch(() => {});
+      // #endregion agent log
       throw new Error(`No results found for address: ${address}`);
     }
 
     const location = response.data.results[0].geometry.location;
+    // #region agent log
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "googlemaps.ts:134",
+        message: "Geocoding succeeded",
+        data: {
+          address,
+          location,
+          status: response.status,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "I",
+      }),
+    }).catch(() => {});
+    // #endregion agent log
     return {
       lat: location.lat,
       lng: location.lng,
     };
   } catch (error: any) {
+    // #region agent log
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "googlemaps.ts:139",
+        message: "Geocoding error caught",
+        data: {
+          address,
+          errorMessage: error?.message || String(error),
+          errorCode: error?.response?.status,
+          errorData: error?.response?.data,
+          errorStatus: error?.response?.statusText,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "I",
+      }),
+    }).catch(() => {});
+    // #endregion agent log
+
+    // If geocoding API is not enabled (403), return null gracefully instead of throwing
+    // This allows the system to work without geocoding API (trips from trips table will be skipped)
+    const isApiNotEnabled =
+      error?.response?.status === 403 ||
+      error?.response?.data?.status === "REQUEST_DENIED";
+
+    if (isApiNotEnabled) {
+      console.warn(
+        `Geocoding API not enabled - skipping address "${address}". Trips from trips table will not appear until geocoding API is enabled.`
+      );
+      // Return null to signal that geocoding failed, but don't throw
+      // The matchmaking service will filter out null values
+      return null;
+    }
+
     console.error(`Geocoding error for address "${address}":`, error);
     throw error;
   }

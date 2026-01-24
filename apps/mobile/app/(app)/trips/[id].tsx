@@ -162,7 +162,8 @@ export default function TripDetailScreen() {
   const canJoin =
     !isDriver &&
     (trip?.status === "pending" || trip?.status === "active") &&
-    trip?.availableSeats > 0 &&
+    trip &&
+    trip.maxSeats - trip.bookedSeats > 0 &&
     !hasPendingRequest;
 
   return (
@@ -225,7 +226,8 @@ export default function TripDetailScreen() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Available Seats:</Text>
               <Text style={styles.detailValue}>
-                {trip.availableSeats} seat{trip.availableSeats !== 1 ? "s" : ""}
+                {trip.maxSeats - trip.bookedSeats} seat
+                {trip.maxSeats - trip.bookedSeats !== 1 ? "s" : ""}
               </Text>
             </View>
           </View>
@@ -269,8 +271,21 @@ export default function TripDetailScreen() {
               <TouchableOpacity
                 style={styles.button}
                 onPress={() => {
-                  if (id) {
-                    createTripRequest.mutate({ tripId: id });
+                  if (id && trip) {
+                    // Use trip origin coordinates as pickup location
+                    // In a real app, you'd get the user's current location
+                    if (trip.originLat !== null && trip.originLng !== null) {
+                      createTripRequest.mutate({
+                        tripId: id,
+                        pickupLat: trip.originLat,
+                        pickupLng: trip.originLng,
+                      });
+                    } else {
+                      Alert.alert(
+                        "Error",
+                        "Trip location information is not available. Please try again later."
+                      );
+                    }
                   }
                 }}
                 disabled={createTripRequest.isPending}

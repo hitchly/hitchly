@@ -7,7 +7,10 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Load .env from root first (for shared config like DB, email)
 config({ path: path.resolve(__dirname, "../../../.env") });
+// Then load .env from apps/api (for API-specific config like Google Maps API)
+config({ path: path.resolve(__dirname, "../.env") });
 
 export const env = {
   db: {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { rides, rideRequests, users } from "@hitchly/db/schema";
+import { trips, tripRequests, users } from "@hitchly/db/schema";
 import { eq, and } from "@hitchly/db/client";
 import { TRPCError } from "@trpc/server";
 import {
@@ -38,6 +38,26 @@ export const matchmakingRouter = router({
   findMatches: protectedProcedure
     .input(rideSearchSchema)
     .query(async ({ ctx, input }) => {
+      // #region agent log
+      const LOG_ENDPOINT =
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking.ts:41",
+          message: "Backend received input.includeDummyMatches",
+          data: {
+            includeDummyMatches: input.includeDummyMatches,
+            type: typeof input.includeDummyMatches,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion agent log
+
       // Build the rider request using the authenticated user's ID
       const request: RiderRequest = {
         riderId: ctx.userId!,
@@ -50,8 +70,46 @@ export const matchmakingRouter = router({
         includeDummyMatches: input.includeDummyMatches,
       };
 
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking.ts:52",
+          message: "Request object includeDummyMatches value",
+          data: {
+            includeDummyMatches: request.includeDummyMatches,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion agent log
+
       // Call the matchmaking service to find and rank matches
       const matches = await findMatchesForUser(request);
+
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking.ts:55",
+          message: "Matches returned from service",
+          data: {
+            matchesCount: matches.length,
+            matchRideIds: matches.map((m) => m.rideId),
+            dummyMatchesCount: matches.filter((m) =>
+              m.rideId.startsWith("dummy-")
+            ).length,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion agent log
 
       // Filter by minimum match threshold (MATCH_THRESHOLD is 0-1, matchPercentage is 0-100)
       const thresholdPercent = MATCH_THRESHOLD * 100;
@@ -63,28 +121,27 @@ export const matchmakingRouter = router({
       return topMatches;
     }),
 
-  //Returns list of confirmed mutual matches (ride requests the user made that were accepted).
+  //Returns list of confirmed mutual matches (trip requests the user made that were accepted).
   getMatchResults: protectedProcedure.query(async ({ ctx }) => {
     const acceptedRequests = await ctx.db
       .select({
-        requestId: rideRequests.id,
-        rideId: rideRequests.rideId,
-
-        status: rideRequests.status,
-        createdAt: rideRequests.createdAt,
-        driverId: rides.driverId,
-        startTime: rides.startTime,
-        originLat: rides.originLat,
-        originLng: rides.originLng,
-        destLat: rides.destLat,
-        destLng: rides.destLng,
+        requestId: tripRequests.id,
+        rideId: tripRequests.tripId,
+        status: tripRequests.status,
+        createdAt: tripRequests.createdAt,
+        driverId: trips.driverId,
+        startTime: trips.departureTime,
+        originLat: trips.originLat,
+        originLng: trips.originLng,
+        destLat: trips.destLat,
+        destLng: trips.destLng,
       })
-      .from(rideRequests)
-      .innerJoin(rides, eq(rideRequests.rideId, rides.id))
+      .from(tripRequests)
+      .innerJoin(trips, eq(tripRequests.tripId, trips.id))
       .where(
         and(
-          eq(rideRequests.riderId, ctx.userId!),
-          eq(rideRequests.status, "accepted")
+          eq(tripRequests.riderId, ctx.userId!),
+          eq(tripRequests.status, "accepted")
         )
       );
 
@@ -111,32 +168,32 @@ export const matchmakingRouter = router({
   requestRide: protectedProcedure
     .input(requestRideSchema)
     .mutation(async ({ ctx, input }) => {
-      // Verify the ride exists before creating a request
-      const ride = await ctx.db.query.rides.findFirst({
-        where: eq(rides.id, input.rideId),
+      // Verify the trip exists before creating a request
+      const trip = await ctx.db.query.trips.findFirst({
+        where: eq(trips.id, input.rideId),
       });
 
-      if (!ride) {
+      if (!trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Ride not found",
+          message: "Trip not found",
         });
       }
 
-      // Check if ride has available seats
-      if (ride.bookedSeats >= ride.maxSeats) {
+      // Check if trip has available seats
+      if (trip.bookedSeats >= trip.maxSeats) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Ride is fully booked",
+          message: "Trip is fully booked",
         });
       }
 
-      // Insert the ride request with pickup location
+      // Insert the trip request with pickup location
       const newRequest = await ctx.db
-        .insert(rideRequests)
+        .insert(tripRequests)
         .values({
           id: crypto.randomUUID(),
-          rideId: input.rideId,
+          tripId: input.rideId,
           riderId: ctx.userId!,
           pickupLat: input.pickupLat,
           pickupLng: input.pickupLng,
@@ -150,12 +207,12 @@ export const matchmakingRouter = router({
       };
     }),
 
-  // Accept a ride request (driver action) - increments bookedSeats
+  // Accept a trip request (driver action) - increments bookedSeats
   acceptRequest: protectedProcedure
     .input(z.object({ requestId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const request = await ctx.db.query.rideRequests.findFirst({
-        where: eq(rideRequests.id, input.requestId),
+      const request = await ctx.db.query.tripRequests.findFirst({
+        where: eq(tripRequests.id, input.requestId),
       });
 
       if (!request) {
@@ -172,47 +229,47 @@ export const matchmakingRouter = router({
         });
       }
 
-      const ride = await ctx.db.query.rides.findFirst({
-        where: eq(rides.id, request.rideId),
+      const trip = await ctx.db.query.trips.findFirst({
+        where: eq(trips.id, request.tripId),
       });
 
-      if (!ride) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Ride not found" });
+      if (!trip) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Trip not found" });
       }
 
-      if (ride.driverId !== ctx.userId) {
+      if (trip.driverId !== ctx.userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the driver can accept requests",
         });
       }
 
-      if (ride.bookedSeats >= ride.maxSeats) {
+      if (trip.bookedSeats >= trip.maxSeats) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Ride is fully booked",
+          message: "Trip is fully booked",
         });
       }
 
       await ctx.db
-        .update(rideRequests)
+        .update(tripRequests)
         .set({ status: "accepted" })
-        .where(eq(rideRequests.id, input.requestId));
+        .where(eq(tripRequests.id, input.requestId));
 
       await ctx.db
-        .update(rides)
-        .set({ bookedSeats: ride.bookedSeats + 1 })
-        .where(eq(rides.id, request.rideId));
+        .update(trips)
+        .set({ bookedSeats: trip.bookedSeats + 1 })
+        .where(eq(trips.id, request.tripId));
 
       return { success: true };
     }),
 
-  // Cancel a ride request - decrements bookedSeats if was accepted
+  // Cancel a trip request - decrements bookedSeats if was accepted
   cancelRequest: protectedProcedure
     .input(z.object({ requestId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const request = await ctx.db.query.rideRequests.findFirst({
-        where: eq(rideRequests.id, input.requestId),
+      const request = await ctx.db.query.tripRequests.findFirst({
+        where: eq(tripRequests.id, input.requestId),
       });
 
       if (!request) {
@@ -232,20 +289,20 @@ export const matchmakingRouter = router({
       const wasAccepted = request.status === "accepted";
 
       await ctx.db
-        .update(rideRequests)
+        .update(tripRequests)
         .set({ status: "cancelled" })
-        .where(eq(rideRequests.id, input.requestId));
+        .where(eq(tripRequests.id, input.requestId));
 
       if (wasAccepted) {
-        const ride = await ctx.db.query.rides.findFirst({
-          where: eq(rides.id, request.rideId),
+        const trip = await ctx.db.query.trips.findFirst({
+          where: eq(trips.id, request.tripId),
         });
 
-        if (ride && ride.bookedSeats > 0) {
+        if (trip && trip.bookedSeats > 0) {
           await ctx.db
-            .update(rides)
-            .set({ bookedSeats: ride.bookedSeats - 1 })
-            .where(eq(rides.id, request.rideId));
+            .update(trips)
+            .set({ bookedSeats: trip.bookedSeats - 1 })
+            .where(eq(trips.id, request.tripId));
         }
       }
 

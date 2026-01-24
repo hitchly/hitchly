@@ -122,8 +122,8 @@ export default function TripsScreen() {
                   {formatTime(trip.departureTime)}
                 </Text>
                 <Text style={styles.tripDetail}>
-                  {trip.availableSeats} seat
-                  {trip.availableSeats !== 1 ? "s" : ""} available
+                  {trip.maxSeats - trip.bookedSeats} seat
+                  {trip.maxSeats - trip.bookedSeats !== 1 ? "s" : ""} available
                 </Text>
               </View>
             </TouchableOpacity>

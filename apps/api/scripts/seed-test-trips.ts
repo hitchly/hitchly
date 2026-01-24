@@ -5,7 +5,7 @@ import {
   profiles,
   vehicles,
   preferences,
-  rides,
+  trips,
 } from "@hitchly/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -148,30 +148,30 @@ async function seedTestTrips() {
       const departureTime = new Date(tomorrow);
       departureTime.setHours(8, tripTemplate.departureMinutes[i], 0, 0);
 
-      // Check if ride already exists for this driver and time
-      const [existingRide] = await db
+      // Check if trip already exists for this driver and time
+      const [existingTrip] = await db
         .select()
-        .from(rides)
-        .where(eq(rides.driverId, driver.id))
+        .from(trips)
+        .where(eq(trips.driverId, driver.id))
         .limit(1);
 
-      if (existingRide) {
-        console.log(`⏭️  Skipping ${driver.name} - ride already exists`);
+      if (existingTrip) {
+        console.log(`⏭️  Skipping ${driver.name} - trip already exists`);
         continue;
       }
 
-      const rideId = crypto.randomUUID();
+      const tripId = crypto.randomUUID();
 
-      await db.insert(rides).values({
-        id: rideId,
+      await db.insert(trips).values({
+        id: tripId,
         driverId: driver.id,
+        origin: tripTemplate.originAddress,
+        destination: tripTemplate.destAddress,
         originLat: tripTemplate.originLat,
         originLng: tripTemplate.originLng,
-        originAddress: tripTemplate.originAddress,
         destLat: tripTemplate.destLat,
         destLng: tripTemplate.destLng,
-        destAddress: tripTemplate.destAddress,
-        startTime: departureTime,
+        departureTime: departureTime,
         maxSeats: tripTemplate.maxSeats[i],
         bookedSeats: 0,
         status: "scheduled",
@@ -179,19 +179,19 @@ async function seedTestTrips() {
 
       tripCount++;
       console.log(
-        `✅ Created ride for ${driver.name}: ${tripTemplate.originAddress} → ${tripTemplate.destAddress} at ${departureTime.toLocaleTimeString()}`
+        `✅ Created trip for ${driver.name}: ${tripTemplate.originAddress} → ${tripTemplate.destAddress} at ${departureTime.toLocaleTimeString()}`
       );
     }
   }
 
-  console.log(`\n✨ Seeding complete! Created ${tripCount} test rides.`);
-  console.log("\n📝 Test rides created for tomorrow:");
+  console.log(`\n✨ Seeding complete! Created ${tripCount} test trips.`);
+  console.log("\n📝 Test trips created for tomorrow:");
   console.log("   Origin: 1503 Main St W, Hamilton, ON");
   console.log("   Destination: McMaster University");
   console.log("   Arrival time: ~9:00 AM");
-  console.log("\n💡 These rides will appear in matchmaking search results!");
-  console.log("\n⚠️  Note: If you see 'rides table does not exist' error,");
-  console.log("   run 'pnpm db:push' in apps/api to create the rides table.");
+  console.log("\n💡 These trips will appear in matchmaking search results!");
+  console.log("\n⚠️  Note: If you see 'trips table does not exist' error,");
+  console.log("   run 'pnpm db:push' in apps/api to create the trips table.");
 }
 
 seedTestTrips()

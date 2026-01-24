@@ -223,8 +223,9 @@ export default function TripRequestsScreen() {
                           { color: colors.textSecondary },
                         ]}
                       >
-                        • {trip.availableSeats} seat
-                        {trip.availableSeats !== 1 ? "s" : ""} available
+                        • {trip.maxSeats - trip.bookedSeats} seat
+                        {trip.maxSeats - trip.bookedSeats !== 1 ? "s" : ""}{" "}
+                        available
                       </Text>
                     </View>
                   </View>

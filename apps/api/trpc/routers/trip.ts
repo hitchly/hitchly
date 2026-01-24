@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, ne, or } from "drizzle-orm";
+import { and, eq, gte, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   MAX_SEATS,
@@ -6,7 +6,8 @@ import {
   trips,
   tripRequests,
   users,
-} from "../../db/schema";
+} from "@hitchly/db/schema";
+import { geocodeAddress } from "../../services/googlemaps";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
@@ -15,7 +16,7 @@ const createTripInputSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
   departureTime: z.coerce.date(),
-  availableSeats: z.number().int().min(1).max(MAX_SEATS),
+  maxSeats: z.number().int().min(1).max(MAX_SEATS),
 });
 
 const updateTripInputSchema = createTripInputSchema.partial();
@@ -30,7 +31,7 @@ const tripFiltersSchema = z.object({
 // Helper functions
 function validateTripInput(tripData: {
   departureTime: Date;
-  availableSeats: number;
+  maxSeats: number;
 }) {
   const now = new Date();
   const minDepartureTime = new Date(
@@ -43,8 +44,8 @@ function validateTripInput(tripData: {
     );
   }
 
-  if (tripData.availableSeats < 1 || tripData.availableSeats > MAX_SEATS) {
-    throw new Error(`Available seats must be between 1 and ${MAX_SEATS}`);
+  if (tripData.maxSeats < 1 || tripData.maxSeats > MAX_SEATS) {
+    throw new Error(`Max seats must be between 1 and ${MAX_SEATS}`);
   }
 }
 
@@ -89,13 +90,27 @@ export const tripRouter = router({
       // Validate trip input
       validateTripInput({
         departureTime: input.departureTime,
-        availableSeats: input.availableSeats,
+        maxSeats: input.maxSeats,
       });
+
+      // Geocode addresses to get coordinates
+      const [originCoords, destCoords] = await Promise.all([
+        geocodeAddress(input.origin),
+        geocodeAddress(input.destination),
+      ]);
+
+      if (!originCoords || !destCoords) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Failed to geocode addresses. The Google Maps Geocoding API may not be enabled in your Google Cloud Console. Please enable it at https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com or check your addresses and try again.",
+        });
+      }
 
       // Generate trip ID
       const tripId = crypto.randomUUID();
 
-      // Create trip
+      // Create trip with both addresses and coordinates
       const [trip] = await ctx.db
         .insert(trips)
         .values({
@@ -103,8 +118,13 @@ export const tripRouter = router({
           driverId: ctx.userId!,
           origin: input.origin,
           destination: input.destination,
+          originLat: originCoords.lat,
+          originLng: originCoords.lng,
+          destLat: destCoords.lat,
+          destLng: destCoords.lng,
           departureTime: input.departureTime,
-          availableSeats: input.availableSeats,
+          maxSeats: input.maxSeats,
+          bookedSeats: 0,
           status: "pending",
         })
         .returning();
@@ -218,10 +238,10 @@ export const tripRouter = router({
       }
 
       // Validate updates if provided
-      if (input.updates.departureTime || input.updates.availableSeats) {
+      if (input.updates.departureTime || input.updates.maxSeats) {
         validateTripInput({
           departureTime: input.updates.departureTime ?? trip.departureTime,
-          availableSeats: input.updates.availableSeats ?? trip.availableSeats,
+          maxSeats: input.updates.maxSeats ?? trip.maxSeats,
         });
       }
 
@@ -295,7 +315,13 @@ export const tripRouter = router({
   // ============================================
 
   createTripRequest: protectedProcedure
-    .input(z.object({ tripId: z.string() }))
+    .input(
+      z.object({
+        tripId: z.string(),
+        pickupLat: z.number(),
+        pickupLng: z.number(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const riderId = ctx.userId!;
 
@@ -322,7 +348,8 @@ export const tripRouter = router({
       }
 
       // Validate trip has available seats
-      if (trip.availableSeats <= 0) {
+      const availableSeats = trip.maxSeats - trip.bookedSeats;
+      if (availableSeats <= 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "This trip has no available seats",
@@ -361,7 +388,7 @@ export const tripRouter = router({
         });
       }
 
-      // Create trip request
+      // Create trip request with pickup coordinates
       const requestId = crypto.randomUUID();
       const [request] = await ctx.db
         .insert(tripRequests)
@@ -369,6 +396,8 @@ export const tripRouter = router({
           id: requestId,
           tripId: input.tripId,
           riderId,
+          pickupLat: input.pickupLat,
+          pickupLng: input.pickupLng,
           status: "pending",
         })
         .returning();
@@ -489,7 +518,8 @@ export const tripRouter = router({
       }
 
       // Validate trip has available seats
-      if (request.trip.availableSeats <= 0) {
+      const availableSeats = request.trip.maxSeats - request.trip.bookedSeats;
+      if (availableSeats <= 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Trip has no available seats",
@@ -506,11 +536,11 @@ export const tripRouter = router({
         .where(eq(tripRequests.id, input.requestId))
         .returning();
 
-      // Decrement available seats
+      // Increment booked seats
       await ctx.db
         .update(trips)
         .set({
-          availableSeats: request.trip.availableSeats - 1,
+          bookedSeats: request.trip.bookedSeats + 1,
           updatedAt: new Date(),
         })
         .where(eq(trips.id, request.trip.id));
@@ -621,12 +651,12 @@ export const tripRouter = router({
         .where(eq(tripRequests.id, input.requestId))
         .returning();
 
-      // If request was accepted, increment available seats
+      // If request was accepted, decrement booked seats
       if (wasAccepted) {
         await ctx.db
           .update(trips)
           .set({
-            availableSeats: request.trip.availableSeats + 1,
+            bookedSeats: request.trip.bookedSeats - 1,
             updatedAt: new Date(),
           })
           .where(eq(trips.id, request.trip.id));
@@ -649,7 +679,7 @@ export const tripRouter = router({
       const conditions = [
         or(eq(trips.status, "pending"), eq(trips.status, "active")),
         ne(trips.driverId, riderId), // Exclude trips where user is the driver
-        gte(trips.availableSeats, 1), // Only trips with available seats
+        sql`${trips.maxSeats} - ${trips.bookedSeats} >= 1`, // Only trips with available seats
       ];
 
       if (input?.startDate) {

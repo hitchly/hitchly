@@ -16,7 +16,8 @@ export type TripRequestWithDetails = {
     origin: string;
     destination: string;
     departureTime: Date | string;
-    availableSeats: number;
+    maxSeats: number;
+    bookedSeats: number;
     status: string;
   };
   rider: {
@@ -151,7 +152,7 @@ export function RiderCard({ request }: RiderCardProps) {
             Seats Available
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {request.trip.availableSeats}
+            {request.trip.maxSeats - request.trip.bookedSeats}
           </Text>
         </View>
       </View>

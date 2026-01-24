@@ -78,7 +78,7 @@ export default function CreateTripScreen() {
       origin: origin.trim(),
       destination: destination.trim(),
       departureTime: departureDateTime,
-      availableSeats,
+      maxSeats: availableSeats,
     });
   };
 

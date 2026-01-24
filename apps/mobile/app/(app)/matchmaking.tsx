@@ -10,7 +10,7 @@ import {
   Animated,
 } from "react-native";
 import { trpc } from "@/lib/trpc";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/theme-context";
@@ -31,6 +31,30 @@ export default function Matchmaking() {
   const toggleAnim = useRef(new Animated.Value(0)).current;
   const utils = trpc.useUtils();
 
+  // #region agent log
+  const LOG_ENDPOINT =
+    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+  const log = (
+    location: string,
+    message: string,
+    data: any,
+    hypothesisId?: string
+  ) => {
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId,
+      }),
+    }).catch(() => {});
+  };
+  // #endregion agent log
+
   useEffect(() => {
     Animated.timing(toggleAnim, {
       toValue: includeDummyMatches ? 1 : 0,
@@ -43,29 +67,33 @@ export default function Matchmaking() {
   const { data: userProfile, isLoading: profileLoading } =
     trpc.profile.getMe.useQuery();
 
-  // Build search params from user's profile
-  const searchParams =
-    userProfile?.profile?.defaultLat && userProfile?.profile?.defaultLong
-      ? {
-          origin: {
-            lat: userProfile.profile.defaultLat,
-            lng: userProfile.profile.defaultLong,
-          },
-          destination: MCMASTER_COORDS,
-          desiredArrivalTime,
-          desiredDate: desiredDate || undefined,
-          maxOccupancy: 1,
-          preference: "costPriority" as const,
-          includeDummyMatches,
-        }
-      : null;
-
-  // Refetch matches when toggle changes (if search has been performed)
-  useEffect(() => {
-    if (hasSearched && searchParams) {
-      utils.matchmaking.findMatches.invalidate();
+  // Build search params from user's profile - useMemo to stabilize object reference
+  const searchParams = useMemo(() => {
+    if (
+      !userProfile?.profile?.defaultLat ||
+      !userProfile?.profile?.defaultLong
+    ) {
+      return null;
     }
-  }, [includeDummyMatches, hasSearched, searchParams, utils]);
+    return {
+      origin: {
+        lat: userProfile.profile.defaultLat,
+        lng: userProfile.profile.defaultLong,
+      },
+      destination: MCMASTER_COORDS,
+      desiredArrivalTime,
+      desiredDate: desiredDate || undefined,
+      maxOccupancy: 1,
+      preference: "costPriority" as const,
+      includeDummyMatches,
+    };
+  }, [
+    userProfile?.profile?.defaultLat,
+    userProfile?.profile?.defaultLong,
+    desiredArrivalTime,
+    desiredDate,
+    includeDummyMatches,
+  ]);
 
   // Only fetch matches if user has location set and has clicked search
   // Include includeDummyMatches in the query key to refetch when toggle changes
@@ -74,6 +102,45 @@ export default function Matchmaking() {
     // Refetch when toggle changes to ensure fresh results
     refetchOnMount: true,
   });
+
+  // React Query will automatically refetch when searchParams changes (since it's the query key)
+  // No need for manual refetch - the query key includes includeDummyMatches
+  // #region agent log
+  useEffect(() => {
+    log(
+      "matchmaking.tsx:98",
+      "searchParams changed",
+      {
+        includeDummyMatches,
+        searchParamsIncludeDummy: searchParams?.includeDummyMatches,
+        hasSearchParams: !!searchParams,
+        queryEnabled: !!searchParams && hasSearched,
+      },
+      "J"
+    );
+  }, [searchParams, includeDummyMatches, hasSearched]);
+  // #endregion agent log
+
+  // #region agent log
+  useEffect(() => {
+    if (matchesQuery.data) {
+      log(
+        "matchmaking.tsx:72",
+        "Matches query data received",
+        {
+          matchCount: matchesQuery.data.length,
+          includeDummyMatches,
+          searchParamsIncludeDummy: searchParams?.includeDummyMatches,
+          rideIds: matchesQuery.data.map((m) => m.rideId),
+          dummyMatches: matchesQuery.data.filter((m) =>
+            m.rideId.startsWith("dummy-")
+          ).length,
+        },
+        "D"
+      );
+    }
+  }, [matchesQuery.data, includeDummyMatches, searchParams]);
+  // #endregion agent log
 
   const requestRideMutation = trpc.matchmaking.requestRide.useMutation({
     onSuccess: () => {
@@ -312,7 +379,20 @@ export default function Matchmaking() {
                         : colors.border,
                     },
                   ]}
-                  onPress={() => setIncludeDummyMatches(!includeDummyMatches)}
+                  onPress={() => {
+                    // #region agent log
+                    log(
+                      "matchmaking.tsx:315",
+                      "Toggle clicked",
+                      {
+                        currentValue: includeDummyMatches,
+                        newValue: !includeDummyMatches,
+                      },
+                      "A"
+                    );
+                    // #endregion agent log
+                    setIncludeDummyMatches(!includeDummyMatches);
+                  }}
                 >
                   <Animated.View
                     style={[

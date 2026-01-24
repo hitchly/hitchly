@@ -4,12 +4,11 @@ import {
   profiles,
   vehicles,
   preferences,
-  rides,
-  rideRequests,
+  trips,
+  tripRequests,
 } from "@hitchly/db/schema";
-import { trips, tripRequests } from "../db/schema";
-import { eq, and, gte, lte, sql, or, ne } from "drizzle-orm";
-import { getDetourAndRideDetails, geocodeAddress } from "./googlemaps";
+import { eq, and, gte, lte, sql, or, ne, inArray } from "drizzle-orm";
+import { getDetourAndRideDetails } from "./googlemaps";
 import { calculateEstimatedCost, calculateCostScore } from "./pricing_service";
 
 // --- TYPES ---
@@ -162,46 +161,23 @@ function computeScore(
 export async function findMatchesForUser(
   request: RiderRequest
 ): Promise<RideMatch[]> {
+  // #region agent log - declare LOG_ENDPOINT once for all logs
+  const LOG_ENDPOINT =
+    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+  // #endregion agent log
+
   // 1. FETCH RIDER'S PREFERENCES
   const riderPrefs = await db.query.preferences.findFirst({
     where: eq(preferences.userId, request.riderId),
   });
 
-  // 2. QUERY SCHEDULED RIDES (from rides table)
-  const rideConditions = [
-    eq(rides.status, "scheduled"),
-    gte(rides.maxSeats, request.maxOccupancy),
-  ];
-
-  // Filter by date if provided
-  if (request.desiredDate) {
-    const startOfDay = new Date(request.desiredDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(request.desiredDate);
-    endOfDay.setHours(23, 59, 59, 999);
-    rideConditions.push(gte(rides.startTime, startOfDay));
-    rideConditions.push(lte(rides.startTime, endOfDay));
-  }
-
-  const dbRides = await db
-    .select({
-      ride: rides,
-      user: users,
-      profile: profiles,
-      vehicle: vehicles,
-      prefs: preferences,
-    })
-    .from(rides)
-    .innerJoin(users, eq(rides.driverId, users.id))
-    .innerJoin(profiles, eq(users.id, profiles.userId))
-    .innerJoin(vehicles, eq(users.id, vehicles.userId))
-    .leftJoin(preferences, eq(users.id, preferences.userId))
-    .where(and(...rideConditions));
-
-  // 3. QUERY TRIPS (from trips table) - convert to ride format
+  // 2. QUERY TRIPS (unified table)
   const tripConditions = [
-    or(eq(trips.status, "pending"), eq(trips.status, "active")),
-    gte(trips.availableSeats, request.maxOccupancy),
+    or(
+      eq(trips.status, "pending"),
+      eq(trips.status, "scheduled"),
+      eq(trips.status, "active")
+    ),
     ne(trips.driverId, request.riderId), // Exclude trips where user is the driver
   ];
 
@@ -214,6 +190,12 @@ export async function findMatchesForUser(
     tripConditions.push(gte(trips.departureTime, startOfDay));
     tripConditions.push(lte(trips.departureTime, endOfDay));
   }
+
+  // Only include trips with coordinates (required for matching)
+  tripConditions.push(sql`${trips.originLat} IS NOT NULL`);
+  tripConditions.push(sql`${trips.originLng} IS NOT NULL`);
+  tripConditions.push(sql`${trips.destLat} IS NOT NULL`);
+  tripConditions.push(sql`${trips.destLng} IS NOT NULL`);
 
   const dbTrips = await db
     .select({
@@ -230,106 +212,63 @@ export async function findMatchesForUser(
     .leftJoin(preferences, eq(users.id, preferences.userId))
     .where(and(...tripConditions));
 
-  // Geocode trip addresses and convert to ride format
-  const geocodedTrips = await Promise.all(
-    dbTrips.map(async (row) => {
-      try {
-        const [originCoords, destCoords] = await Promise.all([
-          geocodeAddress(row.trip.origin),
-          geocodeAddress(row.trip.destination),
-        ]);
-
-        return {
-          ride: {
-            id: row.trip.id,
-            driverId: row.trip.driverId,
-            originLat: originCoords.lat,
-            originLng: originCoords.lng,
-            destLat: destCoords.lat,
-            destLng: destCoords.lng,
-            startTime: row.trip.departureTime,
-            maxSeats: row.trip.availableSeats,
-            bookedSeats: 0, // Will be calculated from tripRequests
-            status: "scheduled" as const,
-          },
-          user: row.user,
-          profile: row.profile,
-          vehicle: row.vehicle,
-          prefs: row.prefs,
-        };
-      } catch (error) {
-        console.error(`Failed to geocode trip ${row.trip.id}:`, error);
-        return null;
-      }
-    })
-  );
-
-  // Filter out failed geocoding attempts
-  const validGeocodedTrips = geocodedTrips.filter(
-    (t): t is NonNullable<typeof t> => t !== null
-  );
-
-  // Combine rides and trips
-  const allRides = [...dbRides, ...validGeocodedTrips];
+  // Convert trips to ride format (for compatibility with existing scoring logic)
+  const allRides = dbTrips.map((row) => ({
+    ride: {
+      id: row.trip.id,
+      driverId: row.trip.driverId,
+      originLat: row.trip.originLat!,
+      originLng: row.trip.originLng!,
+      destLat: row.trip.destLat!,
+      destLng: row.trip.destLng!,
+      startTime: row.trip.departureTime,
+      maxSeats: row.trip.maxSeats,
+      bookedSeats: row.trip.bookedSeats,
+      status: row.trip.status as "scheduled" | "pending" | "active",
+    },
+    user: row.user,
+    profile: row.profile,
+    vehicle: row.vehicle,
+    prefs: row.prefs,
+  }));
 
   if (allRides.length === 0) {
     return [];
   }
 
-  // 4. For each ride, count accepted requests and get their pickup locations
-  const rideIds = allRides.map((r) => r.ride.id);
+  // 4. For each trip, count accepted requests and get their pickup locations
+  const tripIds = allRides.map((r) => r.ride.id);
 
-  // Count accepted passengers per ride
-  let passengerCountMap = new Map<string, number>();
-  // Store existing passenger pickup locations per ride
+  // Store existing passenger pickup locations per trip
   const existingPickupsMap = new Map<string, Location[]>();
 
   try {
-    const passengerCounts = await db
-      .select({
-        rideId: rideRequests.rideId,
-        count: sql<number>`cast(count(*) as int)`,
-      })
-      .from(rideRequests)
-      .where(eq(rideRequests.status, "accepted"))
-      .groupBy(rideRequests.rideId);
-
-    passengerCountMap = new Map(
-      passengerCounts
-        .filter((p) => rideIds.includes(p.rideId))
-        .map((p) => [p.rideId, p.count ?? 0])
-    );
-
-    // Get pickup locations for all accepted passengers (from rideRequests)
+    // Get pickup locations for all accepted passengers (from tripRequests)
     const acceptedPassengers = await db
       .select({
-        rideId: rideRequests.rideId,
-        pickupLat: rideRequests.pickupLat,
-        pickupLng: rideRequests.pickupLng,
+        tripId: tripRequests.tripId,
+        pickupLat: tripRequests.pickupLat,
+        pickupLng: tripRequests.pickupLng,
       })
-      .from(rideRequests)
-      .where(eq(rideRequests.status, "accepted"));
+      .from(tripRequests)
+      .where(eq(tripRequests.status, "accepted"));
 
-    // Group pickup locations by rideId
+    // Group pickup locations by tripId
     for (const passenger of acceptedPassengers) {
-      if (rideIds.includes(passenger.rideId)) {
-        const existingPickups = existingPickupsMap.get(passenger.rideId) || [];
+      if (tripIds.includes(passenger.tripId)) {
+        const existingPickups = existingPickupsMap.get(passenger.tripId) || [];
         existingPickups.push({
           lat: passenger.pickupLat,
           lng: passenger.pickupLng,
         });
-        existingPickupsMap.set(passenger.rideId, existingPickups);
+        existingPickupsMap.set(passenger.tripId, existingPickups);
       }
     }
-
-    // For trips, we don't have pickup locations stored, so we'll use empty array
-    // (trips use origin/destination addresses, not pickup locations)
   } catch {
-    // Silently continue - rides will be processed with empty passenger data
+    // Silently continue - trips will be processed with empty passenger data
   }
 
-  // Get trip request counts for trips (only for trip IDs, not ride IDs)
-  const tripIds = validGeocodedTrips.map((t) => t.ride.id);
+  // Get trip request counts for all trips
   let tripRequestCountMap = new Map<string, number>();
 
   if (tripIds.length > 0) {
@@ -342,10 +281,7 @@ export async function findMatchesForUser(
       .where(
         and(
           eq(tripRequests.status, "accepted"),
-          sql`${tripRequests.tripId} IN (${sql.join(
-            tripIds.map((id) => sql`${id}`),
-            sql`, `
-          )})`
+          inArray(tripRequests.tripId, tripIds)
         )
       )
       .groupBy(tripRequests.tripId);
@@ -355,16 +291,13 @@ export async function findMatchesForUser(
     );
   }
 
-  // 5. MAP & SCORE
+  // 3. MAP & SCORE
   const candidates = allRides.map((row) => {
-    // Use bookedSeats from schema, fallback to calculated count
-    // For trips, use tripRequests count; for rides, use rideRequests count
+    // Use bookedSeats from schema, fallback to calculated count from tripRequests
     const bookedFromSchema = row.ride.bookedSeats || 0;
-    const bookedFromRideRequests = passengerCountMap.get(row.ride.id) ?? 0;
     const bookedFromTripRequests = tripRequestCountMap.get(row.ride.id) ?? 0;
     const currentPassengers = Math.max(
       bookedFromSchema,
-      bookedFromRideRequests,
       bookedFromTripRequests
     );
     const availableSeats = row.ride.maxSeats - currentPassengers;
@@ -398,7 +331,7 @@ export async function findMatchesForUser(
 
   const scoringPromises = availableCandidates.map(async (ride) => {
     try {
-      // Get existing passenger pickup locations for this ride
+      // Get existing passenger pickup locations for this trip
       const existingPickups = existingPickupsMap.get(ride.rideId) || [];
 
       // A. Route Logic - include existing passengers in calculation
@@ -506,20 +439,106 @@ export async function findMatchesForUser(
 
   const validMatches = finalMatches.filter((m): m is RideMatch => m !== null);
 
-  // Filter out only generated dummy matches (by rideId prefix)
-  // Test driver trips from the database should always be visible
-  const realMatches = validMatches.filter(
+  // Test driver emails (from seed scripts) - these should be filtered when toggle is OFF
+  const TEST_DRIVER_EMAILS = [
+    "driver@mcmaster.ca",
+    "burhan.test@mcmaster.ca",
+    "sarim.test@mcmaster.ca",
+    "hamzah.test@mcmaster.ca",
+    "aidan.test@mcmaster.ca",
+  ];
+
+  // Get test driver user IDs by looking up their emails
+  const testDriverUsers = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(inArray(users.email, TEST_DRIVER_EMAILS));
+
+  const testDriverIds = new Set(testDriverUsers.map((u) => u.id));
+
+  // Filter out generated dummy matches (by rideId prefix)
+  const matchesWithoutDummies = validMatches.filter(
     (m) => !m.rideId.startsWith("dummy-")
   );
 
-  // If dummy matches are requested and there are no real matches, return dummy matches
-  // Otherwise, return only real matches
-  if (request.includeDummyMatches && realMatches.length === 0) {
+  // Filter out test driver trips (seeded trips)
+  const realMatches = matchesWithoutDummies.filter((m) => {
+    // If driver is a test driver, filter it out (seeded trip)
+    if (testDriverIds.has(m.driverId)) {
+      return false;
+    }
+    // Otherwise, keep it
+    return true;
+  });
+
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:507",
+      message: "After filtering dummy matches and test drivers",
+      data: {
+        includeDummyMatches: request.includeDummyMatches,
+        validMatchesCount: validMatches.length,
+        matchesWithoutDummiesCount: matchesWithoutDummies.length,
+        testDriverIds: Array.from(testDriverIds),
+        testDriverEmails: TEST_DRIVER_EMAILS,
+        realMatchesCount: realMatches.length,
+        realMatchIds: realMatches.map((m) => m.rideId),
+        filteredOutTestTrips: matchesWithoutDummies.length - realMatches.length,
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      hypothesisId: "E",
+    }),
+  }).catch(() => {});
+  // #endregion agent log
+
+  // If dummy matches are requested, generate and add them to the results
+  if (request.includeDummyMatches) {
     const dummyMatches = generateDummyMatches(request);
-    return dummyMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
+    // #region agent log
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "matchmaking_service.ts:516",
+        message: "Generating dummy matches",
+        data: {
+          dummyMatchesCount: dummyMatches.length,
+          dummyMatchIds: dummyMatches.map((m) => m.rideId),
+          totalMatches: realMatches.length + dummyMatches.length,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "F",
+      }),
+    }).catch(() => {});
+    // #endregion agent log
+    // Combine real matches with dummy matches
+    const allMatches = [...realMatches, ...dummyMatches];
+    return allMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
   }
 
-  // Return only real matches (dummy matches are filtered out)
+  // Return only real matches (dummy matches are filtered out when toggle is disabled)
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:523",
+      message: "Returning only real matches",
+      data: {
+        realMatchesCount: realMatches.length,
+        realMatchIds: realMatches.map((m) => m.rideId),
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      hypothesisId: "G",
+    }),
+  }).catch(() => {});
+  // #endregion agent log
   return realMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
 }
 
@@ -555,6 +574,13 @@ function generateDummyMatches(request: RiderRequest): RideMatch[] {
       bio: "Student driver, flexible schedule",
       rating: 4.6,
       matchPercentage: 65,
+    },
+    {
+      name: "David Wilson",
+      vehicle: "Gray Hyundai Elantra",
+      bio: "Experienced driver, safety first",
+      rating: 4.9,
+      matchPercentage: 80,
     },
   ];
 

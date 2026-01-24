@@ -5,7 +5,7 @@ import {
   trips,
   tripRequests,
   users,
-} from "../../../db/schema";
+} from "@hitchly/db/schema";
 import { tripRouter } from "../trip";
 
 // Mock database with proper chaining
@@ -65,7 +65,7 @@ describe("Trip Router", () => {
       origin: "McMaster University",
       destination: "Downtown Hamilton",
       departureTime: new Date(Date.now() + TIME_WINDOW_MIN * 60 * 1000 + 1000),
-      availableSeats: 3,
+      maxSeats: 3,
     };
 
     it("should create a trip successfully", async () => {
@@ -160,7 +160,7 @@ describe("Trip Router", () => {
       const userId = "user123";
       const invalidInput = {
         ...validInput,
-        availableSeats: 10, // Exceeds MAX_SEATS
+        maxSeats: 10, // Exceeds MAX_SEATS
       };
 
       const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
@@ -189,7 +189,8 @@ describe("Trip Router", () => {
           origin: "Origin 1",
           destination: "Destination 1",
           departureTime: new Date(),
-          availableSeats: 2,
+          maxSeats: 2,
+          bookedSeats: 0,
           status: "pending" as const,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -200,7 +201,8 @@ describe("Trip Router", () => {
           origin: "Origin 2",
           destination: "Destination 2",
           departureTime: new Date(),
-          availableSeats: 4,
+          maxSeats: 4,
+          bookedSeats: 0,
           status: "active" as const,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -232,7 +234,8 @@ describe("Trip Router", () => {
           origin: "Origin 1",
           destination: "Destination 1",
           departureTime: new Date(),
-          availableSeats: 2,
+          maxSeats: 2,
+          bookedSeats: 0,
           status: "pending" as const,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -265,7 +268,8 @@ describe("Trip Router", () => {
         origin: "Origin",
         destination: "Destination",
         departureTime: new Date(),
-        availableSeats: 2,
+        maxSeats: 2,
+        bookedSeats: 0,
         status: "pending" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -342,7 +346,8 @@ describe("Trip Router", () => {
     it("should update trip successfully", async () => {
       const updates = {
         origin: "New Origin",
-        availableSeats: 4,
+        maxSeats: 4,
+        bookedSeats: 0,
       };
 
       // Mock trip lookup

@@ -15,7 +15,8 @@
     "db:push": "drizzle-kit push",
     "seed:dev": "tsx scripts/seed-dev-accounts.ts",
     "seed:trips": "tsx scripts/seed-test-trips.ts",
-    "verify:dev": "tsx scripts/verify-dev-accounts.ts"
+    "verify:dev": "tsx scripts/verify-dev-accounts.ts",
+    "migrate:rides-to-trips": "tsx scripts/migrate-rides-to-trips.ts"
   },
   "jest": {
     "preset": "ts-jest",

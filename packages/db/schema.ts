@@ -191,60 +191,49 @@ export const usersRelations = relations(users, ({ one }) => ({
   }),
 }));
 
-export const rideStatusEnum = pgEnum("ride_status", [
+// Trip status enum - unified from both rides and trips
+export const tripStatusEnum = pgEnum("trip_status", [
+  "pending",
   "scheduled",
-  "in_progress",
+  "active",
   "completed",
   "cancelled",
 ]);
 
-export const requestStatusEnum = pgEnum("request_status", [
+// Trip request status enum
+export const tripRequestStatusEnum = pgEnum("trip_request_status", [
   "pending",
   "accepted",
   "rejected",
   "cancelled",
 ]);
 
-// 1. The Trip (Driver Only)
-export const rides = pgTable("rides", {
+// Trip constants
+export const MAX_SEATS = 5;
+export const TIME_WINDOW_MIN = 15; // minutes
+
+// Unified trips table - combines rides and trips schemas
+export const trips = pgTable("trips", {
   id: text("id").primaryKey(),
   driverId: text("driver_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
-  originLat: doublePrecision("origin_lat").notNull(),
-  originLng: doublePrecision("origin_lng").notNull(),
-  originAddress: text("origin_address"),
+  // Addresses (for display and geocoding fallback)
+  origin: text("origin").notNull(),
+  destination: text("destination").notNull(),
 
-  destLat: doublePrecision("dest_lat").notNull(),
-  destLng: doublePrecision("dest_lng").notNull(),
-  destAddress: text("dest_address"),
+  // Coordinates (for matching - geocoded from addresses, nullable for gradual migration)
+  originLat: doublePrecision("origin_lat"),
+  originLng: doublePrecision("origin_lng"),
+  destLat: doublePrecision("dest_lat"),
+  destLng: doublePrecision("dest_lng"),
 
-  startTime: timestamp("start_time").notNull(),
-
+  departureTime: timestamp("departure_time").notNull(),
   maxSeats: integer("max_seats").notNull(),
   bookedSeats: integer("booked_seats").default(0).notNull(),
 
-  status: rideStatusEnum("status").default("scheduled").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// 2. The Booking (Riders link here)
-export const rideRequests = pgTable("ride_requests", {
-  id: text("id").primaryKey(),
-  rideId: text("ride_id")
-    .notNull()
-    .references(() => rides.id, { onDelete: "cascade" }),
-  riderId: text("rider_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-
-  // Pickup location for this rider
-  pickupLat: doublePrecision("pickup_lat").notNull(),
-  pickupLng: doublePrecision("pickup_lng").notNull(),
-
-  status: requestStatusEnum("status").default("pending").notNull(),
-
+  status: tripStatusEnum("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -288,4 +277,37 @@ export const userAnalytics = pgTable("user_analytics", {
   totalRides: integer("total_rides").default(0),
   reportsCount: integer("reports_count").default(0),
   recordedAt: timestamp("recorded_at").defaultNow(),
+});
+
+// Unified trip requests table - includes pickup coordinates
+export const tripRequests = pgTable("trip_requests", {
+  id: text("id").primaryKey(),
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  riderId: text("rider_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Pickup location coordinates (for route optimization)
+  pickupLat: doublePrecision("pickup_lat").notNull(),
+  pickupLng: doublePrecision("pickup_lng").notNull(),
+
+  status: tripRequestStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Optional routes table for caching route data
+export const routes = pgTable("routes", {
+  id: text("id").primaryKey(),
+  origin: text("origin").notNull(),
+  destination: text("destination").notNull(),
+  distance: text("distance"), // Store as text to allow for various formats
+  duration: integer("duration"), // Duration in minutes
+  geometry: text("geometry"), // JSON string for route geometry
+  cachedAt: timestamp("cached_at").defaultNow().notNull(),
 });
