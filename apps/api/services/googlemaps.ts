@@ -7,9 +7,7 @@ if (!env.google.apiKey) {
     "ERROR: GOOGLE_MAPS_API_KEY is not set in environment variables!"
   );
 } else {
-  console.log(
-    `Google Maps API Key loaded: ${env.google.apiKey.substring(0, 10)}...`
-  );
+  // API key loaded successfully
 }
 
 export type Location = {
@@ -83,12 +81,25 @@ async function getRouteDetails(
   } catch (error: any) {
     const errorMsg = error?.message || String(error);
     const responseData = error?.response?.data;
+
     console.error(`Google Maps API Error: ${errorMsg}`);
     console.error(
       `  Request: origin=(${origin.lat},${origin.lng}) dest=(${destination.lat},${destination.lng}) waypoints=${waypoints.length}`
     );
     if (responseData) {
       console.error(`  Response: ${JSON.stringify(responseData)}`);
+
+      // Check for legacy API error
+      if (
+        responseData.error_message?.includes("legacy API") ||
+        responseData.error_message?.includes("LegacyApiNotActivated")
+      ) {
+        console.error(
+          `\n⚠️  Directions API (Legacy) is not enabled. Please enable it at:\n` +
+            `   https://console.cloud.google.com/apis/library/directions-backend.googleapis.com\n` +
+            `   Or migrate to Routes API for better features.`
+        );
+      }
     }
     throw error;
   }
@@ -178,43 +189,60 @@ export async function geocodeAddress(
       lng: location.lng,
     };
   } catch (error: any) {
+    const errorData = error?.response?.data;
+    const errorMessage = error?.message || String(error);
+    const errorStatus = error?.response?.status;
+
     // #region agent log
     fetch(LOG_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        location: "googlemaps.ts:139",
-        message: "Geocoding error caught",
+        location: "googlemaps.ts:180",
+        message: "Geocoding error caught - detailed",
         data: {
           address,
-          errorMessage: error?.message || String(error),
-          errorCode: error?.response?.status,
-          errorData: error?.response?.data,
+          errorMessage,
+          errorCode: errorStatus,
+          errorData: errorData ? JSON.stringify(errorData) : null,
           errorStatus: error?.response?.statusText,
+          fullError: error
+            ? JSON.stringify(error, Object.getOwnPropertyNames(error))
+            : null,
+          is403: errorStatus === 403,
+          isRequestDenied: errorData?.status === "REQUEST_DENIED",
         },
         timestamp: Date.now(),
         sessionId: "debug-session",
-        hypothesisId: "I",
+        runId: "geocode-debug",
+        hypothesisId: "A",
       }),
     }).catch(() => {});
     // #endregion agent log
 
-    // If geocoding API is not enabled (403), return null gracefully instead of throwing
-    // This allows the system to work without geocoding API (trips from trips table will be skipped)
+    // Check for various API-related errors
+    const errorMsg = errorData?.error_message || errorMessage || "";
     const isApiNotEnabled =
-      error?.response?.status === 403 ||
-      error?.response?.data?.status === "REQUEST_DENIED";
+      errorStatus === 403 ||
+      errorData?.status === "REQUEST_DENIED" ||
+      errorMsg.includes("not activated") ||
+      errorMsg.includes("API is not enabled") ||
+      errorMsg.includes("not authorized to use this service") ||
+      errorMsg.includes("API restrictions settings");
 
     if (isApiNotEnabled) {
-      console.warn(
-        `Geocoding API not enabled - skipping address "${address}". Trips from trips table will not appear until geocoding API is enabled.`
-      );
-      // Return null to signal that geocoding failed, but don't throw
-      // The matchmaking service will filter out null values
+      // Log the specific error for debugging
+      console.warn(`Geocoding API error for address "${address}": ${errorMsg}`);
+      // Return null so the caller can handle it appropriately
       return null;
     }
 
-    console.error(`Geocoding error for address "${address}":`, error);
+    // Log other errors but still throw them
+    console.error(`Geocoding error for address "${address}":`, {
+      status: errorStatus,
+      message: errorMessage,
+      data: errorData,
+    });
     throw error;
   }
 }
@@ -223,44 +251,54 @@ export async function getDetourAndRideDetails(
   driverTrip: DriverRouteInfo,
   rider: NewRiderInfo
 ) {
-  const departureTime = driverTrip.departureTime || new Date();
+  try {
+    const departureTime = driverTrip.departureTime || new Date();
 
-  const baselineRoute = await getRouteDetails(
-    driverTrip.origin,
-    driverTrip.destination,
-    driverTrip.existingWaypoints,
-    departureTime,
-    true // Optimize the existing stops too
-  );
+    const baselineRoute = await getRouteDetails(
+      driverTrip.origin,
+      driverTrip.destination,
+      driverTrip.existingWaypoints,
+      departureTime,
+      true // Optimize the existing stops too
+    );
 
-  const allWaypoints = [...driverTrip.existingWaypoints, rider.origin];
+    const allWaypoints = [...driverTrip.existingWaypoints, rider.origin];
 
-  const newRoute = await getRouteDetails(
-    driverTrip.origin,
-    driverTrip.destination,
-    allWaypoints,
-    departureTime,
-    true
-  );
+    const newRoute = await getRouteDetails(
+      driverTrip.origin,
+      driverTrip.destination,
+      allWaypoints,
+      departureTime,
+      true
+    );
 
-  const detourTimeInSeconds =
-    newRoute.totalDurationSeconds - baselineRoute.totalDurationSeconds;
+    const detourTimeInSeconds =
+      newRoute.totalDurationSeconds - baselineRoute.totalDurationSeconds;
 
-  const riderRoute = await getRouteDetails(
-    rider.origin,
-    driverTrip.destination,
-    [],
-    departureTime,
-    false
-  );
+    const riderRoute = await getRouteDetails(
+      rider.origin,
+      driverTrip.destination,
+      [],
+      departureTime,
+      false
+    );
 
-  const rideDistanceKm = riderRoute.totalDistanceMeters / 1000;
+    const rideDistanceKm = riderRoute.totalDistanceMeters / 1000;
 
-  const rideDurationSeconds = riderRoute.totalDurationSeconds;
+    const rideDurationSeconds = riderRoute.totalDurationSeconds;
 
-  return {
-    detourTimeInSeconds: Math.max(0, detourTimeInSeconds),
-    rideDistanceKm: rideDistanceKm,
-    rideDurationSeconds: rideDurationSeconds,
-  };
+    return {
+      detourTimeInSeconds: Math.max(0, detourTimeInSeconds),
+      rideDistanceKm: rideDistanceKm,
+      rideDurationSeconds: rideDurationSeconds,
+    };
+  } catch (error) {
+    console.error("Error in getDetourAndRideDetails:", error);
+    // Return safe defaults instead of throwing
+    return {
+      detourTimeInSeconds: 0,
+      rideDistanceKm: 0,
+      rideDurationSeconds: 0,
+    };
+  }
 }

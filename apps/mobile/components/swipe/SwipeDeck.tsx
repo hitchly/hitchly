@@ -80,6 +80,17 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
 }: SwipeDeckProps<T>) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards, setVisibleCards] = useState<T[]>(data.slice(0, 4));
+  const isMountedRef = React.useRef(true);
+  const dataRef = React.useRef(data);
+
+  // Track if component is mounted and keep data reference
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    dataRef.current = data;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [data]);
 
   // Update visible cards when data changes
   useEffect(() => {
@@ -112,6 +123,9 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
   // Use shared value to store current card index (worklet-safe)
   const currentCardIndex = useSharedValue(0);
 
+  // Track if swipe completion callback has been called (prevent multiple calls)
+  const swipeCallbackCalled = useSharedValue(false);
+
   // Keep shared value in sync with state
   useEffect(() => {
     currentCardIndex.value = currentIndex;
@@ -119,6 +133,14 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
 
   const handleSwipeComplete = useCallback(
     (direction: "left" | "right", itemId: string) => {
+      // Check if component is still mounted
+      if (!isMountedRef.current) {
+        console.log(
+          "[DEBUG] Component unmounted, skipping handleSwipeComplete"
+        );
+        return;
+      }
+
       try {
         // #region agent log
         log(
@@ -129,35 +151,68 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
             itemId,
             currentIndex,
             dataLength: data.length,
+            isMounted: isMountedRef.current,
             timestamp: Date.now(),
           },
           "B"
         );
         // #endregion
 
+        // Use ref to get current data to avoid stale closure issues
+        const currentData = dataRef.current;
+
         // Find the item by ID from current data (supports both id and rideId)
-        const item = data.find((d) => getItemId(d) === itemId);
+        const item = currentData.find((d) => getItemId(d) === itemId);
         if (!item) {
           log(
             "SwipeDeck.tsx:handleSwipeComplete",
             "Item not found",
-            { itemId },
+            { itemId, dataLength: currentData.length },
             "B"
           );
           return;
         }
 
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        if (direction === "right") {
-          onSwipeRight(item);
-        } else {
-          onSwipeLeft(item);
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } catch (hapticError) {
+          // Haptics might not be available, ignore
+          console.warn("Haptics error:", hapticError);
         }
 
-        // Move to next card
+        // Call callbacks first, but don't let errors stop state updates
+        try {
+          if (direction === "right") {
+            if (onSwipeRight) {
+              onSwipeRight(item);
+            }
+          } else {
+            if (onSwipeLeft) {
+              onSwipeLeft(item);
+            }
+          }
+        } catch (callbackError) {
+          log(
+            "SwipeDeck.tsx:handleSwipeComplete",
+            "Error in swipe callback",
+            {
+              error:
+                callbackError instanceof Error
+                  ? callbackError.message
+                  : String(callbackError),
+              direction,
+              itemId,
+            },
+            "B"
+          );
+          // Don't rethrow - continue with state update
+        }
+
+        // Move to next card - use ref to get current data length
+        const currentDataLength = dataRef.current.length;
         const nextIndex = currentIndex + 1;
-        if (nextIndex >= data.length) {
-          if (onDeckEmpty) {
+        if (nextIndex >= currentDataLength) {
+          if (onDeckEmpty && isMountedRef.current) {
             onDeckEmpty();
           }
           return;
@@ -170,37 +225,97 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
           {
             currentIndex,
             nextIndex,
+            isMounted: isMountedRef.current,
             timestamp: Date.now(),
           },
           "D"
         );
         // #endregion
 
-        // Update state first
-        setCurrentIndex(nextIndex);
-        const newVisible = data.slice(nextIndex, nextIndex + 4);
-        setVisibleCards(newVisible);
+        // Check again if component is still mounted before updating state
+        if (!isMountedRef.current) {
+          console.log(
+            "[DEBUG] Component unmounted before state update, skipping"
+          );
+          return;
+        }
 
-        // Update shared value immediately so gesture handlers use correct index
-        currentCardIndex.value = nextIndex;
+        // Update state first - wrap in try-catch to prevent crashes
+        try {
+          // Use ref to get current data to avoid stale closure issues
+          const currentDataForUpdate = dataRef.current;
 
-        // #region agent log
-        log(
-          "SwipeDeck.tsx:handleSwipeComplete",
-          "State updated, resetting animation",
-          {
-            nextIndex,
-            newVisibleLength: newVisible.length,
-            firstCardId: newVisible[0] ? getItemId(newVisible[0]) : undefined,
-            allCardIds: newVisible.map((c) => getItemId(c)),
-            currentCardIndexValue: currentCardIndex.value,
-            translateXBefore: translateX.value,
-            translateYBefore: translateY.value,
-            timestamp: Date.now(),
-          },
-          "D"
-        );
-        // #endregion
+          // Validate that nextIndex is still valid for current data
+          if (nextIndex < 0 || nextIndex > currentDataForUpdate.length) {
+            log(
+              "SwipeDeck.tsx:handleSwipeComplete",
+              "Invalid nextIndex, skipping state update",
+              {
+                nextIndex,
+                dataLength: currentDataForUpdate.length,
+                currentIndex,
+              },
+              "B"
+            );
+            return;
+          }
+
+          // Update state synchronously - React will batch updates
+          if (isMountedRef.current) {
+            setCurrentIndex(nextIndex);
+            const newVisible = currentDataForUpdate.slice(
+              nextIndex,
+              nextIndex + 4
+            );
+            setVisibleCards(newVisible);
+
+            // Update shared value immediately so gesture handlers use correct index
+            currentCardIndex.value = nextIndex;
+
+            // #region agent log
+            log(
+              "SwipeDeck.tsx:handleSwipeComplete",
+              "State updated, resetting animation",
+              {
+                nextIndex,
+                newVisibleLength: newVisible.length,
+                firstCardId: newVisible[0]
+                  ? getItemId(newVisible[0])
+                  : undefined,
+                allCardIds: newVisible.map((c: T) => getItemId(c)),
+                currentCardIndexValue: currentCardIndex.value,
+                translateXBefore: translateX.value,
+                translateYBefore: translateY.value,
+                timestamp: Date.now(),
+              },
+              "D"
+            );
+            // #endregion
+          }
+        } catch (stateError) {
+          log(
+            "SwipeDeck.tsx:handleSwipeComplete",
+            "Error preparing state update",
+            {
+              error:
+                stateError instanceof Error
+                  ? stateError.message
+                  : String(stateError),
+              nextIndex,
+              isMounted: isMountedRef.current,
+            },
+            "B"
+          );
+          // Try to at least update the shared value
+          try {
+            if (isMountedRef.current) {
+              currentCardIndex.value = nextIndex;
+            }
+          } catch {
+            // If even this fails, we're in a bad state
+          }
+          return;
+        }
 
         // Reset animation values immediately - the previous card is off-screen
         // The new top card needs fresh animation values to respond to gestures
@@ -459,10 +574,20 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                   cardIdToUse = obj.id || obj.rideId || "";
                 }
               }
+              // Reset callback flag before starting animation
+              swipeCallbackCalled.value = false;
               translateX.value = withTiming(
                 -SCREEN_WIDTH * 1.5,
                 { duration: 300 },
                 (finished) => {
+                  if (swipeCallbackCalled.value) {
+                    console.log(
+                      "[DEBUG B] Animation callback already called, skipping"
+                    );
+                    return;
+                  }
+                  swipeCallbackCalled.value = true;
+
                   const ts = Date.now();
                   console.log(
                     `[${new Date(ts).toISOString()}] [DEBUG B] Animation callback (left)`,
@@ -483,14 +608,8 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                         timestamp: Date.now(),
                       }
                     );
-                    try {
-                      runOnJS(handleSwipeCompleteFn)("left", cardIdToUse);
-                    } catch (err) {
-                      console.error(
-                        `[${new Date(Date.now()).toISOString()}] [DEBUG B] Error calling handleSwipeComplete (left):`,
-                        err
-                      );
-                    }
+                    // Call directly - handleSwipeCompleteFn already has error handling
+                    runOnJS(handleSwipeCompleteFn)("left", cardIdToUse);
                   } else {
                     console.log(
                       `[${new Date(Date.now()).toISOString()}] [DEBUG B] Animation callback skipped`,
@@ -533,10 +652,20 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                   cardIdToUse = obj.id || obj.rideId || "";
                 }
               }
+              // Reset callback flag before starting animation
+              swipeCallbackCalled.value = false;
               translateX.value = withTiming(
                 SCREEN_WIDTH * 1.5,
                 { duration: 300 },
                 (finished) => {
+                  if (swipeCallbackCalled.value) {
+                    console.log(
+                      "[DEBUG B] Animation callback already called, skipping"
+                    );
+                    return;
+                  }
+                  swipeCallbackCalled.value = true;
+
                   const ts = Date.now();
                   console.log(
                     `[${new Date(ts).toISOString()}] [DEBUG B] Animation callback (right)`,
@@ -557,14 +686,8 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                         timestamp: Date.now(),
                       }
                     );
-                    try {
-                      runOnJS(handleSwipeCompleteFn)("right", cardIdToUse);
-                    } catch (err) {
-                      console.error(
-                        `[${new Date(Date.now()).toISOString()}] [DEBUG B] Error calling handleSwipeComplete (right):`,
-                        err
-                      );
-                    }
+                    // Call directly - handleSwipeCompleteFn already has error handling
+                    runOnJS(handleSwipeCompleteFn)("right", cardIdToUse);
                   } else {
                     console.log(
                       `[${new Date(Date.now()).toISOString()}] [DEBUG B] Animation callback skipped`,
@@ -730,7 +853,30 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               style={styles.cardWrapper}
               pointerEvents="box-none" // Allow touches to pass through to children, but still detect gestures
             >
-              {renderCard(item, currentIndex + index)}
+              {(() => {
+                try {
+                  return renderCard(item, currentIndex + index);
+                } catch (error) {
+                  log(
+                    "SwipeDeck.tsx:renderCard",
+                    "Error rendering card",
+                    {
+                      error:
+                        error instanceof Error ? error.message : String(error),
+                      errorStack:
+                        error instanceof Error ? error.stack : undefined,
+                      itemId: getItemId(item),
+                      index,
+                    },
+                    "F"
+                  );
+                  return (
+                    <View style={{ padding: 20 }}>
+                      <Text>Error rendering card</Text>
+                    </View>
+                  );
+                }
+              })()}
               {isTopCard && <SwipeOverlay translateX={translateX} />}
             </Animated.View>
           );

@@ -197,6 +197,31 @@ export async function findMatchesForUser(
   tripConditions.push(sql`${trips.destLat} IS NOT NULL`);
   tripConditions.push(sql`${trips.destLng} IS NOT NULL`);
 
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:200",
+      message: "Before querying trips",
+      data: {
+        riderId: request.riderId,
+        desiredArrivalTime: request.desiredArrivalTime,
+        desiredDate: request.desiredDate,
+        hasDesiredDate: !!request.desiredDate,
+        tripConditionsCount: tripConditions.length,
+        tripConditions: tripConditions.map(
+          (c: any) => c.toString?.() || String(c)
+        ),
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "matchmaking-debug",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
+  // #endregion
+
   const dbTrips = await db
     .select({
       trip: trips,
@@ -212,8 +237,129 @@ export async function findMatchesForUser(
     .leftJoin(preferences, eq(users.id, preferences.userId))
     .where(and(...tripConditions));
 
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:214",
+      message: "After querying trips",
+      data: {
+        tripsFound: dbTrips.length,
+        tripIds: dbTrips.map((t) => t.trip.id),
+        tripDepartureTimes: dbTrips.map((t) => ({
+          id: t.trip.id,
+          departureTime: t.trip.departureTime,
+          departureTimeString:
+            t.trip.departureTime instanceof Date
+              ? t.trip.departureTime.toISOString()
+              : String(t.trip.departureTime),
+          status: t.trip.status,
+          hasCoords: !!(
+            t.trip.originLat &&
+            t.trip.originLng &&
+            t.trip.destLat &&
+            t.trip.destLng
+          ),
+        })),
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "matchmaking-debug",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  // Filter out trips that the rider has active requests for (pending or accepted only)
+  // Don't filter out cancelled/completed requests - rider can see those drivers again
+  const activeRequests = await db
+    .select({
+      tripId: tripRequests.tripId,
+      status: tripRequests.status,
+    })
+    .from(tripRequests)
+    .where(
+      and(
+        eq(tripRequests.riderId, request.riderId),
+        or(
+          eq(tripRequests.status, "pending"),
+          eq(tripRequests.status, "accepted")
+        )
+      )
+    );
+
+  const activeRequestedTripIds = new Set(activeRequests.map((r) => r.tripId));
+
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:filterExistingRequests",
+      message: "Filtering out trips rider has active requests for",
+      data: {
+        riderId: request.riderId,
+        activeRequestsCount: activeRequests.length,
+        activeRequestedTripIds: Array.from(activeRequestedTripIds),
+        requestStatuses: activeRequests.map((r) => ({
+          tripId: r.tripId,
+          status: r.status,
+        })),
+        tripsBeforeFilter: dbTrips.length,
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "matchmaking-debug",
+      hypothesisId: "I",
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  // Filter out trips the rider has active requests for (pending or accepted)
+  // BUT allow trips that are completed or cancelled to appear again (even if request was accepted)
+  // This allows riders to see drivers again after completing a trip
+  const filteredTrips = dbTrips.filter((t) => {
+    const hasActiveRequest = activeRequestedTripIds.has(t.trip.id);
+    const isTripCompleted =
+      t.trip.status === "completed" || t.trip.status === "cancelled";
+
+    // If trip is completed/cancelled, allow it to appear again even if there's an accepted request
+    if (isTripCompleted) {
+      return true;
+    }
+
+    // Otherwise, filter out trips with active requests
+    return !hasActiveRequest;
+  });
+
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:afterFilterExistingRequests",
+      message: "After filtering active requests",
+      data: {
+        tripsBeforeFilter: dbTrips.length,
+        tripsAfterFilter: filteredTrips.length,
+        filteredOutCount: dbTrips.length - filteredTrips.length,
+        filteredOutTripIds: dbTrips
+          .filter((t) => activeRequestedTripIds.has(t.trip.id))
+          .map((t) => t.trip.id),
+        note: "Only filtering out trips with pending/accepted requests. Cancelled/completed requests allow drivers to appear again.",
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "matchmaking-debug",
+      hypothesisId: "I",
+    }),
+  }).catch(() => {});
+  // #endregion
+
   // Convert trips to ride format (for compatibility with existing scoring logic)
-  const allRides = dbTrips.map((row) => ({
+  // Use filtered trips instead of all dbTrips
+  const allRides = filteredTrips.map((row) => ({
     ride: {
       id: row.trip.id,
       driverId: row.trip.driverId,
@@ -227,6 +373,7 @@ export async function findMatchesForUser(
       status: row.trip.status as "scheduled" | "pending" | "active",
     },
     user: row.user,
+    driverEmail: row.user.email, // Include email for debugging
     profile: row.profile,
     vehicle: row.vehicle,
     prefs: row.prefs,
@@ -305,6 +452,7 @@ export async function findMatchesForUser(
     return {
       rideId: row.ride.id,
       driverId: row.user.id,
+      driverEmail: (row as any).driverEmail || row.user.email, // Include email for debugging
       name: row.user.name || "Driver",
       image: row.user.image || "",
       vehicle: `${row.vehicle.color} ${row.vehicle.make} ${row.vehicle.model}`,
@@ -327,6 +475,37 @@ export async function findMatchesForUser(
     (c) => c.availableSeats >= request.maxOccupancy
   );
 
+  // #region agent log
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "matchmaking_service.ts:326",
+      message: "After filtering candidates",
+      data: {
+        totalCandidates: candidates.length,
+        availableCandidates: availableCandidates.length,
+        candidateDetails: candidates.map((c) => ({
+          rideId: c.rideId,
+          driverId: c.driverId,
+          driverEmail: (c as any).driverEmail,
+          availableSeats: c.availableSeats,
+          maxOccupancy: request.maxOccupancy,
+          plannedArrivalTime: c.plannedArrivalTime,
+          departureTime:
+            c.departureTime instanceof Date
+              ? c.departureTime.toISOString()
+              : String(c.departureTime),
+        })),
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "matchmaking-debug",
+      hypothesisId: "B",
+    }),
+  }).catch(() => {});
+  // #endregion
+
   if (availableCandidates.length === 0) return [];
 
   const scoringPromises = availableCandidates.map(async (ride) => {
@@ -348,11 +527,36 @@ export async function findMatchesForUser(
         }
       );
 
+      // #region agent log
+      if (!routeDetails) {
+        fetch(LOG_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "matchmaking_service.ts:417",
+            message: "getDetourAndRideDetails returned null/undefined",
+            data: {
+              rideId: ride.rideId,
+              rideOrigin: ride.origin,
+              rideDestination: ride.destination,
+              requestOrigin: request.origin,
+              requestDestination: request.destination,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "swipe-crash-debug",
+            hypothesisId: "D",
+          }),
+        }).catch(() => {});
+        return null;
+      }
+      // #endregion
+
       const cost = calculateEstimatedCost(
-        routeDetails.rideDistanceKm,
-        routeDetails.rideDurationSeconds,
+        routeDetails.rideDistanceKm ?? 0,
+        routeDetails.rideDurationSeconds ?? 0,
         ride.currentPassengers,
-        routeDetails.detourTimeInSeconds
+        routeDetails.detourTimeInSeconds ?? 0
       );
 
       // B. Scoring Logic
@@ -361,7 +565,7 @@ export async function findMatchesForUser(
         ride.plannedArrivalTime
       );
       const sLocation = calculateLocationScore(
-        routeDetails.detourTimeInSeconds,
+        routeDetails.detourTimeInSeconds ?? 0,
         ride.detourTolerance
       );
       const sComfort = calculateComfortScore(
@@ -378,7 +582,7 @@ export async function findMatchesForUser(
       return {
         ride,
         cost,
-        detourSeconds: routeDetails.detourTimeInSeconds,
+        detourSeconds: routeDetails.detourTimeInSeconds ?? 0,
         scores: {
           schedule: sSchedule,
           location: sLocation,
@@ -386,7 +590,26 @@ export async function findMatchesForUser(
           compatibility: sCompatibility,
         },
       };
-    } catch {
+    } catch (error) {
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking_service.ts:scoringPromises",
+          message: "Error in scoring promise",
+          data: {
+            error: error instanceof Error ? error.message : String(error),
+            errorStack: error instanceof Error ? error.stack : undefined,
+            rideId: ride.rideId,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "swipe-crash-debug",
+          hypothesisId: "E",
+        }),
+      }).catch(() => {});
+      // #endregion
       return null;
     }
   });
@@ -427,10 +650,10 @@ export async function findMatchesForUser(
               ? "Good Match"
               : "Fair Match",
         details: {
-          estimatedCost: cost,
-          detourMinutes: Math.round(detourSeconds / 60),
-          arrivalAtPickup: ride.plannedArrivalTime,
-          availableSeats: ride.availableSeats,
+          estimatedCost: cost ?? 0,
+          detourMinutes: Math.round((detourSeconds ?? 0) / 60),
+          arrivalAtPickup: ride.plannedArrivalTime || "",
+          availableSeats: ride.availableSeats ?? 0,
         },
         debugScores: { ...scores, cost: sCost },
       };
@@ -440,8 +663,8 @@ export async function findMatchesForUser(
   const validMatches = finalMatches.filter((m): m is RideMatch => m !== null);
 
   // Test driver emails (from seed scripts) - these should be filtered when toggle is OFF
+  // Note: "driver@mcmaster.ca" removed from list as it's used for real testing
   const TEST_DRIVER_EMAILS = [
-    "driver@mcmaster.ca",
     "burhan.test@mcmaster.ca",
     "sarim.test@mcmaster.ca",
     "hamzah.test@mcmaster.ca",
@@ -461,11 +684,34 @@ export async function findMatchesForUser(
     (m) => !m.rideId.startsWith("dummy-")
   );
 
-  // Filter out test driver trips (seeded trips)
+  // Filter out test driver trips (seeded trips) - but only if includeDummyMatches is false
   const realMatches = matchesWithoutDummies.filter((m) => {
-    // If driver is a test driver, filter it out (seeded trip)
+    // If driver is a test driver, filter it out (seeded trip) UNLESS includeDummyMatches is true
     if (testDriverIds.has(m.driverId)) {
-      return false;
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking_service.ts:540",
+          message: "Test driver match being evaluated",
+          data: {
+            rideId: m.rideId,
+            driverId: m.driverId,
+            driverName: m.name,
+            includeDummyMatches: request.includeDummyMatches,
+            willFilter: !request.includeDummyMatches,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "matchmaking-debug",
+          hypothesisId: "C",
+        }),
+      }).catch(() => {});
+      // #endregion
+      // Keep test drivers only if dummy matches are enabled (for testing)
+      // Otherwise filter them out as they're seeded test data
+      return request.includeDummyMatches === true;
     }
     // Otherwise, keep it
     return true;

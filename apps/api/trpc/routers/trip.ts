@@ -94,16 +94,59 @@ export const tripRouter = router({
       });
 
       // Geocode addresses to get coordinates
+      // #region agent log
+      await fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:97",
+            message: "Before geocoding addresses",
+            data: { origin: input.origin, destination: input.destination },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "geocode-debug",
+            hypothesisId: "A",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       const [originCoords, destCoords] = await Promise.all([
         geocodeAddress(input.origin),
         geocodeAddress(input.destination),
       ]);
 
+      // #region agent log
+      await fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:102",
+            message: "After geocoding addresses",
+            data: {
+              originCoords,
+              destCoords,
+              hasOrigin: !!originCoords,
+              hasDest: !!destCoords,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "geocode-debug",
+            hypothesisId: "A",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       if (!originCoords || !destCoords) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "Failed to geocode addresses. The Google Maps Geocoding API may not be enabled in your Google Cloud Console. Please enable it at https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com or check your addresses and try again.",
+            "Failed to geocode addresses. The Google Maps Geocoding API may not be enabled in your project, or your API key may have restrictions preventing its use. Please:\n1. Enable the Geocoding API at https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com\n2. Check your API key restrictions at https://console.cloud.google.com/apis/credentials - ensure 'Geocoding API' is in the allowed APIs list\n3. Verify your API key has no application restrictions blocking your requests",
         });
       }
 
@@ -536,14 +579,44 @@ export const tripRouter = router({
         .where(eq(tripRequests.id, input.requestId))
         .returning();
 
-      // Increment booked seats
+      // Increment booked seats and update trip status to "active" if this is the first accepted rider
+      const newBookedSeats = request.trip.bookedSeats + 1;
+      const shouldActivateTrip = request.trip.status === "pending";
+
       await ctx.db
         .update(trips)
         .set({
-          bookedSeats: request.trip.bookedSeats + 1,
+          bookedSeats: newBookedSeats,
+          status: shouldActivateTrip ? "active" : request.trip.status,
           updatedAt: new Date(),
         })
         .where(eq(trips.id, request.trip.id));
+
+      // #region agent log
+      const LOG_ENDPOINT =
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "trip.ts:acceptTripRequest",
+          message: "Trip request accepted - updating trip status",
+          data: {
+            tripId: request.trip.id,
+            requestId: input.requestId,
+            oldStatus: request.trip.status,
+            newStatus: shouldActivateTrip ? "active" : request.trip.status,
+            oldBookedSeats: request.trip.bookedSeats,
+            newBookedSeats,
+            shouldActivateTrip,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "trip-status-debug",
+          hypothesisId: "J",
+        }),
+      }).catch(() => {});
+      // #endregion
 
       return acceptedRequest;
     }),
@@ -714,5 +787,96 @@ export const tripRouter = router({
 
       // Filter out trips where rider already has a pending/accepted request
       return allTrips.filter((trip) => !existingTripIds.has(trip.id));
+    }),
+
+  /**
+   * Fix trip status - transitions trips with accepted riders from "pending" to "active"
+   * This fixes trips that got stuck in "pending" status due to bugs
+   */
+  fixTripStatus: protectedProcedure
+    .input(z.object({ tripId: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const driverId = ctx.userId!;
+
+      // Build query conditions
+      const conditions = [eq(trips.driverId, driverId)];
+      if (input.tripId) {
+        conditions.push(eq(trips.id, input.tripId));
+      }
+      // Only fix trips that are stuck in "pending" status
+      conditions.push(eq(trips.status, "pending"));
+
+      // Get trips that need fixing
+      const tripsToFix = await ctx.db
+        .select({
+          trip: trips,
+        })
+        .from(trips)
+        .where(and(...conditions));
+
+      const fixedTrips = [];
+
+      for (const { trip } of tripsToFix) {
+        // Check if this trip has any accepted requests
+        const acceptedRequests = await ctx.db
+          .select({ count: sql<number>`cast(count(*) as int)` })
+          .from(tripRequests)
+          .where(
+            and(
+              eq(tripRequests.tripId, trip.id),
+              eq(tripRequests.status, "accepted")
+            )
+          );
+
+        const acceptedCount = acceptedRequests[0]?.count ?? 0;
+
+        // If trip has accepted riders but is still "pending", fix it
+        if (acceptedCount > 0) {
+          await ctx.db
+            .update(trips)
+            .set({
+              status: "active",
+              updatedAt: new Date(),
+            })
+            .where(eq(trips.id, trip.id));
+
+          fixedTrips.push({
+            tripId: trip.id,
+            acceptedRiders: acceptedCount,
+            oldStatus: trip.status,
+            newStatus: "active",
+          });
+
+          // #region agent log
+          const LOG_ENDPOINT =
+            "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+          fetch(LOG_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "trip.ts:fixTripStatus",
+              message: "Fixed stuck trip status",
+              data: {
+                tripId: trip.id,
+                driverId: trip.driverId,
+                acceptedRiders: acceptedCount,
+                oldStatus: trip.status,
+                newStatus: "active",
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "trip-status-fix",
+              hypothesisId: "J",
+            }),
+          }).catch(() => {});
+          // #endregion
+        }
+      }
+
+      return {
+        success: true,
+        fixedCount: fixedTrips.length,
+        fixedTrips,
+      };
     }),
 });

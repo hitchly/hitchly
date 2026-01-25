@@ -29,6 +29,33 @@ interface TripCardProps {
 export function TripCard({ match }: TripCardProps) {
   const { colors } = useTheme();
 
+  // #region agent log
+  const LOG_ENDPOINT =
+    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+  React.useEffect(() => {
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "TripCard.tsx:useEffect",
+        message: "TripCard rendered",
+        data: {
+          rideId: match.rideId,
+          hasDetails: !!match.details,
+          availableSeats: match.details?.availableSeats,
+          availableSeatsType: typeof match.details?.availableSeats,
+          detailsKeys: match.details ? Object.keys(match.details) : [],
+          matchKeys: Object.keys(match),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "swipe-crash-debug",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
+  }, [match]);
+  // #endregion
+
   const formatTime = (timeString: string) => {
     // If it's already formatted, return as is
     if (timeString.includes(":")) {
@@ -46,6 +73,13 @@ export function TripCard({ match }: TripCardProps) {
       return timeString;
     }
   };
+
+  // Safe access to availableSeats with fallback
+  const availableSeats =
+    match.details?.availableSeats !== null &&
+    match.details?.availableSeats !== undefined
+      ? match.details.availableSeats
+      : 0;
 
   return (
     <View
@@ -110,7 +144,7 @@ export function TripCard({ match }: TripCardProps) {
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {match.details.arrivalAtPickup || "Pickup location"}
+            {match.details?.arrivalAtPickup || "Pickup location"}
           </Text>
           <Text
             style={[styles.routeText, { color: colors.text }]}
@@ -133,7 +167,7 @@ export function TripCard({ match }: TripCardProps) {
             Departure
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {formatTime(match.details.arrivalAtPickup)}
+            {formatTime(match.details?.arrivalAtPickup || "")}
           </Text>
         </View>
 
@@ -147,7 +181,7 @@ export function TripCard({ match }: TripCardProps) {
             Seats
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {match.details.availableSeats} left
+            {availableSeats} left
           </Text>
         </View>
 
@@ -161,7 +195,7 @@ export function TripCard({ match }: TripCardProps) {
             Price
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            ${match.details.estimatedCost.toFixed(2)}
+            ${(match.details?.estimatedCost ?? 0).toFixed(2)}
           </Text>
         </View>
 
@@ -175,7 +209,7 @@ export function TripCard({ match }: TripCardProps) {
             Detour
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {match.details.detourMinutes} min
+            {match.details?.detourMinutes ?? 0} min
           </Text>
         </View>
       </View>

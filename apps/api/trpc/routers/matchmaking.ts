@@ -256,10 +256,44 @@ export const matchmakingRouter = router({
         .set({ status: "accepted" })
         .where(eq(tripRequests.id, input.requestId));
 
+      // Increment booked seats and update trip status to "active" if this is the first accepted rider
+      const newBookedSeats = trip.bookedSeats + 1;
+      const shouldActivateTrip = trip.status === "pending";
+
       await ctx.db
         .update(trips)
-        .set({ bookedSeats: trip.bookedSeats + 1 })
+        .set({
+          bookedSeats: newBookedSeats,
+          status: shouldActivateTrip ? "active" : trip.status,
+          updatedAt: new Date(),
+        })
         .where(eq(trips.id, request.tripId));
+
+      // #region agent log
+      const LOG_ENDPOINT =
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "matchmaking.ts:acceptRequest",
+          message: "Trip request accepted - updating trip status",
+          data: {
+            tripId: request.tripId,
+            requestId: input.requestId,
+            oldStatus: trip.status,
+            newStatus: shouldActivateTrip ? "active" : trip.status,
+            oldBookedSeats: trip.bookedSeats,
+            newBookedSeats,
+            shouldActivateTrip,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "trip-status-debug",
+          hypothesisId: "J",
+        }),
+      }).catch(() => {});
+      // #endregion
 
       return { success: true };
     }),
