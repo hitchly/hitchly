@@ -1,14 +1,29 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  Button,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link } from "expo-router";
 
 import { Card } from "../../components/ui/card";
 import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";
+import { authClient } from "../../lib/auth-client";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id || "";
+
+  const adminCheck = trpc.admin.amIAdmin.useQuery(undefined, {
+    enabled: !!userId,
+  });
 
   const { data, isLoading, error } = trpc.health.ping.useQuery();
 
@@ -76,6 +91,14 @@ export default function HomeScreen() {
           )}
         </View>
       </Card>
+
+      {adminCheck.data?.isAdmin && (
+        <View style={{ marginTop: 20 }}>
+          <Link href={"/admin/dashboard" as any} asChild>
+            <Button title="Go to Admin Dashboard" color={colors.primary} />
+          </Link>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

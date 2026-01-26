@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   uuid,
+  serial,
 } from "drizzle-orm/pg-core";
 
 // --- ENUMS ---
@@ -33,6 +34,10 @@ export const users = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+  role: text("role").default("user"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
 
 export const sessions = pgTable("sessions", {
@@ -245,4 +250,42 @@ export const rideRequests = pgTable("ride_requests", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+});
+
+// 2. REPORTS TABLE
+// Stores the warnings/bans
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  targetUserId: text("target_user_id")
+    .references(() => users.id)
+    .notNull(),
+  adminId: text("admin_id").references(() => users.id),
+  reason: text("reason"),
+  type: text("type").default("warning"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// 4. COMPLAINTS TABLE
+export const complaints = pgTable("complaints", {
+  id: serial("id").primaryKey(),
+  reporterUserId: text("reporter_user_id")
+    .references(() => users.id)
+    .notNull(),
+  targetUserId: text("target_user_id")
+    .references(() => users.id)
+    .notNull(),
+  content: text("content").notNull(),
+  rideId: text("ride_id"),
+  status: text("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+//USER ANALYTICS TABLE
+export const userAnalytics = pgTable("user_analytics", {
+  id: serial("id").primaryKey(),
+  totalUsers: integer("total_users").default(0),
+  activeUsers: integer("active_users").default(0),
+  totalRides: integer("total_rides").default(0),
+  reportsCount: integer("reports_count").default(0),
+  recordedAt: timestamp("recorded_at").defaultNow(),
 });
