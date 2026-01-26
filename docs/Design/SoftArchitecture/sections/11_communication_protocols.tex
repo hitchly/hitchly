@@ -1,0 +1,105 @@
+\section{Design of Communication Protocols}
+
+This section describes the design of the communication protocols implemented in Hitchly.
+Communication occurs primarily between the client-side mobile application and the backend 
+server infrastructure. The system also integrates third-party interfaces for geolocation 
+and external notification services.
+
+\subsection{11.1 Overall Architecture}
+
+All communication between the mobile client and the backend follows a request–response
+model over secure transport channels, ensuring confidentiality and integrity. Data is 
+serialized into a structured format and transferred through defined API endpoints. 
+The architecture adopts a modular service-based design to support scalability and 
+maintainability:
+
+\begin{itemize}
+  \item \textbf{Frontend (Client):} Mobile application interface that sends authenticated 
+  requests to backend endpoints via secure transport protocols.
+  \item \textbf{Backend (Server):} Server-side application exposing routes through an 
+  API layer. It validates and processes incoming requests, interacts with the 
+  persistence layer, and returns structured responses.
+  \item \textbf{External Services:} Interfaces for mapping and geolocation data, 
+  push notification services for alerts, and identity verification providers 
+  (e.g., institutional SSO for email validation).
+\end{itemize}
+
+\subsection{11.2 Communication Flow}
+
+A typical data exchange involves the following sequence:
+
+\begin{enumerate}
+  \item The user initiates an action in the mobile application (e.g., requests a ride,
+  updates schedule, or rates a driver).
+  \item The frontend constructs a remote procedure call encapsulating the action data 
+  and attaches the user’s authentication credentials in the header.
+  \item The server authenticates the request, validates input schemas against defined 
+  contracts, and executes the corresponding service logic.
+  \item The backend queries or updates the persistence layer and returns a success 
+  or error payload to the client.
+  \item The client updates its local state and user interface based on the received data.
+\end{enumerate}
+
+\subsection{11.3 API Endpoints and Message Types}
+
+Hitchly’s backend exposes the following logical API groups:
+
+\begin{itemize}
+  \item \textbf{Auth API:} Handles user registration, login, institutional email verification,
+  and session management. Exchanges encrypted credentials and session tokens.
+  \item \textbf{User API:} Manages user profiles, schedules, and preferences.
+  \item \textbf{Matching API:} Accepts commute parameters, executes the matching algorithm, 
+  and returns ranked ride offers.
+  \item \textbf{Trip API:} Records completed trips, generates summaries, and calculates
+  cost-sharing.
+  \item \textbf{Rating API:} Submits and retrieves reputation scores and text reviews.
+  \item \textbf{Notification API:} Interfaces with external push services to deliver trip
+  confirmations, cancellations, and real-time updates.
+\end{itemize}
+
+All messages follow a standardized structure containing the operation status, payload data, 
+and metadata:
+\begin{verbatim}
+{
+  "status": "success",
+  "data": { ... },
+  "timestamp": "YYYY-MM-DDTHH:MM:SSZ"
+}
+\end{verbatim}
+
+\subsection{11.4 Security and Reliability}
+
+Security and reliability are ensured through:
+
+\begin{itemize}
+  \item \textbf{Transport Security:} Encryption in transit using TLS standards.
+  \item \textbf{Authentication:} Bearer tokens or equivalent session credentials included 
+  in headers of all authorized requests.
+  \item \textbf{Input Validation:} All incoming payloads are validated against strict 
+  schemas to prevent injection attacks or malformed data.
+  \item \textbf{Error Handling:} Standardized error codes with human-readable messages
+  returned to the client.
+  \item \textbf{Rate Limiting:} Middleware limits excessive requests to prevent abuse 
+  and ensure service availability.
+  \item \textbf{Retry Mechanism:} Client-side logic automatically retries transient 
+  network failures to improve resilience.
+\end{itemize}
+
+\subsection{11.5 Design Considerations}
+
+The communication design of Hitchly emphasizes the following principles:
+
+\begin{itemize}
+  \item \textbf{Consistency:} Shared type definitions across frontend and backend 
+  guarantee end-to-end type safety and contract adherence.
+  \item \textbf{Extensibility:} Additional endpoints (e.g., payment interfaces or advanced 
+  analytics) can be introduced without modifying existing client modules.
+  \item \textbf{Scalability:} The stateless architectural design supports horizontal scaling 
+  of the application server.
+  \item \textbf{Low Latency:} Lightweight message serialization and asynchronous 
+  notification delivery minimize perceived user delay.
+\end{itemize}
+
+This design ensures secure, efficient, and maintainable communication between Hitchly’s
+mobile application, backend, and external services, supporting its goals of safety,
+reliability, and sustainability for commuters.

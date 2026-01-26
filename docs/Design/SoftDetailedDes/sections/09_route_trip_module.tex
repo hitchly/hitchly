@@ -1,0 +1,145 @@
+\section{Route \& Trip Module}
+
+\subsection{Module}
+The Route \& Trip Module manages trip lifecycle events, storage, and retrieval for the system. 
+It enables users to publish, query, and modify trip listings that include origin, destination, departure time, and capacity. 
+This module provides the authoritative source of spatial and temporal data used by the Matching Module for compatibility analysis.
+
+\paragraph{Frontend}
+Implemented within the client application, the frontend presents interactive interfaces for trip management. 
+Key features include:
+\begin{itemize}
+    \item Input forms for trip definition (origin, destination, date, time).
+    \item Visual representation of routes using an external mapping service.
+    \item List and detail views for scheduled, active, and completed trips.
+    \item Interface elements for seat management and cancellation.
+    \item Input validation for mandatory fields and logical time constraints.
+    \item Communication with the backend via secure data bindings.
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements business logic and trip operations through defined service endpoints. 
+It is responsible for managing trip state transitions and enforcing data integrity. 
+Primary responsibilities include:
+\begin{itemize}
+    \item Exposing interface methods for trip creation, retrieval, and deletion.
+    \item Validating parameters (geographic bounds, capacity limits, temporal logic).
+    \item Associating trips with authenticated user identities.
+    \item Enforcing role-based access control (e.g., driver privileges).
+    \item Broadcasting state changes to dependent modules (Matching, Scheduling).
+\end{itemize}
+
+\paragraph{Data}
+Trip data is persisted in the relational database management system. 
+The schema supports referential integrity between users, trips, and derived entities. 
+Primary entities include:
+\begin{itemize}
+    \item \texttt{TripEntity} --- stores metadata: origin, destination, timestamps, capacity, and driver reference.
+    \item \texttt{RequestEntity} --- records ride intent from passengers.
+    \item \texttt{RouteEntity} --- caches geometry and distance metrics for optimization.
+\end{itemize}
+Each record maintains audit timestamps, and all modifications are validated against foreign key constraints referencing the user entity.
+
+\subsection{Uses}
+This module is used by the system to manage the core domain object: the trip. 
+It interacts directly with:
+\begin{itemize}
+    \item \textbf{User Profile Module} - links trips to driver and rider profiles.
+    \item \textbf{Matching Module} - provides trip data for compatibility algorithms.
+    \item \textbf{Scheduling Module} - integrates recurring patterns into discrete trip entries.
+    \item \textbf{Notification Module} - triggers alerts for status changes.
+\end{itemize}
+It serves as the foundation for dynamic route pairing and coordination within the system.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_SEATS = 5} - Maximum allowable passenger capacity per vehicle.
+    \item \texttt{TIME\_WINDOW\_MIN = 15} - Minimum lead time (in minutes) for trip creation.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{createTrip} & data: TripData & TripRecord & ValidationFailed \\
+\texttt{getTrips} & userId: $\mathbb{N}$ & TripList & NotFound \\
+\texttt{cancelTrip} & tripId: $\mathbb{N}$ & Confirmation & Unauthorized \\
+\texttt{updateTrip} & tripId: $\mathbb{N}$, data: UpdatedFields & UpdatedTripRecord & ValidationFailed \\
+\texttt{getTripById} & tripId: $\mathbb{N}$ & TripRecord & NotFound \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{Trips}: Map of ($\mathbb{N} \rightarrow$ TripRecord) --- The system-wide collection of all trip records indexed by tripId.
+    \item \texttt{Requests}: Map of ($\mathbb{N} \rightarrow$ RequestRecord) --- The collection of pending ride requests.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Geolocation hardware (GPS) for spatial validation.
+    \item Network interface for data synchronization.
+    \item Persistence layer for reliable storage.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The user is authenticated and possesses necessary role privileges (e.g., Driver) before creating a trip.
+    \item The external mapping service is available for route validation.
+    \item The persistence layer is initialized and reachable.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\noindent \texttt{createTrip(data)}:
+\begin{itemize}
+    \item \textbf{transition:} Generates a unique $id$. $Trips[id] := data$ (with status = \texttt{active}).
+    \item \textbf{output:} Returns $Trips[id]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ contains invalid coordinates or past timestamps.
+\end{itemize}
+
+\noindent \texttt{getTrips(userId)}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns sequence $\{ t \in Trips \mid t.driverId = userId \lor t.riderId = userId \}$.
+    \item \textbf{exception:} \texttt{NotFound} if result sequence is empty.
+\end{itemize}
+
+\noindent \texttt{updateTrip(tripId, data)}:
+\begin{itemize}
+    \item \textbf{transition:} $Trips[tripId] := Trips[tripId] \cup data$ (fields in $data$ overwrite existing).
+    \item \textbf{output:} Returns updated $Trips[tripId]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ violates constraints. \texttt{NotFound} if $tripId \notin Trips$.
+\end{itemize}
+
+\noindent \texttt{cancelTrip(tripId)}:
+\begin{itemize}
+    \item \textbf{transition:} $Trips[tripId].status := \texttt{canceled}$. Notifies dependent modules.
+    \item \textbf{output:} \texttt{true}.
+    \item \textbf{exception:} \texttt{Unauthorized} if the caller is not the owner of $Trips[tripId]$.
+\end{itemize}
+
+\noindent \texttt{getTripById(tripId)}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns $Trips[tripId]$.
+    \item \textbf{exception:} \texttt{NotFound} if $tripId \notin Trips$.
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{calculateRouteDistance(origin, destination): $\mathbb{R}$} --- Computes geodesic or routed distance between points.
+    \item \texttt{validateTripInput(data: TripData): boolean} --- Checks logical consistency of input fields.
+    \item \texttt{filterTripsByTime(trips: TripList, window: Interval): TripList} --- Filters sequence by temporal bounds.
+\end{itemize}

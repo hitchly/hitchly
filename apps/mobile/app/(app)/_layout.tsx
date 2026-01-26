@@ -1,10 +1,12 @@
+import { RequireLocation } from "@/components/location/require-location";
+import { LocationProvider } from "@/context/location-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
-export default function AppLayout() {
+const AppRoutes = () => {
   const router = useRouter();
   const { data: session } = authClient.useSession();
 
@@ -37,6 +39,15 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="matchmaking"
+        options={{
+          title: "Find Ride",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="search" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -46,5 +57,15 @@ export default function AppLayout() {
         }}
       />
     </Tabs>
+  );
+};
+
+export default function AppLayout() {
+  return (
+    <RequireLocation>
+      <LocationProvider>
+        <AppRoutes />
+      </LocationProvider>
+    </RequireLocation>
   );
 }

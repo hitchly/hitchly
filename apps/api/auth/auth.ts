@@ -11,7 +11,9 @@ export const auth = betterAuth({
     admin(),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        await emailClient.sendOtp(email, otp);
+        emailClient.sendOtp(email, otp).catch((err) => {
+          console.error("Failed to send OTP email:", err);
+        });
       },
       sendVerificationOnSignUp: true,
     }),
@@ -21,6 +23,15 @@ export const auth = betterAuth({
     provider: "pg",
     usePlural: true,
   }),
+
+  trustedOrigins: ["null", "exp://", "mobile://"],
+
+  advanced: {
+    defaultCookieAttributes: {
+      secure: false,
+      sameSite: "lax",
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -36,13 +47,4 @@ export const auth = betterAuth({
       return input;
     },
   },
-
-  trustedOrigins: [
-    process.env.CLIENT_ORIGIN ?? "http://localhost:3000", // Keep your existing web client
-    "mobile://", // The scheme you defined in auth-client.ts
-    "exp://", // Generic Expo scheme
-    "http://192.168.2.13:8081", // The Metro bundler origin
-    // Allow wildcards for dev IPs if needed:
-    "http://192.168.2.13:*",
-  ],
 });

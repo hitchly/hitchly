@@ -1,0 +1,160 @@
+\section{Module Decomposition} \label{SecMD}
+
+\begingroup
+\setlength{\parindent}{0pt}
+
+Modules are decomposed according to the principle of information hiding
+\citep{ParnasEtAl1984}. 
+Each module's \textit{Secrets} describes the internal design decision that is
+intentionally hidden from other modules, while the \textit{Services} field specifies
+\textit{what} the module provides without revealing \textit{how} the service is implemented. 
+The \textit{Frontend UI}, \textit{API Logic}, and \textit{Database Models} indicate 
+how each module is realized across the system's architecture. 
+\textit{Implemented By} identifies the structural components used, and 
+\textit{Type of Module} classifies each module as a Behaviour-Hiding or 
+Software-Decision module according to Section~\ref{SecMH}. 
+Only the leaf modules are included.
+
+% ---------------------------------------------------------
+% BEHAVIOUR-HIDING MODULES
+% ---------------------------------------------------------
+\subsection*{Behaviour-Hiding Modules}
+
+\subsubsection*{M1: Authentication \& Verification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Token management strategy, identity verification workflow, and credential validation logic.
+  \item \textbf{Services:} Allows users to register, log in, and verify institutional identity.
+  \item \textbf{Frontend UI:} Authentication interfaces (login, signup, verification).
+  \item \textbf{API Logic:} Authentication controller (login, register, verify), session management, and schema validation.
+  \item \textbf{Database Models:} User identity entity (credentials, verification status, session tokens).
+  \item \textbf{Implemented By:} Client-side authentication flow + server-side identity provider.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M2: User Profile Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Role assignment logic and profile data storage structure.
+  \item \textbf{Services:} Provides operations for profile editing, preference management, and vehicle registration.
+  \item \textbf{Frontend UI:} Profile management view, edit forms, vehicle input screens.
+  \item \textbf{API Logic:} User profile controller for CRUD operations.
+  \item \textbf{Database Models:} User profile entity, vehicle entity, preference entity.
+  \item \textbf{Implemented By:} Client-side forms + server-side profile manager.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M3: Route \& Trip Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Trip data schema, route normalization logic, and timestamp formatting.
+  \item \textbf{Services:} Allows users to create, query, and cancel trip records.
+  \item \textbf{Frontend UI:} Trip creation interface, trip listing view, route selection component.
+  \item \textbf{API Logic:} Trip controller for lifecycle management (create, read, delete).
+  \item \textbf{Database Models:} Trip entity (origin, destination, timestamp, capacity).
+  \item \textbf{Implemented By:} Client-side trip manager + server-side route handler.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M4: Matching Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Compatibility scoring algorithm, parameter weighting, and ranking strategy.
+  \item \textbf{Services:} Computes compatibility between entities and returns ordered results.
+  \item \textbf{Frontend UI:} Match presentation interface (card stack or list view).
+  \item \textbf{API Logic:} Matchmaking service and algorithm implementation.
+  \item \textbf{Database Models:} Match result entity, interaction entity (swipes/decisions).
+  \item \textbf{Implemented By:} Server-side algorithm engine + heuristics library.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M5: Scheduling Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Recurring event generation logic and temporal parsing rules.
+  \item \textbf{Services:} Generates and manages recurring or single-instance schedule entries.
+  \item \textbf{Frontend UI:} Scheduling interface (time picker, recurrence settings).
+  \item \textbf{API Logic:} Schedule parser and generation service.
+  \item \textbf{Database Models:} Schedule entity.
+  \item \textbf{Implemented By:} Server-side scheduling engine.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M6: Notification Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Delivery mechanism details and asynchronous event queue handling.
+  \item \textbf{Services:} Dispatches alerts for system events (matches, cancellations, reminders).
+  \item \textbf{Frontend UI:} Notification center view, device-level push integration.
+  \item \textbf{API Logic:} Notification dispatcher and event listener service.
+  \item \textbf{Database Models:} Notification log entity.
+  \item \textbf{Implemented By:} External push service interface + server-side dispatcher.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M7: Rating \& Feedback Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Reputation scoring formula and feedback aggregation logic.
+  \item \textbf{Services:} Collects and processes user ratings and textual reviews.
+  \item \textbf{Frontend UI:} Feedback submission screen.
+  \item \textbf{API Logic:} Rating controller.
+  \item \textbf{Database Models:} Rating entity (linked to match context).
+  \item \textbf{Implemented By:} Client-side feedback form + server-side reputation manager.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M8: Safety \& Reporting Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Incident flagging thresholds and administrative escalation workflow.
+  \item \textbf{Services:} Captures safety reports and triggers review processes.
+  \item \textbf{Frontend UI:} Report submission interface, safety resource view.
+  \item \textbf{API Logic:} Report handling service.
+  \item \textbf{Database Models:} Incident report entity.
+  \item \textbf{Implemented By:} Client-side reporting tool + server-side safety logic.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M9: Payment \& Cost Estimation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Fare calculation rules and transaction validation logic.
+  \item \textbf{Services:} Estimates service costs and records transaction states.
+  \item \textbf{Frontend UI:} Cost display, confirmation interface.
+  \item \textbf{API Logic:} Payment controller.
+  \item \textbf{Database Models:} Transaction entity, payment record.
+  \item \textbf{Implemented By:} Server-side logic + transaction ledger.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+\subsubsection*{M10: Admin \& Moderation Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Moderation policies, ban thresholds, and privileged access control.
+  \item \textbf{Services:} Provides administrative oversight, user management, and system analytics.
+  \item \textbf{Frontend UI:} Administrative dashboard (optional).
+  \item \textbf{API Logic:} Admin controller.
+  \item \textbf{Database Models:} Audit logs, restriction lists.
+  \item \textbf{Implemented By:} Server-side admin tools.
+  \item \textbf{Type of Module:} Behaviour-Hiding Module.
+\end{itemize}
+
+% ---------------------------------------------------------
+% SOFTWARE-DECISION MODULES
+% ---------------------------------------------------------
+\subsection*{Software-Decision Modules}
+
+\subsubsection*{M11: Pricing Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Cost constants (rates, multipliers) and pricing model structure.
+  \item \textbf{Services:} Computes financial estimates based on distance and service parameters.
+  \item \textbf{Frontend UI:} Cost preview component.
+  \item \textbf{API Logic:} Pricing calculation service (shared utility).
+  \item \textbf{Database Models:} Pricing configuration parameters.
+  \item \textbf{Implemented By:} Shared utility library.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\subsubsection*{M12: Database Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Data persistence implementation, schema definitions, and query optimization.
+  \item \textbf{Services:} Provides a unified interface for data storage and retrieval.
+  \item \textbf{Frontend UI:} None.
+  \item \textbf{API Logic:} Database client configuration and entity exports.
+  \item \textbf{Database Models:} All system entities.
+  \item \textbf{Implemented By:} Object-Relational Mapper (ORM) + Relational Database System.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\endgroup

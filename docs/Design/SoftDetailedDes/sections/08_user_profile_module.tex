@@ -1,0 +1,140 @@
+\section{User Profile Module}
+
+\subsection{Module}
+The User Profile Module manages all personal and contextual information about system users. 
+It allows students, alumni, and faculty to view and edit their personal data, preferences, and role assignment (rider, driver, or both). 
+This module integrates directly with the Authentication \& Verification Module for identity linkage and with the Matching Module to supply accurate attribute data for compatibility scoring.
+
+\paragraph{Frontend}
+The frontend portion resides in the client application. 
+It provides interfaces for profile creation, editing, and data visualization, implemented using modular UI components. 
+Key features include:
+\begin{itemize}
+    \item Editable profile screen showing personal attributes, faculty affiliation, and role.
+    \item Driver-specific section for vehicle information (capacity, specifications).
+    \item Preference configuration for ride comfort options (e.g., conversation, music).
+    \item Integration with device media services for optional profile photo management.
+    \item Input validation and error messaging for data integrity.
+    \item Communication with the backend via secure remote procedure calls.
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements the business logic and data orchestration layers. 
+It exposes endpoints for retrieving, updating, and deleting user data entities. 
+Main responsibilities include:
+\begin{itemize}
+    \item Providing interface methods for profile retrieval and modification.
+    \item Validating incoming data payloads against strict schema definitions.
+    \item Enforcing access control through session validation.
+    \item Maintaining referential integrity with linked entities (e.g., trips, ratings).
+    \item Broadcasting profile state changes to dependent modules.
+\end{itemize}
+
+\paragraph{Data}
+The data layer defines persistent entities stored in the relational database management system. 
+Key entities include:
+\begin{itemize}
+    \item \texttt{UserEntity} --- stores metadata such as name, role, faculty, and resource locators.
+    \item \texttt{VehicleEntity} --- stores driver vehicle details and seating capacity.
+    \item \texttt{PreferenceEntity} --- stores personal ride preferences and configuration settings.
+\end{itemize}
+All entities utilize foreign-key constraints to maintain cardinality relationships with user records. 
+Schema migrations ensure consistent structure across deployment environments.
+
+\subsection{Uses}
+This module is used to manage user data required across the entire system. 
+It interacts with:
+\begin{itemize}
+    \item \textbf{Authentication \& Verification Module} - links verified user identity to profile records.
+    \item \textbf{Matching Module} - provides profile and preference data for scoring algorithms.
+    \item \textbf{Route \& Trip Module} - associates user profiles with created or joined trips.
+    \item \textbf{Rating \& Feedback Module} - aggregates ride feedback to display reliability metrics.
+\end{itemize}
+Through these integrations, the module forms the foundation of personalization and trust within the system.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_BIO\_LENGTH = 250} - Character limit for user biography text.
+    \item \texttt{DEFAULT\_ROLE = Role.Rider} - Default role assigned upon registration.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{getUserProfile} & userId: $\mathbb{N}$ & UserRecord & NotFound \\
+\texttt{updateUserProfile} & userId: $\mathbb{N}$, data: UpdatedRecord & UserRecord & ValidationFailed \\
+\texttt{deleteUser} & userId: $\mathbb{N}$ & Confirmation & Unauthorized \\
+\texttt{getUserPreferences} & userId: $\mathbb{N}$ & PreferenceData & NotFound \\
+\texttt{updatePreferences} & userId: $\mathbb{N}$, data: UpdatedPreference & PreferenceData & ValidationFailed \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{Profiles}: Map of ($\mathbb{N} \rightarrow$ UserRecord) --- The collection of all user profiles indexed by userId.
+    \item \texttt{Preferences}: Map of ($\mathbb{N} \rightarrow$ PreferenceData) --- The collection of user preferences indexed by userId.
+    \item \texttt{Vehicles}: Map of ($\mathbb{N} \rightarrow$ VehicleData) --- The collection of vehicle details indexed by driver userId.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Client input interface (form data).
+    \item Secure transport channel (HTTPS).
+    \item Persistence layer connection.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The user is authenticated and identity is verified before modifying profile data.
+    \item The persistence layer schema matches the entity definitions.
+    \item Basic input formatting (sanitization) is performed by the interface layer.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\noindent \texttt{getUserProfile(userId)}:
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns $Profiles[userId]$.
+    \item \textbf{exception:} \texttt{NotFound} if $userId \notin Profiles$.
+\end{itemize}
+
+\noindent \texttt{updateUserProfile(userId, data)}:
+\begin{itemize}
+    \item \textbf{transition:} $Profiles[userId] := Profiles[userId] \cup data$ (fields in $data$ overwrite existing).
+    \item \textbf{output:} Returns updated $Profiles[userId]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ violates schema constraints.
+\end{itemize}
+
+\noindent \texttt{updatePreferences(userId, data)}:
+\begin{itemize}
+    \item \textbf{transition:} $Preferences[userId] := data$.
+    \item \textbf{output:} Returns $Preferences[userId]$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ contains invalid preference options.
+\end{itemize}
+
+\noindent \texttt{deleteUser(userId)}:
+\begin{itemize}
+    \item \textbf{transition:} Removes $userId$ from $Profiles$, $Preferences$, and $Vehicles$.
+    \item \textbf{output:} \texttt{true}.
+    \item \textbf{exception:} \texttt{Unauthorized} if the requestor does not have ownership or administrative privileges.
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{sanitizeProfileInput(data: UserRecord): UserRecord} --- Strips disallowed characters and formatting.
+    \item \texttt{mergePreferenceDefaults(prefs: PreferenceData): PreferenceData} --- Fills missing fields with system defaults.
+    \item \texttt{calculateReliabilityScore(userId: $\mathbb{N}$): $\mathbb{R}$} --- Computes trust metric based on historical interaction data.
+\end{itemize}

@@ -1,0 +1,38 @@
+\section{Anticipated and Unlikely Changes} \label{SecChange}
+
+This section lists possible changes to the system. According to the likeliness
+of the change, the possible changes are classified into two
+categories. Anticipated changes are listed in Section \ref{SecAchange}, and
+unlikely changes are listed in Section \ref{SecUchange}.
+
+\subsection{Anticipated Changes} \label{SecAchange}
+
+Anticipated changes are the source of the information that is to be hidden
+inside the modules. Ideally, changing one of the anticipated changes will only
+require changing the one module that hides the associated decision. The approach
+adapted here is called design for change.
+
+\begin{description}
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchingAlgorithm}:] \textbf{Matching Algorithm:} The matching algorithm focuses on 
+the goal of finding the best available drivers for the riders. This algorithm takes into account the user's location, timetable, time, and distance. For instance, it matches a rider with a driver that has the same timetable and lives in the same area. The current algorithm is based on these parameters, but it will likely change in the future to consider additional variables to increase efficiency and accuracy. Moreover, subtle changes to the heuristics may be expected for further optimization of complexity and performance.
+\item[\refstepcounter{acnum} \actheacnum \label{acUserInterface}:] \textbf{User Interface:} As the application proceeds through its initial phase of development and use, usability testing is expected to ensure user satisfaction. As users provide feedback, changes will be made to the user interface in future phases. Moreover, changes may be required to meet evolving accessibility standards. The layout and navigation workflows are the primary components of user interaction that are expected to evolve based on user feedback.
+\item[\refstepcounter{acnum} \actheacnum \label{acDB}:] \textbf{Data Model and Schema:} As the application updates with new features, the underlying data structures may change. New parameters would be considered for the matching algorithm, and new entities may be added based on future user needs. Therefore, changes to the persistent storage schema and data definitions are anticipated.
+\item[\refstepcounter{acnum} \actheacnum \label{acPayment}:] \textbf{Payment Processing:} Additional payment processors and pricing formulas may be integrated to determine price estimates for drivers. An addition of parameters to the cost estimation logic would cause the underlying algorithms to change.
+\item[\refstepcounter{acnum} \actheacnum \label{acDevEnvioremnt}:] \textbf{Operational Configuration:} Changes could be made to the build pipelines and deployment configurations to improve the reliability, stability, and automation of the system.
+\end{description}
+
+\subsection{Unlikely Changes} \label{SecUchange}
+
+The module design should be as general as possible. However, a general system is
+more complex. Sometimes this complexity is not necessary. Fixing some design
+decisions at the system architecture stage can simplify the software design. If
+these decisions should later need to be changed, then many parts of the design
+will potentially need to be modified. Hence, it is not intended that these
+decisions will be changed.
+
+\begin{description}
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucDevices}:] \textbf{Target Platform:} Hitchly is an application developed specifically for mobile devices. Porting the system to a desktop-native environment is an unlikely change as it would require significant modifications to the user interaction design and location-based services.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucLanguage}:] \textbf{Language Support:} The application is primarily based on the English language. Architecting the interface to support multi-language localization would require a major structural design decision.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucProgramming}:] \textbf{Implementation Technologies:} The core of this application is developed using a specific set of cross-platform frameworks and typed languages. Changing the fundamental development stack or database engine is an unlikely change as it would require a complete rewrite of the application's codebase.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucVerification}:] \textbf{Verification Requirement:} This application is strictly restricted for users affiliated with the specific institution (McMaster University), as the core domain concept relies on this trusted community. Expanding to the general public is not subject to change. Verification of users will consistently rely on institutional email validation.
+\end{description}

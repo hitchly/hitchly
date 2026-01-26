@@ -39,6 +39,9 @@
     ],
     "*.{md,json,css}": [
       "prettier --write"
+    ],
+    "*.tex": [
+      "bash scripts/check-latex.sh"
     ]
   }
 }

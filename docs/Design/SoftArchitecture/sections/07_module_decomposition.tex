@@ -1,0 +1,139 @@
+\section{Authentication \& Verification Module}
+
+\subsection{Module}
+The Authentication \& Verification Module manages user identity creation, secure login, and institutional email verification for all system users.
+This module is implemented using a secure \textbf{Authentication Framework}, which provides end-to-end session management, credential validation, and token-based verification. 
+It ensures that only users with verified institutional emails (e.g., \texttt{@mcmaster.ca}) can access the system's features.
+
+\paragraph{Frontend}
+The frontend component is integrated into the client application. 
+It provides the user interface flow for login, signup, and verification. 
+User input is collected through secure forms and transmitted to the backend via remote procedure calls. 
+The frontend handles the following:
+\begin{itemize}
+    \item Displays login and signup screens.
+    \item Manages form validation and field state.
+    \item Invokes authentication client hooks for session management.
+    \item Handles redirection and session persistence after successful login.
+    \item Presents error messages for invalid credentials or unverified accounts.
+\end{itemize}
+
+\paragraph{Backend}
+The backend is implemented in the application server using the framework's server-side SDK. 
+It manages credential validation, session tokens, domain enforcement, and email verification logic.
+Key backend operations include:
+\begin{itemize}
+    \item Configuring the identity provider for the API.
+    \item Enforcing allowed email domains during registration.
+    \item Generating and validating secure verification tokens.
+    \item Managing persistent user sessions through secure tokens.
+    \item Integrating with the email service for verification links.
+\end{itemize}
+
+\paragraph{Data}
+The data layer persists authentication and verification information within the relational database managed by the persistence layer.
+The module automatically provisions and maintains required entities:
+\begin{itemize}
+    \item \texttt{UserIdentity} --- stores credentials, roles, and verification state.
+    \item \texttt{SessionStore} --- stores active user sessions with expiry timestamps.
+    \item \texttt{VerificationTokens} --- tracks issued and redeemed email verification tokens.
+\end{itemize}
+Data integrity is enforced by unique constraints on email addresses and transactional updates during verification.
+
+\subsection{Uses}
+This module ensures secure access to the system by verifying each user's institutional affiliation. 
+It interacts directly with:
+\begin{itemize}
+    \item \textbf{Frontend UI:} collects credentials and displays verification flows.
+    \item \textbf{API Layer:} provides endpoints for signup, login, logout, and verification.
+    \item \textbf{Database:} persists user and session data.
+\end{itemize}
+All other modules depend on this component to validate user identity before allowing access to protected features.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{ALLOWED\_DOMAIN = "@mcmaster.ca"}  
+    Restricts signup to allowed institutional domains.
+    \item \texttt{SESSION\_EXPIRY = 86400}  
+    Sets the maximum lifetime (in seconds) for user sessions.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{registerUser} & name: string, email: string, password: string & token: string & DuplicateEmail, InvalidDomain \\
+\texttt{loginUser} & email: string, password: string & session: string & InvalidCredentials \\
+\texttt{verifyEmail} & token: string & success: bool & ExpiredToken \\
+\texttt{logoutUser} & session: string & success: bool & InvalidSession \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{Users}: Set of \texttt{UserRecord} --- The collection of all registered users and their states.
+    \item \texttt{Sessions}: Set of \texttt{SessionRecord} --- The collection of currently active sessions.
+    \item \texttt{PendingVerifications}: Set of (token: string, email: string) --- Map of active verification tokens.
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item User input device (keyboard, network interface).
+    \item Secure transport channel (HTTPS).
+    \item External Email Service (for delivery of verification codes).
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item Users possess valid institutional email accounts.
+    \item The persistence layer is initialized and reachable.
+    \item Network connectivity is stable during the authentication handshake.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\noindent \texttt{registerUser(name, email, password)}:
+\begin{itemize}
+    \item \textbf{transition:} Adds a new entry to \texttt{Users} with \texttt{verified = false}. Generates a unique token $t$ and adds $(t, email)$ to \texttt{PendingVerifications}.
+    \item \textbf{output:} Returns $t$ (to be sent via email).
+    \item \textbf{exception:} \texttt{DuplicateEmail} if email $\in$ \texttt{Users}. \texttt{InvalidDomain} if email does not end with \texttt{ALLOWED\_DOMAIN}.
+\end{itemize}
+
+\noindent \texttt{loginUser(email, password)}:
+\begin{itemize}
+    \item \textbf{transition:} Verifies credentials against \texttt{Users}. If valid, creates a new session $s$ and adds to \texttt{Sessions}.
+    \item \textbf{output:} Returns session token $s$.
+    \item \textbf{exception:} \texttt{InvalidCredentials} if email not found or password hash mismatch.
+\end{itemize}
+
+\noindent \texttt{verifyEmail(token)}:
+\begin{itemize}
+    \item \textbf{transition:} Checks if $token \in$ \texttt{PendingVerifications}. If found, sets corresponding user in \texttt{Users} to \texttt{verified = true} and removes token from \texttt{PendingVerifications}.
+    \item \textbf{output:} \texttt{true} on success.
+    \item \textbf{exception:} \texttt{ExpiredToken} if token not found or time-to-live exceeded.
+\end{itemize}
+
+\noindent \texttt{logoutUser(session)}:
+\begin{itemize}
+    \item \textbf{transition:} Removes $session$ from \texttt{Sessions}.
+    \item \textbf{output:} \texttt{true}.
+    \item \textbf{exception:} \texttt{InvalidSession} if session is not active.
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{generateVerificationToken(): string} --- Generates a cryptographically secure random string.
+    \item \texttt{validateEmailDomain(email: string): boolean} --- Returns ($email$ endsWith \texttt{ALLOWED\_DOMAIN}).
+    \item \texttt{hashPassword(password: string): string} --- Applies a one-way cryptographic hash function to the input.
+\end{itemize}

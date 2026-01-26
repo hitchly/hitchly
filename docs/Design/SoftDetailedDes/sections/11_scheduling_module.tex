@@ -1,0 +1,155 @@
+\section{Scheduling Module}
+
+\subsection{Module}
+The Scheduling Module manages recurring and one-time ride schedules for drivers and riders.
+It allows users to automate trip creation, define weekly patterns, and ensures that recurring schedules generate valid trip entries.  
+This module integrates directly with the Trip Module and the Notification Module.
+
+\paragraph{Frontend}
+Implemented in the Expo app, the frontend provides UI controls for defining recurring or one-time schedules.
+
+Key capabilities:
+\begin{itemize}
+    \item Time picker for selecting departure time
+    \item Day-of-week toggles for recurring schedules
+    \item Interface to view and cancel existing schedules
+    \item Integration with tRPC hooks such as \texttt{useCreateSchedule}, \texttt{useGetUserSchedules}
+    \item Form validation for time ranges and required fields
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements scheduling logic via tRPC.
+
+Responsibilities include:
+\begin{itemize}
+    \item Parsing user-defined recurrence patterns
+    \item Generating future trips based on schedules
+    \item Ensuring schedules do not conflict with existing trips
+    \item Validating schedule timing (future date, valid days)
+    \item Exposing procedures such as \texttt{createSchedule}, \texttt{cancelSchedule}
+\end{itemize}
+
+\paragraph{Data}
+The module persists schedule definitions and generated trip associations.
+
+Tables:
+\begin{itemize}
+    \item \texttt{schedules} --- recurring schedule definitions (days, time, userId)
+    \item \texttt{schedule\_instances} --- maps schedules to generated trips
+    \item \texttt{trips} --- created by this module but stored by Trip Module
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item Trip Module --- creates trip entries from schedules
+    \item User Profile Module --- determines valid schedule types
+    \item Notification Module --- sends reminders for upcoming rides
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_RECURRING\_YEARS = 1}
+    \item \texttt{VALID\_DAYS = [Mon..Sun]}
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{createSchedule} & scheduleData & ScheduleRecord & ValidationError \\
+\texttt{getUserSchedules} & userId & ScheduleList & NotFoundError \\
+\texttt{cancelSchedule} & scheduleId & Confirmation & UnauthorizedError \\
+\texttt{generateFutureTrips} & scheduleId & TripList & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{userSchedules}
+    \item \texttt{activeRules}
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item System scheduler
+    \item Device timezone
+    \item Database connection
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item Users must be verified before scheduling
+    \item Database schema is correctly migrated
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{createSchedule}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Creates new schedule record from scheduleData input
+        \item $\text{userSchedules} := \text{userSchedules} \cup \{\text{newSchedule}\}$
+        \item $\text{activeRules} := \text{activeRules} \cup \{\text{parseRecurrenceRule}(\text{newSchedule})\}$
+        \item Inserts schedule into database
+    \end{itemize}
+    \item \textbf{output:} Returns schedule record from $\text{userSchedules}$.
+    \item \textbf{exception:} ValidationError if schedule data invalid (invalid days, past time, etc.).
+\end{itemize}
+
+\texttt{getUserSchedules}:
+\begin{itemize}
+    \item \textbf{transition:} None (read-only operation).
+    \item \textbf{output:} Returns filtered subset of $\text{userSchedules}$ for the given userId.
+    \item \textbf{exception:} NotFoundError if no schedules exist for userId ($\text{userSchedules} = \emptyset$ for given userId).
+\end{itemize}
+
+\texttt{cancelSchedule}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Locates schedule in $\text{userSchedules}$ by scheduleId
+        \item $\text{userSchedules} := \text{userSchedules} \setminus \{\text{canceledSchedule}\}$
+        \item Removes corresponding rule from $\text{activeRules}$
+        \item Updates database to mark schedule as canceled
+    \end{itemize}
+    \item \textbf{output:} Returns confirmation of cancellation.
+    \item \textbf{exception:} UnauthorizedError if user lacks permission (schedule not in $\text{userSchedules}$ for current user).
+\end{itemize}
+
+\texttt{generateFutureTrips}:
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Locates schedule in $\text{userSchedules}$ by scheduleId
+        \item Retrieves corresponding recurrence rule from $\text{activeRules}$
+        \item Uses $\text{nextOccurrence}$ to compute future trip dates based on active rule
+        \item Generates trip entries for each future occurrence (up to MAX\_RECURRING\_YEARS)
+        \item Creates trip entries via Trip Module's \texttt{createTrip} procedure
+    \end{itemize}
+    \item \textbf{output:} Returns list of generated TripRecord entries.
+    \item \textbf{exception:} AlgorithmError if recurrence rule parsing fails or schedule not found in $\text{activeRules}$.
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{parseRecurrenceRule}
+    \item \texttt{nextOccurrence}
+\end{itemize}
+
+
+% ============================================================
+% 6.6 Notification Module
+% ============================================================

@@ -1,0 +1,445 @@
+\section{Matching Module} \label{sec:matching_module}
+
+\subsection{Module}
+The Matching Module is the core algorithmic engine of the system. 
+It is responsible for generating ranked matches between riders and drivers based on route proximity, time compatibility, and ride preferences. 
+This module applies the \textbf{Strategy Pattern} to maintain flexibility, allowing future replacement or enhancement of the scoring algorithm (e.g., machine learning or context-aware scoring). 
+Its outputs drive the user interface, where users browse and select potential ride matches.
+
+\paragraph{Frontend}
+Implemented in the client application, the frontend presents matches as interactive cards in a sequential interface. 
+Key features include:
+\begin{itemize}
+    \item Input gestures for accepting or passing on potential matches.
+    \item Real-time display of top recommended drivers or riders with route, time, and compatibility score.
+    \item API integration through remote procedure calls.
+    \item Visual match indicators such as qualitative labels or percentage score badges.
+    \item Immediate visual feedback for mutual matches.
+\end{itemize}
+
+\paragraph{Backend}
+The backend implements the matchmaking logic within the application server, encapsulated in a dedicated service component. 
+The design follows the Strategy Pattern to keep scoring algorithms modular. 
+Primary responsibilities include:
+\begin{itemize}
+    \item Retrieving candidate users and associated trips from the persistence layer.
+    \item Filtering incompatible pairs by hard constraints: verified institutional email, opposite roles, overlapping time windows, and nearby routes.
+    \item Applying a scoring strategy (default: WeightedMatchStrategy) that computes a match score (0--100) using normalized factors.
+    \item Sorting and returning the highest-scoring results to the client.
+    \item Storing selection actions and updating mutual matches.
+\end{itemize}
+The backend exposes endpoints for finding matches, submitting selections, and retrieving confirmed results.
+
+\paragraph{Data}
+The data layer maintains persistent records of matches, interactions, and scoring metrics within the relational database. 
+Key entities include:
+\begin{itemize}
+    \item \texttt{MatchEntity} --- stores confirmed mutual matches (rider <-> driver) with timestamp and score.
+    \item \texttt{InteractionEntity} --- records all user decisions (accept/pass) for analytics and recommender tuning.
+    \item \texttt{MatchHistoryEntity} --- archives past matches for feedback and trust scoring.
+\end{itemize}
+Foreign keys link match records to both users and trips, ensuring referential integrity.
+
+\subsection{Formal Specification}
+
+\sloppy
+This subsection provides the comprehensive formal specification for the Matching Module using finite state machines and discrete mathematics. The Matching Module is specified as three focused state machines that model distinct aspects of the matching algorithm: match discovery, ride request management, and match viewing.
+
+The state machines are designed to be:
+\begin{itemize}
+    \item \textbf{Conceptually clear}: Each FSM models a single, well-defined workflow
+    \item \textbf{Implementation-ready}: The runtime FSM enforces all edge cases and error handling
+    \item \textbf{Documentation-friendly}: Simplified models for specification clarity
+\end{itemize}
+
+\paragraph{Note on Implementation vs. Specification}
+\sloppy
+The implementation-level FSM contains additional transitions for error handling, retries, and recovery paths that ensure runtime correctness. For clarity, the documented state machines present simplified conceptual models that focus on the primary workflow, while the runtime FSM enforces all edge cases. This separation follows best practices in formal specification, where abstraction aids understanding while implementation ensures robustness.
+\fussy
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\linewidth]{matching_fsm.pdf}
+\caption{Matching FSM - Handles match discovery, filtering, scoring, and ranking}
+\label{fig:matching_fsm}
+\end{figure}
+
+The Matching FSM (Figure~\ref{fig:matching_fsm}) models the core match discovery workflow:
+\begin{itemize}
+    \item Searching for potential candidates
+    \item Applying hard constraints (verified email, role compatibility, time windows, routes, seat availability)
+    \item Scoring compatibility using weighted factors
+    \item Filtering and ranking results
+    \item Presenting matches or indicating no matches found
+\end{itemize}
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\linewidth]{request_fsm.pdf}
+\caption{Request FSM - Handles ride request lifecycle}
+\label{fig:request_fsm}
+\end{figure}
+
+The Request FSM (Figure~\ref{fig:request_fsm}) models the ride request lifecycle:
+\begin{itemize}
+    \item Creating a ride request
+    \item Managing pending requests awaiting driver action
+    \item Processing accepted requests
+    \item Confirming matches or handling cancellations
+\end{itemize}
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\linewidth]{viewing_fsm.pdf}
+\caption{Viewing FSM - Handles viewing confirmed matches}
+\label{fig:viewing_fsm}
+\end{figure}
+
+The Viewing FSM (Figure~\ref{fig:viewing_fsm}) models the simple workflow for viewing confirmed matches:
+\begin{itemize}
+    \item Querying accepted ride requests
+    \item Displaying associated driver/rider details
+\end{itemize}
+
+\subsubsection{State Definitions}
+
+The matching algorithm is modeled as three focused state machines, each handling a distinct aspect of the workflow. This separation improves clarity and maintainability while ensuring each FSM remains conceptually simple.
+
+\paragraph{Matching FSM States}
+
+The Matching FSM handles the core match discovery and ranking process:
+
+\begin{itemize}
+    \item \textbf{Idle}: Initial state, waiting for match discovery request.
+    \item \textbf{Searching for Matches}: Retrieving potential candidates from database.
+    \item \textbf{Applying Hard Constraints}: Filtering candidates using non-negotiable rules:
+    \begin{itemize}
+        \item Verified institutional email
+        \item Opposite role (rider $\leftrightarrow$ driver)
+        \item Overlapping time windows
+        \item Nearby / overlapping routes
+        \item Sufficient seat availability
+    \end{itemize}
+    \item \textbf{Scoring Compatibility}: Computing match scores using weighted factors (Schedule, Location, Cost, Comfort, Preferences) and normalizing to 0--100.
+    \item \textbf{Filtering and Ranking}: Removing matches below 30\% threshold, sorting by score, selecting top 20 results.
+    \item \textbf{Matches Ready}: Final state indicating ranked matches are available for presentation.
+    \item \textbf{No Matches Found}: Final state indicating no valid matches exist after filtering.
+\end{itemize}
+
+\paragraph{Request FSM States}
+
+The Request FSM handles the ride request lifecycle:
+
+\begin{itemize}
+    \item \textbf{Idle}: Initial state, no active request.
+    \item \textbf{Requesting Ride}: Validating ride existence and seat availability, creating request with status \texttt{pending}.
+    \item \textbf{Pending Request}: Request awaiting driver action (accept/reject).
+    \item \textbf{Accepted Request}: Request approved by driver, verifying authorization and updating capacity.
+    \item \textbf{Confirmed Match}: Final state indicating mutual match confirmed.
+    \item \textbf{Cancelled Request}: Final state indicating request was cancelled (by rider or driver).
+\end{itemize}
+
+\paragraph{Viewing FSM States}
+
+The Viewing FSM handles viewing confirmed matches:
+
+\begin{itemize}
+    \item \textbf{Idle}: Initial state, not viewing matches.
+    \item \textbf{Viewing Matches}: Final state where system queries and displays accepted ride requests with associated driver/rider details.
+\end{itemize}
+
+\paragraph{State Machine Interactions}
+
+While the three FSMs are conceptually separate, they interact in the following ways:
+
+\sloppy
+\begin{itemize}
+    \item The Matching FSM produces results that can trigger the Request FSM (when user selects a match).
+    \item The Request FSM produces confirmed matches that can be viewed via the Viewing FSM.
+    \item All FSMs can return to their respective Idle states, allowing the system to handle multiple operations sequentially.
+    \item Error handling and recovery are managed at the implementation level, ensuring robustness while keeping the specification models clean.
+\end{itemize}
+\fussy
+
+\subsubsection{Mathematical Definitions}
+
+The candidate filtering is formally specified using set theory. Let $R$ be the set of all rides, and let $r_r$ be the rider request.\linebreak The set of candidate rides is defined as:
+
+\begin{align}
+\text{Candidates} = \{r \in R \mid &\text{status}(r) = \text{``scheduled''} \land \nonumber \\
+&\text{maxSeats}(r) \geq r_r.\text{maxOccupancy} \land \nonumber \\
+&\text{availableSeats}(r) \geq r_r.\text{maxOccupancy}\}
+\end{align}
+
+The filtered candidates set excludes rides with compatibility dealbreakers:
+
+\begin{align}
+\text{Filtered} = \{c \in \text{Candidates} \mid &\text{compatibilityScore}(c, r_r) > 0\}
+\end{align}
+
+The scoring function \texttt{computeScore} is formally defined as a weighted sum of normalized factors. For the default preference preset, the weights are:
+
+\begin{align}
+\begin{split}
+\text{rawScore}(r, d) = {}&2.0 \times \text{scheduleScore}(r.\text{desiredArrivalTime}, d.\text{startTime}) + \\
+&2.0 \times \text{locationScore}(r.\text{origin}, r.\text{destination}, d.\text{origin}, d.\text{destination}) + \\
+&1.5 \times \text{costScore}(r.\text{estimatedCost}, \text{minCost}) + \\
+&0.5 \times \text{comfortScore}(d.\text{currentPassengers}, d.\text{maxSeats}, r.\text{maxOccupancy}) + \\
+&1.0 \times \text{compatibilityScore}(r.\text{prefs}, d.\text{prefs})
+\end{split}
+\end{align}
+
+where each factor function maps to the interval $[0, 1]$:
+
+\begin{itemize}
+    \item $\text{scheduleScore}: \text{string} \times \text{string} \rightarrow [0, 1]$ --- Computes time compatibility. Returns 1.0 if driver departs 0-20 minutes after rider's desired time, decreasing linearly for larger differences.
+    \item $\text{locationScore}: \text{Location}^4 \rightarrow [0, 1]$ --- Computes route compatibility based on detour time. Returns 1.0 if detour is within tolerance, decreasing exponentially for excess detour time.
+    \item $\text{costScore}: \mathbb{R} \times \mathbb{R} \rightarrow [0, 1]$ --- Computes cost attractiveness relative to minimum cost among all candidates. Lower cost relative to minimum yields higher score.
+    \item $\text{comfortScore}: \mathbb{N}^3 \rightarrow [0, 1]$ --- Computes seat availability comfort. Returns 0.0 if insufficient seats, otherwise $1.0 - \text{currentPassengers} / \text{maxSeats}$.
+    \item $\text{compatibilityScore}: \text{PreferenceData}^2 \rightarrow [0, 1]$ --- Computes preference compatibility. Returns 0.0 for dealbreakers (smoking, pets mismatches), otherwise computes soft matching score based on music and chatty preferences.
+\end{itemize}
+
+The raw score is normalized to a percentage (0-100) using the maximum theoretical score:
+
+\begin{align}
+\text{normalizeScore}(\text{rawScore}) = \min\left(100, \left\lfloor\frac{\text{rawScore}}{7.0} \times 100 + 0.5\right\rfloor\right)
+\end{align}
+
+where the maximum theoretical score is 7.0 (sum of all weights: $2.0 + 2.0 + 1.5 + 0.5 + 1.0 = 7.0$). The addition of $0.5$ before flooring implements rounding to the nearest integer, equivalent to $\text{round}(\text{rawScore} / 7.0 \times 100)$.
+
+The final ranked match list is constructed by filtering matches above the threshold, sorting by normalized score, and taking the top candidates:
+
+\begin{align}
+\begin{split}
+\text{validMatches} &= \{m \in \text{scoredMatches} \mid \\
+&\quad \text{normalizeScore}(m.\text{rawScore}) \geq \text{MATCH\_THRESHOLD} \times 100\} \\
+\text{matchResults} &= \text{take}(\text{sort}(\text{validMatches}, \text{descending}), \text{MAX\_CANDIDATES})
+\end{split}
+\end{align}
+
+where $\text{MATCH\_THRESHOLD} = 0.3$ (30\% minimum), $\text{MAX\_CANDIDATES} = 20$,\linebreak $\text{sort}(S, \text{descending})$ returns sequence $S$ sorted by normalized score in descending order,\linebreak and $\text{take}(S, n)$ returns the first $n$ elements of sequence $S$.
+
+\fussy
+\subsection{Uses}
+This module connects directly with:
+\begin{itemize}
+    \item \textbf{Route \& Trip Module} - provides trip data (origin, destination, departure time)
+    \item \textbf{User Profile Module} - provides preference data and reliability rating.
+    \item \textbf{Client Interaction Layer} - renders and collects user selection input.
+    \item \textbf{Notification Module} - notifies users upon mutual matches.
+\end{itemize}
+It is the computational bridge between trip listings and user engagement,\linebreak supporting the key matchmaking feature.
+
+\subsection{Syntax}
+
+\paragraph{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_CANDIDATES = 20} - limits results per query.
+    \item \texttt{MATCH\_THRESHOLD = 0.3} - minimum normalized score (30\%) to display.
+\end{itemize}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{findMatchesForUser} & userId: $\mathbb{N}$, request: RequestData & RankedMatchList & NotFound \\
+\texttt{requestRide} & rideId: $\mathbb{N}$, pickup: Location & Confirmation & NotFound, BadRequest \\
+\texttt{acceptRequest} & requestId: $\mathbb{N}$ & Confirmation & NotFound, BadRequest, Forbidden \\
+\texttt{cancelRequest} & requestId: $\mathbb{N}$ & Confirmation & NotFound, Forbidden \\
+\texttt{getMatchResults} & userId: $\mathbb{N}$ & MatchSummary & None \\
+\texttt{computeScore} & rider: UserRecord, driver: UserRecord & Score: $\mathbb{R}$ & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\sloppy
+\paragraph{State Variables}
+
+The module state is defined by the current state machine state and associated data:
+
+\begin{itemize}
+    \item \texttt{ModuleState} $\in \{\text{UNINITIALIZED}, \text{INITIALIZING}, \text{READY}, \text{PROCESSING}, \text{IDLE}, \text{ERROR}, \text{SHUTDOWN}\}$\linebreak --- Current lifecycle state
+    \item \texttt{OperationState} $\in \text{MatchStates} \cup \text{RequestStates} \cup \text{AcceptStates}$\linebreak $\cup \text{CancelStates} \cup \text{ResultsStates}$\linebreak --- Current operation state,\linebreak where each set contains the states for the respective operation
+    \item \texttt{CandidatePool} - Set of Candidate Records (drivers or riders)\linebreak (valid in states: QUERYING\_RIDES, VALIDATING\_CANDIDATES, COMPUTING\_ROUTES, SCORING\_CANDIDATES)
+    \item \texttt{ActiveStrategy} - reference to the current scoring algorithm\linebreak (valid when $\text{ModuleState} \in \{\text{READY}, \text{PROCESSING}\}$)
+    \item \texttt{MatchResults} - ordered sequence of potential matches with scores\linebreak (valid in states: RANKING\_MATCHES, MATCH\_COMPLETE)
+    \item \texttt{OperationQueue} - queue of pending operations\linebreak (valid when ModuleState = READY or PROCESSING)
+    \item \texttt{CurrentOperation} - currently executing operation\linebreak (valid when ModuleState = PROCESSING)
+\end{itemize}
+
+\paragraph{Environment Variables}
+\begin{itemize}
+    \item Active network connection for queries.
+    \item Persistence layer connection for retrieving and updating match data.
+    \item Access to external mapping service for route distance calculations.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item Each user has an active, verified profile with trip data available.
+    \item Distance and time calculations are performed via a reliable geocoding service.
+    \item Only verified institutional users participate in matching.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+All access routines are specified as state machine transitions. Each routine transitions the module from READY state through operation-specific states to either a completion state or error state.
+
+\texttt{findMatchesForUser(userId)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{userId} \in \mathbb{N} \land \text{userId} > 0$
+    \item \textbf{state transition sequence:}
+    \begin{align*}
+    \text{READY} &\xrightarrow{\text{findMatchesForUser(userId)}} \text{PROCESSING} \\
+    \text{PROCESSING} &\xrightarrow{} \text{MATCH\_INITIAL} \\
+    \text{MATCH\_INITIAL} &\xrightarrow{} \text{FETCHING\_PREFERENCES} \\
+    &\quad \text{action: } \text{riderPrefs} := \text{queryPreferences(userId)} \\
+    \text{FETCHING\_PREFERENCES} &\xrightarrow{} \text{QUERYING\_RIDES} \\
+    &\quad \text{action: } \text{CandidatePool} := \text{retrieveCandidates(userId)} \\
+    \text{QUERYING\_RIDES} &\xrightarrow{} \text{VALIDATING\_CANDIDATES} \\
+    &\quad \text{action: } \text{validCandidates} := \{r \in \text{CandidatePool} \mid \text{availableSeats}(r) \geq \text{request.maxOccupancy}\} \\
+    \text{VALIDATING\_CANDIDATES} &\xrightarrow{} \text{COMPUTING\_ROUTES} \\
+    &\quad \text{action: } \forall c \in \text{validCandidates}: \text{routeDetails}[c] := \text{getDetourAndRideDetails}(c, \text{request}) \\
+    \text{COMPUTING\_ROUTES} &\xrightarrow{} \text{SCORING\_CANDIDATES} \\
+    &\quad \text{action: } \text{scoredMatches} := \text{map}(\text{computeScore}, \text{validCandidates}) \\
+    \text{SCORING\_CANDIDATES} &\xrightarrow{} \text{FILTERING\_THRESHOLD} \\
+    &\quad \text{action: } \text{validMatches} := \{m \in \text{scoredMatches} \mid \text{normalizeScore}(m.\text{rawScore}) \geq \text{MATCH\_THRESHOLD} \times 100\} \\
+    \text{FILTERING\_THRESHOLD} &\xrightarrow{} \text{RANKING\_MATCHES} \\
+    &\quad \text{action: } \text{MatchResults} := \text{sort}(\text{validMatches}, \text{descending}) \\
+    \text{RANKING\_MATCHES} &\xrightarrow{} \text{MATCH\_COMPLETE} \\
+    &\quad \text{action: } \text{MatchResults} := \text{take}(\text{MatchResults}, \text{MAX\_CANDIDATES}) \\
+    \text{MATCH\_COMPLETE} &\xrightarrow{} \text{IDLE} \\
+    \text{IDLE} &\xrightarrow{} \text{READY}
+    \end{align*}
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{MatchResults} \neq \text{null} \land |\text{MatchResults}| \leq \text{MAX\_CANDIDATES}$\linebreak where $\text{MAX\_CANDIDATES} = 20$
+    \item \textbf{output:} Returns $\text{MatchResults}$ (ranked list of matches with normalized scores).
+    \item \textbf{exception:} If transition to MATCH\_ERROR occurs: NotFound\linebreak (when $\text{CandidatePool} = \emptyset$ or $\text{validCandidates} = \emptyset$ or $\text{validMatches} = \emptyset$).\linebreak Error recovery transitions to READY state.
+\end{itemize}
+
+\texttt{requestRide(rideId, pickupLat, pickupLng)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{rideId} \neq \text{null}$\linebreak $\land \text{pickupLat}, \text{pickupLng} \in \mathbb{R}$
+    \item \textbf{state transition sequence:}
+    \begin{align*}
+    \text{READY} &\xrightarrow{\text{requestRide}} \text{PROCESSING} \\
+    \text{PROCESSING} &\xrightarrow{} \text{REQUEST\_INITIAL} \\
+    \text{REQUEST\_INITIAL} &\xrightarrow{} \text{VALIDATING\_RIDE} \\
+    &\quad \text{action: } \text{ride} := \text{queryRide(rideId)} \\
+    \text{VALIDATING\_RIDE} &\xrightarrow{} \text{CHECKING\_SEATS} \\
+    &\quad \text{precondition: } \text{ride} \neq \text{null} \\
+    \text{CHECKING\_SEATS} &\xrightarrow{} \text{CREATING\_REQUEST} \\
+    &\quad \text{precondition: } \text{ride.bookedSeats} < \text{ride.maxSeats} \\
+    &\quad \text{action: } \text{insert}(\text{rideRequests}, \{\text{rideId}, \text{riderId}, \text{pickupLat}, \text{pickupLng}, \text{status} = \text{"pending"}\}) \\
+    \text{CREATING\_REQUEST} &\xrightarrow{} \text{REQUEST\_COMPLETE} \\
+    \text{REQUEST\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
+    \end{align*}
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \exists r \in \text{rideRequests}:$\linebreak $r.\text{id} = \text{requestId} \land r.\text{status} = \text{"pending"}$
+    \item \textbf{output:} Confirmation with requestId.
+    \item \textbf{exception:} If transition to REQUEST\_ERROR occurs: NotFound (ride not found) or BadRequest (ride full).
+\end{itemize}
+
+\texttt{acceptRequest(requestId)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{requestId} \neq \text{null}$
+    \item \textbf{state transition sequence:}
+    \begin{align*}
+    \text{READY} &\xrightarrow{\text{acceptRequest}} \text{PROCESSING} \\
+    \text{PROCESSING} &\xrightarrow{} \text{ACCEPT\_INITIAL} \\
+    \text{ACCEPT\_INITIAL} &\xrightarrow{} \text{VALIDATING\_REQUEST} \\
+    &\quad \text{action: } \text{request} := \text{queryRequest(requestId)} \\
+    \text{VALIDATING\_REQUEST} &\xrightarrow{} \text{VERIFYING\_DRIVER} \\
+    &\quad \text{precondition: } \text{request.status} = \text{"pending"} \\
+    \text{VERIFYING\_DRIVER} &\xrightarrow{} \text{CHECKING\_CAPACITY} \\
+    &\quad \text{precondition: } \text{ride.driverId} = \text{ctx.userId} \\
+    \text{CHECKING\_CAPACITY} &\xrightarrow{} \text{UPDATING\_STATUS} \\
+    &\quad \text{precondition: } \text{ride.bookedSeats} < \text{ride.maxSeats} \\
+    &\quad \text{action: } \text{request.status} := \text{"accepted"} \\
+    \text{UPDATING\_STATUS} &\xrightarrow{} \text{INCREMENTING\_SEATS} \\
+    &\quad \text{action: } \text{ride.bookedSeats} := \text{ride.bookedSeats} + 1 \\
+    \text{INCREMENTING\_SEATS} &\xrightarrow{} \text{ACCEPT\_COMPLETE} \\
+    \text{ACCEPT\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
+    \end{align*}
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{request.status} = \text{"accepted"}$\linebreak $\land \text{ride.bookedSeats} = \text{ride.bookedSeats}_{\text{old}} + 1$
+    \item \textbf{output:} Success confirmation.
+    \item \textbf{exception:} If transition to ACCEPT\_ERROR occurs: NotFound, BadRequest, or Forbidden.
+\end{itemize}
+
+\texttt{cancelRequest(requestId)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{requestId} \neq \text{null}$
+    \item \textbf{state transition sequence:}
+    \begin{align*}
+    \text{READY} &\xrightarrow{\text{cancelRequest}} \text{PROCESSING} \\
+    \text{PROCESSING} &\xrightarrow{} \text{CANCEL\_INITIAL} \\
+    \text{CANCEL\_INITIAL} &\xrightarrow{} \text{VALIDATING\_OWNERSHIP} \\
+    &\quad \text{precondition: } \text{request.riderId} = \text{ctx.userId} \\
+    \text{VALIDATING\_OWNERSHIP} &\xrightarrow{} \text{CHECKING\_STATUS} \\
+    \text{CHECKING\_STATUS} &\xrightarrow{} \text{UPDATING\_CANCEL} \\
+    &\quad \text{action: } \text{request.status} := \text{"cancelled"} \\
+    \text{UPDATING\_CANCEL} &\xrightarrow{\text{was accepted}} \text{DECREMENTING\_SEATS} \\
+    &\quad \text{action: } \text{ride.bookedSeats} := \max(0, \text{ride.bookedSeats} - 1) \\
+    \text{UPDATING\_CANCEL} &\xrightarrow{\text{was pending}} \text{CANCEL\_COMPLETE} \\
+    \text{DECREMENTING\_SEATS} &\xrightarrow{} \text{CANCEL\_COMPLETE} \\
+    \text{CANCEL\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
+    \end{align*}
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{request.status} = \text{"cancelled"}$
+    \item \textbf{output:} Success confirmation.
+    \item \textbf{exception:} If transition to CANCEL\_ERROR occurs: NotFound or Forbidden.
+\end{itemize}
+
+\texttt{getMatchResults(userId)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \land \text{userId} \in \mathbb{N}$
+    \item \textbf{state transition sequence:}
+    \begin{align*}
+    \text{READY} &\xrightarrow{\text{getMatchResults}} \text{PROCESSING} \\
+    \text{PROCESSING} &\xrightarrow{} \text{RESULTS\_INITIAL} \\
+    \text{RESULTS\_INITIAL} &\xrightarrow{} \text{QUERYING\_REQUESTS} \\
+    &\quad \text{action: } \text{acceptedRequests} := \text{query}(\text{rideRequests}, \\
+    &\quad\quad \{\text{riderId} = \text{userId}, \text{status} = \text{"accepted"}\}) \\
+    \text{QUERYING\_REQUESTS} &\xrightarrow{\text{requests found}} \text{FETCHING\_DRIVERS} \\
+    &\quad \text{action: } \forall r \in \text{acceptedRequests}: \\
+    &\quad\quad r.\text{driver} := \text{queryUser}(r.\text{driverId}) \\
+    \text{QUERYING\_REQUESTS} &\xrightarrow{\text{no requests}} \text{RESULTS\_COMPLETE} \\
+    \text{FETCHING\_DRIVERS} &\xrightarrow{} \text{RESULTS\_COMPLETE} \\
+    \text{RESULTS\_COMPLETE} &\xrightarrow{} \text{IDLE} \xrightarrow{} \text{READY}
+    \end{align*}
+    \item \textbf{postcondition:} $\text{ModuleState} = \text{READY} \land \text{results} \neq \text{null}$
+    \item \textbf{output:} Returns list of confirmed mutual matches (may be empty).
+    \item \textbf{exception:} None (returns empty list if no matches found).
+\end{itemize}
+
+\texttt{computeScore(rider, driver)}:
+\begin{itemize}
+    \item \textbf{precondition:} $\text{ModuleState} = \text{READY} \lor (\text{ModuleState} = \text{PROCESSING}$\linebreak $\land \text{OperationState} = \text{SCORING\_CANDIDATES})$
+    \item \textbf{transition:} Pure function, no state modification. Computes score using ActiveStrategy.
+    \item \textbf{output:} Floating-point score between 0 and 100 computed as\linebreak $\text{normalizeScore}(\text{rawScore}(r, d))$ where $\text{rawScore}$ is defined by Equation~(3)\linebreak and $\text{normalizeScore}$ is defined by Equation~(4).
+    \item \textbf{exception:} AlgorithmError if scoring function fails (e.g., $\text{ActiveStrategy}$ is undefined).
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{applyFilters(user, candidate)} - evaluates eligibility constraints (status="scheduled", seat availability, compatibility dealbreakers).
+    \item \texttt{calculateWeightedScore(rider, driver)} - computes weighted sum using factors (default preset):
+    \begin{itemize}
+        \item Schedule score (weight 2.0) - time compatibility
+        \item Location score (weight 2.0) - route/detour compatibility
+        \item Cost score (weight 1.5) - cost attractiveness
+        \item Comfort score (weight 0.5) - seat availability
+        \item Compatibility score (weight 1.0) - preference matching
+    \end{itemize}
+    \item \texttt{normalizeScore(raw)} - scales raw score (0-7.0) into [0, 100] using formula: $\min(100, \lfloor(\text{rawScore} / 7.0) \times 100 + 0.5\rfloor)$, which rounds to the nearest integer.
+\end{itemize}
+
+\fussy

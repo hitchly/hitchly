@@ -1,0 +1,78 @@
+\section{Rating \& Feedback Module}
+
+\subsection{Module}
+This module collects and stores ride ratings and feedback, updating reliability scores used by the Matching Module.
+
+\paragraph{Frontend}
+UI elements:
+\begin{itemize}
+    \item Post-ride rating screen
+    \item Optional text feedback box
+    \item History of past ratings
+\end{itemize}
+
+Hooks:
+\begin{itemize}
+    \item \texttt{useSubmitRating}
+    \item \texttt{useGetUserRatings}
+\end{itemize}
+
+\paragraph{Backend}
+Backend responsibilities:
+\begin{itemize}
+    \item Validating rating payloads
+    \item Linking ratings to matches
+    \item Recomputing reliability scores
+    \item Procedures: \texttt{submitRating}, \texttt{calculateReliability}
+\end{itemize}
+
+\paragraph{Data}
+Tables:
+\begin{itemize}
+    \item \texttt{ratings}
+    \item \texttt{reliability\_metrics}
+\end{itemize}
+
+\subsection{Uses}
+\begin{itemize}
+    \item Matching Module --- reliability score as weighted factor
+    \item User Profile Module --- shows aggregated rating
+\end{itemize}
+
+\subsection{Syntax}
+
+\paragraph{Exported Access Programs}
+\par\vspace{0.5em}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l l l l}
+\toprule
+Name & In & Out & Exceptions \\
+\midrule
+\texttt{submitRating} & ratingData & Confirmation & ValidationError \\
+\texttt{getUserRatings} & userId & RatingList & NotFoundError \\
+\texttt{calculateReliability} & userId & Score & AlgorithmError \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection{Semantics}
+
+\paragraph{State Variables}
+\begin{itemize}
+    \item \texttt{recentRatings}
+    \item \texttt{reliabilityScore}
+\end{itemize}
+
+\paragraph{Local Functions}
+\begin{itemize}
+    \item \texttt{computeWeightedAverage}
+    \item \texttt{sanitizeComment}
+\end{itemize}
+
+
+% ============================================================
+% 6.8 Safety & Reporting Module
+% ============================================================
