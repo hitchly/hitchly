@@ -1,44 +1,24 @@
-import { router, protectedProcedure } from "../trpc";
+import { router, protectedProcedure, adminProcedure } from "../trpc"; // 1. Import adminProcedure
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-
 import { db } from "@hitchly/db/client";
 import { eq } from "@hitchly/db/client";
 import { reports, users } from "@hitchly/db/schema";
 import { count } from "drizzle-orm";
 
 export const adminRouter = router({
-  getAnalytics: protectedProcedure.query(async ({ ctx }) => {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, ctx.userId!),
-      columns: { role: true },
-    });
-
-    if (user?.role !== "admin") {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-
+  getAnalytics: adminProcedure.query(async () => {
     const userCount = await db.select({ value: count() }).from(users);
     const reportsCount = await db.select({ value: count() }).from(reports);
 
     return {
       totalUsers: userCount[0].value,
-      activeUsers: 1,
-      totalRides: 0,
+      activeUsers: 1, //TODO
+      totalRides: 0, //TODO
       reportsCount: reportsCount[0].value,
     };
   }),
 
-  getAllUsers: protectedProcedure.query(async ({ ctx }) => {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, ctx.userId!),
-      columns: { role: true },
-    });
-
-    if (user?.role !== "admin") {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-
+  getAllUsers: adminProcedure.query(async () => {
     return await db
       .select({
         id: users.id,
@@ -62,7 +42,7 @@ export const adminRouter = router({
     return { isAdmin: user?.role === "admin" };
   }),
 
-  warnUser: protectedProcedure
+  warnUser: adminProcedure
     .input(
       z.object({
         targetUserId: z.string(),
@@ -70,16 +50,6 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, ctx.userId!),
-        columns: { role: true },
-      });
-
-      if (user?.role !== "admin") {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-
-      // Add the warning report
       await db.insert(reports).values({
         targetUserId: input.targetUserId,
         adminId: ctx.userId!,

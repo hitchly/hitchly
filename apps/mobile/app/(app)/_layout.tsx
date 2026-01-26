@@ -3,6 +3,7 @@ import { LocationProvider } from "@/context/location-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs, useRouter } from "expo-router";
 import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
@@ -20,8 +21,14 @@ const AppRoutes = () => {
     if (banCheck.data?.isBanned) {
       router.replace("/banned");
     }
-  }, [banCheck.data?.isBanned]);
-
+  }, [banCheck.data?.isBanned, router]);
+  if (banCheck.isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
   return (
     <Tabs
       screenOptions={{

@@ -51,6 +51,7 @@ export default function ProfileScreen() {
   };
 
   const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
+  const isAdmin = (session?.user as any)?.role === "admin";
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile?.appRole || ""
   );
@@ -69,6 +70,31 @@ export default function ProfileScreen() {
     : null;
 
   if (isLoading) return <LoadingSkeleton text="Loading Profile..." />;
+  const getBadgeStyle = () => {
+    if (isAdmin) {
+      return {
+        bg: colors.text,
+        text: colors.background,
+        icon: "build",
+        label: "Super Admin",
+      };
+    }
+    if (session?.user?.emailVerified) {
+      return {
+        bg: colors.successBackground,
+        text: colors.success,
+        icon: "shield-checkmark",
+        label: "Verified Student",
+      };
+    }
+    return {
+      bg: colors.warningBackground,
+      text: colors.warning,
+      icon: "alert-circle",
+      label: "Verification Pending",
+    };
+  };
+  const badge = getBadgeStyle();
 
   return (
     <SafeAreaView
@@ -106,39 +132,13 @@ export default function ProfileScreen() {
             <Text style={[styles.heroEmail, { color: colors.textSecondary }]}>
               {session?.user?.email}
             </Text>
-
+            {/* ✅ PASTE THIS NEW BLOCK */}
             <View
-              style={[
-                styles.verificationPill,
-                session?.user?.emailVerified
-                  ? { backgroundColor: colors.successBackground }
-                  : { backgroundColor: colors.warningBackground },
-              ]}
+              style={[styles.verificationPill, { backgroundColor: badge.bg }]}
             >
-              <Ionicons
-                name={
-                  session?.user?.emailVerified
-                    ? "shield-checkmark"
-                    : "alert-circle"
-                }
-                size={14}
-                color={
-                  session?.user?.emailVerified ? colors.success : colors.warning
-                }
-              />
-              <Text
-                style={[
-                  styles.verificationText,
-                  {
-                    color: session?.user?.emailVerified
-                      ? colors.success
-                      : colors.warning,
-                  },
-                ]}
-              >
-                {session?.user?.emailVerified
-                  ? "Verified Student"
-                  : "Verification Pending"}
+              <Ionicons name={badge.icon as any} size={14} color={badge.text} />
+              <Text style={[styles.verificationText, { color: badge.text }]}>
+                {badge.label}
               </Text>
             </View>
           </View>
