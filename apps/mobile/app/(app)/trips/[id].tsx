@@ -34,7 +34,7 @@ export default function TripDetailScreen() {
       Alert.alert("Success", "Trip cancelled successfully", [
         {
           text: "OK",
-          onPress: () => router.push("/trips"),
+          onPress: () => router.push("/trips" as any),
         },
       ]);
     },
@@ -57,6 +57,17 @@ export default function TripDetailScreen() {
     },
   });
 
+  const startTrip = trpc.trip.startTrip.useMutation({
+    onSuccess: () => {
+      if (id) {
+        router.push(`/trips/${id}/drive` as any);
+      }
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
   const formatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleDateString("en-US", {
@@ -73,6 +84,23 @@ export default function TripDetailScreen() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const canStartRide = (
+    departureTime: Date | string
+  ): { canStart: boolean; availableAt?: Date } => {
+    const departure =
+      typeof departureTime === "string"
+        ? new Date(departureTime)
+        : departureTime;
+    const now = new Date();
+    const tenMinutesBefore = new Date(departure.getTime() - 10 * 60 * 1000);
+
+    if (now >= tenMinutesBefore) {
+      return { canStart: true };
+    }
+
+    return { canStart: false, availableAt: tenMinutesBefore };
   };
 
   const handleCancel = () => {
@@ -140,6 +168,8 @@ export default function TripDetailScreen() {
         return "#FFA500";
       case "active":
         return "#007AFF";
+      case "in_progress":
+        return "#34C759";
       case "completed":
         return "#34C759";
       case "cancelled":
@@ -165,6 +195,12 @@ export default function TripDetailScreen() {
     trip &&
     trip.maxSeats - trip.bookedSeats > 0 &&
     !hasPendingRequest;
+
+  // Compute start ride availability for drivers with active trips
+  const startRideInfo =
+    isDriver && trip.status === "active"
+      ? canStartRide(trip.departureTime)
+      : null;
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -195,6 +231,9 @@ export default function TripDetailScreen() {
           {/* Route Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Route</Text>
+            {isDriver && trip.status === "active" && (
+              <Text style={styles.startLocationLabel}>Start Location</Text>
+            )}
             <View style={styles.routeContainer}>
               <View style={styles.routePoint}>
                 <View style={styles.routeDot} />
@@ -207,6 +246,48 @@ export default function TripDetailScreen() {
               </View>
             </View>
           </View>
+
+          {/* Start Ride Button for Drivers */}
+          {startRideInfo && (
+            <View style={styles.actionsSection}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  startRideInfo.canStart
+                    ? styles.startButton
+                    : styles.startButtonDisabled,
+                ]}
+                onPress={() => {
+                  if (startRideInfo.canStart && id) {
+                    Alert.alert(
+                      "Start Ride",
+                      "Start this ride? This will mark the trip as in progress.",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Start",
+                          onPress: () => {
+                            startTrip.mutate({ tripId: id });
+                          },
+                        },
+                      ]
+                    );
+                  }
+                }}
+                disabled={!startRideInfo.canStart || startTrip.isPending}
+              >
+                {startTrip.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    {startRideInfo.canStart
+                      ? "Start Ride"
+                      : `Start Ride (Available at ${formatTime(startRideInfo.availableAt!)})`}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Trip Details */}
           <View style={styles.section}>
@@ -484,5 +565,18 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 16,
     fontWeight: "600",
+  },
+  startLocationLabel: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  startButton: {
+    backgroundColor: "#34C759",
+  },
+  startButtonDisabled: {
+    backgroundColor: "#999",
+    opacity: 0.6,
   },
 });

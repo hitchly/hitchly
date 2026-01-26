@@ -196,6 +196,7 @@ export const tripStatusEnum = pgEnum("trip_status", [
   "pending",
   "scheduled",
   "active",
+  "in_progress",
   "completed",
   "cancelled",
 ]);
@@ -204,6 +205,8 @@ export const tripStatusEnum = pgEnum("trip_status", [
 export const tripRequestStatusEnum = pgEnum("trip_request_status", [
   "pending",
   "accepted",
+  "on_trip",
+  "completed",
   "rejected",
   "cancelled",
 ]);
@@ -292,6 +295,10 @@ export const tripRequests = pgTable("trip_requests", {
   // Pickup location coordinates (for route optimization)
   pickupLat: doublePrecision("pickup_lat").notNull(),
   pickupLng: doublePrecision("pickup_lng").notNull(),
+
+  // Dropoff location coordinates (for individual passenger destinations)
+  dropoffLat: doublePrecision("dropoff_lat"),
+  dropoffLng: doublePrecision("dropoff_lng"),
 
   status: tripRequestStatusEnum("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

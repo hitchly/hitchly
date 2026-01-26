@@ -1,7 +1,7 @@
 import { RequireLocation } from "@/components/location/require-location";
 import { LocationProvider } from "@/context/location-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { authClient } from "../../lib/auth-client";
@@ -11,6 +11,7 @@ const AppRoutes = () => {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
+  const segments = useSegments();
 
   const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
     enabled: !!session?.user?.id,
@@ -31,6 +32,11 @@ const AppRoutes = () => {
   // Determine which screen to show for discover tab
   const discoverScreenName = isDriver ? "requests" : "matchmaking";
 
+  // Hide tab bar when on drive screen
+  const isOnDriveScreen = segments.some(
+    (segment) => (segment as string) === "drive"
+  );
+
   if (banCheck.isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -49,6 +55,7 @@ const AppRoutes = () => {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: "#eeeeee",
+          display: isOnDriveScreen ? "none" : "flex",
         },
       }}
     >
@@ -137,6 +144,12 @@ const AppRoutes = () => {
       />
       <Tabs.Screen
         name="trips/requests"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/[id]/drive"
         options={{
           href: null,
         }}

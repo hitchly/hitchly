@@ -238,15 +238,64 @@ export const tripRouter = router({
         throw new Error("Trip not found");
       }
 
-      // Get trip requests for this trip
+      // Get trip requests with rider information
       const requests = await ctx.db
-        .select()
+        .select({
+          id: tripRequests.id,
+          tripId: tripRequests.tripId,
+          riderId: tripRequests.riderId,
+          pickupLat: tripRequests.pickupLat,
+          pickupLng: tripRequests.pickupLng,
+          dropoffLat: tripRequests.dropoffLat,
+          dropoffLng: tripRequests.dropoffLng,
+          status: tripRequests.status,
+          createdAt: tripRequests.createdAt,
+          updatedAt: tripRequests.updatedAt,
+          rider: {
+            id: users.id,
+            name: users.name,
+            email: users.email,
+          },
+        })
         .from(tripRequests)
+        .leftJoin(users, eq(tripRequests.riderId, users.id))
         .where(eq(tripRequests.tripId, input.tripId));
+
+      // Filter to accepted/on_trip/completed requests for active/in_progress trips
+      // For other statuses, return all requests
+      const filteredRequests =
+        trip.status === "active" || trip.status === "in_progress"
+          ? requests.filter(
+              (req) =>
+                req.status === "accepted" ||
+                req.status === "on_trip" ||
+                req.status === "completed"
+            )
+          : requests;
+
+      // Sort by proximity to trip origin if trip has origin coordinates
+      let sortedRequests = filteredRequests;
+      if (trip.originLat && trip.originLng) {
+        sortedRequests = [...filteredRequests].sort((a, b) => {
+          if (!a.pickupLat || !a.pickupLng) return 1;
+          if (!b.pickupLat || !b.pickupLng) return -1;
+
+          // Simple Euclidean distance calculation
+          const distA = Math.sqrt(
+            Math.pow(a.pickupLat - trip.originLat!, 2) +
+              Math.pow(a.pickupLng - trip.originLng!, 2)
+          );
+          const distB = Math.sqrt(
+            Math.pow(b.pickupLat - trip.originLat!, 2) +
+              Math.pow(b.pickupLng - trip.originLng!, 2)
+          );
+          return distA - distB;
+        });
+      }
 
       return {
         ...trip,
-        requests,
+        requests: sortedRequests,
       };
     }),
 
@@ -351,6 +400,214 @@ export const tripRouter = router({
         );
 
       return { success: true, trip: cancelledTrip };
+    }),
+
+  /**
+   * Start a trip (mark as in progress)
+   */
+  startTrip: protectedProcedure
+    .input(z.object({ tripId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Check trip exists and user owns it
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId));
+
+      if (!trip) {
+        throw new Error("Trip not found");
+      }
+
+      if (trip.driverId !== ctx.userId) {
+        throw new Error("Unauthorized: You can only start your own trips");
+      }
+
+      // Can only start active trips
+      if (trip.status !== "active") {
+        throw new Error("Can only start trips that are in active status");
+      }
+
+      // Update trip status to in_progress
+      const [startedTrip] = await ctx.db
+        .update(trips)
+        .set({
+          status: "in_progress",
+          updatedAt: new Date(),
+        })
+        .where(eq(trips.id, input.tripId))
+        .returning();
+
+      return startedTrip;
+    }),
+
+  /**
+   * Update passenger status (pickup or dropoff)
+   */
+  updatePassengerStatus: protectedProcedure
+    .input(
+      z.object({
+        tripId: z.string(),
+        requestId: z.string(),
+        action: z.enum(["pickup", "dropoff"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Check trip exists and user owns it
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId));
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      if (trip.driverId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Unauthorized: You can only update passengers for your own trips",
+        });
+      }
+
+      // Can only update passengers when trip is in_progress
+      if (trip.status !== "in_progress") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only update passenger status when trip is in progress",
+        });
+      }
+
+      // Get request
+      const [request] = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(eq(tripRequests.id, input.requestId));
+
+      if (!request) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip request not found",
+        });
+      }
+
+      if (request.tripId !== input.tripId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Request does not belong to this trip",
+        });
+      }
+
+      // Validate status transitions
+      if (input.action === "pickup") {
+        if (request.status !== "accepted") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Can only pick up passengers with accepted status",
+          });
+        }
+      } else if (input.action === "dropoff") {
+        if (request.status !== "on_trip") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Can only drop off passengers who are on trip",
+          });
+        }
+      }
+
+      // Update request status
+      const newStatus = input.action === "pickup" ? "on_trip" : "completed";
+      const [updatedRequest] = await ctx.db
+        .update(tripRequests)
+        .set({
+          status: newStatus,
+          updatedAt: new Date(),
+        })
+        .where(eq(tripRequests.id, input.requestId))
+        .returning();
+
+      return updatedRequest;
+    }),
+
+  /**
+   * Complete trip (mark as completed when all passengers dropped off)
+   */
+  completeTrip: protectedProcedure
+    .input(z.object({ tripId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Check trip exists and user owns it
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId));
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      if (trip.driverId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Unauthorized: You can only complete your own trips",
+        });
+      }
+
+      // Can only complete trips that are in_progress
+      if (trip.status !== "in_progress") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only complete trips that are in progress",
+        });
+      }
+
+      // Get all accepted requests for this trip
+      const acceptedRequests = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.status, "accepted")
+          )
+        );
+
+      // Get all on_trip requests
+      const onTripRequests = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.status, "on_trip")
+          )
+        );
+
+      // Verify all passengers are completed
+      if (acceptedRequests.length > 0 || onTripRequests.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot complete trip: not all passengers have been dropped off",
+        });
+      }
+
+      // Update trip status to completed
+      const [completedTrip] = await ctx.db
+        .update(trips)
+        .set({
+          status: "completed",
+          updatedAt: new Date(),
+        })
+        .where(eq(trips.id, input.tripId))
+        .returning();
+
+      return completedTrip;
     }),
 
   // ============================================

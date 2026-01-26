@@ -34,7 +34,7 @@ export default function CreateTripScreen() {
       Alert.alert("Success", "Trip created successfully!", [
         {
           text: "OK",
-          onPress: () => router.push("/trips"),
+          onPress: () => router.push("/trips" as any),
         },
       ]);
     },

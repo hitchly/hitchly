@@ -407,7 +407,7 @@ export default function Matchmaking() {
 
   const handleCardTap = (match: RideMatch) => {
     // Navigate to trip details
-    router.push(`/(app)/trips/${match.rideId}`);
+    router.push(`/(app)/trips/${match.rideId}` as any);
   };
 
   const handleDeckEmpty = () => {

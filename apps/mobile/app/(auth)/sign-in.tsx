@@ -49,7 +49,7 @@ export default function SignIn() {
               });
 
               router.push({
-                pathname: "/verify",
+                pathname: "/verify" as any,
                 params: { email: data.email, password: data.password },
               });
             } else {

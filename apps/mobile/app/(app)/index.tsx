@@ -21,9 +21,9 @@ export default function HomeScreen() {
 
     // Redirect to the appropriate discover screen
     if (isDriver) {
-      router.replace("/requests");
+      router.replace("/requests" as any);
     } else {
-      router.replace("/matchmaking");
+      router.replace("/matchmaking" as any);
     }
   }, [userProfile, profileLoading, router]);
 
