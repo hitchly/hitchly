@@ -1,4 +1,5 @@
 import { router } from "../trpc";
+import { adminRouter } from "./admin";
 import { healthRouter } from "./health";
 import { locationRouter } from "./location";
 import { profileRouter } from "./profile";
@@ -7,6 +8,7 @@ import { adminRouter } from "./admin";
 import { tripRouter } from "./trip";
 
 export const appRouter = router({
+  admin: adminRouter,
   profile: profileRouter,
   location: locationRouter,
   health: healthRouter,

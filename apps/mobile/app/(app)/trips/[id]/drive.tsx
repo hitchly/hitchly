@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { trpc } from "../../../../lib/trpc";
 import { openStopNavigation } from "../../../../lib/navigation";
+import {
+  TripCompletionSummary,
+  type TripCompletionSummaryData,
+} from "../../../../components/trip/trip-completion-summary";
 
 type Stop = {
   type: "pickup" | "dropoff";
@@ -19,6 +24,21 @@ type Stop = {
   location: string;
   lat: number;
   lng: number;
+};
+
+const formatCityProvince = (address?: string | null) => {
+  if (!address) return "Location";
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    const city = parts[parts.length - 2];
+    const province =
+      parts[parts.length - 1].split(" ")[0] || parts[parts.length - 1];
+    return `${city}, ${province}`;
+  }
+  return address;
 };
 
 const getCurrentStop = (trip: any, requests: any[]): Stop | null => {
@@ -47,7 +67,7 @@ const getCurrentStop = (trip: any, requests: any[]): Stop | null => {
         type: "pickup",
         requestId: request.id,
         passengerName: request.rider?.name || "Passenger",
-        location: trip.origin, // Use trip origin as pickup location display
+        location: formatCityProvince(trip.origin),
         lat: request.pickupLat,
         lng: request.pickupLng,
       };
@@ -64,7 +84,7 @@ const getCurrentStop = (trip: any, requests: any[]): Stop | null => {
           type: "dropoff",
           requestId: request.id,
           passengerName: request.rider?.name || "Passenger",
-          location: trip.destination, // Use trip destination as dropoff location display
+          location: formatCityProvince(trip.destination),
           lat: dropoffLat,
           lng: dropoffLng,
         };
@@ -79,12 +99,47 @@ const getCurrentStop = (trip: any, requests: any[]): Stop | null => {
 export default function DriveScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const utils = trpc.useUtils();
+  const [summaryVisible, setSummaryVisible] = useState(false);
+  const [summaryData, setSummaryData] =
+    useState<TripCompletionSummaryData | null>(null);
 
   const {
     data: trip,
     isLoading,
+    error,
     refetch,
   } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
+
+  // #region agent log
+  useEffect(() => {
+    if (id) {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:87",
+            message: "Drive screen trip query",
+            data: {
+              tripId: id,
+              isLoading,
+              hasTrip: !!trip,
+              tripStatus: trip?.status,
+              hasError: !!error,
+              errorMessage: error?.message,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "G",
+          }),
+        }
+      ).catch(() => {});
+    }
+  }, [id, isLoading, trip, error]);
+  // #endregion
 
   const updatePassengerStatus = trpc.trip.updatePassengerStatus.useMutation({
     onSuccess: () => {
@@ -96,10 +151,49 @@ export default function DriveScreen() {
   });
 
   const completeTrip = trpc.trip.completeTrip.useMutation({
-    onSuccess: () => {
-      if (id) {
-        router.push(`/trips/${id}` as any);
-      }
+    onSuccess: (result: any) => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:108",
+            message: "Trip completed - invalidating queries",
+            data: { tripId: id },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "L",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+      // Invalidate queries to refresh UI
+      utils.trip.getTrips.invalidate();
+      utils.trip.getTripById.invalidate({ tripId: id! });
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:113",
+            message: "Queries invalidated",
+            data: { tripId: id },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "L",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+      // Show driver completion summary (placeholder values until payment module is implemented).
+      setSummaryData((result?.summary as TripCompletionSummaryData) ?? null);
+      setSummaryVisible(true);
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
@@ -153,15 +247,47 @@ export default function DriveScreen() {
   const currentStop = getCurrentStop(trip, trip.requests || []);
 
   // Check if all passengers are completed
+  const requests = trip.requests || [];
+  const hasRequests = requests.length > 0;
   const allCompleted =
-    trip.requests &&
-    trip.requests.length > 0 &&
-    trip.requests.every(
+    hasRequests &&
+    requests.every(
       (req: any) =>
         req.status === "completed" ||
         req.status === "rejected" ||
         req.status === "cancelled"
     );
+
+  // Check if there are any pending requests (not yet accepted)
+  const hasPendingRequests = requests.some(
+    (req: any) => req.status === "pending"
+  );
+
+  // #region agent log
+  useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/trips/[id]/drive.tsx:175",
+        message: "Drive screen state",
+        data: {
+          tripId: id,
+          hasRequests,
+          requestsCount: requests.length,
+          requestStatuses: requests.map((r: any) => r.status),
+          hasCurrentStop: !!currentStop,
+          allCompleted,
+          hasPendingRequests,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run4",
+        hypothesisId: "K",
+      }),
+    }).catch(() => {});
+  }, [id, requests, currentStop, allCompleted, hasPendingRequests]);
+  // #endregion
 
   // Auto-complete trip if all passengers are done
   if (
@@ -189,11 +315,24 @@ export default function DriveScreen() {
         {
           text: "Confirm",
           onPress: () => {
-            updatePassengerStatus.mutate({
-              tripId: id!,
-              requestId: currentStop.requestId,
-              action,
-            });
+            updatePassengerStatus.mutate(
+              {
+                tripId: id!,
+                requestId: currentStop.requestId,
+                action,
+              },
+              {
+                onSuccess: () => {
+                  // Placeholder for payment module: charge rider when dropped off.
+                  if (action === "dropoff") {
+                    Alert.alert(
+                      "Payment (Placeholder)",
+                      `Transaction will complete now and ${currentStop.passengerName} will be charged.\n\n(Teammate: implement charge/capture here on passenger dropoff.)`
+                    );
+                  }
+                },
+              }
+            );
           },
         },
       ]
@@ -207,6 +346,14 @@ export default function DriveScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <TripCompletionSummary
+        visible={summaryVisible}
+        summary={summaryData}
+        onClose={() => {
+          setSummaryVisible(false);
+          if (id) router.push(`/trips/${id}` as any);
+        }}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -255,12 +402,40 @@ export default function DriveScreen() {
               <Text style={styles.secondaryButtonText}>Open in Maps</Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : !hasRequests ? (
+          <View style={styles.completedContainer}>
+            <Text style={styles.completedText}>
+              No passengers on this trip yet.
+            </Text>
+            <Text style={styles.completedSubtext}>
+              Passengers can join your trip from the trip details screen.
+            </Text>
+          </View>
+        ) : hasPendingRequests ? (
+          <View style={styles.completedContainer}>
+            <Text style={styles.completedText}>
+              Waiting for passenger requests...
+            </Text>
+            <Text style={styles.completedSubtext}>
+              Accept passenger requests from the trip details screen to start
+              pickups.
+            </Text>
+          </View>
+        ) : allCompleted ? (
           <View style={styles.completedContainer}>
             <Text style={styles.completedText}>
               All passengers have been picked up and dropped off.
             </Text>
             <Text style={styles.completedSubtext}>Completing trip...</Text>
+          </View>
+        ) : (
+          <View style={styles.completedContainer}>
+            <Text style={styles.completedText}>
+              No active stops at this time.
+            </Text>
+            <Text style={styles.completedSubtext}>
+              Check back later for passenger pickups.
+            </Text>
           </View>
         )}
       </View>

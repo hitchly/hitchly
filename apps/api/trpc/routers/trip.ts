@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   MAX_SEATS,
@@ -10,6 +10,8 @@ import {
 import { geocodeAddress } from "../../services/googlemaps";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
+
+const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder (teammate will replace with real fare calc)
 
 // Zod schemas for validation
 const createTripInputSchema = z.object({
@@ -210,7 +212,7 @@ export const tripRouter = router({
         .select()
         .from(trips)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(trips.departureTime);
+        .orderBy(desc(trips.createdAt));
 
       // Apply time filtering if needed
       if (input?.startDate && input?.endDate) {
@@ -229,37 +231,153 @@ export const tripRouter = router({
   getTripById: protectedProcedure
     .input(z.object({ tripId: z.string() }))
     .query(async ({ ctx, input }) => {
+      // #region agent log
+      await fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "apps/api/trpc/routers/trip.ts:231",
+            message: "getTripById called",
+            data: { tripId: input.tripId, userId: ctx.userId },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "H",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       const [trip] = await ctx.db
         .select()
         .from(trips)
         .where(eq(trips.id, input.tripId));
 
+      // #region agent log
+      await fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "apps/api/trpc/routers/trip.ts:237",
+            message: "getTripById query result",
+            data: {
+              tripId: input.tripId,
+              foundTrip: !!trip,
+              tripStatus: trip?.status,
+              tripDriverId: trip?.driverId,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "H",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       if (!trip) {
-        throw new Error("Trip not found");
+        // #region agent log
+        await fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "apps/api/trpc/routers/trip.ts:242",
+              message: "Trip not found error",
+              data: { tripId: input.tripId, userId: ctx.userId },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "run3",
+              hypothesisId: "H",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
       }
 
       // Get trip requests with rider information
-      const requests = await ctx.db
-        .select({
-          id: tripRequests.id,
-          tripId: tripRequests.tripId,
-          riderId: tripRequests.riderId,
-          pickupLat: tripRequests.pickupLat,
-          pickupLng: tripRequests.pickupLng,
-          dropoffLat: tripRequests.dropoffLat,
-          dropoffLng: tripRequests.dropoffLng,
-          status: tripRequests.status,
-          createdAt: tripRequests.createdAt,
-          updatedAt: tripRequests.updatedAt,
-          rider: {
-            id: users.id,
-            name: users.name,
-            email: users.email,
-          },
-        })
-        .from(tripRequests)
-        .leftJoin(users, eq(tripRequests.riderId, users.id))
-        .where(eq(tripRequests.tripId, input.tripId));
+      // Wrap in try-catch to handle cases where requests query fails (e.g., schema issues)
+      let requests: any[] = [];
+      try {
+        // Flatten the query to avoid nested object issues with Drizzle leftJoin
+        const requestsData = await ctx.db
+          .select({
+            id: tripRequests.id,
+            tripId: tripRequests.tripId,
+            riderId: tripRequests.riderId,
+            pickupLat: tripRequests.pickupLat,
+            pickupLng: tripRequests.pickupLng,
+            dropoffLat: tripRequests.dropoffLat,
+            dropoffLng: tripRequests.dropoffLng,
+            status: tripRequests.status,
+            createdAt: tripRequests.createdAt,
+            updatedAt: tripRequests.updatedAt,
+            riderPickupConfirmedAt: tripRequests.riderPickupConfirmedAt,
+            riderId_user: users.id,
+            riderName: users.name,
+            riderEmail: users.email,
+          })
+          .from(tripRequests)
+          .leftJoin(users, eq(tripRequests.riderId, users.id))
+          .where(eq(tripRequests.tripId, input.tripId));
+
+        // Reconstruct nested rider object
+        requests = requestsData.map((req) => ({
+          id: req.id,
+          tripId: req.tripId,
+          riderId: req.riderId,
+          pickupLat: req.pickupLat,
+          pickupLng: req.pickupLng,
+          dropoffLat: req.dropoffLat,
+          dropoffLng: req.dropoffLng,
+          status: req.status,
+          createdAt: req.createdAt,
+          updatedAt: req.updatedAt,
+          riderPickupConfirmedAt: req.riderPickupConfirmedAt,
+          rider: req.riderId_user
+            ? {
+                id: req.riderId_user,
+                name: req.riderName,
+                email: req.riderEmail,
+              }
+            : null,
+        }));
+      } catch (error: any) {
+        // #region agent log
+        await fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "apps/api/trpc/routers/trip.ts:276",
+              message: "Trip requests query failed",
+              data: {
+                tripId: input.tripId,
+                error: error?.message,
+                errorStack: error?.stack,
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "run3",
+              hypothesisId: "I",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+        // Log error but continue - return trip with empty requests array
+        console.error("Failed to fetch trip requests:", error);
+        requests = [];
+      }
 
       // Filter to accepted/on_trip/completed requests for active/in_progress trips
       // For other statuses, return all requests
@@ -376,6 +494,28 @@ export const tripRouter = router({
       }
 
       // Update trip status
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "apps/api/trpc/routers/trip.ts:cancelTrip:beforeUpdate",
+            message: "Before updating trip status",
+            data: {
+              tripId: input.tripId,
+              currentStatus: trip.status,
+              userId: ctx.userId,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "F",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
       const [cancelledTrip] = await ctx.db
         .update(trips)
         .set({
@@ -384,8 +524,74 @@ export const tripRouter = router({
         })
         .where(eq(trips.id, input.tripId))
         .returning();
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "apps/api/trpc/routers/trip.ts:cancelTrip:afterUpdate",
+            message: "After updating trip status",
+            data: {
+              tripId: input.tripId,
+              newStatus: cancelledTrip?.status,
+              success: !!cancelledTrip,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "F",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
       // Cancel all pending trip requests
+      // #region agent log
+      const pendingRequestsBefore = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.status, "pending")
+          )
+        );
+      const acceptedRequestsBefore = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.status, "accepted")
+          )
+        );
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location:
+              "apps/api/trpc/routers/trip.ts:cancelTrip:beforeCancelRequests",
+            message: "Before cancelling requests",
+            data: {
+              tripId: input.tripId,
+              pendingCount: pendingRequestsBefore.length,
+              acceptedCount: acceptedRequestsBefore.length,
+              pendingRequestIds: pendingRequestsBefore.map((r) => r.id),
+              acceptedRequestIds: acceptedRequestsBefore.map((r) => r.id),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       await ctx.db
         .update(tripRequests)
         .set({
@@ -398,6 +604,39 @@ export const tripRouter = router({
             eq(tripRequests.status, "pending")
           )
         );
+
+      // #region agent log
+      const allRequestsAfter = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(eq(tripRequests.tripId, input.tripId));
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location:
+              "apps/api/trpc/routers/trip.ts:cancelTrip:afterCancelRequests",
+            message: "After cancelling requests",
+            data: {
+              tripId: input.tripId,
+              tripStatus: cancelledTrip?.status,
+              allRequestCount: allRequestsAfter.length,
+              requestStatuses: allRequestsAfter.map((r) => ({
+                id: r.id,
+                status: r.status,
+                riderId: r.riderId,
+              })),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
       return { success: true, trip: cancelledTrip };
     }),
@@ -428,16 +667,96 @@ export const tripRouter = router({
       }
 
       // Update trip status to in_progress
-      const [startedTrip] = await ctx.db
-        .update(trips)
-        .set({
-          status: "in_progress",
-          updatedAt: new Date(),
-        })
-        .where(eq(trips.id, input.tripId))
-        .returning();
+      // #region agent log
+      await fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "apps/api/trpc/routers/trip.ts:476",
+            message: "startTrip mutation called",
+            data: { tripId: input.tripId, currentStatus: trip.status },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run3",
+            hypothesisId: "J",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
-      return startedTrip;
+      try {
+        const [startedTrip] = await ctx.db
+          .update(trips)
+          .set({
+            status: "in_progress",
+            updatedAt: new Date(),
+          })
+          .where(eq(trips.id, input.tripId))
+          .returning();
+
+        // #region agent log
+        await fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "apps/api/trpc/routers/trip.ts:485",
+              message: "startTrip mutation completed",
+              data: {
+                tripId: input.tripId,
+                success: !!startedTrip,
+                newStatus: startedTrip?.status,
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "run3",
+              hypothesisId: "J",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+
+        if (!startedTrip) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update trip status",
+          });
+        }
+
+        return startedTrip;
+      } catch (error: any) {
+        // #region agent log
+        const errorDetails = {
+          message: error?.message,
+          code: error?.code,
+          cause: error?.cause?.message || error?.cause,
+          name: error?.name,
+          stack: error?.stack?.substring(0, 1000),
+        };
+        await fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "apps/api/trpc/routers/trip.ts:497",
+              message: "startTrip mutation failed",
+              data: { tripId: input.tripId, error: errorDetails },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "run3",
+              hypothesisId: "J",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+
+        // Re-throw the original error to preserve the full error details
+        throw error;
+      }
     }),
 
   /**
@@ -503,6 +822,12 @@ export const tripRouter = router({
 
       // Validate status transitions
       if (input.action === "pickup") {
+        if (!request.riderPickupConfirmedAt) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Rider has not confirmed pickup yet",
+          });
+        }
         if (request.status !== "accepted") {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -520,14 +845,109 @@ export const tripRouter = router({
 
       // Update request status
       const newStatus = input.action === "pickup" ? "on_trip" : "completed";
-      const [updatedRequest] = await ctx.db
-        .update(tripRequests)
-        .set({
-          status: newStatus,
-          updatedAt: new Date(),
-        })
-        .where(eq(tripRequests.id, input.requestId))
-        .returning();
+      // #region agent log
+      const LOG_ENDPOINT =
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "trip.ts:updatePassengerStatus",
+          message: "Before update - request status",
+          data: {
+            requestId: input.requestId,
+            currentStatus: request.status,
+            newStatus,
+            action: input.action,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "run1",
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion
+      let updatedRequest;
+      try {
+        // #region agent log
+        fetch(LOG_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:updatePassengerStatus",
+            message: "About to execute update query",
+            data: {
+              requestId: input.requestId,
+              newStatus,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }).catch(() => {});
+        // #endregion
+        [updatedRequest] = await ctx.db
+          .update(tripRequests)
+          .set({
+            status: newStatus,
+            updatedAt: new Date(),
+          })
+          .where(eq(tripRequests.id, input.requestId))
+          .returning({
+            id: tripRequests.id,
+            tripId: tripRequests.tripId,
+            riderId: tripRequests.riderId,
+            pickupLat: tripRequests.pickupLat,
+            pickupLng: tripRequests.pickupLng,
+            dropoffLat: tripRequests.dropoffLat,
+            dropoffLng: tripRequests.dropoffLng,
+            status: tripRequests.status,
+            createdAt: tripRequests.createdAt,
+            updatedAt: tripRequests.updatedAt,
+          });
+      } catch (error: any) {
+        // #region agent log
+        fetch(LOG_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:updatePassengerStatus",
+            message: "Update query failed",
+            data: {
+              requestId: input.requestId,
+              error: error?.message,
+              errorCause: error?.cause,
+              errorStack: error?.stack,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }).catch(() => {});
+        // #endregion
+        throw error;
+      }
+      // #region agent log
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "trip.ts:updatePassengerStatus",
+          message: "After update - updated request",
+          data: {
+            requestId: input.requestId,
+            updatedStatus: updatedRequest?.status,
+            hasUpdatedRequest: !!updatedRequest,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          runId: "run1",
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion
 
       return updatedRequest;
     }),
@@ -598,16 +1018,209 @@ export const tripRouter = router({
       }
 
       // Update trip status to completed
+      const completedAt = new Date();
+      const startedAt = trip.updatedAt; // best-available proxy for "trip started" timestamp (set in startTrip)
       const [completedTrip] = await ctx.db
         .update(trips)
         .set({
           status: "completed",
-          updatedAt: new Date(),
+          updatedAt: completedAt,
         })
         .where(eq(trips.id, input.tripId))
         .returning();
 
-      return completedTrip;
+      const completedRequests = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.status, "completed")
+          )
+        );
+
+      const passengerCount = completedRequests.length;
+      const durationMinutes =
+        startedAt instanceof Date
+          ? Math.max(
+              0,
+              Math.round((completedAt.getTime() - startedAt.getTime()) / 60000)
+            )
+          : null;
+
+      const perPassenger = await Promise.all(
+        completedRequests.map(async (r) => {
+          const [rider] = await ctx.db
+            .select({ name: users.name })
+            .from(users)
+            .where(eq(users.id, r.riderId))
+            .limit(1);
+          return {
+            riderName: rider?.name ?? "Passenger",
+            amountCents: PLACEHOLDER_FARE_CENTS_PER_PASSENGER,
+          };
+        })
+      );
+
+      const totalEarningsCents =
+        passengerCount * PLACEHOLDER_FARE_CENTS_PER_PASSENGER;
+
+      return {
+        trip: completedTrip,
+        summary: {
+          durationMinutes,
+          totalEarningsCents,
+          passengerCount,
+          perPassenger,
+          totalDistanceKm: null, // placeholder
+        },
+      };
+    }),
+
+  submitTripReview: protectedProcedure
+    .input(
+      z.object({
+        tripId: z.string(),
+        rating: z.number().int().min(1).max(5),
+        comment: z.string().max(1000).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Placeholder only (no DB tables yet)
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:submitTripReview",
+            message: "Review submitted (placeholder)",
+            data: {
+              tripId: input.tripId,
+              rating: input.rating,
+              hasComment: !!input.comment,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "P",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+      return { success: true };
+    }),
+
+  submitTripTip: protectedProcedure
+    .input(
+      z.object({
+        tripId: z.string(),
+        tipCents: z.number().int().min(0).max(100000),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Placeholder only (no DB tables yet)
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:submitTripTip",
+            message: "Tip submitted (placeholder)",
+            data: { tripId: input.tripId, tipCents: input.tipCents },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "P",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+      return { success: true };
+    }),
+
+  submitRiderReview: protectedProcedure
+    .input(
+      z.object({
+        tripId: z.string(),
+        riderId: z.string(),
+        rating: z.number().int().min(1).max(5),
+        comment: z.string().max(1000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.userId!;
+
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId));
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      if (trip.driverId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only the driver can rate riders for this trip",
+        });
+      }
+
+      if (trip.status !== "completed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Trip must be completed before rating riders",
+        });
+      }
+
+      const [request] = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.riderId, input.riderId)
+          )
+        );
+
+      if (!request) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Rider request not found for this trip",
+        });
+      }
+
+      // Placeholder: no persistence layer yet for reviews
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:submitRiderReview",
+            message: "Driver rated rider (placeholder)",
+            data: {
+              tripId: input.tripId,
+              riderId: input.riderId,
+              rating: input.rating,
+              hasComment: !!input.comment,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "P",
+          }),
+        }
+      ).catch(() => {});
+
+      return { success: true };
     }),
 
   // ============================================
@@ -716,6 +1329,25 @@ export const tripRouter = router({
       const userId = ctx.userId!;
       const conditions = [];
 
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:getTripRequests:entry",
+            message: "getTripRequests called",
+            data: { userId, input },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       if (input.tripId) {
         // Driver viewing requests for their trip
         const [trip] = await ctx.db
@@ -754,28 +1386,156 @@ export const tripRouter = router({
         conditions.push(eq(tripRequests.riderId, userId));
       }
 
-      const requests = await ctx.db
-        .select({
-          id: tripRequests.id,
-          tripId: tripRequests.tripId,
-          riderId: tripRequests.riderId,
-          status: tripRequests.status,
-          createdAt: tripRequests.createdAt,
-          updatedAt: tripRequests.updatedAt,
-          trip: trips,
-          rider: users,
-        })
-        .from(tripRequests)
-        .where(and(...conditions))
-        .leftJoin(trips, eq(tripRequests.tripId, trips.id))
-        .leftJoin(users, eq(tripRequests.riderId, users.id))
-        .orderBy(tripRequests.createdAt);
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:getTripRequests:beforeQuery",
+            message: "About to query database",
+            data: {
+              conditionsCount: conditions.length,
+              queryType: input.tripId
+                ? "tripId"
+                : input.riderId
+                  ? "riderId"
+                  : "default",
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
-      // Filter out requests for cancelled trips or trips that don't exist
-      return requests.filter((req) => {
+      let requests;
+      try {
+        requests = await ctx.db
+          .select({
+            id: tripRequests.id,
+            tripId: tripRequests.tripId,
+            riderId: tripRequests.riderId,
+            status: tripRequests.status,
+            createdAt: tripRequests.createdAt,
+            updatedAt: tripRequests.updatedAt,
+            riderPickupConfirmedAt: tripRequests.riderPickupConfirmedAt,
+            trip: trips,
+            rider: users,
+          })
+          .from(tripRequests)
+          .where(and(...conditions))
+          .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+          .leftJoin(users, eq(tripRequests.riderId, users.id))
+          .orderBy(desc(tripRequests.createdAt));
+      } catch (error: any) {
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "trip.ts:getTripRequests:queryError",
+              message: "Query failed - possible missing column",
+              data: {
+                error: error?.message,
+                errorCode: error?.code,
+                errorDetail: error?.detail,
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "debug-requests",
+              hypothesisId: "D",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+        // Fallback: try without riderPickupConfirmedAt if column doesn't exist
+        requests = await ctx.db
+          .select({
+            id: tripRequests.id,
+            tripId: tripRequests.tripId,
+            riderId: tripRequests.riderId,
+            status: tripRequests.status,
+            createdAt: tripRequests.createdAt,
+            updatedAt: tripRequests.updatedAt,
+            trip: trips,
+            rider: users,
+          })
+          .from(tripRequests)
+          .where(and(...conditions))
+          .leftJoin(trips, eq(tripRequests.tripId, trips.id))
+          .leftJoin(users, eq(tripRequests.riderId, users.id))
+          .orderBy(desc(tripRequests.createdAt));
+      }
+
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:getTripRequests:afterQuery",
+            message: "Database query completed",
+            data: {
+              requestsCount: requests.length,
+              requestStatuses: requests.map((r) => ({
+                id: r.id,
+                status: r.status,
+                riderId: r.riderId,
+              })),
+              hasTrips: requests.map((r) => !!r.trip),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
+      // Filter out requests for cancelled trips, cancelled requests, or trips that don't exist
+      const filtered = requests.filter((req) => {
         if (!req.trip) return false;
-        return req.trip.status !== "cancelled";
+        if (req.trip.status === "cancelled") return false;
+        if (req.status === "cancelled") return false; // Hide cancelled requests from rider's view
+        return true;
       });
+
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:getTripRequests:afterFilter",
+            message: "After filtering cancelled trips",
+            data: {
+              filteredCount: filtered.length,
+              filteredStatuses: filtered.map((r) => ({
+                id: r.id,
+                status: r.status,
+                riderId: r.riderId,
+                tripStatus: r.trip?.status,
+              })),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "D",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
+      return filtered;
     }),
 
   acceptTripRequest: protectedProcedure
@@ -826,6 +1586,29 @@ export const tripRouter = router({
         });
       }
 
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:acceptTripRequest:beforeUpdate",
+            message: "About to update request status",
+            data: {
+              requestId: input.requestId,
+              riderId: request.request.riderId,
+              currentStatus: request.request.status,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "A",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       // Update request status
       const [acceptedRequest] = await ctx.db
         .update(tripRequests)
@@ -835,6 +1618,30 @@ export const tripRouter = router({
         })
         .where(eq(tripRequests.id, input.requestId))
         .returning();
+
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:acceptTripRequest:afterUpdate",
+            message: "Request status updated",
+            data: {
+              requestId: input.requestId,
+              riderId: acceptedRequest?.riderId,
+              newStatus: acceptedRequest?.status,
+              hasAcceptedRequest: !!acceptedRequest,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "A",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
       // Increment booked seats and update trip status to "active" if this is the first accepted rider
       const newBookedSeats = request.trip.bookedSeats + 1;
@@ -848,6 +1655,29 @@ export const tripRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(trips.id, request.trip.id));
+
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trip.ts:acceptTripRequest:afterTripUpdate",
+            message: "Trip updated, mutation complete",
+            data: {
+              requestId: input.requestId,
+              riderId: acceptedRequest?.riderId,
+              acceptedRequestStatus: acceptedRequest?.status,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "A",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
 
       // #region agent log
       const LOG_ENDPOINT =
@@ -993,6 +1823,54 @@ export const tripRouter = router({
       }
 
       return cancelledRequest;
+    }),
+
+  confirmRiderPickup: protectedProcedure
+    .input(z.object({ requestId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const riderId = ctx.userId!;
+
+      // Get request
+      const [request] = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(eq(tripRequests.id, input.requestId))
+        .limit(1);
+
+      if (!request) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip request not found",
+        });
+      }
+
+      // Validate rider owns the request
+      if (request.riderId !== riderId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only confirm pickup for your own requests",
+        });
+      }
+
+      // Validate request status
+      if (request.status !== "accepted") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Request must be accepted before confirming pickup",
+        });
+      }
+
+      // Update request with pickup confirmation timestamp
+      const [updatedRequest] = await ctx.db
+        .update(tripRequests)
+        .set({
+          riderPickupConfirmedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(tripRequests.id, input.requestId))
+        .returning();
+
+      return updatedRequest;
     }),
 
   getAvailableTrips: protectedProcedure

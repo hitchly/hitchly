@@ -1,5 +1,9 @@
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -8,16 +12,31 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NumericStepper } from "../../../components/ui/numeric-stepper";
 import { trpc } from "../../../lib/trpc";
 
 export default function TripsScreen() {
   const router = useRouter();
+  const utils = trpc.useUtils();
   const {
     data: trips,
     isLoading,
     refetch,
     isRefetching,
   } = trpc.trip.getTrips.useQuery();
+  const [showTestTripModal, setShowTestTripModal] = useState(false);
+  const [passengerCount, setPassengerCount] = useState(1);
+
+  const createTorontoTestTrip = trpc.admin.createTorontoTestTrip.useMutation({
+    onSuccess: () => {
+      utils.trip.getTrips.invalidate();
+      setShowTestTripModal(false);
+      Alert.alert("Success", "Test trip created successfully!");
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
 
   // Filter out cancelled trips
   const activeTrips =
@@ -46,6 +65,8 @@ export default function TripsScreen() {
         return "#FFA500";
       case "active":
         return "#007AFF";
+      case "in_progress":
+        return "#34C759";
       case "completed":
         return "#34C759";
       case "cancelled":
@@ -53,6 +74,13 @@ export default function TripsScreen() {
       default:
         return "#666";
     }
+  };
+
+  const formatStatus = (status: string) => {
+    if (status === "in_progress") {
+      return "IN PROGRESS";
+    }
+    return status.toUpperCase();
   };
 
   if (isLoading) {
@@ -63,17 +91,112 @@ export default function TripsScreen() {
     );
   }
 
+  const handleAddTestTrip = () => {
+    // #region agent log
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "trips/index.tsx:handleAddTestTrip",
+        message: "Creating test trip",
+        data: { passengerCount },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "M",
+      }),
+    }).catch(() => {});
+    // #endregion
+    createTorontoTestTrip.mutate({ passengerCount });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>My Trips</Text>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => router.push("/trips/create" as any)}
-        >
-          <Text style={styles.createButtonText}>+ Create Trip</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={() => setShowTestTripModal(true)}
+          >
+            <Text style={styles.testButtonText}>Add Test Trip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => router.push("/trips/create" as any)}
+          >
+            <Text style={styles.createButtonText}>+ Create Trip</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <Modal
+        visible={showTestTripModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTestTripModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Test Trip</Text>
+            <Text style={styles.modalSubtitle}>
+              McMaster University → Toronto Union Station
+            </Text>
+
+            <View style={styles.passengerSelector}>
+              <Text style={styles.passengerLabel}>
+                Number of Passengers: {passengerCount}
+              </Text>
+              <NumericStepper
+                value={passengerCount}
+                onValueChange={(value) => {
+                  // #region agent log
+                  fetch(
+                    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        location: "trips/index.tsx:passengerCountChange",
+                        message: "Passenger count changed",
+                        data: { oldValue: passengerCount, newValue: value },
+                        timestamp: Date.now(),
+                        sessionId: "debug-session",
+                        runId: "run1",
+                        hypothesisId: "M",
+                      }),
+                    }
+                  ).catch(() => {});
+                  // #endregion
+                  setPassengerCount(value);
+                }}
+                min={1}
+                max={4}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowTestTripModal(false)}
+              >
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleAddTestTrip}
+                disabled={createTorontoTestTrip.isPending}
+              >
+                {createTorontoTestTrip.isPending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonConfirmText}>Create</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         style={styles.list}
@@ -111,7 +234,7 @@ export default function TripsScreen() {
                   ]}
                 >
                   <Text style={styles.statusText}>
-                    {trip.status.toUpperCase()}
+                    {formatStatus(trip.status)}
                   </Text>
                 </View>
               </View>
@@ -153,6 +276,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
+  headerButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  testButton: {
+    backgroundColor: "#34C759",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   createButton: {
     backgroundColor: "#007AFF",
     paddingHorizontal: 16,
@@ -162,6 +300,67 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: "#fff",
     fontSize: 14,
+    fontWeight: "600",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 24,
+    width: "85%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 24,
+  },
+  passengerSelector: {
+    marginBottom: 24,
+  },
+  passengerLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "flex-end",
+  },
+  modalButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
+    alignItems: "center",
+  },
+  modalButtonCancel: {
+    backgroundColor: "#f0f0f0",
+  },
+  modalButtonCancelText: {
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalButtonConfirm: {
+    backgroundColor: "#007AFF",
+  },
+  modalButtonConfirmText: {
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "600",
   },
   list: {

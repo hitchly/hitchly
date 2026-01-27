@@ -174,7 +174,7 @@ async function seedTestTrips() {
         departureTime: departureTime,
         maxSeats: tripTemplate.maxSeats[i],
         bookedSeats: 0,
-        status: "scheduled",
+        status: "pending",
       });
 
       tripCount++;

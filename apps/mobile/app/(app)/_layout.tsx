@@ -1,7 +1,7 @@
 import { RequireLocation } from "@/components/location/require-location";
 import { LocationProvider } from "@/context/location-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs, useRouter, useSegments } from "expo-router";
+import { Tabs, usePathname, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { authClient } from "../../lib/auth-client";
@@ -12,6 +12,7 @@ const AppRoutes = () => {
   const { data: session } = authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const segments = useSegments();
+  const pathname = usePathname();
 
   const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
     enabled: !!session?.user?.id,
@@ -29,13 +30,93 @@ const AppRoutes = () => {
   const isDriver = appRole === "driver";
   const isRider = appRole === "rider";
 
-  // Determine which screen to show for discover tab
+  // Determine which screen to show on initial entry
   const discoverScreenName = isDriver ? "requests" : "matchmaking";
 
-  // Hide tab bar when on drive screen
+  // Hide tab bar only when on drive screen or ride screen (not trip detail screen)
   const isOnDriveScreen = segments.some(
     (segment) => (segment as string) === "drive"
   );
+  const isOnRideScreen = segments.some(
+    (segment) => (segment as string) === "ride"
+  );
+
+  // Role-based landing: when switching roles, ensure we don't land on a screen that is hidden/incorrect for that role.
+  useEffect(() => {
+    if (!userProfile?.profile?.appRole) return;
+    if (isDriver && pathname === "/matchmaking") {
+      router.replace("/requests");
+      return;
+    }
+    if (isRider && pathname === "/trips") {
+      router.replace("/requests");
+      return;
+    }
+    if (isRider && pathname === "/requests") {
+      // ok for riders (My Requests)
+      return;
+    }
+  }, [isDriver, isRider, pathname, router, userProfile?.profile?.appRole]);
+
+  // #region agent log
+  useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/_layout.tsx:navState",
+        message: "Tabs nav state",
+        data: {
+          appRole,
+          isDriver,
+          isRider,
+          discoverScreenName,
+          isOnDriveScreen,
+          pathname,
+          segments: segments.map(String),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "nav-debug",
+        hypothesisId: "H2",
+      }),
+    }).catch(() => {});
+  }, [
+    appRole,
+    isDriver,
+    isRider,
+    discoverScreenName,
+    isOnDriveScreen,
+    pathname,
+    segments,
+  ]);
+  // #endregion
+
+  // #region agent log
+  useEffect(() => {
+    const isReviewRoute = segments.includes("review" as any);
+    const isTripDetailRoute =
+      segments.includes("[id]" as any) || pathname.includes("/trips/");
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/_layout.tsx:routeClassify",
+        message: "Route classification",
+        data: {
+          pathname,
+          isReviewRoute,
+          isTripDetailRoute,
+          segments: segments.map(String),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "nav-debug",
+        hypothesisId: "H1",
+      }),
+    }).catch(() => {});
+  }, [pathname, segments]);
+  // #endregion
 
   if (banCheck.isLoading) {
     return (
@@ -55,7 +136,7 @@ const AppRoutes = () => {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: "#eeeeee",
-          display: isOnDriveScreen ? "none" : "flex",
+          display: isOnDriveScreen || isOnRideScreen ? "none" : "flex",
         },
       }}
     >
@@ -77,8 +158,8 @@ const AppRoutes = () => {
       <Tabs.Screen
         name="requests"
         options={{
-          title: isDriver ? "Passengers" : undefined,
-          href: isDriver ? undefined : null,
+          title: isDriver ? "Passengers" : "My Requests",
+          href: undefined,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               size={28}
@@ -150,6 +231,18 @@ const AppRoutes = () => {
       />
       <Tabs.Screen
         name="trips/[id]/drive"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/[id]/ride"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips/[id]/review"
         options={{
           href: null,
         }}

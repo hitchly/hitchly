@@ -19,6 +19,10 @@ import { trpc } from "../../../lib/trpc";
 export default function CreateTripScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
+  const { data: userProfile } = trpc.profile.getMe.useQuery();
+  const isUserDriver = ["driver", "both"].includes(
+    userProfile?.profile?.appRole || ""
+  );
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [departureDateTime, setDepartureDateTime] = useState(
@@ -82,13 +86,37 @@ export default function CreateTripScreen() {
     });
   };
 
+  // Handle back navigation - drivers should go to trips list
+  const handleBack = () => {
+    // #region agent log
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/trips/create.tsx:85",
+        message: "Back button pressed from create trip",
+        data: {
+          isUserDriver,
+          willNavigateTo: isUserDriver ? "/trips" : "back",
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "O",
+      }),
+    }).catch(() => {});
+    // #endregion
+    if (isUserDriver) {
+      router.push("/trips" as any);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Trip</Text>

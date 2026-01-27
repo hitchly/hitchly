@@ -19,22 +19,65 @@ export default function TripDetailScreen() {
   const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
+  const { data: userProfile } = trpc.profile.getMe.useQuery();
+  const isUserDriver = ["driver", "both"].includes(
+    userProfile?.profile?.appRole || ""
+  );
 
   const {
     data: trip,
     isLoading,
+    error,
     refetch,
   } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
 
+  // Check if current user already has a request (computed early for logging)
+  // Prioritize active requests (pending/accepted) over cancelled/rejected ones
+  const userRequest =
+    trip?.requests?.find(
+      (req) =>
+        req.riderId === currentUserId &&
+        (req.status === "pending" || req.status === "accepted")
+    ) || trip?.requests?.find((req) => req.riderId === currentUserId);
+  const isDriver = currentUserId && trip?.driverId === currentUserId;
+  const hasPendingRequest =
+    userRequest?.status === "pending" || userRequest?.status === "accepted";
+  const canJoin =
+    !isDriver &&
+    trip?.status !== "cancelled" &&
+    (trip?.status === "pending" || trip?.status === "active") &&
+    trip &&
+    trip.maxSeats - trip.bookedSeats > 0 &&
+    !hasPendingRequest;
+
   const cancelTrip = trpc.trip.cancelTrip.useMutation({
-    onSuccess: () => {
-      // Invalidate trips query to refresh the list
+    onSuccess: async (data) => {
       utils.trip.getTrips.invalidate();
       utils.trip.getTripRequests.invalidate();
+      await utils.trip.getTripById.invalidate({ tripId: id! });
+      await refetch();
       Alert.alert("Success", "Trip cancelled successfully", [
         {
           text: "OK",
           onPress: () => router.push("/trips" as any),
+        },
+      ]);
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
+  const cancelTripRequest = trpc.trip.cancelTripRequest.useMutation({
+    onSuccess: async () => {
+      await utils.trip.getTripById.invalidate({ tripId: id! });
+      utils.trip.getTripRequests.invalidate();
+      utils.trip.getTrips.invalidate();
+      // Refetch trip data to ensure UI updates
+      await refetch();
+      Alert.alert("Success", "Request cancelled successfully", [
+        {
+          text: "OK",
         },
       ]);
     },
@@ -51,6 +94,17 @@ export default function TripDetailScreen() {
           onPress: () => refetch(),
         },
       ]);
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
+  const simulateDriverComplete = trpc.admin.simulateDriverComplete.useMutation({
+    onSuccess: () => {
+      utils.trip.getTripById.invalidate();
+      utils.trip.getTripRequests.invalidate();
+      Alert.alert("Simulation complete", "Driver flow simulated for this trip");
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
@@ -86,6 +140,21 @@ export default function TripDetailScreen() {
     });
   };
 
+  const formatOrdinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  const formatCityProvince = (address?: string | null) => {
+    if (!address) return "";
+    const parts = address.split(",").map((p) => p.trim());
+    if (parts.length < 2) return address;
+    const province = parts[parts.length - 1];
+    const city = parts[parts.length - 2];
+    return `${city}, ${province}`;
+  };
+
   const canStartRide = (
     departureTime: Date | string
   ): { canStart: boolean; availableAt?: Date } => {
@@ -118,12 +187,21 @@ export default function TripDetailScreen() {
     ]);
   };
 
+  // Handle back navigation helper
+  const handleBackNavigation = () => {
+    if (isUserDriver) {
+      router.push("/trips" as any);
+    } else {
+      router.back();
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={handleBackNavigation}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -144,7 +222,7 @@ export default function TripDetailScreen() {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={handleBackNavigation}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -154,7 +232,10 @@ export default function TripDetailScreen() {
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Trip not found</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleBackNavigation}
+          >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -179,22 +260,15 @@ export default function TripDetailScreen() {
     }
   };
 
-  const isDriver = currentUserId && trip?.driverId === currentUserId;
+  const formatStatus = (status: string) => {
+    if (status === "in_progress") {
+      return "IN PROGRESS";
+    }
+    return status.toUpperCase();
+  };
+
   const canCancel =
     isDriver && (trip?.status === "pending" || trip?.status === "active");
-
-  // Check if current user already has a request
-  const userRequest = trip?.requests?.find(
-    (req) => req.riderId === currentUserId
-  );
-  const hasPendingRequest =
-    userRequest?.status === "pending" || userRequest?.status === "accepted";
-  const canJoin =
-    !isDriver &&
-    (trip?.status === "pending" || trip?.status === "active") &&
-    trip &&
-    trip.maxSeats - trip.bookedSeats > 0 &&
-    !hasPendingRequest;
 
   // Compute start ride availability for drivers with active trips
   const startRideInfo =
@@ -202,13 +276,61 @@ export default function TripDetailScreen() {
       ? canStartRide(trip.departureTime)
       : null;
 
+  const riderEtaDetails = (() => {
+    if (
+      isDriver ||
+      !trip ||
+      (trip.status !== "active" && trip.status !== "in_progress")
+    ) {
+      return null;
+    }
+    if (!userRequest) return null;
+    if (userRequest.status === "accepted") {
+      return {
+        title: "Driver en route",
+        message: "Driver arriving in 5 minutes (placeholder)",
+        sub: trip.origin
+          ? `Pickup: ${formatCityProvince(trip.origin)}`
+          : undefined,
+      };
+    }
+    if (userRequest.status === "on_trip") {
+      const onTripRequests =
+        trip.requests?.filter((r) => r.status === "on_trip") || [];
+      const idx = onTripRequests.findIndex((r) => r.id === userRequest.id);
+      if (idx >= 0 && onTripRequests.length > 1) {
+        return {
+          title: "On the way",
+          message: `Dropping passengers off, you're ${formatOrdinal(
+            idx + 1
+          )} to be dropped off`,
+          sub: "ETA placeholders to be replaced with live data",
+        };
+      }
+      return {
+        title: "On the way",
+        message: "Arriving at destination in 10 minutes (placeholder)",
+        sub: trip.destination
+          ? formatCityProvince(trip.destination)
+          : undefined,
+      };
+    }
+    return null;
+  })();
+
+  // Handle back navigation - drivers should go to trips list, riders can go back
+  const handleBack = () => {
+    if (isDriver) {
+      router.push("/trips" as any);
+    } else {
+      router.push("/requests" as any);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Trip Details</Text>
@@ -224,7 +346,7 @@ export default function TripDetailScreen() {
                 { backgroundColor: getStatusColor(trip.status) },
               ]}
             >
-              <Text style={styles.statusText}>{trip.status.toUpperCase()}</Text>
+              <Text style={styles.statusText}>{formatStatus(trip.status)}</Text>
             </View>
           </View>
 
@@ -237,15 +359,89 @@ export default function TripDetailScreen() {
             <View style={styles.routeContainer}>
               <View style={styles.routePoint}>
                 <View style={styles.routeDot} />
-                <Text style={styles.routeText}>{trip.origin}</Text>
+                <Text style={styles.routeText}>
+                  {formatCityProvince(trip.origin)}
+                </Text>
               </View>
               <View style={styles.routeLine} />
               <View style={styles.routePoint}>
                 <View style={[styles.routeDot, styles.routeDotDestination]} />
-                <Text style={styles.routeText}>{trip.destination}</Text>
+                <Text style={styles.routeText}>
+                  {formatCityProvince(trip.destination)}
+                </Text>
               </View>
             </View>
           </View>
+
+          {/* Rider ETA Section */}
+          {!isDriver && riderEtaDetails && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>ETA</Text>
+              <Text style={styles.sectionHighlight}>
+                {riderEtaDetails.title}
+              </Text>
+              <Text style={styles.sectionText}>{riderEtaDetails.message}</Text>
+              {riderEtaDetails.sub && (
+                <Text style={styles.sectionSubtext}>{riderEtaDetails.sub}</Text>
+              )}
+            </View>
+          )}
+
+          {/* Open Trip Screen Button for Riders (moved up for visibility) */}
+          {!isDriver &&
+            (userRequest?.status === "accepted" ||
+              userRequest?.status === "on_trip") && (
+              <View style={styles.actionsSection}>
+                <TouchableOpacity
+                  style={[styles.button, styles.startButton]}
+                  onPress={() => {
+                    if (id) {
+                      router.push({
+                        pathname: `/trips/${id}/ride` as any,
+                        params: { referrer: `/trips/${id}` },
+                      });
+                    }
+                  }}
+                >
+                  <Text style={styles.buttonText}>Open Trip Screen</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+          {/* Rider Safety Placeholders */}
+          {!isDriver &&
+            riderEtaDetails &&
+            (trip.status === "active" || trip.status === "in_progress") && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Safety</Text>
+                <View style={styles.safetyButtons}>
+                  <TouchableOpacity
+                    style={[styles.safetyButton, styles.safetyButtonOutline]}
+                    onPress={() =>
+                      Alert.alert(
+                        "Safety",
+                        "Emergency Contact - to be implemented by team"
+                      )
+                    }
+                  >
+                    <Text style={styles.safetyButtonText}>
+                      Emergency Contact
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.safetyButton, styles.safetyButtonOutline]}
+                    onPress={() =>
+                      Alert.alert(
+                        "Safety",
+                        "Report Issue - to be implemented by team"
+                      )
+                    }
+                  >
+                    <Text style={styles.safetyButtonText}>Report Issue</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
           {/* Start Ride Button for Drivers */}
           {startRideInfo && (
@@ -289,6 +485,76 @@ export default function TripDetailScreen() {
             </View>
           )}
 
+          {/* Trip In Progress Button for Drivers */}
+          {isDriver && trip.status === "in_progress" && (
+            <View style={styles.actionsSection}>
+              <TouchableOpacity
+                style={[styles.button, styles.startButton]}
+                onPress={() => {
+                  if (id) {
+                    router.push(`/trips/${id}/drive` as any);
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Trip In Progress</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Test Driver Complete (simulation) */}
+          {isDriver &&
+            (trip.status === "active" || trip.status === "in_progress") && (
+              <View style={styles.actionsSection}>
+                <TouchableOpacity
+                  style={[styles.button, styles.startButton]}
+                  onPress={() => {
+                    if (id) {
+                      simulateDriverComplete.mutate({ tripId: id });
+                    }
+                  }}
+                  disabled={simulateDriverComplete.isPending}
+                >
+                  {simulateDriverComplete.isPending ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Test Driver Complete</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+          {/* Rider Review/Tip Button */}
+          {!isDriver && trip.status === "completed" && (
+            <View style={styles.actionsSection}>
+              <TouchableOpacity
+                style={[styles.button, styles.startButton]}
+                onPress={() => {
+                  if (id) {
+                    router.push(`/trips/${id}/review` as any);
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Leave Review & Tip</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Driver Rate Riders Button */}
+          {isDriver && trip.status === "completed" && (
+            <View style={styles.actionsSection}>
+              <TouchableOpacity
+                style={[styles.button, styles.startButton]}
+                onPress={() => {
+                  if (id) {
+                    router.push(`/trips/${id}/review` as any);
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Rate Riders</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Trip Details */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Trip Details</Text>
@@ -313,22 +579,6 @@ export default function TripDetailScreen() {
             </View>
           </View>
 
-          {/* Trip Requests */}
-          {trip.requests && trip.requests.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                Requests ({trip.requests.length})
-              </Text>
-              {trip.requests.map((request) => (
-                <View key={request.id} style={styles.requestCard}>
-                  <Text style={styles.requestStatus}>
-                    Status: {request.status.toUpperCase()}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
           {/* Actions */}
           {isDriver && canCancel && (
             <View style={styles.actionsSection}>
@@ -346,37 +596,21 @@ export default function TripDetailScreen() {
             </View>
           )}
 
-          {/* Join Trip Button for Riders */}
-          {!isDriver && canJoin && (
-            <View style={styles.actionsSection}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => {
-                  if (id && trip) {
-                    // Use trip origin coordinates as pickup location
-                    // In a real app, you'd get the user's current location
-                    if (trip.originLat !== null && trip.originLng !== null) {
-                      createTripRequest.mutate({
-                        tripId: id,
-                        pickupLat: trip.originLat,
-                        pickupLng: trip.originLng,
-                      });
-                    } else {
-                      Alert.alert(
-                        "Error",
-                        "Trip location information is not available. Please try again later."
-                      );
-                    }
-                  }
-                }}
-                disabled={createTripRequest.isPending}
-              >
-                {createTripRequest.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Join Trip</Text>
-                )}
-              </TouchableOpacity>
+          {/* Join Trip Button removed from trip details - riders should join from Discover tab only */}
+
+          {/* Trip Requests */}
+          {trip.requests && trip.requests.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                Requests ({trip.requests.length})
+              </Text>
+              {trip.requests.map((request) => (
+                <View key={request.id} style={styles.requestCard}>
+                  <Text style={styles.requestStatus}>
+                    Status: {request.status.toUpperCase()}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -392,6 +626,39 @@ export default function TripDetailScreen() {
                       : "Request Status"}
                 </Text>
               </View>
+              {(userRequest?.status === "pending" ||
+                userRequest?.status === "accepted") && (
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton, { marginTop: 8 }]}
+                  onPress={() => {
+                    Alert.alert(
+                      "Cancel Request",
+                      "Are you sure you want to cancel your request for this trip?",
+                      [
+                        { text: "No", style: "cancel" },
+                        {
+                          text: "Yes",
+                          style: "destructive",
+                          onPress: () => {
+                            if (userRequest?.id) {
+                              cancelTripRequest.mutate({
+                                requestId: userRequest.id,
+                              });
+                            }
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  disabled={cancelTripRequest.isPending}
+                >
+                  {cancelTripRequest.isPending ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Cancel Request</Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -515,6 +782,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     flex: 1,
+  },
+  sectionHighlight: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  sectionText: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 4,
+  },
+  sectionSubtext: {
+    fontSize: 13,
+    color: "#666",
+  },
+  safetyButtons: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+    flexWrap: "wrap",
+  },
+  safetyButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  safetyButtonOutline: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#ccc",
+  },
+  safetyButtonText: {
+    fontWeight: "600",
+    color: "#333",
   },
   detailRow: {
     flexDirection: "row",

@@ -300,6 +300,9 @@ export const tripRequests = pgTable("trip_requests", {
   dropoffLat: doublePrecision("dropoff_lat"),
   dropoffLng: doublePrecision("dropoff_lng"),
 
+  // Rider pickup confirmation (server-enforced)
+  riderPickupConfirmedAt: timestamp("rider_pickup_confirmed_at"),
+
   status: tripRequestStatusEnum("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -318,3 +321,9 @@ export const routes = pgTable("routes", {
   geometry: text("geometry"), // JSON string for route geometry
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 });
+
+// --- PAYMENT MODULE PLACEHOLDERS (future tables) ---
+// payments: store payment intents/authorizations/captures (funds on hold → capture at dropoff)
+// tips: store post-trip tips (available 1 hour after trip completion)
+// reviews: store rider reviews (rating + comment)
+// earnings: store driver earnings rollups (or compute from completed trips + payments)
