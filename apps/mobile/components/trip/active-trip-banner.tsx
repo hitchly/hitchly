@@ -57,7 +57,6 @@ export const ActiveTripBanner = ({
       message: "Banner style values",
       data: {
         backgroundColor: styles.banner.backgroundColor,
-        paddingVertical: styles.banner.paddingVertical,
         paddingTop: styles.banner.paddingTop,
         paddingBottom: styles.banner.paddingBottom,
         topInset,

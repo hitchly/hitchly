@@ -100,34 +100,6 @@ export default function RequestsScreen() {
     }
   }, [riderRequests, isLoadingRiderRequests, isRefetchingRiderRequests]);
 
-  React.useEffect(() => {
-    if (!isDriverView && filteredRequests.length > 0) {
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:riderRequestsRendered",
-            message: "Rendering rider requests list",
-            data: {
-              requestsCount: filteredRequests.length,
-              requestStatuses: filteredRequests.map((r) => ({
-                id: r.id,
-                status: r.status,
-              })),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "post-fix",
-            hypothesisId: "FIX",
-          }),
-        }
-      ).catch(() => {});
-    }
-  }, [filteredRequests, isDriverView]);
-  // #endregion
-
   const isLoading =
     isLoadingProfile ||
     isLoadingTrips ||
@@ -385,9 +357,9 @@ export default function RequestsScreen() {
             message: "Create test request succeeded",
             data: {
               responseData: data,
-              hasRequest: !!data?.request,
-              requestId: data?.request?.id,
-              requestStatus: data?.request?.status,
+              hasRequest: !!data,
+              requestId: data?.id,
+              requestStatus: data?.status,
             },
             timestamp: Date.now(),
             sessionId: "debug-session",
@@ -415,7 +387,6 @@ export default function RequestsScreen() {
               errorMessage: error.message,
               errorCode: error.data?.code,
               errorShape: error.shape,
-              stack: error.stack,
             },
             timestamp: Date.now(),
             sessionId: "debug-session",

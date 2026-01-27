@@ -94,9 +94,9 @@ const AppRoutes = () => {
 
   // #region agent log
   useEffect(() => {
-    const isReviewRoute = segments.includes("review" as any);
+    const isReviewRoute = segments.some((s) => s === "review");
     const isTripDetailRoute =
-      segments.includes("[id]" as any) || pathname.includes("/trips/");
+      segments.some((s) => s === "[id]") || pathname.includes("/trips/");
     fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
