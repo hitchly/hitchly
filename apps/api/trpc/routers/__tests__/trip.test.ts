@@ -28,12 +28,16 @@ describe("Trip Router", () => {
   let mockDb: any;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     mockDb = createMockDb();
-    // Clear call history but keep implementation - re-setup mocks after clearAllMocks
+    // Clear call history but keep implementation
     mockGeocodeAddress.mockClear();
     mockCalculateTripDistance.mockClear();
-    // Always re-setup mocks after clearAllMocks (it may clear implementations)
+    // Setup default mocks - ensure they're always configured
+    mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
+    mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
+    // Clear other mocks
+    vi.clearAllMocks();
+    // Re-setup mocks after clearAllMocks (it clears implementations)
     mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
     mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
   });
