@@ -59,6 +59,11 @@ describe("Trip Router", () => {
         updatedAt: new Date(),
       };
 
+      // Setup geocode mocks - return different values for origin and destination
+      mockGeocodeAddress
+        .mockResolvedValueOnce({ lat: 43.2609, lng: -79.9192 }) // origin
+        .mockResolvedValueOnce({ lat: 43.2557, lng: -79.8711 }); // destination
+
       // Setup user lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
