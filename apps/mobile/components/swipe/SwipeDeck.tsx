@@ -754,8 +754,20 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     // here to avoid recreating the gesture on every swipe. Instead, we use
     // currentCardIndex shared value which is updated synchronously in handleSwipeComplete
     // Shared values (translateX, translateY, rotation, etc.) are stable references
-    // and don't need to be in the dependency array
-  }, [handleSwipeComplete, onCardTap, data]);
+    // Included in deps to satisfy linter, but won't cause re-renders since they're stable
+  }, [
+    handleSwipeComplete,
+    onCardTap,
+    data,
+    currentCardIndex,
+    currentIndex,
+    translateX,
+    translateY,
+    rotation,
+    opacity,
+    scale,
+    swipeCallbackCalled,
+  ]);
   // #endregion
 
   const animatedStyle = useAnimatedStyle(() => {

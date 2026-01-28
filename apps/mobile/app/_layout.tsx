@@ -141,7 +141,14 @@ function AppContent() {
         }
       );
     });
-  }, [session, userProfile, trips]);
+  }, [
+    session,
+    userProfile,
+    trips,
+    deleteDummyPassengers,
+    utils.trip.getTrips,
+    utils.trip.getTripRequests,
+  ]);
 
   // #region agent log
   useEffect(() => {
