@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TIME_WINDOW_MIN, trips } from "@hitchly/db/schema";
+import { TIME_WINDOW_MIN } from "@hitchly/db/schema";
+// import { trips } from "@hitchly/db/schema"; // Used in commented out test
 import { createMockDb } from "../../../tests/utils/mockDb";
 import { createMockContext } from "../../../tests/utils/mockContext";
 import {
