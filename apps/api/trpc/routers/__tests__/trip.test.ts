@@ -8,10 +8,13 @@ import {
   createMockTripRequest,
 } from "../../../tests/utils/fixtures";
 
-// Mock geocodeAddress
+// Mock geocodeAddress - must be before importing the router
+const mockGeocodeAddress = vi.fn();
+const mockCalculateTripDistance = vi.fn();
+
 vi.mock("../../services/googlemaps", () => ({
-  geocodeAddress: vi.fn().mockResolvedValue({ lat: 43.2609, lng: -79.9192 }),
-  calculateTripDistance: vi.fn().mockResolvedValue({ distanceKm: 15.5 }),
+  geocodeAddress: mockGeocodeAddress,
+  calculateTripDistance: mockCalculateTripDistance,
 }));
 
 // Mock notification service
@@ -25,6 +28,9 @@ describe("Trip Router", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb = createMockDb();
+    // Setup default mocks
+    mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
+    mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
   });
 
   describe("createTrip", () => {

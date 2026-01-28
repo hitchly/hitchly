@@ -31,7 +31,6 @@ vi.mock("@hitchly/db/schema", () => ({
 import {
   geocodeAddress,
   getRouteDetails,
-  calculateTripDistance,
   getDetourAndRideDetails,
 } from "../googlemaps";
 import { Client } from "@googlemaps/google-maps-services-js";
