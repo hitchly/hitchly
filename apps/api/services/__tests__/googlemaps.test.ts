@@ -1,12 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-// Create mock client before mocking
+// Mock Google Maps client - must be before importing the service
 const mockClient = {
   directions: vi.fn(),
   geocode: vi.fn(),
 };
 
-// Mock Google Maps client - must be before importing the service
 vi.mock("@googlemaps/google-maps-services-js", () => ({
   Client: vi.fn().mockImplementation(() => mockClient),
 }));

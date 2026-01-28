@@ -85,6 +85,13 @@ describe("Matchmaking Service", () => {
         }),
       });
 
+      // Mock active requests query (third db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]), // No active requests
+        }),
+      });
+
       const matches = await findMatchesForUser(baseRequest);
       expect(matches).toEqual([]);
     });
@@ -414,33 +421,37 @@ describe("Matchmaking Service", () => {
         }),
       });
 
-      (db.select as any)
-        .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+      // Mock trips query (second db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
-                innerJoin: vi.fn().mockReturnValue({
-                  leftJoin: vi.fn().mockReturnValue({
-                    where: vi.fn().mockResolvedValue([
-                      {
-                        trip: mockTrip,
-                        user: mockUser,
-                        profile: mockProfile,
-                        vehicle: mockVehicle,
-                        prefs: null,
-                      },
-                    ]),
-                  }),
+                leftJoin: vi.fn().mockReturnValue({
+                  where: vi.fn().mockResolvedValue([
+                    {
+                      trip: mockTrip,
+                      user: mockUser,
+                      profile: mockProfile,
+                      vehicle: mockVehicle,
+                      prefs: null,
+                    },
+                  ]),
                 }),
               }),
             }),
           }),
-        })
+        }),
+      });
+
+      // Mock active requests query (third db.select call)
+      (db.select as any)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([]),
+            where: vi.fn().mockResolvedValue([]), // No active requests
           }),
         })
+        // Mock accepted passengers query (fourth db.select call)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([
