@@ -1,11 +1,7 @@
 import { z } from "zod";
-import { trips, tripRequests, users } from "@hitchly/db/schema";
+import { trips, tripRequests } from "@hitchly/db/schema";
 import { eq } from "@hitchly/db/client";
 import { TRPCError } from "@trpc/server";
-import {
-  sendTripNotification,
-  formatNotificationDate,
-} from "../../services/notification_service";
 import { protectedProcedure, router } from "../trpc";
 
 const locationSchema = z.object({

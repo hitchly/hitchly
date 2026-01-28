@@ -74,7 +74,7 @@ export const AddressAutocomplete = ({
 }: AddressAutocompleteProps) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const blurTimeoutRef = useRef<number | null>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   const handleChangeText = (text: string) => {

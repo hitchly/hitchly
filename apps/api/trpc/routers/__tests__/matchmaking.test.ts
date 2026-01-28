@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { matchmakingRouter } from "../matchmaking";
 import { createMockContext } from "../../../tests/utils/mockContext";
-import { createMockTrip } from "../../../tests/utils/fixtures";
 
 // Mock matchmaking service
 vi.mock("../../services/matchmaking_service", () => ({
