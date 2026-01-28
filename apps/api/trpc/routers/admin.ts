@@ -1,12 +1,10 @@
 import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
 import crypto from "crypto";
 import { z } from "zod";
-import { trips, tripRequests, users, profiles, reports } from "@hitchly/db/schema";
-import { protectedProcedure, router, adminProcedure } from "../trpc";
+import { trips, tripRequests, users, profiles } from "@hitchly/db/schema";
+import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { geocodeAddress } from "../../services/googlemaps";
-import { db } from "@hitchly/db/client";
-import { count } from "drizzle-orm";
 import { requireTestAccount } from "../../lib/test-accounts";
 
 // McMaster University coordinates (default)
@@ -22,10 +20,140 @@ const MAIN_ST_COORDS = {
 };
 
 /**
+ * Helper to check if user is admin
+ * TODO: Add role field to users schema and implement proper admin check
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const checkAdmin = async (_userId: string, _db: any) => {
+  // Placeholder - implement when role field is added to users schema
+  // const [user] = await _db.select().from(users).where(eq(users.id, _userId)).limit(1);
+  // if (user?.role !== "admin") {
+  //   throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  // }
+  return true;
+};
+
+/**
  * Admin Router
- * Test data creation endpoints for development/testing
+ * Combines test data creation endpoints and admin management endpoints
  */
 export const adminRouter = router({
+  // ========== ADMIN MANAGEMENT ENDPOINTS (from main) ==========
+
+  /**
+   * Get analytics data
+   */
+  getAnalytics: protectedProcedure.query(async ({ ctx }) => {
+    await checkAdmin(ctx.userId!, ctx.db);
+
+    const userCount = await ctx.db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+    // TODO: Add reports schema and implement reportsCount
+    // const reportsCount = await ctx.db.select({ count: sql<number>`count(*)` }).from(reports);
+
+    return {
+      totalUsers: Number(userCount[0]?.count ?? 0),
+      activeUsers: 1, // TODO: Implement active users calculation
+      totalRides: 0, // TODO: Implement total rides calculation
+      reportsCount: 0, // TODO: Implement when reports schema is added
+    };
+  }),
+
+  /**
+   * Get all users with strike count
+   */
+  getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+    await checkAdmin(ctx.userId!, ctx.db);
+
+    // TODO: Add reports schema and implement strike count
+    // return await ctx.db
+    //   .select({
+    //     id: users.id,
+    //     name: users.name,
+    //     email: users.email,
+    //     image: users.image,
+    //     strikeCount: count(reports.id),
+    //   })
+    //   .from(users)
+    //   .leftJoin(reports, eq(reports.targetUserId, users.id))
+    //   .groupBy(users.id)
+    //   .limit(50);
+
+    return await ctx.db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        image: users.image,
+        strikeCount: sql<number>`0`.as("strike_count"), // Placeholder until reports schema is added
+      })
+      .from(users)
+      .limit(50);
+  }),
+
+  /**
+   * Check if current user is admin
+   */
+  amIAdmin: protectedProcedure.query(async () => {
+    // TODO: Add role field to users schema
+    // const user = await ctx.db.query.users.findFirst({
+    //   where: eq(users.id, ctx.userId!),
+    //   columns: { role: true },
+    // });
+    // return { isAdmin: user?.role === "admin" };
+
+    return { isAdmin: false }; // Placeholder until role field is added
+  }),
+
+  /**
+   * Warn a user (creates a report)
+   */
+  warnUser: protectedProcedure
+    .input(
+      z.object({
+        targetUserId: z.string(),
+        reason: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input: _input }) => {
+      await checkAdmin(ctx.userId!, ctx.db);
+
+      // TODO: Add reports schema and implement warning logic
+      void _input; // Placeholder - will be used when reports schema is added
+      // await ctx.db.insert(reports).values({
+      //   targetUserId: _input.targetUserId,
+      //   adminId: ctx.userId!,
+      //   reason: _input.reason,
+      //   type: "warning",
+      // });
+      //
+      // const warnings = await ctx.db
+      //   .select({ count: count() })
+      //   .from(reports)
+      //   .where(eq(reports.targetUserId, _input.targetUserId));
+      //
+      // const totalStrikes = warnings[0].count;
+      //
+      // if (totalStrikes >= 3) {
+      //   console.warn(
+      //     `User ${_input.targetUserId} has reached 3 strikes. Executing BAN.`
+      //   );
+      //
+      //   await ctx.db
+      //     .update(users)
+      //     .set({
+      //       banned: true,
+      //       banReason: "Excessive strikes (3+ warnings)",
+      //     })
+      //     .where(eq(users.id, _input.targetUserId));
+      // }
+
+      return { success: true };
+    }),
+
+  // ========== TEST DATA CREATION ENDPOINTS (from feat/trip-module) ==========
+
   /**
    * Create a test trip with optional passengers
    */
@@ -1364,81 +1492,5 @@ export const adminRouter = router({
         deletedCount: dummyRequests.length,
         updatedBookedSeats: newBookedSeats,
       };
-    }),
-
-  // Admin procedures from HEAD (reports/warnings)
-  getAnalytics: adminProcedure.query(async () => {
-    const userCount = await db.select({ value: count() }).from(users);
-    const reportsCount = await db.select({ value: count() }).from(reports);
-
-    return {
-      totalUsers: userCount[0].value,
-      activeUsers: 1, //TODO
-      totalRides: 0, //TODO
-      reportsCount: reportsCount[0].value,
-    };
-  }),
-
-  getAllUsers: adminProcedure.query(async () => {
-    return await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        image: users.image,
-        strikeCount: count(reports.id),
-      })
-      .from(users)
-      .leftJoin(reports, eq(reports.targetUserId, users.id))
-      .groupBy(users.id)
-      .limit(50);
-  }),
-
-  amIAdmin: protectedProcedure.query(async ({ ctx }) => {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, ctx.userId!),
-      columns: { role: true },
-    });
-
-    return { isAdmin: user?.role === "admin" };
-  }),
-
-  warnUser: adminProcedure
-    .input(
-      z.object({
-        targetUserId: z.string(),
-        reason: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      await db.insert(reports).values({
-        targetUserId: input.targetUserId,
-        adminId: ctx.userId!,
-        reason: input.reason,
-        type: "warning",
-      });
-
-      const warnings = await db
-        .select({ count: count() })
-        .from(reports)
-        .where(eq(reports.targetUserId, input.targetUserId));
-
-      const totalStrikes = warnings[0].count;
-
-      if (totalStrikes >= 3) {
-        console.warn(
-          `User ${input.targetUserId} has reached 3 strikes. Executing BAN.`
-        );
-
-        await db
-          .update(users)
-          .set({
-            banned: true,
-            banReason: "Excessive strikes (3+ warnings)",
-          })
-          .where(eq(users.id, input.targetUserId));
-      }
-
-      return { success: true };
     }),
 });

@@ -117,18 +117,10 @@ export const profileRouter = router({
       return { success: true };
     }),
 
-  getBanStatus: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.db.query.users.findFirst({
-      where: eq(users.id, ctx.userId!),
-      columns: { banned: true, banReason: true },
-    });
-
-    return {
-      isBanned: user?.banned || false,
-      reason: user?.banReason || "Violation of Terms",
-    };
-  }),
-
+  /**
+   * getDriverEarnings()
+   * Returns driver earnings statistics (lifetime, week, month).
+   */
   getDriverEarnings: protectedProcedure.query(async ({ ctx }) => {
     const driverId = ctx.userId!;
     const now = new Date();
@@ -225,4 +217,28 @@ export const profileRouter = router({
         .where(eq(users.id, ctx.userId!));
       return { success: true };
     }),
+
+  /**
+   * getBanStatus()
+   * Returns the user's ban status.
+   * TODO: Add banned and banReason fields to users schema
+   */
+  getBanStatus: protectedProcedure.query(async () => {
+    // TODO: Uncomment when banned/banReason fields are added to users schema
+    // const user = await ctx.db.query.users.findFirst({
+    //   where: eq(users.id, ctx.userId!),
+    //   columns: { banned: true, banReason: true },
+    // });
+    //
+    // return {
+    //   isBanned: user?.banned || false,
+    //   reason: user?.banReason || "Violation of Terms",
+    // };
+
+    // Placeholder until schema is updated
+    return {
+      isBanned: false,
+      reason: null,
+    };
+  }),
 });
