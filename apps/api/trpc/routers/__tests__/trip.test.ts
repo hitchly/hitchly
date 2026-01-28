@@ -8,12 +8,8 @@ import {
 } from "../../../tests/utils/fixtures";
 
 // Mock geocodeAddress - must be before importing the router
-const mockGeocodeAddress = vi
-  .fn()
-  .mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
-const mockCalculateTripDistance = vi
-  .fn()
-  .mockResolvedValue({ distanceKm: 15.5 });
+const mockGeocodeAddress = vi.fn();
+const mockCalculateTripDistance = vi.fn();
 
 vi.mock("../../services/googlemaps", () => ({
   geocodeAddress: mockGeocodeAddress,
@@ -92,6 +88,7 @@ describe("Trip Router", () => {
 
       expect(result).toEqual(mockTrip);
       expect(mockDb.insert).toHaveBeenCalledWith(trips);
+      expect(mockGeocodeAddress).toHaveBeenCalledTimes(2);
     });
 
     it("should reject unverified users", async () => {
