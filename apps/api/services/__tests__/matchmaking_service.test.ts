@@ -253,42 +253,50 @@ describe("Matchmaking Service", () => {
       // Mock preferences query (first db.select call) - called twice for two preference tests
       (db.select as any)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([null]),
+          from: vi.fn().mockReturnValueOnce({
+            where: vi.fn().mockReturnValueOnce({
+              limit: vi.fn().mockResolvedValueOnce([null]),
             }),
           }),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([null]),
+          from: vi.fn().mockReturnValueOnce({
+            where: vi.fn().mockReturnValueOnce({
+              limit: vi.fn().mockResolvedValueOnce([null]),
             }),
           }),
         });
 
-      (db.select as any)
-        .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+      // Helper to create trips query result structure
+      const createTripsQueryFromResult = () => ({
+        innerJoin: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              innerJoin: vi.fn().mockReturnValue({
-                innerJoin: vi.fn().mockReturnValue({
-                  leftJoin: vi.fn().mockReturnValue({
-                    where: vi.fn().mockResolvedValue([
-                      {
-                        trip: mockTrip,
-                        user: mockUser,
-                        profile: mockProfile,
-                        vehicle: mockVehicle,
-                        prefs: null,
-                      },
-                    ]),
-                  }),
-                }),
+              leftJoin: vi.fn().mockReturnValue({
+                where: vi.fn().mockResolvedValue([
+                  {
+                    trip: mockTrip,
+                    user: mockUser,
+                    profile: mockProfile,
+                    vehicle: mockVehicle,
+                    prefs: null,
+                  },
+                ]),
               }),
             }),
           }),
+        }),
+      });
+
+      // Mock trips query (called twice - once for each preference test)
+      (db.select as any)
+        .mockReturnValueOnce({
+          from: vi.fn().mockImplementation(() => createTripsQueryFromResult()),
         })
+        .mockReturnValueOnce({
+          from: vi.fn().mockImplementation(() => createTripsQueryFromResult()),
+        })
+        // Mock active requests query (called twice)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([]),
@@ -297,6 +305,25 @@ describe("Matchmaking Service", () => {
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([]),
+          }),
+        })
+        // Mock accepted passengers query (called twice)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        })
+        // Mock trip request counts query (called twice)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              groupBy: vi.fn().mockResolvedValue([]),
+            }),
           }),
         })
         .mockReturnValueOnce({
@@ -306,7 +333,7 @@ describe("Matchmaking Service", () => {
             }),
           }),
         })
-        // Mock test driver users query (called twice for two preference tests)
+        // Mock test driver users query (called twice)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([]), // No test drivers
@@ -348,9 +375,9 @@ describe("Matchmaking Service", () => {
 
       // Mock preferences query (first db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([null]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([null]),
           }),
         }),
       });
@@ -414,9 +441,9 @@ describe("Matchmaking Service", () => {
 
       // Mock preferences query (first db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([null]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([null]),
           }),
         }),
       });
