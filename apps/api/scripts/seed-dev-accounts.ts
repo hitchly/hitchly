@@ -46,6 +46,7 @@ async function seedDevAccounts() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Origin: API_URL,
           },
           body: JSON.stringify({
             email: account.email,
@@ -58,8 +59,15 @@ async function seedDevAccounts() {
           error?: { code?: string; message?: string };
         };
 
-        if (!response.ok && result.error?.code !== "USER_ALREADY_EXISTS") {
-          throw new Error(result.error?.message || "Signup failed");
+        if (!response.ok) {
+          const errorMsg =
+            result.error?.message ||
+            `HTTP ${response.status}: ${response.statusText}`;
+          console.error(`   Signup API error: ${errorMsg}`);
+          console.error(`   Response:`, JSON.stringify(result, null, 2));
+          if (result.error?.code !== "USER_ALREADY_EXISTS") {
+            throw new Error(errorMsg);
+          }
         }
 
         // Mark user as verified (bypass email verification)
