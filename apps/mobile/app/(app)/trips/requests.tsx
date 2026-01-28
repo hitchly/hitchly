@@ -44,7 +44,7 @@ export default function TripRequestsScreen() {
   );
 
   // Get all requests for driver's trips if user is a driver and viewing all requests
-  const { data: driverRequestsData } = trpc.trip.getTripRequests.useQuery(
+  trpc.trip.getTripRequests.useQuery(
     { tripId: driverTrips?.[0]?.id || "" },
     {
       enabled:

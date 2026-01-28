@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -200,6 +200,60 @@ export default function DriveScreen() {
     },
   });
 
+  // Compute derived state before early returns (needed for useEffect)
+  const requests = useMemo(() => trip?.requests || [], [trip?.requests]);
+  const currentStop = useMemo(
+    () => (trip ? getCurrentStop(trip, requests) : null),
+    [trip, requests]
+  );
+  const hasRequests = requests.length > 0;
+  const allCompleted =
+    hasRequests &&
+    requests.every(
+      (req: any) =>
+        req.status === "completed" ||
+        req.status === "rejected" ||
+        req.status === "cancelled"
+    );
+  const hasPendingRequests = requests.some(
+    (req: any) => req.status === "pending"
+  );
+
+  // #region agent log
+  useEffect(() => {
+    if (!trip) return;
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/trips/[id]/drive.tsx:175",
+        message: "Drive screen state",
+        data: {
+          tripId: id,
+          hasRequests,
+          requestsCount: requests.length,
+          requestStatuses: requests.map((r: any) => r.status),
+          hasCurrentStop: !!currentStop,
+          allCompleted,
+          hasPendingRequests,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run4",
+        hypothesisId: "K",
+      }),
+    }).catch(() => {});
+  }, [
+    id,
+    trip,
+    requests,
+    currentStop,
+    allCompleted,
+    hasPendingRequests,
+    hasRequests,
+  ]);
+  // #endregion
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -243,51 +297,6 @@ export default function DriveScreen() {
       </SafeAreaView>
     );
   }
-
-  const currentStop = getCurrentStop(trip, trip.requests || []);
-
-  // Check if all passengers are completed
-  const requests = trip.requests || [];
-  const hasRequests = requests.length > 0;
-  const allCompleted =
-    hasRequests &&
-    requests.every(
-      (req: any) =>
-        req.status === "completed" ||
-        req.status === "rejected" ||
-        req.status === "cancelled"
-    );
-
-  // Check if there are any pending requests (not yet accepted)
-  const hasPendingRequests = requests.some(
-    (req: any) => req.status === "pending"
-  );
-
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "app/(app)/trips/[id]/drive.tsx:175",
-        message: "Drive screen state",
-        data: {
-          tripId: id,
-          hasRequests,
-          requestsCount: requests.length,
-          requestStatuses: requests.map((r: any) => r.status),
-          hasCurrentStop: !!currentStop,
-          allCompleted,
-          hasPendingRequests,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run4",
-        hypothesisId: "K",
-      }),
-    }).catch(() => {});
-  }, [id, requests, currentStop, allCompleted, hasPendingRequests]);
-  // #endregion
 
   // Auto-complete trip if all passengers are done
   if (

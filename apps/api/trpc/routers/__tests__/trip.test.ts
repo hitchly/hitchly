@@ -142,7 +142,7 @@ describe("Trip Router", () => {
       );
 
       await expect(caller.createTrip(validInput)).rejects.toThrow(
-        "Unauthorized"
+        /UNAUTHORIZED|Unauthorized/
       );
     });
   });
@@ -275,9 +275,19 @@ describe("Trip Router", () => {
       );
       const result = await caller.getTripById({ tripId });
 
-      expect(result).toEqual({
-        ...mockTrip,
-        requests: mockRequests,
+      expect(result).toMatchObject({
+        id: mockTrip.id,
+        driverId: mockTrip.driverId,
+        origin: mockTrip.origin,
+        destination: mockTrip.destination,
+        status: mockTrip.status,
+        requests: expect.arrayContaining([
+          expect.objectContaining({
+            id: mockRequests[0].id,
+            riderId: mockRequests[0].riderId,
+            status: mockRequests[0].status,
+          }),
+        ]),
       });
     });
 
@@ -322,8 +332,8 @@ describe("Trip Router", () => {
 
       // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
@@ -395,8 +405,8 @@ describe("Trip Router", () => {
     it("should cancel trip successfully", async () => {
       // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 

@@ -59,7 +59,7 @@ function AppContent() {
   });
 
   // Query for active/in_progress trips
-  const { data: trips, refetch: refetchTrips } = trpc.trip.getTrips.useQuery(
+  const { data: trips } = trpc.trip.getTrips.useQuery(
     {},
     { enabled: !!session }
   );
@@ -124,7 +124,7 @@ function AppContent() {
       );
     });
     // Only run once on mount when session/profile/trips are available
-  }, [session?.user?.id, userProfile?.profile?.appRole]);
+  }, [session, userProfile, trips, deleteDummyPassengers]);
 
   // #region agent log
   useEffect(() => {

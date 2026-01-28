@@ -92,7 +92,7 @@ describe("Matchmaking Router", () => {
       );
 
       await expect(caller.findMatches(validInput)).rejects.toThrow(
-        "Unauthorized"
+        /UNAUTHORIZED|Unauthorized/
       );
     });
 

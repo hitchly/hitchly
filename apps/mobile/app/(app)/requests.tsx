@@ -121,13 +121,20 @@ export default function RequestsScreen() {
 
   // Determine if user is viewing as driver or rider
   const isDriverView = isDriver;
-  const requests = isDriverView ? allDriverRequests : riderRequests || [];
+  const requests = useMemo(
+    () => (isDriverView ? allDriverRequests : riderRequests || []),
+    [isDriverView, allDriverRequests, riderRequests]
+  );
 
   // Filter out requests for cancelled trips
-  const filteredRequests = requests.filter((req) => {
-    if (!req.trip) return false;
-    return req.trip.status !== "cancelled";
-  });
+  const filteredRequests = useMemo(
+    () =>
+      requests.filter((req) => {
+        if (!req.trip) return false;
+        return req.trip.status !== "cancelled";
+      }),
+    [requests]
+  );
 
   // #region agent log
   React.useEffect(() => {

@@ -183,7 +183,8 @@ export default function DriverSwipeRequestsScreen() {
             No pending requests
           </Text>
           <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            You'll see ride requests here when riders request to join your trips
+            You&apos;ll see ride requests here when riders request to join your
+            trips
           </Text>
         </View>
       </SafeAreaView>

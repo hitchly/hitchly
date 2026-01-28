@@ -30,7 +30,6 @@ export default function TripDetailScreen() {
   const {
     data: trip,
     isLoading,
-    error,
     refetch,
   } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
 
@@ -82,20 +81,6 @@ export default function TripDetailScreen() {
       Alert.alert("Success", "Request cancelled successfully", [
         {
           text: "OK",
-        },
-      ]);
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  const createTripRequest = trpc.trip.createTripRequest.useMutation({
-    onSuccess: () => {
-      Alert.alert("Success", "Trip request sent successfully", [
-        {
-          text: "OK",
-          onPress: () => refetch(),
         },
       ]);
     },

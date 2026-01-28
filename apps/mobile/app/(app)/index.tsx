@@ -1,7 +1,5 @@
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useEffect } from "react";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -10,7 +8,6 @@ import {
   Button,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
 
 import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";

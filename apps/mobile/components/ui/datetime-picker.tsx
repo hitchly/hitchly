@@ -94,15 +94,6 @@ export const DateTimePickerComponent = ({
     setShowDatePicker(true);
   };
 
-  const showTimePickerModal = () => {
-    setMode("time");
-    if (Platform.OS === "ios") {
-      setShowTimePicker(true);
-    } else {
-      setShowTimePicker(true);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <TouchableOpacity

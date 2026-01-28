@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -129,7 +128,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
   // Keep shared value in sync with state
   useEffect(() => {
     currentCardIndex.value = currentIndex;
-  }, [currentIndex]);
+  }, [currentIndex, currentCardIndex]);
 
   const handleSwipeComplete = useCallback(
     (direction: "left" | "right", itemId: string) => {
@@ -751,9 +750,11 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
       return null;
     }
     // Recreate when dependencies change
-    // NOTE: We intentionally don't include currentIndex here to avoid recreating
-    // the gesture on every swipe. Instead, we use currentCardIndex shared value
-    // which is updated synchronously in handleSwipeComplete
+    // NOTE: We intentionally don't include currentIndex, translateX, translateY, etc.
+    // here to avoid recreating the gesture on every swipe. Instead, we use
+    // currentCardIndex shared value which is updated synchronously in handleSwipeComplete
+    // Shared values (translateX, translateY, rotation, etc.) are stable references
+    // and don't need to be in the dependency array
   }, [handleSwipeComplete, onCardTap, data]);
   // #endregion
 

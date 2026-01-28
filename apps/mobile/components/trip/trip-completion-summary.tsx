@@ -12,10 +12,10 @@ export type TripCompletionSummaryData = {
   durationMinutes?: number | null;
   totalEarningsCents?: number | null;
   passengerCount?: number | null;
-  perPassenger?: Array<{
+  perPassenger?: {
     riderName?: string | null;
     amountCents?: number | null;
-  }>;
+  }[];
   totalDistanceKm?: number | null;
 };
 
