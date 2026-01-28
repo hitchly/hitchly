@@ -35,7 +35,7 @@ export default function SignIn() {
           onError: async (ctx) => {
             if (
               ctx.error.code === "EMAIL_NOT_VERIFIED" ||
-              ctx.error.message.includes("verified")
+              ctx.error.message?.includes("verified")
             ) {
               Alert.alert(
                 "Verification Required",
@@ -53,7 +53,10 @@ export default function SignIn() {
                 params: { email: data.email, password: data.password },
               });
             } else {
-              Alert.alert("Login Failed", ctx.error.message);
+              Alert.alert(
+                "Login Failed",
+                ctx.error.message || "Invalid credentials"
+              );
             }
           },
         }

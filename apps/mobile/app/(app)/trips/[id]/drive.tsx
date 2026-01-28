@@ -150,6 +150,15 @@ export default function DriveScreen() {
     },
   });
 
+  const startTrip = trpc.trip.startTrip.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
   const completeTrip = trpc.trip.completeTrip.useMutation({
     onSuccess: (result: any) => {
       // #region agent log
@@ -196,6 +205,30 @@ export default function DriveScreen() {
       setSummaryVisible(true);
     },
     onError: (error) => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:completeTrip:error",
+            message: "Complete trip mutation failed",
+            data: {
+              tripId: id,
+              errorMessage: error.message,
+              tripStatus: trip?.status,
+              allCompleted,
+              acceptedRequestsCount: acceptedRequests.length,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "D",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
       Alert.alert("Error", error.message);
     },
   });
@@ -207,6 +240,27 @@ export default function DriveScreen() {
     [trip, requests]
   );
   const hasRequests = requests.length > 0;
+
+  // #region agent log
+  const acceptedRequests = useMemo(
+    () =>
+      requests.filter(
+        (req: any) =>
+          req.status === "accepted" ||
+          req.status === "on_trip" ||
+          req.status === "completed"
+      ),
+    [requests]
+  );
+  const rejectedCancelledRequests = useMemo(
+    () =>
+      requests.filter(
+        (req: any) => req.status === "rejected" || req.status === "cancelled"
+      ),
+    [requests]
+  );
+  // #endregion
+
   const allCompleted =
     hasRequests &&
     requests.every(
@@ -218,6 +272,52 @@ export default function DriveScreen() {
   const hasPendingRequests = requests.some(
     (req: any) => req.status === "pending"
   );
+
+  // #region agent log
+  useEffect(() => {
+    if (!trip) return;
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/(app)/trips/[id]/drive.tsx:210",
+        message: "allCompleted calculation debug",
+        data: {
+          tripId: id,
+          tripStatus: trip.status,
+          totalRequests: requests.length,
+          acceptedRequestsCount: acceptedRequests.length,
+          rejectedCancelledCount: rejectedCancelledRequests.length,
+          pendingCount: requests.filter((r: any) => r.status === "pending")
+            .length,
+          requestStatuses: requests.map((r: any) => ({
+            id: r.id,
+            status: r.status,
+          })),
+          hasRequests,
+          allCompleted,
+          willAutoComplete:
+            allCompleted &&
+            trip.status === "in_progress" &&
+            !completeTrip.isPending,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
+  }, [
+    id,
+    trip,
+    requests,
+    hasRequests,
+    allCompleted,
+    acceptedRequests,
+    rejectedCancelledRequests,
+    completeTrip.isPending,
+  ]);
+  // #endregion
 
   // #region agent log
   useEffect(() => {
@@ -299,13 +399,214 @@ export default function DriveScreen() {
   }
 
   // Auto-complete trip if all passengers are done
-  if (
-    allCompleted &&
-    trip.status === "in_progress" &&
-    !completeTrip.isPending
-  ) {
-    completeTrip.mutate({ tripId: id! });
-  }
+  // #region agent log
+  useEffect(() => {
+    if (!trip) return;
+    if (allCompleted) {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:345",
+            message: "allCompleted is true - showing completion message",
+            data: {
+              tripId: id,
+              tripStatus: trip.status,
+              allCompleted,
+              acceptedRequestsCount: acceptedRequests.length,
+              totalRequests: requests.length,
+              requestStatuses: requests.map((r: any) => ({
+                id: r.id,
+                status: r.status,
+              })),
+              willAutoComplete:
+                trip.status === "in_progress" && !completeTrip.isPending,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "C",
+          }),
+        }
+      ).catch(() => {});
+    }
+    // Only attempt completion if trip is in_progress and not already completed
+    // Skip if trip is already completed to prevent unnecessary refetch and errors
+    if (trip.status === "completed") {
+      // Trip already completed - nothing to do
+      return;
+    }
+
+    if (
+      allCompleted &&
+      trip.status === "in_progress" &&
+      !completeTrip.isPending &&
+      !startTrip.isPending
+    ) {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(app)/trips/[id]/drive.tsx:365",
+            message: "Auto-complete trigger fired",
+            data: {
+              tripId: id,
+              tripStatus: trip.status,
+              allCompleted,
+              acceptedRequestsCount: acceptedRequests.length,
+              totalRequests: requests.length,
+              requestStatuses: requests.map((r: any) => ({
+                id: r.id,
+                status: r.status,
+              })),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "B",
+          }),
+        }
+      ).catch(() => {});
+      // Refetch trip to ensure we have latest status before completing
+      refetch().then((result) => {
+        const latestTrip = result.data;
+
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "app/(app)/trips/[id]/drive.tsx:refetchBeforeComplete",
+              message: "Refetched trip before completion attempt",
+              data: {
+                tripId: id,
+                tripStatusBeforeRefetch: trip.status,
+                tripStatusAfterRefetch: latestTrip?.status,
+                allCompleted,
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "run1",
+              hypothesisId: "G",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+
+        // If trip is already completed, don't try to complete again
+        if (latestTrip?.status === "completed") {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "app/(app)/trips/[id]/drive.tsx:tripAlreadyCompleted",
+                message: "Trip is already completed - skipping completion",
+                data: {
+                  tripId: id,
+                  tripStatus: latestTrip.status,
+                },
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "run1",
+                hypothesisId: "H",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
+          // Trip is already completed - just show summary if available
+          return;
+        }
+
+        // Check status again after refetch
+        if (latestTrip?.status === "in_progress") {
+          completeTrip.mutate({ tripId: id! });
+        } else if (latestTrip?.status === "active") {
+          // Trip is active but not started - auto-start it first, then complete
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location:
+                  "app/(app)/trips/[id]/drive.tsx:autoStartBeforeComplete",
+                message: "Trip is active, auto-starting before completion",
+                data: {
+                  tripId: id,
+                  tripStatus: latestTrip?.status,
+                },
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "run1",
+                hypothesisId: "F",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
+          startTrip.mutate(
+            { tripId: id! },
+            {
+              onSuccess: () => {
+                // After starting, complete the trip
+                completeTrip.mutate({ tripId: id! });
+              },
+              onError: (error) => {
+                Alert.alert("Error", `Failed to start trip: ${error.message}`);
+              },
+            }
+          );
+        } else {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "app/(app)/trips/[id]/drive.tsx:refetchAfter",
+                message: "Trip status changed after refetch - cannot complete",
+                data: {
+                  tripId: id,
+                  tripStatusBeforeRefetch: trip.status,
+                  tripStatusAfterRefetch: latestTrip?.status,
+                  expectedStatus: "in_progress",
+                },
+                timestamp: Date.now(),
+                sessionId: "debug-session",
+                runId: "run1",
+                hypothesisId: "E",
+              }),
+            }
+          ).catch(() => {});
+          // #endregion
+          // Show alert for invalid status (completed case already handled above)
+          Alert.alert(
+            "Cannot Complete Trip",
+            `Trip status is "${latestTrip?.status || "unknown"}" but must be "in_progress" to complete. Please start the trip first.`
+          );
+        }
+      });
+    }
+  }, [
+    allCompleted,
+    trip?.status,
+    completeTrip.isPending,
+    id,
+    trip,
+    acceptedRequests.length,
+    requests,
+  ]);
+  // #endregion
 
   const handleAction = () => {
     if (!currentStop) return;

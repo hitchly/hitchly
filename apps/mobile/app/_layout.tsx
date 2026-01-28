@@ -1,7 +1,7 @@
 import { ThemeProvider as NavigationThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -65,18 +65,18 @@ function AppContent() {
   );
 
   // Auto-cleanup dummy passengers on app launch (for drivers)
-  const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation({
-    onSuccess: () => {
-      utils.trip.getTrips.invalidate();
-      utils.trip.getTripRequests.invalidate();
-    },
-  });
+  const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation();
+  const cleanupRanRef = useRef(false);
 
   useEffect(() => {
-    if (!session || !userProfile || !trips) return;
+    // Only run cleanup once per session, not on every trips change
+    if (!session || !userProfile || !trips || cleanupRanRef.current) return;
 
     const isDriver = userProfile?.profile?.appRole === "driver";
     if (!isDriver) return;
+
+    // Mark cleanup as run to prevent infinite loop
+    cleanupRanRef.current = true;
 
     // #region agent log
     fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
@@ -94,12 +94,25 @@ function AppContent() {
     }).catch(() => {});
     // #endregion
 
-    // Clean up dummy passengers for each trip
-    trips.forEach((trip) => {
+    // Clean up dummy passengers for each trip (batch all mutations, don't invalidate until all done)
+    const tripIds = trips.map((trip) => trip.id);
+    let completedCount = 0;
+    const totalTrips = tripIds.length;
+
+    tripIds.forEach((tripId) => {
       deleteDummyPassengers.mutate(
-        { tripId: trip.id },
+        { tripId },
         {
+          onSuccess: () => {
+            completedCount++;
+            // Only invalidate once all cleanup mutations are done
+            if (completedCount === totalTrips) {
+              utils.trip.getTrips.invalidate();
+              utils.trip.getTripRequests.invalidate();
+            }
+          },
           onError: (err) => {
+            completedCount++;
             // Silently fail - dummy passengers might not exist
             // #region agent log
             fetch(
@@ -110,7 +123,7 @@ function AppContent() {
                 body: JSON.stringify({
                   location: "app/_layout.tsx:autoCleanup:error",
                   message: "Cleanup failed for trip",
-                  data: { tripId: trip.id, error: err.message },
+                  data: { tripId, error: err.message },
                   timestamp: Date.now(),
                   sessionId: "debug-session",
                   runId: "run1",
@@ -119,12 +132,16 @@ function AppContent() {
               }
             ).catch(() => {});
             // #endregion
+            // Still invalidate when all are done (even if some failed)
+            if (completedCount === totalTrips) {
+              utils.trip.getTrips.invalidate();
+              utils.trip.getTripRequests.invalidate();
+            }
           },
         }
       );
     });
-    // Only run once on mount when session/profile/trips are available
-  }, [session, userProfile, trips, deleteDummyPassengers]);
+  }, [session, userProfile, trips]);
 
   // #region agent log
   useEffect(() => {

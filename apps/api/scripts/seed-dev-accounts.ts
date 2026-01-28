@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db } from "@hitchly/db/client";
-import { users } from "@hitchly/db/schema";
+import { users, profiles, vehicles } from "@hitchly/db/schema";
 import { eq } from "drizzle-orm";
 
 const TEST_PASSWORD = "test1234"; // Change this in production! (min 8 chars for Better Auth)
@@ -10,11 +10,13 @@ const devAccounts = [
     name: "Test Driver",
     email: "driver@mcmaster.ca",
     password: TEST_PASSWORD,
+    appRole: "driver" as const,
   },
   {
     name: "Test Rider",
     email: "rider@mcmaster.ca",
     password: TEST_PASSWORD,
+    appRole: "rider" as const,
   },
 ];
 
@@ -85,6 +87,46 @@ async function seedDevAccounts() {
               updatedAt: new Date(),
             })
             .where(eq(users.id, createdUser.id));
+
+          // Create or update profile with correct appRole
+          const [existingProfile] = await db
+            .select()
+            .from(profiles)
+            .where(eq(profiles.userId, createdUser.id))
+            .limit(1);
+
+          if (existingProfile) {
+            await db
+              .update(profiles)
+              .set({ appRole: account.appRole })
+              .where(eq(profiles.userId, createdUser.id));
+          } else {
+            await db.insert(profiles).values({
+              userId: createdUser.id,
+              appRole: account.appRole,
+              universityRole: "student",
+            });
+          }
+
+          // If driver, ensure they have a vehicle
+          if (account.appRole === "driver") {
+            const [existingVehicle] = await db
+              .select()
+              .from(vehicles)
+              .where(eq(vehicles.userId, createdUser.id))
+              .limit(1);
+
+            if (!existingVehicle) {
+              await db.insert(vehicles).values({
+                userId: createdUser.id,
+                make: "Toyota",
+                model: "Camry",
+                color: "Black",
+                plate: "TEST001",
+                seats: 4,
+              });
+            }
+          }
         }
       } catch (apiError: any) {
         // If signup fails, the user might already exist - that's okay

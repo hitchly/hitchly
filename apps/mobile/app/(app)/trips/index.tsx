@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +22,8 @@ export default function TripsScreen() {
   const utils = trpc.useUtils();
   authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
-  const userEmail = userProfile?.email;
-  const isTestUser = isTestAccount(userEmail);
+  const userEmail = useMemo(() => userProfile?.email, [userProfile?.email]);
+  const isTestUser = useMemo(() => isTestAccount(userEmail), [userEmail]);
   const {
     data: trips,
     isLoading,
@@ -44,58 +44,58 @@ export default function TripsScreen() {
     },
   });
 
-  // Filter out cancelled trips
-  const activeTrips =
-    trips?.filter((trip) => trip.status !== "cancelled") || [];
+  // Filter out cancelled trips - memoized to prevent recalculation on every render
+  const activeTrips = useMemo(
+    () => trips?.filter((trip) => trip.status !== "cancelled") || [],
+    [trips]
+  );
 
-  // #region agent log - Debug trip statuses
+  // #region agent log - Performance debug
   useEffect(() => {
-    if (trips && trips.length > 0) {
-      const LOG_ENDPOINT =
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-      trips.forEach((trip) => {
-        fetch(LOG_ENDPOINT, {
+    if (trips) {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            location: "trips/index.tsx:tripStatusCheck",
-            message: "Trip status from backend",
+            location: "trips/index.tsx:render",
+            message: "Trips screen render",
             data: {
-              tripId: trip.id,
-              status: trip.status,
-              origin: trip.origin,
-              destination: trip.destination,
-              departureTime: trip.departureTime,
+              tripsCount: trips.length,
+              activeTripsCount: activeTrips.length,
+              timestamp: Date.now(),
             },
             timestamp: Date.now(),
             sessionId: "debug-session",
-            runId: "status-debug",
-            hypothesisId: "H1",
+            runId: "perf-debug",
+            hypothesisId: "PERF1",
           }),
-        }).catch(() => {});
-      });
+        }
+      ).catch(() => {});
     }
-  }, [trips]);
+  }, [trips, activeTrips.length]);
   // #endregion
 
-  const formatDate = (date: Date | string) => {
+  // Memoize formatters to prevent recreation on every render
+  const formatDate = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  };
+  }, []);
 
-  const formatTime = (date: Date | string) => {
+  const formatTime = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "pending":
         return "#FFA500";
@@ -110,14 +110,14 @@ export default function TripsScreen() {
       default:
         return "#666";
     }
-  };
+  }, []);
 
-  const formatStatus = (status: string) => {
+  const formatStatus = useCallback((status: string) => {
     if (status === "in_progress") {
       return "IN PROGRESS";
     }
     return status.toUpperCase();
-  };
+  }, []);
 
   if (isLoading) {
     return (
