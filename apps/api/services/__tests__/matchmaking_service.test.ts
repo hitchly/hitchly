@@ -38,8 +38,9 @@ describe("Matchmaking Service", () => {
     vi.clearAllMocks();
     // Re-import db to get fresh mock after clearing
     const { db } = await import("@hitchly/db/client");
-    // Reset db.select mock
+    // Reset db.select mock and clear all return values
     (db.select as any).mockClear();
+    (db.select as any).mockReset();
   });
 
   describe("Constants", () => {
@@ -186,17 +187,17 @@ describe("Matchmaking Service", () => {
 
       // Mock preferences query (first db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
+        from: vi.fn().mockImplementation(() => ({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([null]), // No preferences found
           }),
-        }),
+        })),
       });
 
       // Mock all queries
       (db.select as any)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
                 innerJoin: vi.fn().mockReturnValue({
@@ -214,7 +215,7 @@ describe("Matchmaking Service", () => {
                 }),
               }),
             }),
-          }),
+          })),
         })
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
@@ -257,25 +258,25 @@ describe("Matchmaking Service", () => {
       // Mock preferences query (first db.select call) - called twice for two preference tests
       (db.select as any)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValueOnce({
-            where: vi.fn().mockReturnValueOnce({
-              limit: vi.fn().mockResolvedValueOnce([null]),
+          from: vi.fn().mockImplementation(() => ({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([null]),
             }),
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValueOnce({
-            where: vi.fn().mockReturnValueOnce({
-              limit: vi.fn().mockResolvedValueOnce([null]),
+          from: vi.fn().mockImplementation(() => ({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([null]),
             }),
-          }),
+          })),
         });
 
       // Mock trips query (called twice - once for each preference test)
       // Each from() call needs to return a fresh object with innerJoin
       (db.select as any)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
                 innerJoin: vi.fn().mockReturnValue({
@@ -293,10 +294,10 @@ describe("Matchmaking Service", () => {
                 }),
               }),
             }),
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
                 innerJoin: vi.fn().mockReturnValue({
@@ -314,55 +315,55 @@ describe("Matchmaking Service", () => {
                 }),
               }),
             }),
-          }),
+          })),
         })
         // Mock active requests query (called twice)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]),
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]),
-          }),
+          })),
         })
         // Mock accepted passengers query (called twice)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]),
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]),
-          }),
+          })),
         })
         // Mock trip request counts query (called twice)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockReturnValue({
               groupBy: vi.fn().mockResolvedValue([]),
             }),
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockReturnValue({
               groupBy: vi.fn().mockResolvedValue([]),
             }),
-          }),
+          })),
         })
         // Mock test driver users query (called twice)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]), // No test drivers
-          }),
+          })),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             where: vi.fn().mockResolvedValue([]), // No test drivers
-          }),
+          })),
         });
 
       // Test costPriority preference
@@ -395,16 +396,16 @@ describe("Matchmaking Service", () => {
 
       // Mock preferences query (first db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValueOnce({
-          where: vi.fn().mockReturnValueOnce({
-            limit: vi.fn().mockResolvedValueOnce([null]),
+        from: vi.fn().mockImplementation(() => ({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]),
           }),
-        }),
+        })),
       });
 
       (db.select as any)
         .mockReturnValueOnce({
-          from: vi.fn().mockReturnValue({
+          from: vi.fn().mockImplementation(() => ({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
                 innerJoin: vi.fn().mockReturnValue({
@@ -414,7 +415,7 @@ describe("Matchmaking Service", () => {
                 }),
               }),
             }),
-          }),
+          })),
         })
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
@@ -461,16 +462,16 @@ describe("Matchmaking Service", () => {
 
       // Mock preferences query (first db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValueOnce({
-          where: vi.fn().mockReturnValueOnce({
-            limit: vi.fn().mockResolvedValueOnce([null]),
+        from: vi.fn().mockImplementation(() => ({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]),
           }),
-        }),
+        })),
       });
 
       // Mock trips query (second db.select call)
       (db.select as any).mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
+        from: vi.fn().mockImplementation(() => ({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
@@ -488,7 +489,7 @@ describe("Matchmaking Service", () => {
               }),
             }),
           }),
-        }),
+        })),
       });
 
       // Mock active requests query (third db.select call)
