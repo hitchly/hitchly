@@ -2,7 +2,7 @@ import "dotenv/config";
 import { db } from "@hitchly/db/client";
 import { trips, tripRequests } from "@hitchly/db/schema";
 import { geocodeAddress } from "../services/googlemaps";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Pool } from "pg";
 
 /**

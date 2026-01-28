@@ -1,0 +1,288 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  geocodeAddress,
+  getRouteDetails,
+  calculateTripDistance,
+  getDetourAndRideDetails,
+} from "../googlemaps";
+import { Client } from "@googlemaps/google-maps-services-js";
+
+// Mock Google Maps client
+vi.mock("@googlemaps/google-maps-services-js", () => ({
+  Client: vi.fn().mockImplementation(() => ({
+    directions: vi.fn(),
+    geocode: vi.fn(),
+  })),
+}));
+
+// Mock database
+vi.mock("@hitchly/db/client", () => ({
+  db: {
+    select: vi.fn(),
+  },
+}));
+
+describe("Google Maps Service", () => {
+  let mockClient: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockClient = {
+      directions: vi.fn(),
+      geocode: vi.fn(),
+    };
+    (Client as any).mockImplementation(() => mockClient);
+  });
+
+  describe("geocodeAddress", () => {
+    it("should return lat/lng for valid address", async () => {
+      const mockResponse = {
+        data: {
+          results: [
+            {
+              geometry: {
+                location: {
+                  lat: 43.2609,
+                  lng: -79.9192,
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      mockClient.geocode.mockResolvedValue(mockResponse);
+
+      const result = await geocodeAddress("McMaster University");
+
+      expect(result).toEqual({ lat: 43.2609, lng: -79.9192 });
+      expect(mockClient.geocode).toHaveBeenCalled();
+    });
+
+    it("should return null for invalid address", async () => {
+      mockClient.geocode.mockResolvedValue({
+        data: {
+          results: [],
+        },
+      });
+
+      const result = await geocodeAddress("Invalid Address 12345");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null on API error", async () => {
+      mockClient.geocode.mockRejectedValue(new Error("API Error"));
+
+      const result = await geocodeAddress("Some Address");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("getRouteDetails", () => {
+    it("should return duration and distance for route", async () => {
+      const mockResponse = {
+        data: {
+          routes: [
+            {
+              legs: [
+                {
+                  duration: { value: 1800 }, // 30 minutes
+                  distance: { value: 15000 }, // 15 km
+                },
+                {
+                  duration: { value: 600 }, // 10 minutes
+                  distance: { value: 5000 }, // 5 km
+                },
+              ],
+              waypoint_order: [0, 1],
+            },
+          ],
+        },
+      };
+
+      mockClient.directions.mockResolvedValue(mockResponse);
+
+      const result = await getRouteDetails(
+        { lat: 43.2609, lng: -79.9192 },
+        { lat: 43.2557, lng: -79.8711 },
+        [{ lat: 43.261, lng: -79.92 }],
+        new Date()
+      );
+
+      expect(result.totalDurationSeconds).toBe(2400); // 30 + 10 minutes
+      expect(result.totalDistanceMeters).toBe(20000); // 15 + 5 km
+      expect(result.waypointOrder).toEqual([0, 1]);
+    });
+
+    it("should handle route with waypoints", async () => {
+      const mockResponse = {
+        data: {
+          routes: [
+            {
+              legs: [
+                {
+                  duration: { value: 900 },
+                  distance: { value: 10000 },
+                },
+              ],
+              waypoint_order: [],
+            },
+          ],
+        },
+      };
+
+      mockClient.directions.mockResolvedValue(mockResponse);
+
+      const waypoints = [
+        { lat: 43.261, lng: -79.92 },
+        { lat: 43.262, lng: -79.921 },
+      ];
+
+      const result = await getRouteDetails(
+        { lat: 43.2609, lng: -79.9192 },
+        { lat: 43.2557, lng: -79.8711 },
+        waypoints,
+        new Date(),
+        true // optimize
+      );
+
+      expect(result.totalDurationSeconds).toBe(900);
+      expect(result.totalDistanceMeters).toBe(10000);
+    });
+
+    it("should throw error when no route found", async () => {
+      mockClient.directions.mockResolvedValue({
+        data: {
+          routes: [],
+        },
+      });
+
+      await expect(
+        getRouteDetails(
+          { lat: 43.2609, lng: -79.9192 },
+          { lat: 43.2557, lng: -79.8711 },
+          [],
+          new Date()
+        )
+      ).rejects.toThrow("No route found");
+    });
+  });
+
+  describe("calculateTripDistance", () => {
+    it("should return distance in km", async () => {
+      const { db } = await import("@hitchly/db/client");
+
+      // Mock route cache lookup (empty)
+      (db.select as any).mockResolvedValue([]);
+
+      // Mock directions API call
+      mockClient.directions.mockResolvedValue({
+        data: {
+          routes: [
+            {
+              legs: [
+                {
+                  duration: { value: 1800 },
+                  distance: { value: 15500 }, // 15.5 km
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const result = await calculateTripDistance(
+        { lat: 43.2609, lng: -79.9192 },
+        { lat: 43.2557, lng: -79.8711 },
+        []
+      );
+
+      expect(result?.distanceKm).toBeCloseTo(15.5, 1);
+    });
+
+    it("should handle waypoints correctly", async () => {
+      const { db } = await import("@hitchly/db/client");
+
+      (db.select as any).mockResolvedValue([]);
+
+      mockClient.directions.mockResolvedValue({
+        data: {
+          routes: [
+            {
+              legs: [
+                { duration: { value: 600 }, distance: { value: 5000 } },
+                { duration: { value: 600 }, distance: { value: 5000 } },
+              ],
+            },
+          ],
+        },
+      });
+
+      const waypoints = [{ lat: 43.261, lng: -79.92 }];
+      const result = await calculateTripDistance(
+        { lat: 43.2609, lng: -79.9192 },
+        { lat: 43.2557, lng: -79.8711 },
+        waypoints
+      );
+
+      expect(result?.distanceKm).toBeCloseTo(10.0, 1);
+    });
+  });
+
+  describe("getDetourAndRideDetails", () => {
+    it("should calculate detour time and distance", async () => {
+      const { db } = await import("@hitchly/db/client");
+
+      (db.select as any).mockResolvedValue([]);
+
+      // Mock original route (without rider)
+      mockClient.directions.mockResolvedValueOnce({
+        data: {
+          routes: [
+            {
+              legs: [
+                {
+                  duration: { value: 1800 }, // 30 min
+                  distance: { value: 15000 }, // 15 km
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      // Mock route with rider pickup
+      mockClient.directions.mockResolvedValueOnce({
+        data: {
+          routes: [
+            {
+              legs: [
+                { duration: { value: 600 }, distance: { value: 5000 } }, // To pickup
+                { duration: { value: 1800 }, distance: { value: 15000 } }, // To destination
+              ],
+            },
+          ],
+        },
+      });
+
+      const result = await getDetourAndRideDetails(
+        {
+          origin: { lat: 43.2609, lng: -79.9192 },
+          destination: { lat: 43.2557, lng: -79.8711 },
+          existingWaypoints: [],
+        },
+        {
+          origin: { lat: 43.261, lng: -79.92 },
+          destination: { lat: 43.2557, lng: -79.8711 },
+        }
+      );
+
+      expect(result).toHaveProperty("detourSeconds");
+      expect(result).toHaveProperty("detourKm");
+      expect(result).toHaveProperty("rideDurationSeconds");
+      expect(result).toHaveProperty("rideDistanceKm");
+    });
+  });
+});

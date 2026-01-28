@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authClient } from "../../../lib/auth-client";
 import { trpc } from "../../../lib/trpc";
+import { isTestAccount } from "../../../lib/test-accounts";
 
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +24,8 @@ export default function TripDetailScreen() {
   const isUserDriver = ["driver", "both"].includes(
     userProfile?.profile?.appRole || ""
   );
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
 
   const {
     data: trip,
@@ -42,16 +45,17 @@ export default function TripDetailScreen() {
   const isDriver = currentUserId && trip?.driverId === currentUserId;
   const hasPendingRequest =
     userRequest?.status === "pending" || userRequest?.status === "accepted";
-  const canJoin =
-    !isDriver &&
-    trip?.status !== "cancelled" &&
-    (trip?.status === "pending" || trip?.status === "active") &&
-    trip &&
-    trip.maxSeats - trip.bookedSeats > 0 &&
-    !hasPendingRequest;
+  // canJoin is computed but not used in current implementation
+  // const canJoin =
+  //   !isDriver &&
+  //   trip?.status !== "cancelled" &&
+  //   (trip?.status === "pending" || trip?.status === "active") &&
+  //   trip &&
+  //   trip.maxSeats - trip.bookedSeats > 0 &&
+  //   !hasPendingRequest;
 
   const cancelTrip = trpc.trip.cancelTrip.useMutation({
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       utils.trip.getTrips.invalidate();
       utils.trip.getTripRequests.invalidate();
       await utils.trip.getTripById.invalidate({ tripId: id! });
@@ -250,7 +254,7 @@ export default function TripDetailScreen() {
       case "active":
         return "#007AFF";
       case "in_progress":
-        return "#34C759";
+        return "#FF9500"; // Orange to distinguish from completed (green)
       case "completed":
         return "#34C759";
       case "cancelled":
@@ -503,6 +507,7 @@ export default function TripDetailScreen() {
 
           {/* Test Driver Complete (simulation) */}
           {isDriver &&
+            isTestUser &&
             (trip.status === "active" || trip.status === "in_progress") && (
               <View style={styles.actionsSection}>
                 <TouchableOpacity

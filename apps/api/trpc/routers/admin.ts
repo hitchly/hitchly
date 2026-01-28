@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { geocodeAddress } from "../../services/googlemaps";
 import { db } from "@hitchly/db/client";
 import { count } from "drizzle-orm";
+import { requireTestAccount } from "../../lib/test-accounts";
 
 // McMaster University coordinates (default)
 const MCMASTER_COORDS = {
@@ -56,6 +57,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       const driverId = input.driverId || ctx.userId!;
 
       // Verify driver exists
@@ -95,7 +97,7 @@ export const adminRouter = router({
           destLat = destCoords.lat;
           destLng = destCoords.lng;
         }
-      } catch (error) {
+      } catch {
         // Use defaults if geocoding fails
         console.warn("Geocoding failed, using default coordinates");
       }
@@ -453,6 +455,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       const driverId = input.driverId || ctx.userId!;
 
       // Verify driver exists
@@ -588,37 +591,11 @@ export const adminRouter = router({
             dropoffLat: dropoffCoords.lat,
             dropoffLng: dropoffCoords.lng,
             status: "accepted", // All passengers accepted (ready to start)
+            riderPickupConfirmedAt: new Date(), // Simulate rider confirming pickup for test trips
           })
           .returning();
-
         createdRequests.push(request);
       }
-
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:createTorontoTestTrip:success",
-            message: "Test trip created",
-            data: {
-              tripId,
-              passengerCount: input.passengerCount,
-              createdRequestsCount: createdRequests.length,
-              bookedSeats: trip.bookedSeats,
-              maxSeats: trip.maxSeats,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "L",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
       return {
         trip,
         passengers: createdRequests,
@@ -635,6 +612,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       // Get trip
       const [trip] = await ctx.db
         .select()
@@ -718,9 +696,10 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       const riderId = ctx.userId!;
 
-      // If tripId not provided, find first available trip (pending/active with seats and not cancelled)
+      // If tripId not provided, find first available trip (pending/active with seats, not cancelled, and rider is not the driver)
       let targetTripId = input.tripId;
       if (!targetTripId) {
         const availableTrips = await ctx.db
@@ -729,17 +708,61 @@ export const adminRouter = router({
           .where(
             and(
               or(eq(trips.status, "pending"), eq(trips.status, "active")),
-              sql`${trips.maxSeats} - ${trips.bookedSeats} > 0`
+              sql`${trips.maxSeats} - ${trips.bookedSeats} > 0`,
+              ne(trips.driverId, riderId) // Exclude trips where rider is the driver
             )
           )
           .limit(1);
         if (!availableTrips.length) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "No available trips found to attach a test request",
+          // Auto-create a test trip with a dummy driver
+          const dummyDriverId = crypto.randomUUID();
+          const dummyDriverEmail = `test-driver-${Date.now()}@mcmaster.ca`;
+
+          // Create dummy driver user
+          await ctx.db.insert(users).values({
+            id: dummyDriverId,
+            email: dummyDriverEmail,
+            name: "Test Driver",
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           });
+
+          // Create driver profile
+          await ctx.db.insert(profiles).values({
+            userId: dummyDriverId,
+            universityRole: "student",
+            appRole: "driver",
+            defaultAddress: "McMaster University",
+            defaultLat: MCMASTER_COORDS.lat,
+            defaultLong: MCMASTER_COORDS.lng,
+          });
+
+          // Create test trip
+          const autoTripId = crypto.randomUUID();
+          const departureTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+          await ctx.db
+            .insert(trips)
+            .values({
+              id: autoTripId,
+              driverId: dummyDriverId,
+              origin: "McMaster University",
+              destination: "Toronto Union Station",
+              originLat: MCMASTER_COORDS.lat,
+              originLng: MCMASTER_COORDS.lng,
+              destLat: MAIN_ST_COORDS.lat,
+              destLng: MAIN_ST_COORDS.lng,
+              departureTime,
+              maxSeats: 4,
+              bookedSeats: 0,
+              status: "active",
+            })
+            .returning();
+          targetTripId = autoTripId;
+        } else {
+          targetTripId = availableTrips[0].id;
         }
-        targetTripId = availableTrips[0].id;
       }
 
       // Verify trip and availability
@@ -808,32 +831,6 @@ export const adminRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(trips.id, trip.id));
-
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:createTestRequest:success",
-            message: "Test request created",
-            data: {
-              requestId: request.id,
-              requestStatus: request.status,
-              tripId: trip.id,
-              tripStatus: trip.status,
-              bookedSeats: trip.bookedSeats + 1,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "debug-test-request",
-            hypothesisId: "C",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
       return request;
     }),
 
@@ -849,6 +846,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       // Get request
       const [request] = await ctx.db
         .select()
@@ -912,6 +910,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       // Get request
       const [request] = await ctx.db
         .select()
@@ -987,6 +986,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       const riderId = ctx.userId!;
 
       // Try to use provided tripId, else find an available trip, else create one with a dummy driver.
@@ -1091,6 +1091,7 @@ export const adminRouter = router({
   simulateDriverComplete: protectedProcedure
     .input(z.object({ tripId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
       const driverId = ctx.userId!;
 
       const [trip] = await ctx.db
@@ -1159,6 +1160,29 @@ export const adminRouter = router({
           .where(eq(trips.id, input.tripId))
           .returning();
         newStatus = updatedTrip?.status ?? newStatus;
+
+        // Send Trip Completed notification to all completed riders
+        const completedRequestIds = [...onTripIds, ...acceptedIds];
+        if (completedRequestIds.length > 0) {
+          const completedRiders = await ctx.db
+            .select({ userId: users.id, pushToken: users.pushToken })
+            .from(users)
+            .innerJoin(tripRequests, eq(tripRequests.riderId, users.id))
+            .where(inArray(tripRequests.id, completedRequestIds));
+
+          if (completedRiders.length > 0) {
+            const { sendTripNotification } =
+              await import("../../services/notification_service");
+            await sendTripNotification(
+              completedRiders,
+              "Trip Completed",
+              `Your trip from ${trip.origin} to ${trip.destination} is complete. Thanks for riding with Hitchly!`,
+              { tripId: input.tripId, action: "completed" }
+            ).catch((err) =>
+              console.error("Failed to send complete notification:", err)
+            );
+          }
+        }
       }
 
       return {
@@ -1172,6 +1196,88 @@ export const adminRouter = router({
     }),
 
   /**
+   * Simulate trip start notification (for testing rider notifications)
+   * Allows riders to test the "Trip Starting" notification
+   */
+  simulateTripStartNotification: protectedProcedure
+    .input(z.object({ tripId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId))
+        .limit(1);
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      // Get current user's push token
+      const [user] = await ctx.db
+        .select({ userId: users.id, pushToken: users.pushToken })
+        .from(users)
+        .where(eq(users.id, ctx.userId!));
+
+      if (user?.pushToken) {
+        const { sendTripNotification } =
+          await import("../../services/notification_service");
+        await sendTripNotification(
+          [user],
+          "Trip Starting",
+          "Your driver is on the way! Get ready for pickup.",
+          { tripId: input.tripId, action: "started" }
+        );
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Simulate trip cancel notification (for testing rider notifications)
+   * Allows riders to test the "Trip Cancelled" notification
+   */
+  simulateTripCancelNotification: protectedProcedure
+    .input(z.object({ tripId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await requireTestAccount(ctx.userId!);
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId))
+        .limit(1);
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      // Get current user's push token
+      const [user] = await ctx.db
+        .select({ userId: users.id, pushToken: users.pushToken })
+        .from(users)
+        .where(eq(users.id, ctx.userId!));
+
+      if (user?.pushToken) {
+        const { sendTripNotification } =
+          await import("../../services/notification_service");
+        await sendTripNotification(
+          [user],
+          "Trip Cancelled",
+          `Your trip from ${trip.origin} to ${trip.destination} has been cancelled by the driver.`,
+          { tripId: input.tripId, action: "cancelled" }
+        );
+      }
+
+      return { success: true };
+    }),
+
+  /**
    * Delete dummy passengers for a trip (identified by email pattern)
    */
   deleteDummyPassengers: protectedProcedure
@@ -1181,25 +1287,7 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:deleteDummyPassengers:entry",
-            message: "Deleting dummy passengers",
-            data: { tripId: input.tripId },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
+      await requireTestAccount(ctx.userId!);
       // Get trip
       const [trip] = await ctx.db
         .select()
@@ -1215,35 +1303,10 @@ export const adminRouter = router({
       }
 
       // Find all dummy passengers (by email pattern)
-      const dummyRequestPattern = `dummy-rider-%@test.com`;
       const allRequests = await ctx.db
         .select()
         .from(tripRequests)
         .where(eq(tripRequests.tripId, input.tripId));
-
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:deleteDummyPassengers:beforeFilter",
-            message: "Found requests",
-            data: {
-              tripId: input.tripId,
-              totalRequests: allRequests.length,
-              requestIds: allRequests.map((r) => r.id),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
       // Filter dummy passengers by email pattern
       const dummyRequests = [];
       for (const request of allRequests) {
@@ -1261,30 +1324,6 @@ export const adminRouter = router({
           dummyRequests.push(request);
         }
       }
-
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:deleteDummyPassengers:afterFilter",
-            message: "Filtered dummy requests",
-            data: {
-              tripId: input.tripId,
-              dummyCount: dummyRequests.length,
-              dummyRequestIds: dummyRequests.map((r) => r.id),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
       if (dummyRequests.length === 0) {
         return { deletedCount: 0, updatedBookedSeats: trip.bookedSeats };
       }
@@ -1321,31 +1360,6 @@ export const adminRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(trips.id, input.tripId));
-
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "admin.ts:deleteDummyPassengers:success",
-            message: "Dummy passengers deleted",
-            data: {
-              tripId: input.tripId,
-              deletedCount: dummyRequests.length,
-              oldBookedSeats: trip.bookedSeats,
-              newBookedSeats,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
-
       return {
         deletedCount: dummyRequests.length,
         updatedBookedSeats: newBookedSeats,

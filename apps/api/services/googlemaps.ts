@@ -1,5 +1,7 @@
 import { Client } from "@googlemaps/google-maps-services-js";
 import { env } from "../config/env";
+import { db, eq, and, gte } from "@hitchly/db/client";
+import { routes } from "@hitchly/db/schema";
 
 // Verify API key is loaded at startup
 if (!env.google.apiKey) {
@@ -34,7 +36,7 @@ const toGoogleLatLng = (loc: Location) => ({
   lng: loc.lng,
 });
 
-async function getRouteDetails(
+export async function getRouteDetails(
   origin: Location,
   destination: Location,
   waypoints: Location[] = [],
@@ -108,33 +110,8 @@ async function getRouteDetails(
 export async function geocodeAddress(
   address: string
 ): Promise<Location | null> {
-  // #region agent log - declare LOG_ENDPOINT at function scope
-  const LOG_ENDPOINT =
-    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-  // #endregion agent log
-
   try {
     const apiKey = env.google.apiKey;
-    // #region agent log
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "googlemaps.ts:86",
-        message: "Geocoding address",
-        data: {
-          address,
-          apiKeySet: !!apiKey,
-          apiKeyLength: apiKey?.length ?? 0,
-          apiKeyPrefix: apiKey?.substring(0, 10) ?? "none",
-          expectedKey: "AIzaSyC0BL",
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        hypothesisId: "I",
-      }),
-    }).catch(() => {});
-    // #endregion agent log
 
     const response = await mapsClient.geocode({
       params: {
@@ -144,46 +121,10 @@ export async function geocodeAddress(
     });
 
     if (response.data.results.length === 0) {
-      // #region agent log
-      fetch(LOG_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          location: "googlemaps.ts:130",
-          message: "Geocoding returned no results",
-          data: {
-            address,
-            status: response.status,
-            statusText: response.statusText,
-          },
-          timestamp: Date.now(),
-          sessionId: "debug-session",
-          hypothesisId: "I",
-        }),
-      }).catch(() => {});
-      // #endregion agent log
       throw new Error(`No results found for address: ${address}`);
     }
 
     const location = response.data.results[0].geometry.location;
-    // #region agent log
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "googlemaps.ts:134",
-        message: "Geocoding succeeded",
-        data: {
-          address,
-          location,
-          status: response.status,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        hypothesisId: "I",
-      }),
-    }).catch(() => {});
-    // #endregion agent log
     return {
       lat: location.lat,
       lng: location.lng,
@@ -192,33 +133,6 @@ export async function geocodeAddress(
     const errorData = error?.response?.data;
     const errorMessage = error?.message || String(error);
     const errorStatus = error?.response?.status;
-
-    // #region agent log
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "googlemaps.ts:180",
-        message: "Geocoding error caught - detailed",
-        data: {
-          address,
-          errorMessage,
-          errorCode: errorStatus,
-          errorData: errorData ? JSON.stringify(errorData) : null,
-          errorStatus: error?.response?.statusText,
-          fullError: error
-            ? JSON.stringify(error, Object.getOwnPropertyNames(error))
-            : null,
-          is403: errorStatus === 403,
-          isRequestDenied: errorData?.status === "REQUEST_DENIED",
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "geocode-debug",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion agent log
 
     // Check for various API-related errors
     const errorMsg = errorData?.error_message || errorMessage || "";
@@ -300,5 +214,96 @@ export async function getDetourAndRideDetails(
       rideDistanceKm: 0,
       rideDurationSeconds: 0,
     };
+  }
+}
+
+// Cache expiry time (24 hours in milliseconds)
+const ROUTE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Generate a cache key for route caching
+ * Rounds coordinates to 4 decimal places (~11m precision) for better cache hits
+ */
+function generateRouteCacheKey(
+  origin: Location,
+  destination: Location,
+  waypoints: Location[] = []
+): string {
+  const round = (n: number) => n.toFixed(4);
+  const originStr = `${round(origin.lat)},${round(origin.lng)}`;
+  const destStr = `${round(destination.lat)},${round(destination.lng)}`;
+  const waypointsStr = waypoints
+    .map((w) => `${round(w.lat)},${round(w.lng)}`)
+    .sort()
+    .join("|");
+  return `${originStr}->${destStr}${waypointsStr ? `|${waypointsStr}` : ""}`;
+}
+
+export type TripDistanceResult = {
+  distanceKm: number;
+  durationSeconds: number;
+} | null;
+
+/**
+ * Calculate trip distance with route caching
+ * Checks cache first, calls Google Maps API if cache miss, and stores result
+ */
+export async function calculateTripDistance(
+  origin: Location,
+  destination: Location,
+  waypoints: Location[] = []
+): Promise<TripDistanceResult> {
+  try {
+    const cacheKey = generateRouteCacheKey(origin, destination, waypoints);
+    const twentyFourHoursAgo = new Date(Date.now() - ROUTE_CACHE_TTL_MS);
+
+    // Check cache first
+    const cached = await db.query.routes.findFirst({
+      where: and(
+        eq(routes.id, cacheKey),
+        gte(routes.cachedAt, twentyFourHoursAgo)
+      ),
+    });
+
+    if (cached && cached.distance && cached.duration) {
+      return {
+        distanceKm: parseFloat(cached.distance),
+        durationSeconds: cached.duration * 60,
+      };
+    }
+
+    // Cache miss - call Google Maps API
+    const result = await getRouteDetails(origin, destination, waypoints);
+
+    const distanceKm = result.totalDistanceMeters / 1000;
+    const durationMinutes = Math.round(result.totalDurationSeconds / 60);
+
+    // Store in cache (upsert)
+    await db
+      .insert(routes)
+      .values({
+        id: cacheKey,
+        origin: JSON.stringify(origin),
+        destination: JSON.stringify(destination),
+        distance: distanceKm.toFixed(2),
+        duration: durationMinutes,
+        cachedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: routes.id,
+        set: {
+          distance: distanceKm.toFixed(2),
+          duration: durationMinutes,
+          cachedAt: new Date(),
+        },
+      });
+
+    return {
+      distanceKm,
+      durationSeconds: result.totalDurationSeconds,
+    };
+  } catch (error) {
+    console.error("Error calculating trip distance:", error);
+    return null;
   }
 }

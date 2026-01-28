@@ -10,7 +10,6 @@ import {
   TextInput,
   Animated,
 } from "react-native";
-import { trpc } from "@/lib/trpc";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +18,8 @@ import { useRouter } from "expo-router";
 import { SwipeDeck, TripCard, type RideMatch } from "../../components/swipe";
 import { DatePickerComponent } from "../../components/ui/date-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { trpc } from "../../lib/trpc";
+import { isTestAccount } from "../../lib/test-accounts";
 
 // McMaster University coordinates (default destination)
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
@@ -26,6 +27,10 @@ const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 export default function Matchmaking() {
   const { colors } = useTheme();
   const router = useRouter();
+  const { data: userProfile, isLoading: profileLoading } =
+    trpc.profile.getMe.useQuery();
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
   const [desiredArrivalTime, setDesiredArrivalTime] = useState("09:00");
   const [desiredDate, setDesiredDate] = useState<Date | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -103,7 +108,6 @@ export default function Matchmaking() {
     // Always save (even if empty) to ensure storage is in sync
     saveSwipedCards();
   }, [swipedCardIds]);
-  const utils = trpc.useUtils();
 
   // #region agent log
   const LOG_ENDPOINT =
@@ -137,9 +141,7 @@ export default function Matchmaking() {
     }).start();
   }, [includeDummyMatches, toggleAnim]);
 
-  // Get user profile with default location
-  const { data: userProfile, isLoading: profileLoading } =
-    trpc.profile.getMe.useQuery();
+  // User profile already loaded above
 
   // Build search params from user's profile - useMemo to stabilize object reference
   const searchParams = useMemo(() => {
@@ -293,7 +295,7 @@ export default function Matchmaking() {
     return filtered;
   }, [matchesQuery.data, swipedCardIds, swipedCardsLoaded]);
 
-  const requestRideMutation = trpc.matchmaking.requestRide.useMutation({
+  const requestRideMutation = trpc.trip.createTripRequest.useMutation({
     onSuccess: () => {
       // Alert removed per user request
       // Request sent silently
@@ -359,7 +361,7 @@ export default function Matchmaking() {
           return;
         }
         requestRideMutation.mutate({
-          rideId: matchData.rideId,
+          tripId: matchData.rideId,
           pickupLat: searchParamsData.origin.lat,
           pickupLng: searchParamsData.origin.lng,
         });
@@ -594,68 +596,70 @@ export default function Matchmaking() {
             </View>
 
             {/* Dummy Matches Toggle */}
-            <View style={styles.inputGroup}>
-              <View
-                style={[
-                  styles.toggleContainer,
-                  {
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.toggleLabelContainer}>
-                  <Ionicons
-                    name="flask-outline"
-                    size={18}
-                    color={colors.textSecondary}
-                  />
-                  <Text style={[styles.toggleLabel, { color: colors.text }]}>
-                    Include Test Matches
-                  </Text>
-                </View>
-                <TouchableOpacity
+            {isTestUser && (
+              <View style={styles.inputGroup}>
+                <View
                   style={[
-                    styles.toggleSwitch,
+                    styles.toggleContainer,
                     {
-                      backgroundColor: includeDummyMatches
-                        ? colors.primary
-                        : colors.border,
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
                     },
                   ]}
-                  onPress={() => {
-                    // #region agent log
-                    log(
-                      "matchmaking.tsx:315",
-                      "Toggle clicked",
-                      {
-                        currentValue: includeDummyMatches,
-                        newValue: !includeDummyMatches,
-                      },
-                      "A"
-                    );
-                    // #endregion agent log
-                    setIncludeDummyMatches(!includeDummyMatches);
-                  }}
                 >
-                  <Animated.View
+                  <View style={styles.toggleLabelContainer}>
+                    <Ionicons
+                      name="flask-outline"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={[styles.toggleLabel, { color: colors.text }]}>
+                      Include Test Matches
+                    </Text>
+                  </View>
+                  <TouchableOpacity
                     style={[
-                      styles.toggleThumb,
+                      styles.toggleSwitch,
                       {
-                        transform: [
-                          {
-                            translateX: toggleAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 22],
-                            }),
-                          },
-                        ],
+                        backgroundColor: includeDummyMatches
+                          ? colors.primary
+                          : colors.border,
                       },
                     ]}
-                  />
-                </TouchableOpacity>
+                    onPress={() => {
+                      // #region agent log
+                      log(
+                        "matchmaking.tsx:315",
+                        "Toggle clicked",
+                        {
+                          currentValue: includeDummyMatches,
+                          newValue: !includeDummyMatches,
+                        },
+                        "A"
+                      );
+                      // #endregion agent log
+                      setIncludeDummyMatches(!includeDummyMatches);
+                    }}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.toggleThumb,
+                        {
+                          transform: [
+                            {
+                              translateX: toggleAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 22],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
           </View>
 
           <TouchableOpacity

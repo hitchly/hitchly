@@ -8,8 +8,7 @@ import {
   trips,
   tripRequests,
 } from "@hitchly/db/schema";
-import { eq, and } from "drizzle-orm";
-import { auth } from "../auth/auth";
+import { eq } from "drizzle-orm";
 
 // McMaster University coordinates
 const MCMASTER_COORDS = {

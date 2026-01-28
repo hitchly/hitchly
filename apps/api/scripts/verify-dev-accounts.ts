@@ -3,15 +3,7 @@ import { db } from "@hitchly/db/client";
 import { users } from "@hitchly/db/schema";
 import { inArray } from "drizzle-orm";
 
-const testEmails = [
-  "driver@mcmaster.ca",
-  "rider@mcmaster.ca",
-  "burhan.test@mcmaster.ca",
-  "sarim.test@mcmaster.ca",
-  "hamzah.test@mcmaster.ca",
-  "aidan.test@mcmaster.ca",
-  "swesan.test@mcmaster.ca",
-];
+const testEmails = ["driver@mcmaster.ca", "rider@mcmaster.ca"];
 
 async function verifyDevAccounts() {
   console.log("🔐 Verifying developer test accounts...\n");

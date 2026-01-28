@@ -1,62 +1,29 @@
-import type { Context } from "../../context";
-import {
-  MAX_SEATS,
-  TIME_WINDOW_MIN,
-  trips,
-  tripRequests,
-  users,
-} from "@hitchly/db/schema";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { TIME_WINDOW_MIN, trips } from "@hitchly/db/schema";
 import { tripRouter } from "../trip";
+import { createMockDb } from "../../../tests/utils/mockDb";
+import { createMockContext } from "../../../tests/utils/mockContext";
+import {
+  createMockTrip,
+  createMockTripRequest,
+} from "../../../tests/utils/fixtures";
 
-// Mock database with proper chaining
-const createMockDb = () => {
-  const mockDb: any = {
-    select: jest.fn(),
-    insert: jest.fn(),
-    update: jest.fn(),
-  };
+// Mock geocodeAddress
+vi.mock("../../services/googlemaps", () => ({
+  geocodeAddress: vi.fn().mockResolvedValue({ lat: 43.2609, lng: -79.9192 }),
+  calculateTripDistance: vi.fn().mockResolvedValue({ distanceKm: 15.5 }),
+}));
 
-  // Setup select chain
-  mockDb.select.mockReturnValue({
-    from: jest.fn().mockReturnValue({
-      where: jest.fn().mockReturnValue({
-        orderBy: jest.fn(),
-      }),
-    }),
-  });
-
-  // Setup insert chain
-  mockDb.insert.mockReturnValue({
-    values: jest.fn().mockReturnValue({
-      returning: jest.fn(),
-    }),
-  });
-
-  // Setup update chain
-  mockDb.update.mockReturnValue({
-    set: jest.fn().mockReturnValue({
-      where: jest.fn().mockReturnValue({
-        returning: jest.fn(),
-      }),
-    }),
-  });
-
-  return mockDb;
-};
-
-// Mock context
-const createMockContext = (userId?: string, db?: any): Context => ({
-  req: {} as any,
-  resHeaders: new Headers(),
-  db: db || createMockDb(),
-  userId,
-});
+// Mock notification service
+vi.mock("../../services/notification_service", () => ({
+  sendTripNotification: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("Trip Router", () => {
   let mockDb: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockDb = createMockDb();
   });
 
@@ -88,15 +55,15 @@ describe("Trip Router", () => {
 
       // Setup user lookup
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockUser]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockUser]),
         }),
       });
 
       // Setup trip insert
       mockDb.insert.mockReturnValueOnce({
-        values: jest.fn().mockReturnValueOnce({
-          returning: jest.fn().mockResolvedValueOnce([mockTrip]),
+        values: vi.fn().mockReturnValueOnce({
+          returning: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
@@ -117,8 +84,8 @@ describe("Trip Router", () => {
       };
 
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockUser]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockUser]),
         }),
       });
 
@@ -144,8 +111,8 @@ describe("Trip Router", () => {
       };
 
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockUser]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockUser]),
         }),
       });
 
@@ -210,9 +177,9 @@ describe("Trip Router", () => {
       ];
 
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockReturnValueOnce({
-            orderBy: jest.fn().mockResolvedValueOnce(mockTrips),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            orderBy: vi.fn().mockResolvedValueOnce(mockTrips),
           }),
         }),
       });
@@ -243,9 +210,9 @@ describe("Trip Router", () => {
       ];
 
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockReturnValueOnce({
-            orderBy: jest.fn().mockResolvedValueOnce(mockTrips),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            orderBy: vi.fn().mockResolvedValueOnce(mockTrips),
           }),
         }),
       });
@@ -288,15 +255,18 @@ describe("Trip Router", () => {
 
       // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
       // Mock requests lookup
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce(mockRequests),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(mockRequests),
+          leftJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce(mockRequests),
+          }),
         }),
       });
 
@@ -313,8 +283,8 @@ describe("Trip Router", () => {
 
     it("should throw error if trip not found", async () => {
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
         }),
       });
 
@@ -357,12 +327,13 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock update
       const updatedTrip = { ...mockTrip, ...updates };
+
+      // Mock update
       mockDb.update.mockReturnValueOnce({
-        set: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockReturnValueOnce({
-            returning: jest.fn().mockResolvedValueOnce([updatedTrip]),
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([updatedTrip]),
           }),
         }),
       });
@@ -432,17 +403,26 @@ describe("Trip Router", () => {
       // Mock trip update
       const cancelledTrip = { ...mockTrip, status: "cancelled" as const };
       mockDb.update.mockReturnValueOnce({
-        set: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockReturnValueOnce({
-            returning: jest.fn().mockResolvedValueOnce([cancelledTrip]),
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([cancelledTrip]),
           }),
         }),
       });
 
       // Mock trip requests update
       mockDb.update.mockReturnValueOnce({
-        set: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce(undefined),
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      // Mock accepted riders query for notifications
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce([]),
+          }),
         }),
       });
 
@@ -483,6 +463,553 @@ describe("Trip Router", () => {
       await expect(caller.cancelTrip({ tripId })).rejects.toThrow(
         "Cannot cancel a completed or already cancelled trip"
       );
+    });
+  });
+
+  describe("startTrip", () => {
+    const tripId = "trip123";
+    const userId = "user123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId: userId,
+      status: "active",
+    });
+
+    it("should start trip successfully", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      const startedTrip = { ...mockTrip, status: "in_progress" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([startedTrip]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce([]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const result = await caller.startTrip({ tripId });
+
+      expect(result.status).toBe("in_progress");
+    });
+
+    it("should reject start from non-owner", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext("otherUser", mockDb)
+      );
+
+      await expect(caller.startTrip({ tripId })).rejects.toThrow(
+        "Unauthorized: You can only start your own trips"
+      );
+    });
+
+    it("should reject start of non-active trips", async () => {
+      const pendingTrip = { ...mockTrip, status: "pending" as const };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([pendingTrip]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+
+      await expect(caller.startTrip({ tripId })).rejects.toThrow(
+        "Can only start trips that are in active status"
+      );
+    });
+  });
+
+  describe("updatePassengerStatus", () => {
+    const tripId = "trip123";
+    const requestId = "request123";
+    const userId = "user123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId: userId,
+      status: "in_progress",
+    });
+    const mockRequest = createMockTripRequest({
+      id: requestId,
+      tripId,
+      status: "accepted",
+      riderPickupConfirmedAt: new Date(),
+    });
+
+    it("should update passenger status to on_trip (pickup)", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockRequest]),
+        }),
+      });
+
+      const updatedRequest = { ...mockRequest, status: "on_trip" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([updatedRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const result = await caller.updatePassengerStatus({
+        tripId,
+        requestId,
+        action: "pickup",
+      });
+
+      expect(result.status).toBe("on_trip");
+    });
+
+    it("should update passenger status to completed (dropoff)", async () => {
+      const onTripRequest = { ...mockRequest, status: "on_trip" as const };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([onTripRequest]),
+        }),
+      });
+
+      const updatedRequest = { ...onTripRequest, status: "completed" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([updatedRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const result = await caller.updatePassengerStatus({
+        tripId,
+        requestId,
+        action: "dropoff",
+      });
+
+      expect(result.status).toBe("completed");
+    });
+
+    it("should reject pickup without rider confirmation", async () => {
+      const unconfirmedRequest = {
+        ...mockRequest,
+        riderPickupConfirmedAt: null,
+      };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([unconfirmedRequest]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+
+      await expect(
+        caller.updatePassengerStatus({ tripId, requestId, action: "pickup" })
+      ).rejects.toThrow("Rider has not confirmed pickup yet");
+    });
+
+    it("should reject update when trip is not in_progress", async () => {
+      const activeTrip = { ...mockTrip, status: "active" as const };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([activeTrip]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+
+      await expect(
+        caller.updatePassengerStatus({ tripId, requestId, action: "pickup" })
+      ).rejects.toThrow(
+        "Can only update passenger status when trip is in progress"
+      );
+    });
+  });
+
+  describe("completeTrip", () => {
+    const tripId = "trip123";
+    const userId = "user123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId: userId,
+      status: "in_progress",
+      updatedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+    });
+
+    it("should complete trip successfully", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]), // No accepted requests
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]), // No on_trip requests
+        }),
+      });
+
+      const completedTrip = { ...mockTrip, status: "completed" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([completedTrip]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]), // Completed requests
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const result = await caller.completeTrip({ tripId });
+
+      expect(result.trip.status).toBe("completed");
+      expect(result.summary).toHaveProperty("durationMinutes");
+      expect(result.summary).toHaveProperty("totalEarningsCents");
+      expect(result.summary).toHaveProperty("passengerCount");
+    });
+
+    it("should reject completion with incomplete passengers", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              createMockTripRequest({ status: "accepted" }),
+            ]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+
+      await expect(caller.completeTrip({ tripId })).rejects.toThrow(
+        "Cannot complete trip: not all passengers have been dropped off"
+      );
+    });
+  });
+
+  describe("createTripRequest", () => {
+    const tripId = "trip123";
+    const riderId = "rider123";
+    const driverId = "driver123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId,
+      status: "active",
+      bookedSeats: 1,
+      maxSeats: 3,
+    });
+
+    it("should create trip request successfully", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockTrip]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([]), // No existing request
+          }),
+        }),
+      });
+
+      const mockRequest = createMockTripRequest({
+        tripId,
+        riderId,
+        pickupLat: 43.2609,
+        pickupLng: -79.9192,
+      });
+      mockDb.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnValueOnce({
+          returning: vi.fn().mockResolvedValueOnce([mockRequest]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb)
+      );
+      const result = await caller.createTripRequest({
+        tripId,
+        pickupLat: 43.2609,
+        pickupLng: -79.9192,
+      });
+
+      expect(result.tripId).toBe(tripId);
+      expect(result.riderId).toBe(riderId);
+    });
+
+    it("should reject request from driver", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockTrip]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb)
+      );
+
+      await expect(
+        caller.createTripRequest({
+          tripId,
+          pickupLat: 43.2609,
+          pickupLng: -79.9192,
+        })
+      ).rejects.toThrow("You cannot request to join your own trip");
+    });
+
+    it("should reject request when no seats available", async () => {
+      const fullTrip = { ...mockTrip, bookedSeats: 3, maxSeats: 3 };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([fullTrip]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb)
+      );
+
+      await expect(
+        caller.createTripRequest({
+          tripId,
+          pickupLat: 43.2609,
+          pickupLng: -79.9192,
+        })
+      ).rejects.toThrow("This trip has no available seats");
+    });
+  });
+
+  describe("acceptTripRequest", () => {
+    const requestId = "request123";
+    const tripId = "trip123";
+    const driverId = "driver123";
+    const riderId = "rider123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId,
+      status: "pending",
+      bookedSeats: 0,
+      maxSeats: 3,
+    });
+    const mockRequest = createMockTripRequest({
+      id: requestId,
+      tripId,
+      riderId,
+      status: "pending",
+    });
+
+    it("should accept trip request successfully", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValueOnce([
+                {
+                  request: mockRequest,
+                  trip: mockTrip,
+                },
+              ]),
+            }),
+          }),
+        }),
+      });
+
+      const acceptedRequest = { ...mockRequest, status: "accepted" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([acceptedRequest]),
+          }),
+        }),
+      });
+
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb)
+      );
+      const result = await caller.acceptTripRequest({ requestId });
+
+      expect(result.status).toBe("accepted");
+    });
+
+    it("should activate trip when first request accepted", async () => {
+      const pendingTrip = { ...mockTrip, status: "pending" as const };
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValueOnce([
+                {
+                  request: mockRequest,
+                  trip: pendingTrip,
+                },
+              ]),
+            }),
+          }),
+        }),
+      });
+
+      const acceptedRequest = { ...mockRequest, status: "accepted" as const };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([acceptedRequest]),
+          }),
+        }),
+      });
+
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb)
+      );
+      await caller.acceptTripRequest({ requestId });
+
+      // Trip should be updated to active
+      expect(mockDb.update).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("getAvailableTrips", () => {
+    const riderId = "rider123";
+    const driverId = "driver123";
+
+    it("should exclude driver's own trips", async () => {
+      const driverTrip = createMockTrip({ driverId, status: "active" });
+      const otherTrip = createMockTrip({
+        driverId: "other-driver",
+        status: "active",
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            orderBy: vi.fn().mockResolvedValueOnce([driverTrip, otherTrip]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]), // No existing requests
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb)
+      );
+      const result = await caller.getAvailableTrips({});
+
+      // Should filter out driver's own trip
+      expect(result.every((t) => t.driverId !== riderId)).toBe(true);
+    });
+  });
+
+  describe("fixTripStatus", () => {
+    const driverId = "driver123";
+    const tripId = "trip123";
+    const mockTrip = createMockTrip({
+      id: tripId,
+      driverId,
+      status: "pending",
+    });
+
+    it("should fix stuck trip status", async () => {
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([{ trip: mockTrip }]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([
+            { count: 2 }, // 2 accepted riders
+          ]),
+        }),
+      });
+
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb)
+      );
+      const result = await caller.fixTripStatus({ tripId });
+
+      expect(result.success).toBe(true);
+      expect(result.fixedCount).toBe(1);
     });
   });
 });

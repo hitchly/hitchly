@@ -78,6 +78,9 @@ DB_NAME=hitchly_db
 # API configuration
 API_PORT=3000
 
+# Google Maps API (required for trip module - geocoding and routing)
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+
 # Email configuration (for OTP verification)
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587
@@ -114,10 +117,10 @@ docker-compose up -d db
 cd apps/api
 
 # Generate migration files
-npm run drizzle:generate
+npm run db:generate
 
 # Apply migrations to database
-npm run drizzle:migrate
+npm run db:migrate
 ```
 
 ## Running the Application
@@ -214,7 +217,58 @@ When Expo starts, you can:
 
 ## Development Workflow
 
+### Testing Setup
+
+Before running tests, ensure you have:
+
+1. Completed the database setup (migrations applied) - see [Set Up Database](#4-set-up-database) section
+2. Set up test environment variables
+3. Seeded test accounts
+
+#### 1. Set Up Test Environment Variables
+
+Ensure your `.env` file includes:
+
+```env
+# Database configuration (can use same as dev)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=hitchly_db
+
+# Google Maps API Key (required for trip module tests)
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+**Note:** Tests use the same database as development. Consider using a separate test database for production testing.
+
+#### 2. Seed Test Accounts
+
+Create developer test accounts that can be used for testing:
+
+```bash
+cd apps/api
+npm run seed:dev
+```
+
+This creates the following test accounts (password: `test1234`):
+
+- `driver@mcmaster.ca` - Test Driver
+- `rider@mcmaster.ca` - Test Rider
+
+#### 3. Verify Test Accounts
+
+Mark all test accounts as email verified (required for trip creation):
+
+```bash
+cd apps/api
+npx tsx scripts/verify-dev-accounts.ts
+```
+
 ### Running Tests
+
+The project uses **Vitest** as the test framework. Tests are located in `__tests__` directories or files ending with `.test.ts` or `.spec.ts`.
 
 ```bash
 # Run all tests
@@ -223,9 +277,52 @@ npm test
 # Run API tests only
 cd apps/api && npm test
 
-# Run tests in watch mode
+# Run tests in watch mode (for development)
 cd apps/api && npm test -- --watch
+
+# Run specific test file
+cd apps/api && npm test -- services/__tests__/pricing_service.test.ts
+
+# Run tests with coverage
+cd apps/api && npm test -- --coverage
+
+# Run tests in UI mode (interactive)
+cd apps/api && npm test -- --ui
 ```
+
+#### Test Structure
+
+Tests are organized as follows:
+
+- **Service Tests**: `apps/api/services/__tests__/`
+  - `pricing_service.test.ts` - Pricing calculations
+  - `matchmaking_service.test.ts` - Matchmaking algorithms
+  - `googlemaps.test.ts` - Google Maps integration
+
+- **Router Tests**: `apps/api/trpc/routers/__tests__/`
+  - `trip.test.ts` - Trip CRUD and request management
+  - `matchmaking.test.ts` - Matchmaking endpoints
+
+- **Test Utilities**: `apps/api/tests/utils/`
+  - `mockDb.ts` - Database mocking helpers
+  - `mockContext.ts` - tRPC context mocking
+  - `fixtures.ts` - Test data fixtures
+
+#### Test Accounts for Manual Testing
+
+When testing manually via the mobile app or API:
+
+**Driver Account:**
+
+- Email: `driver@mcmaster.ca`
+- Password: `test1234`
+
+**Rider Account:**
+
+- Email: `rider@mcmaster.ca`
+- Password: `test1234`
+
+These accounts are pre-configured with profiles, vehicles, and preferences suitable for testing the trip module functionality.
 
 ### Type Checking
 

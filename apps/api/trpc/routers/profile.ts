@@ -13,6 +13,7 @@ import {
   vehicles,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { protectedProcedure, router } from "../trpc";
 
 const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder
@@ -210,4 +211,18 @@ export const profileRouter = router({
       },
     };
   }),
+
+  /**
+   * updatePushToken()
+   * Updates the user's Expo push notification token.
+   */
+  updatePushToken: protectedProcedure
+    .input(z.object({ pushToken: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(users)
+        .set({ pushToken: input.pushToken })
+        .where(eq(users.id, ctx.userId!));
+      return { success: true };
+    }),
 });

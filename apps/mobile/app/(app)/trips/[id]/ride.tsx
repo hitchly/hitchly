@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { trpc } from "../../../../lib/trpc";
 import { openStopNavigation } from "../../../../lib/navigation";
 import { authClient } from "../../../../lib/auth-client";
+import { isTestAccount } from "../../../../lib/test-accounts";
 
 const formatOrdinal = (n: number) => {
   const s = ["th", "st", "nd", "rd"];
@@ -36,19 +37,20 @@ const formatCityProvince = (address?: string | null) => {
 };
 
 export default function RideScreen() {
-  const { id, referrer } = useLocalSearchParams<{
+  const { id } = useLocalSearchParams<{
     id: string;
-    referrer?: string;
   }>();
   const router = useRouter();
   const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
+  const { data: userProfile } = trpc.profile.getMe.useQuery();
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
 
   const {
     data: trip,
     isLoading,
-    error,
     refetch,
   } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
 
@@ -87,6 +89,26 @@ export default function RideScreen() {
       Alert.alert("Error", error.message);
     },
   });
+
+  const simulateTripStartNotification =
+    trpc.admin.simulateTripStartNotification.useMutation({
+      onSuccess: () => {
+        Alert.alert("Success", "Trip Start notification sent!");
+      },
+      onError: (error) => {
+        Alert.alert("Error", error.message);
+      },
+    });
+
+  const simulateTripCancelNotification =
+    trpc.admin.simulateTripCancelNotification.useMutation({
+      onSuccess: () => {
+        Alert.alert("Success", "Trip Cancel notification sent!");
+      },
+      onError: (error) => {
+        Alert.alert("Error", error.message);
+      },
+    });
 
   // Auto-redirect to review page when trip is completed
   // Must be before conditional returns to maintain hook order
@@ -278,7 +300,7 @@ export default function RideScreen() {
             )}
 
             {/* Test Driver Actions */}
-            {!isCompleted && (
+            {!isCompleted && isTestUser && (
               <View style={styles.testButtons}>
                 {isAccepted && pickupConfirmed && (
                   <TouchableOpacity
@@ -349,6 +371,61 @@ export default function RideScreen() {
                       </>
                     )}
                   </TouchableOpacity>
+                )}
+                {/* Notification Test Buttons */}
+                {isAccepted && (
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.testButton,
+                        { backgroundColor: "#007AFF" },
+                      ]}
+                      onPress={() => {
+                        simulateTripStartNotification.mutate({ tripId: id! });
+                      }}
+                      disabled={simulateTripStartNotification.isPending}
+                    >
+                      {simulateTripStartNotification.isPending ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="notifications-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.testButtonText}>
+                            Test Trip Start Notification
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.testButton,
+                        { backgroundColor: "#FF3B30" },
+                      ]}
+                      onPress={() => {
+                        simulateTripCancelNotification.mutate({ tripId: id! });
+                      }}
+                      disabled={simulateTripCancelNotification.isPending}
+                    >
+                      {simulateTripCancelNotification.isPending ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="close-circle-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.testButtonText}>
+                            Test Trip Cancel Notification
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </>
                 )}
               </View>
             )}

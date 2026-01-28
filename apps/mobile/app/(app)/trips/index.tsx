@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,10 +14,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NumericStepper } from "../../../components/ui/numeric-stepper";
 import { trpc } from "../../../lib/trpc";
+import { isTestAccount } from "../../../lib/test-accounts";
+import { authClient } from "../../../lib/auth-client";
 
 export default function TripsScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
+  authClient.useSession();
+  const { data: userProfile } = trpc.profile.getMe.useQuery();
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
   const {
     data: trips,
     isLoading,
@@ -41,6 +47,36 @@ export default function TripsScreen() {
   // Filter out cancelled trips
   const activeTrips =
     trips?.filter((trip) => trip.status !== "cancelled") || [];
+
+  // #region agent log - Debug trip statuses
+  useEffect(() => {
+    if (trips && trips.length > 0) {
+      const LOG_ENDPOINT =
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+      trips.forEach((trip) => {
+        fetch(LOG_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "trips/index.tsx:tripStatusCheck",
+            message: "Trip status from backend",
+            data: {
+              tripId: trip.id,
+              status: trip.status,
+              origin: trip.origin,
+              destination: trip.destination,
+              departureTime: trip.departureTime,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "status-debug",
+            hypothesisId: "H1",
+          }),
+        }).catch(() => {});
+      });
+    }
+  }, [trips]);
+  // #endregion
 
   const formatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
@@ -66,7 +102,7 @@ export default function TripsScreen() {
       case "active":
         return "#007AFF";
       case "in_progress":
-        return "#34C759";
+        return "#FF9500"; // Orange to distinguish from completed (green)
       case "completed":
         return "#34C759";
       case "cancelled":
@@ -115,12 +151,14 @@ export default function TripsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>My Trips</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => setShowTestTripModal(true)}
-          >
-            <Text style={styles.testButtonText}>Add Test Trip</Text>
-          </TouchableOpacity>
+          {isTestUser && (
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={() => setShowTestTripModal(true)}
+            >
+              <Text style={styles.testButtonText}>Add Test Trip</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.createButton}
             onPress={() => router.push("/trips/create" as any)}

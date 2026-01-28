@@ -1,8 +1,7 @@
 import "dotenv/config";
 import { db } from "@hitchly/db/client";
-import { users, accounts } from "@hitchly/db/schema";
+import { users } from "@hitchly/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "../auth/auth";
 
 const TEST_PASSWORD = "test1234"; // Change this in production! (min 8 chars for Better Auth)
 
@@ -15,31 +14,6 @@ const devAccounts = [
   {
     name: "Test Rider",
     email: "rider@mcmaster.ca",
-    password: TEST_PASSWORD,
-  },
-  {
-    name: "Burhanuddin Kharodawala",
-    email: "burhan.test@mcmaster.ca",
-    password: TEST_PASSWORD,
-  },
-  {
-    name: "Sarim Zia",
-    email: "sarim.test@mcmaster.ca",
-    password: TEST_PASSWORD,
-  },
-  {
-    name: "Hamzah Rawasia",
-    email: "hamzah.test@mcmaster.ca",
-    password: TEST_PASSWORD,
-  },
-  {
-    name: "Aidan Froggatt",
-    email: "aidan.test@mcmaster.ca",
-    password: TEST_PASSWORD,
-  },
-  {
-    name: "Swesan Pathmanathan",
-    email: "swesan.test@mcmaster.ca",
     password: TEST_PASSWORD,
   },
 ];

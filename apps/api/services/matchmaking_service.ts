@@ -7,7 +7,7 @@ import {
   trips,
   tripRequests,
 } from "@hitchly/db/schema";
-import { eq, and, gte, lte, sql, or, ne, inArray } from "drizzle-orm";
+import { eq, and, sql, or, inArray, ne } from "drizzle-orm";
 import { getDetourAndRideDetails } from "./googlemaps";
 import { calculateEstimatedCost, calculateCostScore } from "./pricing_service";
 
@@ -161,66 +161,19 @@ function computeScore(
 export async function findMatchesForUser(
   request: RiderRequest
 ): Promise<RideMatch[]> {
-  // #region agent log - declare LOG_ENDPOINT once for all logs
-  const LOG_ENDPOINT =
-    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-  // #endregion agent log
+  // Get rider preferences for compatibility scoring
+  const [riderPrefs] = await db
+    .select()
+    .from(preferences)
+    .where(eq(preferences.userId, request.riderId))
+    .limit(1);
 
-  // 1. FETCH RIDER'S PREFERENCES
-  const riderPrefs = await db.query.preferences.findFirst({
-    where: eq(preferences.userId, request.riderId),
-  });
-
-  // 2. QUERY TRIPS (unified table)
+  // Build trip conditions - only active/pending trips
   const tripConditions = [
-    or(
-      eq(trips.status, "pending"),
-      eq(trips.status, "scheduled"),
-      eq(trips.status, "active")
-    ),
-    ne(trips.driverId, request.riderId), // Exclude trips where user is the driver
+    or(eq(trips.status, "pending"), eq(trips.status, "active")),
+    // Exclude trips from the same rider (they can't request their own trips)
+    ne(trips.driverId, request.riderId),
   ];
-
-  // Filter by date if provided
-  if (request.desiredDate) {
-    const startOfDay = new Date(request.desiredDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(request.desiredDate);
-    endOfDay.setHours(23, 59, 59, 999);
-    tripConditions.push(gte(trips.departureTime, startOfDay));
-    tripConditions.push(lte(trips.departureTime, endOfDay));
-  }
-
-  // Only include trips with coordinates (required for matching)
-  tripConditions.push(sql`${trips.originLat} IS NOT NULL`);
-  tripConditions.push(sql`${trips.originLng} IS NOT NULL`);
-  tripConditions.push(sql`${trips.destLat} IS NOT NULL`);
-  tripConditions.push(sql`${trips.destLng} IS NOT NULL`);
-
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:200",
-      message: "Before querying trips",
-      data: {
-        riderId: request.riderId,
-        desiredArrivalTime: request.desiredArrivalTime,
-        desiredDate: request.desiredDate,
-        hasDesiredDate: !!request.desiredDate,
-        tripConditionsCount: tripConditions.length,
-        tripConditions: tripConditions.map(
-          (c: any) => c.toString?.() || String(c)
-        ),
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "matchmaking-debug",
-      hypothesisId: "A",
-    }),
-  }).catch(() => {});
-  // #endregion
 
   const dbTrips = await db
     .select({
@@ -236,41 +189,6 @@ export async function findMatchesForUser(
     .innerJoin(vehicles, eq(users.id, vehicles.userId))
     .leftJoin(preferences, eq(users.id, preferences.userId))
     .where(and(...tripConditions));
-
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:214",
-      message: "After querying trips",
-      data: {
-        tripsFound: dbTrips.length,
-        tripIds: dbTrips.map((t) => t.trip.id),
-        tripDepartureTimes: dbTrips.map((t) => ({
-          id: t.trip.id,
-          departureTime: t.trip.departureTime,
-          departureTimeString:
-            t.trip.departureTime instanceof Date
-              ? t.trip.departureTime.toISOString()
-              : String(t.trip.departureTime),
-          status: t.trip.status,
-          hasCoords: !!(
-            t.trip.originLat &&
-            t.trip.originLng &&
-            t.trip.destLat &&
-            t.trip.destLng
-          ),
-        })),
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "matchmaking-debug",
-      hypothesisId: "A",
-    }),
-  }).catch(() => {});
-  // #endregion
-
   // Filter out trips that the rider has active requests for (pending or accepted only)
   // Don't filter out cancelled/completed requests - rider can see those drivers again
   const activeRequests = await db
@@ -290,32 +208,6 @@ export async function findMatchesForUser(
     );
 
   const activeRequestedTripIds = new Set(activeRequests.map((r) => r.tripId));
-
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:filterExistingRequests",
-      message: "Filtering out trips rider has active requests for",
-      data: {
-        riderId: request.riderId,
-        activeRequestsCount: activeRequests.length,
-        activeRequestedTripIds: Array.from(activeRequestedTripIds),
-        requestStatuses: activeRequests.map((r) => ({
-          tripId: r.tripId,
-          status: r.status,
-        })),
-        tripsBeforeFilter: dbTrips.length,
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "matchmaking-debug",
-      hypothesisId: "I",
-    }),
-  }).catch(() => {});
-  // #endregion
-
   // Filter out trips the rider has active requests for (pending or accepted)
   // BUT allow trips that are completed or cancelled to appear again (even if request was accepted)
   // This allows riders to see drivers again after completing a trip
@@ -332,31 +224,6 @@ export async function findMatchesForUser(
     // Otherwise, filter out trips with active requests
     return !hasActiveRequest;
   });
-
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:afterFilterExistingRequests",
-      message: "After filtering active requests",
-      data: {
-        tripsBeforeFilter: dbTrips.length,
-        tripsAfterFilter: filteredTrips.length,
-        filteredOutCount: dbTrips.length - filteredTrips.length,
-        filteredOutTripIds: dbTrips
-          .filter((t) => activeRequestedTripIds.has(t.trip.id))
-          .map((t) => t.trip.id),
-        note: "Only filtering out trips with pending/accepted requests. Cancelled/completed requests allow drivers to appear again.",
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "matchmaking-debug",
-      hypothesisId: "I",
-    }),
-  }).catch(() => {});
-  // #endregion
-
   // Convert trips to ride format (for compatibility with existing scoring logic)
   // Use filtered trips instead of all dbTrips
   const allRides = filteredTrips.map((row) => ({
@@ -474,38 +341,6 @@ export async function findMatchesForUser(
   const availableCandidates = candidates.filter(
     (c) => c.availableSeats >= request.maxOccupancy
   );
-
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:326",
-      message: "After filtering candidates",
-      data: {
-        totalCandidates: candidates.length,
-        availableCandidates: availableCandidates.length,
-        candidateDetails: candidates.map((c) => ({
-          rideId: c.rideId,
-          driverId: c.driverId,
-          driverEmail: (c as any).driverEmail,
-          availableSeats: c.availableSeats,
-          maxOccupancy: request.maxOccupancy,
-          plannedArrivalTime: c.plannedArrivalTime,
-          departureTime:
-            c.departureTime instanceof Date
-              ? c.departureTime.toISOString()
-              : String(c.departureTime),
-        })),
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "matchmaking-debug",
-      hypothesisId: "B",
-    }),
-  }).catch(() => {});
-  // #endregion
-
   if (availableCandidates.length === 0) return [];
 
   const scoringPromises = availableCandidates.map(async (ride) => {
@@ -526,32 +361,6 @@ export async function findMatchesForUser(
           destination: request.destination,
         }
       );
-
-      // #region agent log
-      if (!routeDetails) {
-        fetch(LOG_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "matchmaking_service.ts:417",
-            message: "getDetourAndRideDetails returned null/undefined",
-            data: {
-              rideId: ride.rideId,
-              rideOrigin: ride.origin,
-              rideDestination: ride.destination,
-              requestOrigin: request.origin,
-              requestDestination: request.destination,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "swipe-crash-debug",
-            hypothesisId: "D",
-          }),
-        }).catch(() => {});
-        return null;
-      }
-      // #endregion
-
       const cost = calculateEstimatedCost(
         routeDetails.rideDistanceKm ?? 0,
         routeDetails.rideDurationSeconds ?? 0,
@@ -576,8 +385,8 @@ export async function findMatchesForUser(
 
       // C. Compatibility Check
       const sCompatibility = calculateCompatibilityScore(
-        riderPrefs,
-        ride.prefs
+        riderPrefs || null,
+        ride.prefs || null
       );
       return {
         ride,
@@ -590,26 +399,7 @@ export async function findMatchesForUser(
           compatibility: sCompatibility,
         },
       };
-    } catch (error) {
-      // #region agent log
-      fetch(LOG_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          location: "matchmaking_service.ts:scoringPromises",
-          message: "Error in scoring promise",
-          data: {
-            error: error instanceof Error ? error.message : String(error),
-            errorStack: error instanceof Error ? error.stack : undefined,
-            rideId: ride.rideId,
-          },
-          timestamp: Date.now(),
-          sessionId: "debug-session",
-          runId: "swipe-crash-debug",
-          hypothesisId: "E",
-        }),
-      }).catch(() => {});
-      // #endregion
+    } catch {
       return null;
     }
   });
@@ -688,27 +478,6 @@ export async function findMatchesForUser(
   const realMatches = matchesWithoutDummies.filter((m) => {
     // If driver is a test driver, filter it out (seeded trip) UNLESS includeDummyMatches is true
     if (testDriverIds.has(m.driverId)) {
-      // #region agent log
-      fetch(LOG_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          location: "matchmaking_service.ts:540",
-          message: "Test driver match being evaluated",
-          data: {
-            rideId: m.rideId,
-            driverId: m.driverId,
-            driverName: m.name,
-            includeDummyMatches: request.includeDummyMatches,
-            willFilter: !request.includeDummyMatches,
-          },
-          timestamp: Date.now(),
-          sessionId: "debug-session",
-          runId: "matchmaking-debug",
-          hypothesisId: "C",
-        }),
-      }).catch(() => {});
-      // #endregion
       // Keep test drivers only if dummy matches are enabled (for testing)
       // Otherwise filter them out as they're seeded test data
       return request.includeDummyMatches === true;
@@ -717,74 +486,15 @@ export async function findMatchesForUser(
     return true;
   });
 
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:507",
-      message: "After filtering dummy matches and test drivers",
-      data: {
-        includeDummyMatches: request.includeDummyMatches,
-        validMatchesCount: validMatches.length,
-        matchesWithoutDummiesCount: matchesWithoutDummies.length,
-        testDriverIds: Array.from(testDriverIds),
-        testDriverEmails: TEST_DRIVER_EMAILS,
-        realMatchesCount: realMatches.length,
-        realMatchIds: realMatches.map((m) => m.rideId),
-        filteredOutTestTrips: matchesWithoutDummies.length - realMatches.length,
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      hypothesisId: "E",
-    }),
-  }).catch(() => {});
-  // #endregion agent log
-
   // If dummy matches are requested, generate and add them to the results
   if (request.includeDummyMatches) {
     const dummyMatches = generateDummyMatches(request);
-    // #region agent log
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "matchmaking_service.ts:516",
-        message: "Generating dummy matches",
-        data: {
-          dummyMatchesCount: dummyMatches.length,
-          dummyMatchIds: dummyMatches.map((m) => m.rideId),
-          totalMatches: realMatches.length + dummyMatches.length,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        hypothesisId: "F",
-      }),
-    }).catch(() => {});
-    // #endregion agent log
     // Combine real matches with dummy matches
     const allMatches = [...realMatches, ...dummyMatches];
     return allMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
   }
 
   // Return only real matches (dummy matches are filtered out when toggle is disabled)
-  // #region agent log
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "matchmaking_service.ts:523",
-      message: "Returning only real matches",
-      data: {
-        realMatchesCount: realMatches.length,
-        realMatchIds: realMatches.map((m) => m.rideId),
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      hypothesisId: "G",
-    }),
-  }).catch(() => {});
-  // #endregion agent log
   return realMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
 }
 

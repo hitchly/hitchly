@@ -1,4 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -16,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
+import { isTestAccount } from "../../lib/test-accounts";
 import {
   SwipeDeck,
   RiderCard,
@@ -35,6 +38,8 @@ export default function RequestsScreen() {
 
   const appRole = userProfile?.profile?.appRole || "rider";
   const isDriver = appRole === "driver";
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
 
   // Get all trips for the user (only if driver)
   const { data: driverTrips, isLoading: isLoadingTrips } =
@@ -344,8 +349,62 @@ export default function RequestsScreen() {
     },
   });
 
+  const registerPushToken = trpc.profile.updatePushToken.useMutation();
+
   const createTestRequest = trpc.admin.createTestRequest.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Register push token when creating test request
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === "granted") {
+          // Get projectId from Constants or environment variable
+          const projectId =
+            Constants.expoConfig?.extra?.eas?.projectId ||
+            process.env.EXPO_PUBLIC_PROJECT_ID ||
+            Constants.expoConfig?.extra?.projectId;
+
+          // Only try to get push token if projectId is available
+          // In Expo Go, push notifications may not work anyway
+          if (projectId) {
+            const tokenData = await Notifications.getExpoPushTokenAsync({
+              projectId,
+            });
+            await registerPushToken.mutateAsync({
+              pushToken: tokenData.data,
+            });
+          }
+        }
+      } catch (error: any) {
+        // Don't block test request creation if push token registration fails
+        console.error(
+          "Failed to register push token:",
+          error?.message || error
+        );
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "requests.tsx:createTestRequest:pushTokenError",
+              message: "Push token registration failed",
+              data: {
+                error: error?.message || String(error),
+                hasProjectId: !!(
+                  Constants.expoConfig?.extra?.eas?.projectId ||
+                  process.env.EXPO_PUBLIC_PROJECT_ID
+                ),
+              },
+              timestamp: Date.now(),
+              sessionId: "debug-session",
+              runId: "push-token-debug",
+              hypothesisId: "H1",
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
+      }
       // #region agent log
       fetch(
         "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
@@ -454,7 +513,7 @@ export default function RequestsScreen() {
         <Text style={[styles.title, { color: colors.text }]}>
           {isDriverView ? "Trip Requests" : "My Requests"}
         </Text>
-        {isDriverView && firstTripId && (
+        {isDriverView && isTestUser && firstTripId && (
           <View style={styles.dummyToggleContainer}>
             <Text
               style={[styles.dummyToggleLabel, { color: colors.textSecondary }]}
@@ -471,7 +530,7 @@ export default function RequestsScreen() {
             />
           </View>
         )}
-        {!isDriverView && (
+        {!isDriverView && isTestUser && (
           <TouchableOpacity
             style={[
               styles.testButton,
