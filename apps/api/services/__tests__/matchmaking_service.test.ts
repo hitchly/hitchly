@@ -221,6 +221,12 @@ describe("Matchmaking Service", () => {
               groupBy: vi.fn().mockResolvedValue([]),
             }),
           }),
+        })
+        // Mock test driver users query
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]), // No test drivers
+          }),
         });
 
       const matches = await findMatchesForUser(baseRequest);
@@ -292,6 +298,17 @@ describe("Matchmaking Service", () => {
               groupBy: vi.fn().mockResolvedValue([]),
             }),
           }),
+        })
+        // Mock test driver users query (called twice for two preference tests)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]), // No test drivers
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]), // No test drivers
+          }),
         });
 
       // Test costPriority preference
@@ -360,6 +377,12 @@ describe("Matchmaking Service", () => {
             where: vi.fn().mockReturnValue({
               groupBy: vi.fn().mockResolvedValue([]),
             }),
+          }),
+        })
+        // Mock test driver users query
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]), // No test drivers
           }),
         });
 
@@ -436,6 +459,12 @@ describe("Matchmaking Service", () => {
                 .fn()
                 .mockResolvedValue([{ tripId: "trip-1", count: 2 }]),
             }),
+          }),
+        })
+        // Mock test driver users query
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]), // No test drivers
           }),
         });
 

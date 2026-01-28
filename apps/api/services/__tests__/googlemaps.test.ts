@@ -1,18 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import {
-  geocodeAddress,
-  getRouteDetails,
-  calculateTripDistance,
-  getDetourAndRideDetails,
-} from "../googlemaps";
-import { Client } from "@googlemaps/google-maps-services-js";
 
-// Mock Google Maps client - must be before importing the service
+// Create mock client before mocking
 const mockClient = {
   directions: vi.fn(),
   geocode: vi.fn(),
 };
 
+// Mock Google Maps client - must be before importing the service
 vi.mock("@googlemaps/google-maps-services-js", () => ({
   Client: vi.fn().mockImplementation(() => mockClient),
 }));
@@ -30,6 +24,14 @@ vi.mock("@hitchly/db/client", () => ({
 vi.mock("@hitchly/db/schema", () => ({
   routes: {},
 }));
+
+// Import after mocks are set up
+import {
+  geocodeAddress,
+  getRouteDetails,
+  calculateTripDistance,
+  getDetourAndRideDetails,
+} from "../googlemaps";
 
 describe("Google Maps Service", () => {
   beforeEach(() => {
@@ -86,6 +88,35 @@ describe("Google Maps Service", () => {
 
   describe("getRouteDetails", () => {
     it("should return duration and distance for route", async () => {
+      const mockResponse = {
+        data: {
+          routes: [
+            {
+              legs: [
+                {
+                  duration: { value: 1800 }, // 30 minutes
+                  distance: { value: 15000 }, // 15 km
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      mockClient.directions.mockResolvedValue(mockResponse);
+
+      const result = await getRouteDetails(
+        { lat: 43.2609, lng: -79.9192 },
+        { lat: 43.2557, lng: -79.8711 },
+        [],
+        new Date()
+      );
+
+      expect(result.totalDurationSeconds).toBe(1800);
+      expect(result.totalDistanceMeters).toBe(15000);
+    });
+
+    it("should handle route with waypoints", async () => {
       const mockResponse = {
         data: {
           routes: [
@@ -209,26 +240,29 @@ describe("Google Maps Service", () => {
     it("should handle waypoints correctly", async () => {
       const { db } = await import("@hitchly/db/client");
 
+      // Mock route cache lookup (empty)
       (db.select as any).mockResolvedValue([]);
 
+      // Mock directions API call
       mockClient.directions.mockResolvedValue({
         data: {
           routes: [
             {
               legs: [
-                { duration: { value: 600 }, distance: { value: 5000 } },
-                { duration: { value: 600 }, distance: { value: 5000 } },
+                {
+                  duration: { value: 600 },
+                  distance: { value: 10000 }, // 10 km
+                },
               ],
             },
           ],
         },
       });
 
-      const waypoints = [{ lat: 43.261, lng: -79.92 }];
       const result = await calculateTripDistance(
         { lat: 43.2609, lng: -79.9192 },
         { lat: 43.2557, lng: -79.8711 },
-        waypoints
+        [{ lat: 43.261, lng: -79.92 }]
       );
 
       expect(result?.distanceKm).toBeCloseTo(10.0, 1);
@@ -237,11 +271,7 @@ describe("Google Maps Service", () => {
 
   describe("getDetourAndRideDetails", () => {
     it("should calculate detour time and distance", async () => {
-      const { db } = await import("@hitchly/db/client");
-
-      (db.select as any).mockResolvedValue([]);
-
-      // Mock original route (without rider)
+      // Mock route without rider
       mockClient.directions.mockResolvedValueOnce({
         data: {
           routes: [

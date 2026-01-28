@@ -374,8 +374,8 @@ describe("Trip Router", () => {
     it("should reject update of non-pending trips", async () => {
       const completedTrip = { ...mockTrip, status: "completed" as const };
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([completedTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([completedTrip]),
         }),
       });
 
@@ -463,8 +463,8 @@ describe("Trip Router", () => {
     it("should reject cancellation of completed trips", async () => {
       const completedTrip = { ...mockTrip, status: "completed" as const };
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([completedTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([completedTrip]),
         }),
       });
 
