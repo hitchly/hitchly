@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TIME_WINDOW_MIN, trips } from "@hitchly/db/schema";
-import { tripRouter } from "../trip";
 import { createMockDb } from "../../../tests/utils/mockDb";
 import { createMockContext } from "../../../tests/utils/mockContext";
 import {
@@ -26,16 +25,19 @@ vi.mock("../../services/notification_service", () => ({
   sendTripNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Import router AFTER mocks are set up
+import { tripRouter } from "../trip";
+
 describe("Trip Router", () => {
   let mockDb: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb = createMockDb();
-    // Reset mocks but keep the implementation
+    // Clear call history but keep implementation - re-setup mocks after clearAllMocks
     mockGeocodeAddress.mockClear();
     mockCalculateTripDistance.mockClear();
-    // Setup default mocks
+    // Always re-setup mocks after clearAllMocks (it may clear implementations)
     mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
     mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
   });
