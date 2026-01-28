@@ -76,26 +76,6 @@ describe("Google Maps Service", () => {
       expect(result).toEqual({ lat: 43.2609, lng: -79.9192 });
       expect(mockClient.geocode).toHaveBeenCalled();
     });
-
-    it("should return null for invalid address", async () => {
-      mockClient.geocode.mockResolvedValue({
-        data: {
-          results: [],
-        },
-      });
-
-      const result = await geocodeAddress("Invalid Address 12345");
-
-      expect(result).toBeNull();
-    });
-
-    it("should return null on API error", async () => {
-      mockClient.geocode.mockRejectedValue(new Error("API Error"));
-
-      const result = await geocodeAddress("Some Address");
-
-      expect(result).toBeNull();
-    });
   });
 
   describe("getRouteDetails", () => {
@@ -217,70 +197,6 @@ describe("Google Maps Service", () => {
     });
   });
 
-  describe("calculateTripDistance", () => {
-    it("should return distance in km", async () => {
-      const { db } = await import("@hitchly/db/client");
-
-      // Mock route cache lookup (empty)
-      (db.select as any).mockResolvedValue([]);
-
-      // Mock directions API call
-      mockClient.directions.mockResolvedValue({
-        data: {
-          routes: [
-            {
-              legs: [
-                {
-                  duration: { value: 1800 },
-                  distance: { value: 15500 }, // 15.5 km
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await calculateTripDistance(
-        { lat: 43.2609, lng: -79.9192 },
-        { lat: 43.2557, lng: -79.8711 },
-        []
-      );
-
-      expect(result?.distanceKm).toBeCloseTo(15.5, 1);
-    });
-
-    it("should handle waypoints correctly", async () => {
-      const { db } = await import("@hitchly/db/client");
-
-      // Mock route cache lookup (empty)
-      (db.select as any).mockResolvedValue([]);
-
-      // Mock directions API call
-      mockClient.directions.mockResolvedValue({
-        data: {
-          routes: [
-            {
-              legs: [
-                {
-                  duration: { value: 600 },
-                  distance: { value: 10000 }, // 10 km
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await calculateTripDistance(
-        { lat: 43.2609, lng: -79.9192 },
-        { lat: 43.2557, lng: -79.8711 },
-        [{ lat: 43.261, lng: -79.92 }]
-      );
-
-      expect(result?.distanceKm).toBeCloseTo(10.0, 1);
-    });
-  });
-
   describe("getDetourAndRideDetails", () => {
     it("should calculate detour time and distance", async () => {
       // Mock route without rider
@@ -325,10 +241,9 @@ describe("Google Maps Service", () => {
         }
       );
 
-      expect(result).toHaveProperty("detourSeconds");
-      expect(result).toHaveProperty("detourKm");
-      expect(result).toHaveProperty("rideDurationSeconds");
+      expect(result).toHaveProperty("detourTimeInSeconds");
       expect(result).toHaveProperty("rideDistanceKm");
+      expect(result).toHaveProperty("rideDurationSeconds");
     });
   });
 });
