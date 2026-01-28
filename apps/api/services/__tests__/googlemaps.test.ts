@@ -1,14 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock Google Maps client - must be before importing the service
-const mockClient = {
-  directions: vi.fn(),
-  geocode: vi.fn(),
-};
-
-vi.mock("@googlemaps/google-maps-services-js", () => ({
-  Client: vi.fn().mockImplementation(() => mockClient),
-}));
+// Define mockClient inside the mock factory to avoid initialization order issues
+vi.mock("@googlemaps/google-maps-services-js", () => {
+  const mockClient = {
+    directions: vi.fn(),
+    geocode: vi.fn(),
+  };
+  return {
+    Client: vi.fn().mockImplementation(() => mockClient),
+    __mockClient: mockClient, // Export for test access
+  };
+});
 
 // Mock database
 vi.mock("@hitchly/db/client", () => ({
@@ -31,10 +34,20 @@ import {
   calculateTripDistance,
   getDetourAndRideDetails,
 } from "../googlemaps";
+import { Client } from "@googlemaps/google-maps-services-js";
+
+// Get mock client instance
+const getMockClient = () => {
+  const MockedClient = vi.mocked(Client);
+  return new MockedClient({}) as any;
+};
 
 describe("Google Maps Service", () => {
+  let mockClient: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient = getMockClient();
     mockClient.directions = vi.fn();
     mockClient.geocode = vi.fn();
   });

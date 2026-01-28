@@ -34,8 +34,12 @@ vi.mock("../pricing_service", () => ({
 }));
 
 describe("Matchmaking Service", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Re-import db to get fresh mock after clearing
+    const { db } = await import("@hitchly/db/client");
+    // Reset db.select mock
+    (db.select as any).mockClear();
   });
 
   describe("Constants", () => {
@@ -267,34 +271,50 @@ describe("Matchmaking Service", () => {
           }),
         });
 
-      // Helper to create trips query result structure
-      const createTripsQueryFromResult = () => ({
-        innerJoin: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
+      // Mock trips query (called twice - once for each preference test)
+      // Each from() call needs to return a fresh object with innerJoin
+      (db.select as any)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              leftJoin: vi.fn().mockReturnValue({
-                where: vi.fn().mockResolvedValue([
-                  {
-                    trip: mockTrip,
-                    user: mockUser,
-                    profile: mockProfile,
-                    vehicle: mockVehicle,
-                    prefs: null,
-                  },
-                ]),
+              innerJoin: vi.fn().mockReturnValue({
+                innerJoin: vi.fn().mockReturnValue({
+                  leftJoin: vi.fn().mockReturnValue({
+                    where: vi.fn().mockResolvedValue([
+                      {
+                        trip: mockTrip,
+                        user: mockUser,
+                        profile: mockProfile,
+                        vehicle: mockVehicle,
+                        prefs: null,
+                      },
+                    ]),
+                  }),
+                }),
               }),
             }),
           }),
-        }),
-      });
-
-      // Mock trips query (called twice - once for each preference test)
-      (db.select as any)
-        .mockReturnValueOnce({
-          from: vi.fn().mockImplementation(() => createTripsQueryFromResult()),
         })
         .mockReturnValueOnce({
-          from: vi.fn().mockImplementation(() => createTripsQueryFromResult()),
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              innerJoin: vi.fn().mockReturnValue({
+                innerJoin: vi.fn().mockReturnValue({
+                  leftJoin: vi.fn().mockReturnValue({
+                    where: vi.fn().mockResolvedValue([
+                      {
+                        trip: mockTrip,
+                        user: mockUser,
+                        profile: mockProfile,
+                        vehicle: mockVehicle,
+                        prefs: null,
+                      },
+                    ]),
+                  }),
+                }),
+              }),
+            }),
+          }),
         })
         // Mock active requests query (called twice)
         .mockReturnValueOnce({
