@@ -7,12 +7,14 @@ import {
 } from "../googlemaps";
 import { Client } from "@googlemaps/google-maps-services-js";
 
-// Mock Google Maps client
+// Mock Google Maps client - must be before importing the service
+const mockClient = {
+  directions: vi.fn(),
+  geocode: vi.fn(),
+};
+
 vi.mock("@googlemaps/google-maps-services-js", () => ({
-  Client: vi.fn().mockImplementation(() => ({
-    directions: vi.fn(),
-    geocode: vi.fn(),
-  })),
+  Client: vi.fn().mockImplementation(() => mockClient),
 }));
 
 // Mock database
@@ -20,18 +22,20 @@ vi.mock("@hitchly/db/client", () => ({
   db: {
     select: vi.fn(),
   },
+  eq: vi.fn(),
+  and: vi.fn(),
+  gte: vi.fn(),
+}));
+
+vi.mock("@hitchly/db/schema", () => ({
+  routes: {},
 }));
 
 describe("Google Maps Service", () => {
-  let mockClient: any;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    mockClient = {
-      directions: vi.fn(),
-      geocode: vi.fn(),
-    };
-    (Client as any).mockImplementation(() => mockClient);
+    mockClient.directions = vi.fn();
+    mockClient.geocode = vi.fn();
   });
 
   describe("geocodeAddress", () => {

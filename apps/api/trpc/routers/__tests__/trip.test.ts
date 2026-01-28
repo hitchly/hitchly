@@ -357,8 +357,8 @@ describe("Trip Router", () => {
     it("should reject update from non-owner", async () => {
       const otherUserId = "otherUser";
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
@@ -446,8 +446,8 @@ describe("Trip Router", () => {
     it("should reject cancellation from non-owner", async () => {
       const otherUserId = "otherUser";
       mockDb.select.mockReturnValueOnce({
-        from: jest.fn().mockReturnValueOnce({
-          where: jest.fn().mockResolvedValueOnce([mockTrip]),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 

@@ -61,14 +61,23 @@ describe("Matchmaking Service", () => {
     it("should return empty array when no trips found", async () => {
       const { db } = await import("@hitchly/db/client");
 
-      // Mock empty results
-      (db.select as any).mockReturnValue({
+      // Mock preferences query (first db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]), // No preferences found
+          }),
+        }),
+      });
+
+      // Mock trips query (second db.select call)
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
               innerJoin: vi.fn().mockReturnValue({
                 leftJoin: vi.fn().mockReturnValue({
-                  where: vi.fn().mockResolvedValue([]),
+                  where: vi.fn().mockResolvedValue([]), // No trips found
                 }),
               }),
             }),
@@ -87,6 +96,15 @@ describe("Matchmaking Service", () => {
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
+      // Mock preferences query (first db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]), // No preferences found
+          }),
+        }),
+      });
 
       // Mock trips query
       (db.select as any)
@@ -155,6 +173,15 @@ describe("Matchmaking Service", () => {
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
 
+      // Mock preferences query (first db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]), // No preferences found
+          }),
+        }),
+      });
+
       // Mock all queries
       (db.select as any)
         .mockReturnValueOnce({
@@ -209,6 +236,23 @@ describe("Matchmaking Service", () => {
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
+      // Mock preferences query (first db.select call) - called twice for two preference tests
+      (db.select as any)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([null]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([null]),
+            }),
+          }),
+        });
 
       (db.select as any)
         .mockReturnValueOnce({
@@ -278,6 +322,15 @@ describe("Matchmaking Service", () => {
         prefs: null,
       }));
 
+      // Mock preferences query (first db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]),
+          }),
+        }),
+      });
+
       (db.select as any)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
@@ -328,6 +381,15 @@ describe("Matchmaking Service", () => {
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
+      // Mock preferences query (first db.select call)
+      (db.select as any).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([null]),
+          }),
+        }),
+      });
 
       (db.select as any)
         .mockReturnValueOnce({
