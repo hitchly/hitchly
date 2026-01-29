@@ -4,10 +4,10 @@ import {
   profiles,
   vehicles,
   preferences,
-  rides,
-  rideRequests,
+  trips,
+  tripRequests,
 } from "@hitchly/db/schema";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { eq, and, sql, or, inArray, ne } from "drizzle-orm";
 import { getDetourAndRideDetails } from "./googlemaps";
 import { calculateEstimatedCost, calculateCostScore } from "./pricing_service";
 
@@ -19,8 +19,10 @@ export type RiderRequest = {
   origin: Location;
   destination: Location;
   desiredArrivalTime: string;
+  desiredDate?: Date;
   maxOccupancy: number;
   preference?: "default" | "costPriority" | "comfortPriority";
+  includeDummyMatches?: boolean;
 };
 
 export type { DriverRouteInfo, NewRiderInfo } from "./googlemaps";
@@ -159,96 +161,165 @@ function computeScore(
 export async function findMatchesForUser(
   request: RiderRequest
 ): Promise<RideMatch[]> {
-  // 1. FETCH RIDER'S PREFERENCES
-  const riderPrefs = await db.query.preferences.findFirst({
-    where: eq(preferences.userId, request.riderId),
-  });
+  // Get rider preferences for compatibility scoring
+  const [riderPrefs] = await db
+    .select()
+    .from(preferences)
+    .where(eq(preferences.userId, request.riderId))
+    .limit(1);
 
-  // 2. QUERY SCHEDULED RIDES
-  const dbRides = await db
+  // Build trip conditions - only active/pending trips
+  const tripConditions = [
+    or(eq(trips.status, "pending"), eq(trips.status, "active")),
+    // Exclude trips from the same rider (they can't request their own trips)
+    ne(trips.driverId, request.riderId),
+  ];
+
+  const dbTrips = await db
     .select({
-      ride: rides,
+      trip: trips,
       user: users,
       profile: profiles,
       vehicle: vehicles,
       prefs: preferences,
     })
-    .from(rides)
-    .innerJoin(users, eq(rides.driverId, users.id))
+    .from(trips)
+    .innerJoin(users, eq(trips.driverId, users.id))
     .innerJoin(profiles, eq(users.id, profiles.userId))
     .innerJoin(vehicles, eq(users.id, vehicles.userId))
     .leftJoin(preferences, eq(users.id, preferences.userId))
+    .where(and(...tripConditions));
+  // Filter out trips that the rider has active requests for (pending or accepted only)
+  // Don't filter out cancelled/completed requests - rider can see those drivers again
+  const activeRequests = await db
+    .select({
+      tripId: tripRequests.tripId,
+      status: tripRequests.status,
+    })
+    .from(tripRequests)
     .where(
       and(
-        eq(rides.status, "scheduled"),
-        gte(rides.maxSeats, request.maxOccupancy)
+        eq(tripRequests.riderId, request.riderId),
+        or(
+          eq(tripRequests.status, "pending"),
+          eq(tripRequests.status, "accepted")
+        )
       )
     );
 
-  if (dbRides.length === 0) {
+  const activeRequestedTripIds = new Set(activeRequests.map((r) => r.tripId));
+  // Filter out trips the rider has active requests for (pending or accepted)
+  // BUT allow trips that are completed or cancelled to appear again (even if request was accepted)
+  // This allows riders to see drivers again after completing a trip
+  const filteredTrips = dbTrips.filter((t) => {
+    const hasActiveRequest = activeRequestedTripIds.has(t.trip.id);
+    const isTripCompleted =
+      t.trip.status === "completed" || t.trip.status === "cancelled";
+
+    // If trip is completed/cancelled, allow it to appear again even if there's an accepted request
+    if (isTripCompleted) {
+      return true;
+    }
+
+    // Otherwise, filter out trips with active requests
+    return !hasActiveRequest;
+  });
+  // Convert trips to ride format (for compatibility with existing scoring logic)
+  // Use filtered trips instead of all dbTrips
+  const allRides = filteredTrips.map((row) => ({
+    ride: {
+      id: row.trip.id,
+      driverId: row.trip.driverId,
+      originLat: row.trip.originLat!,
+      originLng: row.trip.originLng!,
+      destLat: row.trip.destLat!,
+      destLng: row.trip.destLng!,
+      startTime: row.trip.departureTime,
+      maxSeats: row.trip.maxSeats,
+      bookedSeats: row.trip.bookedSeats,
+      status: row.trip.status as "scheduled" | "pending" | "active",
+    },
+    user: row.user,
+    driverEmail: row.user.email, // Include email for debugging
+    profile: row.profile,
+    vehicle: row.vehicle,
+    prefs: row.prefs,
+  }));
+
+  if (allRides.length === 0) {
     return [];
   }
 
-  // 3. For each ride, count accepted requests and get their pickup locations
-  const rideIds = dbRides.map((r) => r.ride.id);
+  // 4. For each trip, count accepted requests and get their pickup locations
+  const tripIds = allRides.map((r) => r.ride.id);
 
-  // Count accepted passengers per ride
-  let passengerCountMap = new Map<string, number>();
-  // Store existing passenger pickup locations per ride
+  // Store existing passenger pickup locations per trip
   const existingPickupsMap = new Map<string, Location[]>();
 
   try {
-    const passengerCounts = await db
-      .select({
-        rideId: rideRequests.rideId,
-        count: sql<number>`cast(count(*) as int)`,
-      })
-      .from(rideRequests)
-      .where(eq(rideRequests.status, "accepted"))
-      .groupBy(rideRequests.rideId);
-
-    passengerCountMap = new Map(
-      passengerCounts
-        .filter((p) => rideIds.includes(p.rideId))
-        .map((p) => [p.rideId, p.count ?? 0])
-    );
-
-    // Get pickup locations for all accepted passengers
+    // Get pickup locations for all accepted passengers (from tripRequests)
     const acceptedPassengers = await db
       .select({
-        rideId: rideRequests.rideId,
-        pickupLat: rideRequests.pickupLat,
-        pickupLng: rideRequests.pickupLng,
+        tripId: tripRequests.tripId,
+        pickupLat: tripRequests.pickupLat,
+        pickupLng: tripRequests.pickupLng,
       })
-      .from(rideRequests)
-      .where(eq(rideRequests.status, "accepted"));
+      .from(tripRequests)
+      .where(eq(tripRequests.status, "accepted"));
 
-    // Group pickup locations by rideId
+    // Group pickup locations by tripId
     for (const passenger of acceptedPassengers) {
-      if (rideIds.includes(passenger.rideId)) {
-        const existingPickups = existingPickupsMap.get(passenger.rideId) || [];
+      if (tripIds.includes(passenger.tripId)) {
+        const existingPickups = existingPickupsMap.get(passenger.tripId) || [];
         existingPickups.push({
           lat: passenger.pickupLat,
           lng: passenger.pickupLng,
         });
-        existingPickupsMap.set(passenger.rideId, existingPickups);
+        existingPickupsMap.set(passenger.tripId, existingPickups);
       }
     }
   } catch {
-    // Silently continue - rides will be processed with empty passenger data
+    // Silently continue - trips will be processed with empty passenger data
   }
 
-  // 4. MAP & SCORE
-  const candidates = dbRides.map((row) => {
-    // Use bookedSeats from schema, fallback to calculated count
-    const bookedFromSchema = row.ride.bookedSeats;
-    const bookedFromRequests = passengerCountMap.get(row.ride.id) ?? 0;
-    const currentPassengers = Math.max(bookedFromSchema, bookedFromRequests);
+  // Get trip request counts for all trips
+  let tripRequestCountMap = new Map<string, number>();
+
+  if (tripIds.length > 0) {
+    const tripRequestCounts = await db
+      .select({
+        tripId: tripRequests.tripId,
+        count: sql<number>`cast(count(*) as int)`,
+      })
+      .from(tripRequests)
+      .where(
+        and(
+          eq(tripRequests.status, "accepted"),
+          inArray(tripRequests.tripId, tripIds)
+        )
+      )
+      .groupBy(tripRequests.tripId);
+
+    tripRequestCountMap = new Map(
+      tripRequestCounts.map((t) => [t.tripId, t.count ?? 0])
+    );
+  }
+
+  // 3. MAP & SCORE
+  const candidates = allRides.map((row) => {
+    // Use bookedSeats from schema, fallback to calculated count from tripRequests
+    const bookedFromSchema = row.ride.bookedSeats || 0;
+    const bookedFromTripRequests = tripRequestCountMap.get(row.ride.id) ?? 0;
+    const currentPassengers = Math.max(
+      bookedFromSchema,
+      bookedFromTripRequests
+    );
     const availableSeats = row.ride.maxSeats - currentPassengers;
 
     return {
       rideId: row.ride.id,
       driverId: row.user.id,
+      driverEmail: (row as any).driverEmail || row.user.email, // Include email for debugging
       name: row.user.name || "Driver",
       image: row.user.image || "",
       vehicle: `${row.vehicle.color} ${row.vehicle.make} ${row.vehicle.model}`,
@@ -270,12 +341,11 @@ export async function findMatchesForUser(
   const availableCandidates = candidates.filter(
     (c) => c.availableSeats >= request.maxOccupancy
   );
-
   if (availableCandidates.length === 0) return [];
 
   const scoringPromises = availableCandidates.map(async (ride) => {
     try {
-      // Get existing passenger pickup locations for this ride
+      // Get existing passenger pickup locations for this trip
       const existingPickups = existingPickupsMap.get(ride.rideId) || [];
 
       // A. Route Logic - include existing passengers in calculation
@@ -291,12 +361,11 @@ export async function findMatchesForUser(
           destination: request.destination,
         }
       );
-
       const cost = calculateEstimatedCost(
-        routeDetails.rideDistanceKm,
-        routeDetails.rideDurationSeconds,
+        routeDetails.rideDistanceKm ?? 0,
+        routeDetails.rideDurationSeconds ?? 0,
         ride.currentPassengers,
-        routeDetails.detourTimeInSeconds
+        routeDetails.detourTimeInSeconds ?? 0
       );
 
       // B. Scoring Logic
@@ -305,7 +374,7 @@ export async function findMatchesForUser(
         ride.plannedArrivalTime
       );
       const sLocation = calculateLocationScore(
-        routeDetails.detourTimeInSeconds,
+        routeDetails.detourTimeInSeconds ?? 0,
         ride.detourTolerance
       );
       const sComfort = calculateComfortScore(
@@ -316,13 +385,13 @@ export async function findMatchesForUser(
 
       // C. Compatibility Check
       const sCompatibility = calculateCompatibilityScore(
-        riderPrefs,
-        ride.prefs
+        riderPrefs || null,
+        ride.prefs || null
       );
       return {
         ride,
         cost,
-        detourSeconds: routeDetails.detourTimeInSeconds,
+        detourSeconds: routeDetails.detourTimeInSeconds ?? 0,
         scores: {
           schedule: sSchedule,
           location: sLocation,
@@ -371,10 +440,10 @@ export async function findMatchesForUser(
               ? "Good Match"
               : "Fair Match",
         details: {
-          estimatedCost: cost,
-          detourMinutes: Math.round(detourSeconds / 60),
-          arrivalAtPickup: ride.plannedArrivalTime,
-          availableSeats: ride.availableSeats,
+          estimatedCost: cost ?? 0,
+          detourMinutes: Math.round((detourSeconds ?? 0) / 60),
+          arrivalAtPickup: ride.plannedArrivalTime || "",
+          availableSeats: ride.availableSeats ?? 0,
         },
         debugScores: { ...scores, cost: sCost },
       };
@@ -383,5 +452,136 @@ export async function findMatchesForUser(
 
   const validMatches = finalMatches.filter((m): m is RideMatch => m !== null);
 
-  return validMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
+  // Test driver emails (from seed scripts) - these should be filtered when toggle is OFF
+  // Note: "driver@mcmaster.ca" removed from list as it's used for real testing
+  const TEST_DRIVER_EMAILS = [
+    "burhan.test@mcmaster.ca",
+    "sarim.test@mcmaster.ca",
+    "hamzah.test@mcmaster.ca",
+    "aidan.test@mcmaster.ca",
+  ];
+
+  // Get test driver user IDs by looking up their emails
+  const testDriverUsers = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(inArray(users.email, TEST_DRIVER_EMAILS));
+
+  const testDriverIds = new Set(testDriverUsers.map((u) => u.id));
+
+  // Filter out generated dummy matches (by rideId prefix)
+  const matchesWithoutDummies = validMatches.filter(
+    (m) => !m.rideId.startsWith("dummy-")
+  );
+
+  // Filter out test driver trips (seeded trips) - but only if includeDummyMatches is false
+  const realMatches = matchesWithoutDummies.filter((m) => {
+    // If driver is a test driver, filter it out (seeded trip) UNLESS includeDummyMatches is true
+    if (testDriverIds.has(m.driverId)) {
+      // Keep test drivers only if dummy matches are enabled (for testing)
+      // Otherwise filter them out as they're seeded test data
+      return request.includeDummyMatches === true;
+    }
+    // Otherwise, keep it
+    return true;
+  });
+
+  // If dummy matches are requested, generate and add them to the results
+  if (request.includeDummyMatches) {
+    const dummyMatches = generateDummyMatches(request);
+    // Combine real matches with dummy matches
+    const allMatches = [...realMatches, ...dummyMatches];
+    return allMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
+  }
+
+  // Return only real matches (dummy matches are filtered out when toggle is disabled)
+  return realMatches.sort((a, b) => b.matchPercentage - a.matchPercentage);
+}
+
+/**
+ * Generate dummy matches for testing purposes
+ */
+function generateDummyMatches(request: RiderRequest): RideMatch[] {
+  const dummyDrivers = [
+    {
+      name: "Alex Johnson",
+      vehicle: "Blue Honda Civic",
+      bio: "Friendly driver, love music and chatting",
+      rating: 4.9,
+      matchPercentage: 85,
+    },
+    {
+      name: "Sarah Chen",
+      vehicle: "Red Toyota Camry",
+      bio: "Quiet ride, prefer minimal conversation",
+      rating: 4.7,
+      matchPercentage: 72,
+    },
+    {
+      name: "Mike Thompson",
+      vehicle: "Black Ford Focus",
+      bio: "Early morning commuter, punctual",
+      rating: 4.8,
+      matchPercentage: 78,
+    },
+    {
+      name: "Emily Davis",
+      vehicle: "White Nissan Altima",
+      bio: "Student driver, flexible schedule",
+      rating: 4.6,
+      matchPercentage: 65,
+    },
+    {
+      name: "David Wilson",
+      vehicle: "Gray Hyundai Elantra",
+      bio: "Experienced driver, safety first",
+      rating: 4.9,
+      matchPercentage: 80,
+    },
+  ];
+
+  // Generate dummy matches with slight variations from rider's origin
+  return dummyDrivers.map((driver, index) => {
+    // Add small random offset to origin (within ~5km)
+    const latOffset = (Math.random() - 0.5) * 0.05; // ~5km max
+    const lngOffset = (Math.random() - 0.5) * 0.05;
+
+    // Calculate approximate cost based on distance
+    const distanceKm = Math.sqrt(latOffset ** 2 + lngOffset ** 2) * 111; // Rough conversion
+    const estimatedCost = Math.max(
+      5,
+      Math.round(distanceKm * 1.5 + Math.random() * 5)
+    );
+
+    // Calculate arrival time (within 30 minutes of desired time)
+    const desiredMinutes = timeToMinutes(request.desiredArrivalTime);
+    const timeVariation = (Math.random() - 0.5) * 30; // ±15 minutes
+    const arrivalMinutes = desiredMinutes + timeVariation;
+    const arrivalHours = Math.floor(arrivalMinutes / 60) % 24;
+    const arrivalMins = Math.floor(arrivalMinutes % 60);
+    const arrivalTime = `${arrivalHours.toString().padStart(2, "0")}:${arrivalMins.toString().padStart(2, "0")}`;
+
+    return {
+      rideId: `dummy-${index}-${Date.now()}`,
+      driverId: `dummy-driver-${index}`,
+      name: driver.name,
+      profilePic: "",
+      vehicle: driver.vehicle,
+      rating: driver.rating,
+      bio: driver.bio,
+      matchPercentage: driver.matchPercentage,
+      uiLabel:
+        driver.matchPercentage > 85
+          ? "Great Match"
+          : driver.matchPercentage > 60
+            ? "Good Match"
+            : "Fair Match",
+      details: {
+        estimatedCost,
+        detourMinutes: Math.round(Math.abs(timeVariation)),
+        arrivalAtPickup: arrivalTime,
+        availableSeats: Math.floor(Math.random() * 3) + 1, // 1-3 seats
+      },
+    };
+  });
 }

@@ -1,95 +1,528 @@
 import {
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Alert,
-  Modal,
-  Image,
+  InteractionManager,
   ScrollView,
   View,
   Text,
-  TextProps,
   TextInput,
+  Animated,
 } from "react-native";
-import { trpc } from "@/lib/trpc";
-import React, { useState } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  Component,
+  ErrorInfo,
+  ReactNode,
+} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/theme-context";
+import { useRouter } from "expo-router";
+import { SwipeDeck, TripCard, type RideMatch } from "../../components/swipe";
+import { DatePickerComponent } from "../../components/ui/date-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { trpc } from "../../lib/trpc";
+import { isTestAccount } from "../../lib/test-accounts";
 
 // McMaster University coordinates (default destination)
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 
-// Type for ride match from API
-type RideMatch = {
-  rideId: string;
-  driverId: string;
-  name: string;
-  profilePic: string;
-  vehicle: string;
-  rating: number;
-  bio: string;
-  matchPercentage: number;
-  uiLabel: string;
-  details: {
-    estimatedCost: number;
-    detourMinutes: number;
-    arrivalAtPickup: string;
-    availableSeats: number;
-  };
-};
+// Error Boundary for SwipeDeck
+class ErrorBoundary extends Component<
+  { children: ReactNode; onReset?: () => void },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; onReset?: () => void }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // #region agent log
+    try {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "matchmaking.tsx:ErrorBoundary:componentDidCatch",
+            message: "SwipeDeck crash caught by error boundary",
+            data: {
+              errorMessage: error.message,
+              errorName: error.name,
+              errorStack: error.stack,
+              componentStack: errorInfo.componentStack,
+              timestamp: Date.now(),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "crash-debug",
+            hypothesisId: "CRASH",
+          }),
+        }
+      ).catch(() => {});
+    } catch (fetchErr) {
+      // Fallback if fetch fails
+      console.error("Error logging crash:", fetchErr);
+    }
+    // #endregion
+    console.error("SwipeDeck Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              marginBottom: 10,
+              color: "#FF3B30",
+            }}
+          >
+            Swipe Error
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              textAlign: "center",
+              marginBottom: 20,
+              color: "#666",
+            }}
+          >
+            {this.state.error?.message || "An error occurred"}
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              this.setState({ hasError: false, error: null });
+              this.props.onReset?.();
+            }}
+            style={{
+              backgroundColor: "#007AFF",
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function Matchmaking() {
-  const { colors, fonts } = useTheme();
-  const [selectedMatch, setSelectedMatch] = useState<RideMatch | null>(null);
-  const [desiredArrivalTime, setDesiredArrivalTime] = useState("09:00");
-  const [hasSearched, setHasSearched] = useState(false);
-
-  // Get user profile with default location
+  const { colors } = useTheme();
+  const router = useRouter();
   const { data: userProfile, isLoading: profileLoading } =
     trpc.profile.getMe.useQuery();
+  const userEmail = userProfile?.email;
+  const isTestUser = isTestAccount(userEmail);
+  const [desiredArrivalTime, setDesiredArrivalTime] = useState("09:00");
+  const [desiredDate, setDesiredDate] = useState<Date | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [includeDummyMatches, setIncludeDummyMatches] = useState(false);
+  const [swipedCardIds, setSwipedCardIds] = useState<Set<string>>(new Set());
+  const [swipedCardsLoaded, setSwipedCardsLoaded] = useState(false);
+  const toggleAnim = useRef(new Animated.Value(0)).current;
 
-  // Build search params from user's profile
-  const searchParams =
-    userProfile?.profile?.defaultLat && userProfile?.profile?.defaultLong
-      ? {
-          origin: {
-            lat: userProfile.profile.defaultLat,
-            lng: userProfile.profile.defaultLong,
-          },
-          destination: MCMASTER_COORDS,
-          desiredArrivalTime,
-          maxOccupancy: 1,
-          preference: "costPriority" as const,
+  // Load swiped cards from storage on mount - MUST complete before filtering
+  useEffect(() => {
+    const loadSwipedCards = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("swipedCardIds");
+        if (stored) {
+          const ids = JSON.parse(stored) as string[];
+          const loadedSet = new Set(ids);
+          setSwipedCardIds(loadedSet);
+          // #region agent log
+          log(
+            "matchmaking.tsx:loadSwipedCards",
+            "Loaded swiped cards from storage",
+            {
+              count: ids.length,
+              ids,
+              loadedSetSize: loadedSet.size,
+            },
+            "H"
+          );
+          // #endregion
+        } else {
+          // #region agent log
+          log(
+            "matchmaking.tsx:loadSwipedCards",
+            "No swiped cards in storage",
+            {},
+            "H"
+          );
+          // #endregion
         }
-      : null;
+        setSwipedCardsLoaded(true);
+      } catch (error) {
+        console.error("Error loading swiped cards:", error);
+        setSwipedCardsLoaded(true); // Still mark as loaded even on error
+      }
+    };
+    loadSwipedCards();
+  }, []);
+
+  // Save swiped cards to storage whenever they change
+  useEffect(() => {
+    const saveSwipedCards = async () => {
+      try {
+        const ids = Array.from(swipedCardIds);
+        if (ids.length > 0) {
+          await AsyncStorage.setItem("swipedCardIds", JSON.stringify(ids));
+        } else {
+          // Clear storage if no swiped cards
+          await AsyncStorage.removeItem("swipedCardIds");
+        }
+        // #region agent log
+        log(
+          "matchmaking.tsx:saveSwipedCards",
+          "Saved swiped cards to storage",
+          {
+            count: ids.length,
+            ids,
+          },
+          "H"
+        );
+        // #endregion
+      } catch (error) {
+        console.error("Error saving swiped cards:", error);
+      }
+    };
+    // Always save (even if empty) to ensure storage is in sync
+    saveSwipedCards();
+  }, [swipedCardIds]);
+
+  // #region agent log
+  const LOG_ENDPOINT =
+    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
+  const log = (
+    location: string,
+    message: string,
+    data: any,
+    hypothesisId?: string
+  ) => {
+    fetch(LOG_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId,
+      }),
+    }).catch(() => {});
+  };
+  // #endregion agent log
+
+  useEffect(() => {
+    Animated.timing(toggleAnim, {
+      toValue: includeDummyMatches ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [includeDummyMatches, toggleAnim]);
+
+  // User profile already loaded above
+
+  // Build search params from user's profile - useMemo to stabilize object reference
+  const searchParams = useMemo(() => {
+    if (
+      !userProfile?.profile?.defaultLat ||
+      !userProfile?.profile?.defaultLong
+    ) {
+      return null;
+    }
+    return {
+      origin: {
+        lat: userProfile.profile.defaultLat,
+        lng: userProfile.profile.defaultLong,
+      },
+      destination: MCMASTER_COORDS,
+      desiredArrivalTime,
+      desiredDate: desiredDate || undefined,
+      maxOccupancy: 1,
+      preference: "costPriority" as const,
+      includeDummyMatches,
+    };
+  }, [
+    userProfile?.profile?.defaultLat,
+    userProfile?.profile?.defaultLong,
+    desiredArrivalTime,
+    desiredDate,
+    includeDummyMatches,
+  ]);
 
   // Only fetch matches if user has location set and has clicked search
+  // Include includeDummyMatches in the query key to refetch when toggle changes
   const matchesQuery = trpc.matchmaking.findMatches.useQuery(searchParams!, {
     enabled: !!searchParams && hasSearched,
+    // Refetch when toggle changes to ensure fresh results
+    refetchOnMount: true,
   });
 
-  const requestMutation = trpc.matchmaking.requestRide.useMutation({
-    onSuccess: () => {
-      setSelectedMatch(null);
-      Alert.alert(
-        "Request Sent",
-        "The driver has been notified of your request!"
+  // React Query will automatically refetch when searchParams changes (since it's the query key)
+  // No need for manual refetch - the query key includes includeDummyMatches
+  // #region agent log
+  useEffect(() => {
+    log(
+      "matchmaking.tsx:98",
+      "searchParams changed",
+      {
+        includeDummyMatches,
+        searchParamsIncludeDummy: searchParams?.includeDummyMatches,
+        hasSearchParams: !!searchParams,
+        queryEnabled: !!searchParams && hasSearched,
+      },
+      "J"
+    );
+  }, [searchParams, includeDummyMatches, hasSearched]);
+  // #endregion agent log
+
+  // #region agent log
+  useEffect(() => {
+    if (matchesQuery.data) {
+      log(
+        "matchmaking.tsx:72",
+        "Matches query data received",
+        {
+          matchCount: matchesQuery.data.length,
+          includeDummyMatches,
+          searchParamsIncludeDummy: searchParams?.includeDummyMatches,
+          rideIds: matchesQuery.data.map((m) => m.rideId),
+          dummyMatches: matchesQuery.data.filter((m) =>
+            m.rideId.startsWith("dummy-")
+          ).length,
+        },
+        "D"
       );
+    }
+  }, [matchesQuery.data, includeDummyMatches, searchParams]);
+  // #endregion agent log
+
+  // Filter out swiped cards - use useMemo to ensure stable reference
+  // MUST be called before any early returns to follow Rules of Hooks
+  // IMPORTANT: Only filter after swiped cards are loaded from storage
+  const filteredMatches = useMemo(() => {
+    if (!matchesQuery.data) {
+      // #region agent log
+      log(
+        "matchmaking.tsx:filteredMatches",
+        "No query data available",
+        {
+          swipedCount: swipedCardIds.size,
+          swipedIds: Array.from(swipedCardIds),
+          swipedCardsLoaded,
+        },
+        "H"
+      );
+      // #endregion
+      return [];
+    }
+
+    // Wait for swiped cards to load before filtering
+    if (!swipedCardsLoaded) {
+      // #region agent log
+      log(
+        "matchmaking.tsx:filteredMatches",
+        "Swiped cards not loaded yet, returning all matches temporarily",
+        {
+          totalMatches: matchesQuery.data.length,
+          swipedCardsLoaded,
+        },
+        "H"
+      );
+      // #endregion
+      return matchesQuery.data; // Return all matches until swiped cards are loaded
+    }
+
+    const allMatchIds = matchesQuery.data.map((m) => m.rideId);
+    const filtered = matchesQuery.data.filter((match) => {
+      const isSwiped = swipedCardIds.has(match.rideId);
+      if (isSwiped) {
+        // #region agent log
+        log(
+          "matchmaking.tsx:filteredMatches",
+          "Filtering out swiped card",
+          {
+            rideId: match.rideId,
+            swipedIds: Array.from(swipedCardIds),
+            swipedCardsLoaded,
+          },
+          "H"
+        );
+        // #endregion
+      }
+      return !isSwiped;
+    });
+
+    // #region agent log
+    log(
+      "matchmaking.tsx:filteredMatches",
+      "Filtering matches",
+      {
+        totalMatches: matchesQuery.data.length,
+        swipedCount: swipedCardIds.size,
+        swipedIds: Array.from(swipedCardIds),
+        filteredCount: filtered.length,
+        filteredIds: filtered.map((m) => m.rideId),
+        allMatchIds,
+        matchesBeingFiltered: allMatchIds.filter((id) => swipedCardIds.has(id)),
+        swipedCardsLoaded,
+      },
+      "H"
+    );
+    // #endregion
+
+    return filtered;
+  }, [matchesQuery.data, swipedCardIds, swipedCardsLoaded]);
+
+  const requestRideMutation = trpc.trip.createTripRequest.useMutation({
+    onSuccess: () => {
+      // Alert removed per user request
+      // Request sent silently
     },
     onError: (error: any) => {
-      Alert.alert("Error", "Could not send request: " + error.message);
+      console.error("Request ride mutation error:", error);
+      // Keep error alert for debugging
+      setTimeout(() => {
+        Alert.alert("Error", "Could not send request: " + error.message);
+      }, 500);
     },
   });
 
-  const handleRequestRide = () => {
-    if (!selectedMatch || !searchParams) return;
-    requestMutation.mutate({
-      rideId: selectedMatch.rideId,
-      pickupLat: searchParams.origin.lat,
-      pickupLng: searchParams.origin.lng,
+  const handleSwipeRight = (match: RideMatch) => {
+    // Track that this card was swiped right (requested)
+    if (match?.rideId) {
+      setSwipedCardIds((prev) => {
+        const newSet = new Set(prev).add(match.rideId);
+        // Immediately save to storage to ensure persistence
+        AsyncStorage.setItem(
+          "swipedCardIds",
+          JSON.stringify(Array.from(newSet))
+        ).catch((err) => {
+          console.error("Error saving swiped card immediately:", err);
+        });
+        // #region agent log
+        log(
+          "matchmaking.tsx:handleSwipeRight",
+          "Card swiped right - tracking",
+          {
+            rideId: match.rideId,
+            swipedCount: newSet.size,
+            swipedIds: Array.from(newSet),
+            prevCount: prev.size,
+          },
+          "H"
+        );
+        // #endregion
+        return newSet;
+      });
+    }
+
+    // Store match data in case component unmounts
+    const matchData = { ...match };
+    const searchParamsData = searchParams ? { ...searchParams } : null;
+
+    // Use InteractionManager to defer the mutation until all interactions/animations complete
+    const handle = InteractionManager.runAfterInteractions(() => {
+      try {
+        // Use matchmaking.requestRide (uses rideId from rides table)
+        // Pickup location is the rider's origin (where they want to be picked up)
+        if (!searchParamsData) {
+          // Defer alert to avoid conflicts
+          setTimeout(() => {
+            Alert.alert("Error", "Search parameters not available");
+          }, 100);
+          return;
+        }
+        if (!matchData?.rideId) {
+          setTimeout(() => {
+            Alert.alert("Error", "Invalid match data");
+          }, 100);
+          return;
+        }
+        requestRideMutation.mutate({
+          tripId: matchData.rideId,
+          pickupLat: searchParamsData.origin.lat,
+          pickupLng: searchParamsData.origin.lng,
+        });
+      } catch (error) {
+        console.error("Error in handleSwipeRight:", error);
+        setTimeout(() => {
+          Alert.alert("Error", "Failed to send ride request");
+        }, 100);
+      }
     });
+
+    // Return cancellation function in case component unmounts
+    return () => handle.cancel();
+  };
+
+  const handleSwipeLeft = (match: RideMatch) => {
+    // Track that this card was swiped left (dismissed)
+    if (match?.rideId) {
+      setSwipedCardIds((prev) => {
+        const newSet = new Set(prev).add(match.rideId);
+        // Immediately save to storage to ensure persistence
+        AsyncStorage.setItem(
+          "swipedCardIds",
+          JSON.stringify(Array.from(newSet))
+        ).catch((err) => {
+          console.error("Error saving swiped card immediately:", err);
+        });
+        // #region agent log
+        log(
+          "matchmaking.tsx:handleSwipeLeft",
+          "Card swiped left - tracking",
+          {
+            rideId: match.rideId,
+            swipedCount: newSet.size,
+            swipedIds: Array.from(newSet),
+            prevCount: prev.size,
+          },
+          "H"
+        );
+        // #endregion
+        return newSet;
+      });
+    }
+  };
+
+  const handleCardTap = (match: RideMatch) => {
+    // Navigate to trip details
+    router.push(`/(app)/trips/${match.rideId}` as any);
+  };
+
+  const handleDeckEmpty = () => {
+    // Alert removed per user request
+    // Deck empty - no action needed
   };
 
   const handleSearch = () => {
@@ -100,7 +533,21 @@ export default function Matchmaking() {
       );
       return;
     }
+    // #region agent log
+    log(
+      "matchmaking.tsx:handleSearch",
+      "Search initiated",
+      {
+        swipedCount: swipedCardIds.size,
+        swipedIds: Array.from(swipedCardIds),
+        desiredArrivalTime,
+        desiredDate: desiredDate?.toISOString(),
+      },
+      "H"
+    );
+    // #endregion
     setHasSearched(true);
+    // Don't clear swiped cards - keep them tracked across searches
   };
 
   // --- STATE 1: PROFILE LOADING ---
@@ -223,6 +670,21 @@ export default function Matchmaking() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Date
+              </Text>
+              <DatePickerComponent
+                value={desiredDate || new Date()}
+                onChange={(date) => setDesiredDate(date)}
+                minimumDate={new Date()}
+                backgroundColor={colors.background}
+                borderColor={colors.border}
+                textColor={colors.text}
+                iconColor={colors.primary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Desired Arrival Time
               </Text>
               <TextInput
@@ -240,6 +702,72 @@ export default function Matchmaking() {
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
+
+            {/* Dummy Matches Toggle */}
+            {isTestUser && (
+              <View style={styles.inputGroup}>
+                <View
+                  style={[
+                    styles.toggleContainer,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.toggleLabelContainer}>
+                    <Ionicons
+                      name="flask-outline"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={[styles.toggleLabel, { color: colors.text }]}>
+                      Include Test Matches
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.toggleSwitch,
+                      {
+                        backgroundColor: includeDummyMatches
+                          ? colors.primary
+                          : colors.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      // #region agent log
+                      log(
+                        "matchmaking.tsx:315",
+                        "Toggle clicked",
+                        {
+                          currentValue: includeDummyMatches,
+                          newValue: !includeDummyMatches,
+                        },
+                        "A"
+                      );
+                      // #endregion agent log
+                      setIncludeDummyMatches(!includeDummyMatches);
+                    }}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.toggleThumb,
+                        {
+                          transform: [
+                            {
+                              translateX: toggleAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 22],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
 
           <TouchableOpacity
@@ -278,7 +806,7 @@ export default function Matchmaking() {
   }
 
   // --- STATE 5: EMPTY RESULTS ---
-  if (!matchesQuery.data || matchesQuery.data.length === 0) {
+  if (!matchesQuery.data || filteredMatches.length === 0) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -300,7 +828,32 @@ export default function Matchmaking() {
           </Text>
           <TouchableOpacity
             style={[styles.secondaryButton, { borderColor: colors.primary }]}
-            onPress={() => setHasSearched(false)}
+            onPress={async () => {
+              // #region agent log
+              log(
+                "matchmaking.tsx:NewSearchButton",
+                "New Search clicked - clearing state",
+                {
+                  swipedCountBefore: swipedCardIds.size,
+                  swipedIdsBefore: Array.from(swipedCardIds),
+                },
+                "H"
+              );
+              // #endregion
+              setHasSearched(false);
+              setDesiredDate(null);
+              setIncludeDummyMatches(false);
+              setSwipedCardIds(new Set()); // Clear swiped cards for new search
+              // Also clear from storage
+              try {
+                await AsyncStorage.removeItem("swipedCardIds");
+              } catch (error) {
+                console.error(
+                  "Error clearing swiped cards from storage:",
+                  error
+                );
+              }
+            }}
           >
             <Text
               style={[styles.secondaryButtonText, { color: colors.primary }]}
@@ -313,262 +866,81 @@ export default function Matchmaking() {
     );
   }
 
-  // --- STATE 6: RESULTS LIST ---
+  // --- STATE 6: SWIPE DECK ---
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Available Rides
+          Swipe to Match
         </Text>
         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-          {matchesQuery.data.length} rides found for {desiredArrivalTime}
+          {filteredMatches.length} rides found
+          {desiredDate
+            ? ` for ${desiredDate.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })} at ${desiredArrivalTime}`
+            : ` for ${desiredArrivalTime}`}
         </Text>
-        <TouchableOpacity onPress={() => setHasSearched(false)}>
+        <TouchableOpacity
+          onPress={async () => {
+            setHasSearched(false);
+            setDesiredDate(null);
+            setIncludeDummyMatches(false);
+            setSwipedCardIds(new Set()); // Clear swiped cards for new search
+            // Also clear from storage
+            try {
+              await AsyncStorage.removeItem("swipedCardIds");
+            } catch (error) {
+              console.error("Error clearing swiped cards from storage:", error);
+            }
+          }}
+        >
           <Text style={[styles.linkText, { color: colors.primary }]}>
             New Search
           </Text>
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={matchesQuery.data}
-        keyExtractor={(item) => item.rideId}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.rideCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            activeOpacity={0.9}
-            onPress={() => setSelectedMatch(item)}
+      <View style={styles.swipeContainer}>
+        <ErrorBoundary
+          onReset={() => {
+            setHasSearched(false);
+          }}
+        >
+          <SwipeDeck
+            data={filteredMatches}
+            renderCard={(match) => <TripCard match={match} />}
+            onSwipeLeft={handleSwipeLeft}
+            onSwipeRight={handleSwipeRight}
+            onCardTap={handleCardTap}
+            onDeckEmpty={handleDeckEmpty}
+          />
+        </ErrorBoundary>
+      </View>
+
+      {/* Swipe instructions */}
+      <View style={styles.instructionsContainer}>
+        <View style={styles.instructionRow}>
+          <Ionicons name="close-circle" size={24} color={colors.error} />
+          <Text
+            style={[styles.instructionText, { color: colors.textSecondary }]}
           >
-            <View style={styles.rideCardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.driverName, { color: colors.text }]}>
-                  {item.name}
-                </Text>
-                <Text
-                  style={[styles.vehicleText, { color: colors.textSecondary }]}
-                >
-                  {item.vehicle}
-                </Text>
-              </View>
-              <Text style={[styles.priceText, { color: colors.text }]}>
-                ${item.details.estimatedCost.toFixed(2)}
-              </Text>
-            </View>
-
-            <View style={styles.rideCardFooter}>
-              <View
-                style={[
-                  styles.matchBadge,
-                  { backgroundColor: colors.primaryLight },
-                ]}
-              >
-                <Text
-                  style={[styles.matchBadgeText, { color: colors.primary }]}
-                >
-                  {item.matchPercentage}% Match
-                </Text>
-              </View>
-              <View style={styles.seatsInfo}>
-                <Ionicons
-                  name="person"
-                  size={14}
-                  color={colors.textSecondary}
-                />
-                <Text
-                  style={[styles.seatsText, { color: colors.textSecondary }]}
-                >
-                  {item.details.availableSeats} seats
-                </Text>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={colors.textSecondary}
-              />
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-
-      {/* --- DETAILS MODAL --- */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={!!selectedMatch}
-        onRequestClose={() => setSelectedMatch(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.modalContent, { backgroundColor: colors.surface }]}
-          >
-            <TouchableOpacity
-              style={styles.closeHandleArea}
-              onPress={() => setSelectedMatch(null)}
-            >
-              <View
-                style={[styles.dragHandle, { backgroundColor: colors.border }]}
-              />
-            </TouchableOpacity>
-
-            {selectedMatch && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
-              >
-                <View style={styles.profileHeader}>
-                  {selectedMatch.profilePic ? (
-                    <Image
-                      source={{ uri: selectedMatch.profilePic }}
-                      style={styles.profileImage}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.avatarCircle,
-                        { backgroundColor: colors.primary },
-                      ]}
-                    >
-                      <Text style={styles.avatarText}>
-                        {selectedMatch.name.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  <Text
-                    style={[styles.modalDriverName, { color: colors.text }]}
-                  >
-                    {selectedMatch.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.ratingBadge,
-                      { backgroundColor: colors.background },
-                    ]}
-                  >
-                    <Ionicons name="star" size={14} color={colors.warning} />
-                    <Text style={[styles.ratingText, { color: colors.text }]}>
-                      {selectedMatch.rating}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  style={[
-                    styles.statsContainer,
-                    { backgroundColor: colors.background },
-                  ]}
-                >
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Price
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      ${selectedMatch.details.estimatedCost.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statDivider,
-                      { backgroundColor: colors.border },
-                    ]}
-                  />
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Departs
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      {selectedMatch.details.arrivalAtPickup}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statDivider,
-                      { backgroundColor: colors.border },
-                    ]}
-                  />
-                  <View style={styles.statBox}>
-                    <Text
-                      style={[
-                        styles.statLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Match
-                    </Text>
-                    <Text style={[styles.statValue, { color: colors.primary }]}>
-                      {selectedMatch.matchPercentage}%
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.infoSection}>
-                  <Text
-                    style={[styles.infoLabel, { color: colors.textSecondary }]}
-                  >
-                    Vehicle
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {selectedMatch.vehicle}
-                  </Text>
-                </View>
-
-                <View style={styles.infoSection}>
-                  <Text
-                    style={[styles.infoLabel, { color: colors.textSecondary }]}
-                  >
-                    Available Seats
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>
-                    {selectedMatch.details.availableSeats} seats available
-                  </Text>
-                </View>
-
-                {selectedMatch.bio && (
-                  <View style={styles.infoSection}>
-                    <Text
-                      style={[
-                        styles.infoLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      About
-                    </Text>
-                    <Text style={[styles.infoValue, { color: colors.text }]}>
-                      {selectedMatch.bio}
-                    </Text>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[
-                    styles.primaryButton,
-                    { backgroundColor: colors.primary, marginTop: 24 },
-                  ]}
-                  onPress={handleRequestRide}
-                >
-                  <Text style={styles.primaryButtonText}>Request Ride</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            )}
-          </View>
+            Swipe left to pass
+          </Text>
         </View>
-      </Modal>
+        <View style={styles.instructionRow}>
+          <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+          <Text
+            style={[styles.instructionText, { color: colors.textSecondary }]}
+          >
+            Swipe right to request
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -688,128 +1060,60 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // List
-  listContent: { padding: 16 },
-  rideCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  rideCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  rideCardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  driverName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  vehicleText: { fontSize: 14 },
-  priceText: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  matchBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  matchBadgeText: {
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  seatsInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  // Swipe container
+  swipeContainer: {
     flex: 1,
-  },
-  seatsText: { fontSize: 13 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: "85%",
-    paddingHorizontal: 24,
-    paddingTop: 10,
-  },
-  closeHandleArea: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
-  profileHeader: { alignItems: "center", marginBottom: 24, marginTop: 8 },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    paddingVertical: 20,
   },
-  profileImage: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    marginBottom: 12,
+  instructionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  modalDriverName: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  ratingBadge: {
+  instructionRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    gap: 8,
   },
-  ratingText: {
-    fontWeight: "600",
+  instructionText: {
     fontSize: 14,
+    fontWeight: "500",
   },
-  statsContainer: {
+  toggleContainer: {
     flexDirection: "row",
-    padding: 16,
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
     borderRadius: 12,
-    marginBottom: 24,
+    padding: 14,
   },
-  statBox: { alignItems: "center", flex: 1 },
-  statDivider: { width: 1 },
-  statLabel: { fontSize: 12, marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: "700" },
-  infoSection: { marginBottom: 20 },
-  infoLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  toggleLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  infoValue: { fontSize: 16, lineHeight: 24 },
+  toggleLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  toggleSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    padding: 2,
+    justifyContent: "center",
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    transform: [{ translateX: 0 }],
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 22 }],
+  },
 });
