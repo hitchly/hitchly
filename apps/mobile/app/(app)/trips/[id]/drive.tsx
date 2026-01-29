@@ -146,7 +146,17 @@ export default function DriveScreen() {
       refetch();
     },
     onError: (error) => {
-      Alert.alert("Error", error.message);
+      // Check if rider hasn't confirmed pickup yet - show informational message instead of error
+      if (error.message.includes("Rider has not confirmed pickup yet")) {
+        Alert.alert(
+          "Waiting for Confirmation",
+          "Waiting for passenger to confirm pickup...",
+          [{ text: "OK" }]
+        );
+      } else {
+        // Show error for other cases
+        Alert.alert("Error", error.message);
+      }
     },
   });
 
@@ -614,6 +624,21 @@ export default function DriveScreen() {
     if (!currentStop) return;
 
     const action = currentStop.type === "pickup" ? "pickup" : "dropoff";
+    
+    // Check if rider has confirmed pickup (only for pickup actions)
+    if (action === "pickup") {
+      const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
+      if (currentRequest && !currentRequest.riderPickupConfirmedAt) {
+        // Show informational message instead of allowing action
+        Alert.alert(
+          "Waiting for Confirmation",
+          "Waiting for passenger to confirm pickup...",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    }
+
     const actionText =
       currentStop.type === "pickup"
         ? "Passenger Picked Up"
@@ -690,10 +715,46 @@ export default function DriveScreen() {
             </Text>
             <Text style={styles.location}>{currentStop.location}</Text>
 
+            {/* Show waiting message if rider hasn't confirmed pickup */}
+            {(() => {
+              if (currentStop.type === "pickup") {
+                const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
+                const waitingForConfirmation = currentRequest && !currentRequest.riderPickupConfirmedAt;
+                if (waitingForConfirmation) {
+                  return (
+                    <View style={styles.waitingContainer}>
+                      <Text style={styles.waitingText}>
+                        Waiting for passenger to confirm pickup...
+                      </Text>
+                    </View>
+                  );
+                }
+              }
+              return null;
+            })()}
+
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                (() => {
+                  if (currentStop.type === "pickup") {
+                    const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
+                    if (currentRequest && !currentRequest.riderPickupConfirmedAt) {
+                      return styles.primaryButtonDisabled;
+                    }
+                  }
+                  return null;
+                })(),
+              ]}
               onPress={handleAction}
-              disabled={updatePassengerStatus.isPending}
+              disabled={(() => {
+                if (updatePassengerStatus.isPending) return true;
+                if (currentStop.type === "pickup") {
+                  const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
+                  return currentRequest && !currentRequest.riderPickupConfirmedAt;
+                }
+                return false;
+              })()}
             >
               {updatePassengerStatus.isPending ? (
                 <ActivityIndicator color="#fff" />
@@ -844,10 +905,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  primaryButtonDisabled: {
+    backgroundColor: "#ccc",
+    opacity: 0.6,
+  },
   primaryButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  waitingContainer: {
+    backgroundColor: "#FFF3CD",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#FFC107",
+  },
+  waitingText: {
+    color: "#856404",
+    fontSize: 14,
+    textAlign: "center",
+    fontWeight: "500",
   },
   secondaryButton: {
     flexDirection: "row",
