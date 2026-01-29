@@ -11,4 +11,4 @@ const pool = new Pool({
 });
 
 export const db = drizzle(pool, { schema });
-export { and, asc, desc, eq, or, sql } from "drizzle-orm";
+export { and, asc, desc, eq, gte, lte, or, sql } from "drizzle-orm";

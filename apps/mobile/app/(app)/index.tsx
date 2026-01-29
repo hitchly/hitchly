@@ -1,5 +1,5 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import { Link, useRouter } from "expo-router";
+import { useEffect } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,15 +8,16 @@ import {
   Button,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
 
-import { Card } from "../../components/ui/card";
 import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";
 import { authClient } from "../../lib/auth-client";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
+  const { data: userProfile, isLoading: profileLoading } =
+    trpc.profile.getMe.useQuery();
 
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id || "";
@@ -27,104 +28,71 @@ export default function HomeScreen() {
 
   const { data, isLoading, error } = trpc.health.ping.useQuery();
 
-  const isOnline = !!data && !error;
+  // Redirect to appropriate discover screen based on role
+  useEffect(() => {
+    if (profileLoading) return;
 
-  return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top", "left", "right"]}
-    >
-      <Card>
-        <View style={[styles.cardHeader, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            System Status
+    const appRole = userProfile?.profile?.appRole || "rider";
+    const isDriver = appRole === "driver";
+
+    // Redirect to the appropriate discover screen
+    if (isDriver) {
+      router.replace("/requests" as any);
+    } else {
+      router.replace("/matchmaking" as any);
+    }
+  }, [userProfile, profileLoading, router]);
+
+  if (profileLoading || adminCheck.isLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["top", "left", "right"]}
+      >
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show admin dashboard link if user is admin (before redirect)
+  // Note: This will briefly flash before redirect happens
+  if (adminCheck.data?.isAdmin) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["top", "left", "right"]}
+      >
+        <View style={styles.loadingContainer}>
+          <Text style={{ color: colors.text, marginBottom: 20 }}>
+            Health Check:{" "}
+            {isLoading ? "Loading..." : data?.message || "Unknown"}
           </Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor: isOnline
-                  ? colors.successBackground
-                  : colors.errorBackground,
-                borderColor: isOnline ? colors.success : colors.error,
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isOnline ? colors.success : colors.error },
-              ]}
-            />
-            <Text
-              style={[
-                styles.statusText,
-                { color: isOnline ? colors.success : colors.error },
-              ]}
-            >
-              {isLoading ? "Checking..." : isOnline ? "Online" : "Offline"}
+          {error && (
+            <Text style={{ color: colors.error, marginBottom: 20 }}>
+              Error: {error.message}
             </Text>
-          </View>
-        </View>
-
-        <View style={styles.statusContent}>
-          {isLoading ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : error ? (
-            <View style={styles.messageRow}>
-              <Ionicons name="warning-outline" size={20} color={colors.error} />
-              <Text style={[styles.messageText, { color: colors.text }]}>
-                {error.message}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.messageRow}>
-              <Ionicons
-                name="server-outline"
-                size={20}
-                color={colors.textSecondary}
-              />
-              <Text style={[styles.messageText, { color: colors.text }]}>
-                Server says: &quot;{data?.message}&quot;
-              </Text>
-            </View>
           )}
-        </View>
-      </Card>
-
-      {adminCheck.data?.isAdmin && (
-        <View style={{ marginTop: 20 }}>
           <Link href={"/admin/dashboard" as any} asChild>
             <Button title="Go to Admin Dashboard" color={colors.primary} />
           </Link>
         </View>
-      )}
-    </SafeAreaView>
-  );
+      </SafeAreaView>
+    );
+  }
+
+  // This should not render as we redirect, but keep as fallback
+  return null;
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+  container: {
+    flex: 1,
   },
-  cardTitle: { fontSize: 16, fontWeight: "600" },
-  statusBadge: {
-    flexDirection: "row",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  statusText: { fontSize: 12, fontWeight: "600" },
-  statusContent: { paddingVertical: 8 },
-  messageRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  messageText: { fontSize: 16, fontWeight: "500" },
 });

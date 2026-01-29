@@ -34,7 +34,7 @@ export default function SignUp() {
         {
           onSuccess: () => {
             router.push({
-              pathname: "/verify",
+              pathname: "/verify" as any,
               params: { email: data.email, password: data.password },
             });
           },

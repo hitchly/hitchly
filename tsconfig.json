@@ -3,7 +3,9 @@
   "references": [
     { "path": "./apps/api" },
     { "path": "./apps/mobile" },
-    { "path": "./packages/db" }
+    { "path": "./packages/db" },
+    { "path": "./packages/utils" },
+    { "path": "./packages/types" }
   ],
   "compilerOptions": {
     "composite": true,
@@ -22,5 +24,6 @@
     "paths": {
       "@hitchly/db/*": ["packages/db/*"]
     }
-  }
+  },
+  "extends": "expo/tsconfig.base"
 }

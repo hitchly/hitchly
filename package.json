@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/react": "~19.1.10",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -43,5 +44,8 @@
     "*.tex": [
       "bash scripts/check-latex.sh"
     ]
+  },
+  "dependencies": {
+    "expo": "~54.0.32"
   }
 }

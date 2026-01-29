@@ -45,13 +45,13 @@ export default function Verify() {
 
         if (signInError) {
           Alert.alert("Verified", "Email verified! Please sign in manually.");
-          router.replace("/(auth)/sign-in");
+          router.replace("/(auth)/sign-in" as any);
         } else {
           router.replace("/");
         }
       } else {
         Alert.alert("Success", "Email verified! Please sign in.");
-        router.replace("/(auth)/sign-in");
+        router.replace("/(auth)/sign-in" as any);
       }
     } catch (err) {
       console.error("Unexpected Sign Up Error:", err);

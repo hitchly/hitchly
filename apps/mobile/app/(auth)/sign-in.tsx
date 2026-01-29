@@ -35,7 +35,7 @@ export default function SignIn() {
           onError: async (ctx) => {
             if (
               ctx.error.code === "EMAIL_NOT_VERIFIED" ||
-              ctx.error.message.includes("verified")
+              ctx.error.message?.includes("verified")
             ) {
               Alert.alert(
                 "Verification Required",
@@ -49,17 +49,47 @@ export default function SignIn() {
               });
 
               router.push({
-                pathname: "/verify",
+                pathname: "/verify" as any,
                 params: { email: data.email, password: data.password },
               });
             } else {
-              Alert.alert("Login Failed", ctx.error.message);
+              Alert.alert(
+                "Login Failed",
+                ctx.error.message || "Invalid credentials"
+              );
             }
           },
         }
       );
     } catch (err) {
       console.error("Unexpected Sign In Error:", err);
+
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "app/(auth)/sign-in.tsx:onSubmit:catch",
+            message: "Sign in network error",
+            data: {
+              errorMessage: err instanceof Error ? err.message : String(err),
+              errorType:
+                err instanceof Error ? err.constructor.name : typeof err,
+              errorStack: err instanceof Error ? err.stack : undefined,
+              email: data.email,
+              timestamp: Date.now(),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "network-debug",
+            hypothesisId: "D",
+          }),
+        }
+      ).catch(() => {});
+      // #endregion
+
       Alert.alert(
         "Login Failed",
         "An unexpected error occurred. Please try again."

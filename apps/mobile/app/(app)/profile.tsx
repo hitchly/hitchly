@@ -22,6 +22,11 @@ import { useTheme } from "../../context/theme-context";
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
+const formatCurrency = (cents?: number | null) => {
+  if (cents === null || cents === undefined) return "TBD";
+  return `$${(cents / 100).toFixed(2)}`;
+};
+
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
@@ -54,6 +59,13 @@ export default function ProfileScreen() {
   const isAdmin = (session?.user as any)?.role === "admin";
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile?.appRole || ""
+  );
+
+  const { data: earnings } = trpc.profile.getDriverEarnings.useQuery(
+    undefined,
+    {
+      enabled: isDriver,
+    }
   );
 
   const locationDisplay = userRecord?.profile?.defaultAddress
@@ -282,6 +294,43 @@ export default function ProfileScreen() {
               </View>
             )}
           </InfoCard>
+
+          {isDriver && (
+            <InfoCard
+              title="Earnings"
+              empty={!earnings}
+              emptyText="Earnings will appear after you complete trips."
+            >
+              {earnings && (
+                <View style={{ gap: 12 }}>
+                  <View style={styles.row}>
+                    <InfoRow
+                      label="Lifetime"
+                      value={formatCurrency(earnings.totals.lifetimeCents)}
+                    />
+                    <InfoRow
+                      label="This Month"
+                      value={formatCurrency(earnings.totals.monthCents)}
+                    />
+                  </View>
+                  <View style={styles.row}>
+                    <InfoRow
+                      label="This Week"
+                      value={formatCurrency(earnings.totals.weekCents)}
+                    />
+                    <InfoRow
+                      label="Avg / Trip"
+                      value={formatCurrency(earnings.stats.avgPerTripCents)}
+                    />
+                  </View>
+                  <InfoRow
+                    label="Completed Trips"
+                    value={earnings.stats.completedTripCount.toString()}
+                  />
+                </View>
+              )}
+            </InfoCard>
+          )}
 
           {isDriver && (
             <InfoCard

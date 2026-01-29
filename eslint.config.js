@@ -38,4 +38,21 @@ export default [
       "@typescript-eslint/no-misused-promises": "off",
     },
   },
+  {
+    // Override for Node.js scripts
+    files: ["**/scripts/**/*.{js,ts}"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+      },
+    },
+    rules: {
+      "no-console": "off",
+      "no-undef": "off",
+    },
+  },
 ];
