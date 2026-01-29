@@ -624,10 +624,12 @@ export default function DriveScreen() {
     if (!currentStop) return;
 
     const action = currentStop.type === "pickup" ? "pickup" : "dropoff";
-    
+
     // Check if rider has confirmed pickup (only for pickup actions)
     if (action === "pickup") {
-      const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
+      const currentRequest = requests.find(
+        (req: any) => req.id === currentStop.requestId
+      );
       if (currentRequest && !currentRequest.riderPickupConfirmedAt) {
         // Show informational message instead of allowing action
         Alert.alert(
@@ -718,8 +720,11 @@ export default function DriveScreen() {
             {/* Show waiting message if rider hasn't confirmed pickup */}
             {(() => {
               if (currentStop.type === "pickup") {
-                const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
-                const waitingForConfirmation = currentRequest && !currentRequest.riderPickupConfirmedAt;
+                const currentRequest = requests.find(
+                  (req: any) => req.id === currentStop.requestId
+                );
+                const waitingForConfirmation =
+                  currentRequest && !currentRequest.riderPickupConfirmedAt;
                 if (waitingForConfirmation) {
                   return (
                     <View style={styles.waitingContainer}>
@@ -738,8 +743,13 @@ export default function DriveScreen() {
                 styles.primaryButton,
                 (() => {
                   if (currentStop.type === "pickup") {
-                    const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
-                    if (currentRequest && !currentRequest.riderPickupConfirmedAt) {
+                    const currentRequest = requests.find(
+                      (req: any) => req.id === currentStop.requestId
+                    );
+                    if (
+                      currentRequest &&
+                      !currentRequest.riderPickupConfirmedAt
+                    ) {
                       return styles.primaryButtonDisabled;
                     }
                   }
@@ -750,8 +760,12 @@ export default function DriveScreen() {
               disabled={(() => {
                 if (updatePassengerStatus.isPending) return true;
                 if (currentStop.type === "pickup") {
-                  const currentRequest = requests.find((req: any) => req.id === currentStop.requestId);
-                  return currentRequest && !currentRequest.riderPickupConfirmedAt;
+                  const currentRequest = requests.find(
+                    (req: any) => req.id === currentStop.requestId
+                  );
+                  return (
+                    currentRequest && !currentRequest.riderPickupConfirmedAt
+                  );
                 }
                 return false;
               })()}

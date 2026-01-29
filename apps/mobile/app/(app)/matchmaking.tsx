@@ -10,7 +10,15 @@ import {
   TextInput,
   Animated,
 } from "react-native";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  Component,
+  ErrorInfo,
+  ReactNode,
+} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/theme-context";
@@ -23,6 +31,106 @@ import { isTestAccount } from "../../lib/test-accounts";
 
 // McMaster University coordinates (default destination)
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
+
+// Error Boundary for SwipeDeck
+class ErrorBoundary extends Component<
+  { children: ReactNode; onReset?: () => void },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; onReset?: () => void }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // #region agent log
+    try {
+      fetch(
+        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "matchmaking.tsx:ErrorBoundary:componentDidCatch",
+            message: "SwipeDeck crash caught by error boundary",
+            data: {
+              errorMessage: error.message,
+              errorName: error.name,
+              errorStack: error.stack,
+              componentStack: errorInfo.componentStack,
+              timestamp: Date.now(),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "crash-debug",
+            hypothesisId: "CRASH",
+          }),
+        }
+      ).catch(() => {});
+    } catch (fetchErr) {
+      // Fallback if fetch fails
+      console.error("Error logging crash:", fetchErr);
+    }
+    // #endregion
+    console.error("SwipeDeck Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              marginBottom: 10,
+              color: "#FF3B30",
+            }}
+          >
+            Swipe Error
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              textAlign: "center",
+              marginBottom: 20,
+              color: "#666",
+            }}
+          >
+            {this.state.error?.message || "An error occurred"}
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              this.setState({ hasError: false, error: null });
+              this.props.onReset?.();
+            }}
+            style={{
+              backgroundColor: "#007AFF",
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function Matchmaking() {
   const { colors } = useTheme();
@@ -798,14 +906,20 @@ export default function Matchmaking() {
       </View>
 
       <View style={styles.swipeContainer}>
-        <SwipeDeck
-          data={filteredMatches}
-          renderCard={(match) => <TripCard match={match} />}
-          onSwipeLeft={handleSwipeLeft}
-          onSwipeRight={handleSwipeRight}
-          onCardTap={handleCardTap}
-          onDeckEmpty={handleDeckEmpty}
-        />
+        <ErrorBoundary
+          onReset={() => {
+            setHasSearched(false);
+          }}
+        >
+          <SwipeDeck
+            data={filteredMatches}
+            renderCard={(match) => <TripCard match={match} />}
+            onSwipeLeft={handleSwipeLeft}
+            onSwipeRight={handleSwipeRight}
+            onCardTap={handleCardTap}
+            onDeckEmpty={handleDeckEmpty}
+          />
+        </ErrorBoundary>
       </View>
 
       {/* Swipe instructions */}

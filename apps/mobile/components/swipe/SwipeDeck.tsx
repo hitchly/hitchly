@@ -409,7 +409,9 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     }
 
     // Capture data array and callbacks for worklet closure
-    const dataArray = data;
+    // Create a safe copy to avoid mutation issues
+    const dataArray = Array.isArray(data) ? [...data] : [];
+    const dataArrayLength = dataArray.length;
     const handleSwipeCompleteFn = handleSwipeComplete;
     const onCardTapFn = onCardTap;
 
@@ -417,42 +419,15 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
       const gesture = Gesture.Pan()
         .activeOffsetX([-1, 1]) // Activate on any horizontal movement (very permissive)
         .onBegin(() => {
-          // #region agent log
-          const ts = Date.now();
-          console.log(
-            `[${new Date(ts).toISOString()}] [DEBUG B] Pan gesture began (finger down)`,
-            {
-              currentCardIndex: currentCardIndex.value,
-              timestamp: ts,
-            }
-          );
-          // #endregion
+          "worklet";
+          // Removed console.log from worklet - can cause crashes
         })
         .onStart(() => {
-          // #region agent log
-          const ts = Date.now();
-          console.log(
-            `[${new Date(ts).toISOString()}] [DEBUG B] Pan gesture started (activated)`,
-            {
-              currentCardIndex: currentCardIndex.value,
-              timestamp: ts,
-            }
-          );
-          // #endregion
+          "worklet";
+          // Removed console.log from worklet - can cause crashes
         })
         .onUpdate((event) => {
-          // #region agent log
-          const ts = Date.now();
-          console.log(
-            `[${new Date(ts).toISOString()}] [DEBUG B] Pan gesture update`,
-            {
-              translationX: event.translationX,
-              translationY: event.translationY,
-              currentCardIndex: currentCardIndex.value,
-              timestamp: ts,
-            }
-          );
-          // #endregion
+          "worklet";
           try {
             translateX.value = event.translationX;
             translateY.value = event.translationY * 0.1; // Less vertical movement
@@ -460,23 +435,17 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
             opacity.value =
               1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
           } catch (error) {
-            console.error("[DEBUG B] Error in onUpdate:", error);
+            // Silently handle errors in worklet - can't use console.log here
+            // Reset to safe values
+            translateX.value = 0;
+            translateY.value = 0;
+            rotation.value = 0;
+            opacity.value = 1;
           }
         })
         .onEnd((event) => {
-          // #region agent log
-          const ts = Date.now();
-          console.log(
-            `[${new Date(ts).toISOString()}] [DEBUG B] Pan gesture ended`,
-            {
-              translationX: event.translationX,
-              velocityX: event.velocityX,
-              currentCardIndex: currentCardIndex.value,
-              timestamp: ts,
-            }
-          );
-          // Note: log() removed from worklet to avoid serialization issues
-          // #endregion
+          "worklet";
+          // Removed console.log from worklet - can cause crashes
           try {
             const absTranslationX = Math.abs(event.translationX);
             const shouldSwipeLeft = event.translationX < -SWIPE_THRESHOLD;
@@ -489,16 +458,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               absTranslationX < tapThreshold &&
               Math.abs(event.velocityX) < 100
             ) {
-              // #region agent log
-              const ts = Date.now();
-              console.log(
-                `[${new Date(ts).toISOString()}] [DEBUG B] Detected tap (small movement)`,
-                {
-                  currentCardIndex: currentCardIndex.value,
-                  timestamp: ts,
-                }
-              );
-              // #endregion
+              // Removed console.log from worklet - can cause crashes
               // Reset to center
               translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
               translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -506,16 +466,24 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
               // Trigger tap handler if provided - use current index to get card
               // Only pass ID to avoid passing objects with refs through worklet boundary
-              const idx = currentCardIndex.value;
-              if (onCardTapFn && idx >= 0 && idx < dataArray.length) {
-                const item = dataArray[idx];
-                // Worklet-safe ID extraction (inline check, no function call)
+              try {
+                const idx = currentCardIndex.value;
                 let cardId = "";
-                if (item && typeof item === "object") {
-                  const obj = item as Record<string, any>;
-                  cardId = obj.id || obj.rideId || "";
+                // Safely access array - use captured length, check bounds and existence
+                if (
+                  idx >= 0 &&
+                  idx < dataArrayLength &&
+                  dataArray &&
+                  dataArray[idx]
+                ) {
+                  const item = dataArray[idx];
+                  // Worklet-safe ID extraction (inline check, no function call)
+                  if (item && typeof item === "object") {
+                    const obj = item as Record<string, any>;
+                    cardId = obj.id || obj.rideId || "";
+                  }
                 }
-                if (cardId) {
+                if (cardId && onCardTapFn) {
                   // Create a safe callback - use captured values from closure
                   runOnJS(
                     (
@@ -537,11 +505,13 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                           callback(foundItem);
                         }
                       } catch (err) {
-                        console.error("[DEBUG B] Error in tap callback:", err);
+                        // Error logged via runOnJS - can't use console in worklet
                       }
                     }
                   )(cardId, dataArray, onCardTapFn);
                 }
+              } catch (err) {
+                // Silently handle tap errors
               }
               return;
             }
@@ -550,158 +520,132 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               shouldSwipeLeft ||
               (event.translationX < 0 && event.velocityX < -velocityThreshold)
             ) {
-              // Swipe left
-              // #region agent log
-              const ts = Date.now();
-              console.log(
-                `[${new Date(ts).toISOString()}] [DEBUG B] Swipe left detected`,
-                {
-                  translationX: event.translationX,
-                  currentCardIndex: currentCardIndex.value,
-                  timestamp: ts,
-                }
-              );
-              // #endregion
-              // Extract cardId BEFORE animation (worklet-safe)
-              const idx = currentCardIndex.value;
-              let cardIdToUse = "";
-              if (idx >= 0 && idx < dataArray.length) {
-                const item = dataArray[idx];
-                // Worklet-safe ID extraction (inline check, no function call)
-                if (item && typeof item === "object") {
-                  const obj = item as Record<string, any>;
-                  cardIdToUse = obj.id || obj.rideId || "";
-                }
-              }
-              // Reset callback flag before starting animation
-              swipeCallbackCalled.value = false;
-              translateX.value = withTiming(
-                -SCREEN_WIDTH * 1.5,
-                { duration: 300 },
-                (finished) => {
-                  if (swipeCallbackCalled.value) {
-                    console.log(
-                      "[DEBUG B] Animation callback already called, skipping"
-                    );
-                    return;
+              // Swipe left - extract cardId BEFORE animation (worklet-safe)
+              try {
+                const idx = currentCardIndex.value;
+                let cardIdToUse = "";
+                // Safely access array - use captured length, check bounds first
+                if (
+                  idx >= 0 &&
+                  idx < dataArrayLength &&
+                  dataArray &&
+                  dataArray[idx]
+                ) {
+                  const item = dataArray[idx];
+                  if (item && typeof item === "object") {
+                    const obj = item as Record<string, any>;
+                    cardIdToUse = obj.id || obj.rideId || "";
                   }
-                  swipeCallbackCalled.value = true;
-
-                  const ts = Date.now();
-                  console.log(
-                    `[${new Date(ts).toISOString()}] [DEBUG B] Animation callback (left)`,
-                    {
-                      finished,
-                      currentCardIndex: currentCardIndex.value,
-                      cardIdToUse,
-                      hasHandleSwipeCompleteFn: !!handleSwipeCompleteFn,
-                      timestamp: ts,
+                }
+                // Reset callback flag before starting animation
+                swipeCallbackCalled.value = false;
+                // Store cardId in a shared value to avoid closure issues
+                const cardIdForCallback = cardIdToUse;
+                translateX.value = withTiming(
+                  -SCREEN_WIDTH * 1.5,
+                  { duration: 300 },
+                  (finished) => {
+                    "worklet";
+                    try {
+                      if (swipeCallbackCalled.value) {
+                        return;
+                      }
+                      swipeCallbackCalled.value = true;
+                      if (
+                        finished &&
+                        cardIdForCallback &&
+                        handleSwipeCompleteFn
+                      ) {
+                        runOnJS(handleSwipeCompleteFn)(
+                          "left",
+                          cardIdForCallback
+                        );
+                      }
+                    } catch (err) {
+                      // Silently handle errors in animation callback
                     }
-                  );
-                  if (finished && cardIdToUse && handleSwipeCompleteFn) {
-                    console.log(
-                      `[${new Date(Date.now()).toISOString()}] [DEBUG B] Calling handleSwipeComplete (left)`,
-                      {
-                        cardId: cardIdToUse,
-                        idx,
-                        timestamp: Date.now(),
-                      }
-                    );
-                    // Call directly - handleSwipeCompleteFn already has error handling
-                    runOnJS(handleSwipeCompleteFn)("left", cardIdToUse);
-                  } else {
-                    console.log(
-                      `[${new Date(Date.now()).toISOString()}] [DEBUG B] Animation callback skipped`,
-                      {
-                        finished,
-                        hasCardId: !!cardIdToUse,
-                        hasHandleSwipeCompleteFn: !!handleSwipeCompleteFn,
-                        timestamp: Date.now(),
-                      }
-                    );
                   }
-                }
-              );
-              opacity.value = withTiming(0, { duration: 300 });
-              scale.value = withTiming(0.8, { duration: 300 });
+                );
+                opacity.value = withTiming(0, { duration: 300 });
+                scale.value = withTiming(0.8, { duration: 300 });
+              } catch (err) {
+                // Reset on error
+                translateX.value = withSpring(0, {
+                  damping: 15,
+                  stiffness: 150,
+                });
+                translateY.value = withSpring(0, {
+                  damping: 15,
+                  stiffness: 150,
+                });
+                rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+                opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
+              }
             } else if (
               shouldSwipeRight ||
               (event.translationX > 0 && event.velocityX > velocityThreshold)
             ) {
-              // Swipe right
-              // #region agent log
-              const ts = Date.now();
-              console.log(
-                `[${new Date(ts).toISOString()}] [DEBUG B] Swipe right detected`,
-                {
-                  translationX: event.translationX,
-                  currentCardIndex: currentCardIndex.value,
-                  timestamp: ts,
-                }
-              );
-              // #endregion
-              // Extract cardId BEFORE animation (worklet-safe)
-              const idx = currentCardIndex.value;
-              let cardIdToUse = "";
-              if (idx >= 0 && idx < dataArray.length) {
-                const item = dataArray[idx];
-                // Worklet-safe ID extraction (inline check, no function call)
-                if (item && typeof item === "object") {
-                  const obj = item as Record<string, any>;
-                  cardIdToUse = obj.id || obj.rideId || "";
-                }
-              }
-              // Reset callback flag before starting animation
-              swipeCallbackCalled.value = false;
-              translateX.value = withTiming(
-                SCREEN_WIDTH * 1.5,
-                { duration: 300 },
-                (finished) => {
-                  if (swipeCallbackCalled.value) {
-                    console.log(
-                      "[DEBUG B] Animation callback already called, skipping"
-                    );
-                    return;
+              // Swipe right - extract cardId BEFORE animation (worklet-safe)
+              try {
+                const idx = currentCardIndex.value;
+                let cardIdToUse = "";
+                // Safely access array - use captured length, check bounds first
+                if (
+                  idx >= 0 &&
+                  idx < dataArrayLength &&
+                  dataArray &&
+                  dataArray[idx]
+                ) {
+                  const item = dataArray[idx];
+                  if (item && typeof item === "object") {
+                    const obj = item as Record<string, any>;
+                    cardIdToUse = obj.id || obj.rideId || "";
                   }
-                  swipeCallbackCalled.value = true;
-
-                  const ts = Date.now();
-                  console.log(
-                    `[${new Date(ts).toISOString()}] [DEBUG B] Animation callback (right)`,
-                    {
-                      finished,
-                      currentCardIndex: currentCardIndex.value,
-                      cardIdToUse,
-                      hasHandleSwipeCompleteFn: !!handleSwipeCompleteFn,
-                      timestamp: ts,
+                }
+                // Reset callback flag before starting animation
+                swipeCallbackCalled.value = false;
+                // Store cardId in a shared value to avoid closure issues
+                const cardIdForCallback = cardIdToUse;
+                translateX.value = withTiming(
+                  SCREEN_WIDTH * 1.5,
+                  { duration: 300 },
+                  (finished) => {
+                    "worklet";
+                    try {
+                      if (swipeCallbackCalled.value) {
+                        return;
+                      }
+                      swipeCallbackCalled.value = true;
+                      if (
+                        finished &&
+                        cardIdForCallback &&
+                        handleSwipeCompleteFn
+                      ) {
+                        runOnJS(handleSwipeCompleteFn)(
+                          "right",
+                          cardIdForCallback
+                        );
+                      }
+                    } catch (err) {
+                      // Silently handle errors in animation callback
                     }
-                  );
-                  if (finished && cardIdToUse && handleSwipeCompleteFn) {
-                    console.log(
-                      `[${new Date(Date.now()).toISOString()}] [DEBUG B] Calling handleSwipeComplete (right)`,
-                      {
-                        cardId: cardIdToUse,
-                        idx,
-                        timestamp: Date.now(),
-                      }
-                    );
-                    // Call directly - handleSwipeCompleteFn already has error handling
-                    runOnJS(handleSwipeCompleteFn)("right", cardIdToUse);
-                  } else {
-                    console.log(
-                      `[${new Date(Date.now()).toISOString()}] [DEBUG B] Animation callback skipped`,
-                      {
-                        finished,
-                        hasCardId: !!cardIdToUse,
-                        hasHandleSwipeCompleteFn: !!handleSwipeCompleteFn,
-                        timestamp: Date.now(),
-                      }
-                    );
                   }
-                }
-              );
-              opacity.value = withTiming(0, { duration: 300 });
-              scale.value = withTiming(0.8, { duration: 300 });
+                );
+                opacity.value = withTiming(0, { duration: 300 });
+                scale.value = withTiming(0.8, { duration: 300 });
+              } catch (err) {
+                // Reset on error
+                translateX.value = withSpring(0, {
+                  damping: 15,
+                  stiffness: 150,
+                });
+                translateY.value = withSpring(0, {
+                  damping: 15,
+                  stiffness: 150,
+                });
+                rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+                opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
+              }
             } else {
               // Spring back to center
               translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -710,7 +654,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
             }
           } catch (error) {
-            console.error("[DEBUG B] Error in onEnd:", error);
+            // Removed console.error from worklet - can cause crashes
             // Reset to center on error
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -771,15 +715,29 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
   // #endregion
 
   const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotate: `${rotation.value}deg` },
-        { scale: scale.value },
-      ],
-      opacity: opacity.value,
-    };
+    "worklet";
+    try {
+      return {
+        transform: [
+          { translateX: translateX.value },
+          { translateY: translateY.value },
+          { rotate: `${rotation.value}deg` },
+          { scale: scale.value },
+        ],
+        opacity: opacity.value,
+      };
+    } catch (error) {
+      // Fallback to safe values on error
+      return {
+        transform: [
+          { translateX: 0 },
+          { translateY: 0 },
+          { rotate: "0deg" },
+          { scale: 1 },
+        ],
+        opacity: 1,
+      };
+    }
   });
 
   const getCardStyle = (index: number): ViewStyle => {
@@ -953,23 +911,33 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
 
 function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
   const leftOverlayStyle = useAnimatedStyle(() => {
-    const overlayOpacity =
-      translateX.value < 0
-        ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
-        : 0;
-    return {
-      opacity: overlayOpacity,
-    };
+    "worklet";
+    try {
+      const overlayOpacity =
+        translateX.value < 0
+          ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
+          : 0;
+      return {
+        opacity: overlayOpacity,
+      };
+    } catch (error) {
+      return { opacity: 0 };
+    }
   });
 
   const rightOverlayStyle = useAnimatedStyle(() => {
-    const overlayOpacity =
-      translateX.value > 0
-        ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
-        : 0;
-    return {
-      opacity: overlayOpacity,
-    };
+    "worklet";
+    try {
+      const overlayOpacity =
+        translateX.value > 0
+          ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
+          : 0;
+      return {
+        opacity: overlayOpacity,
+      };
+    } catch (error) {
+      return { opacity: 0 };
+    }
   });
 
   return (

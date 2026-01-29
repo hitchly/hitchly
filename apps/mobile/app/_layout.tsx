@@ -24,6 +24,29 @@ function AppContent() {
   const { data: session, isPending } = authClient.useSession();
   const utils = trpc.useUtils();
 
+  // #region agent log
+  useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/_layout.tsx:sessionState",
+        message: "Session loading state check",
+        data: {
+          isPending,
+          hasSession: !!session,
+          sessionUserId: session?.user?.id,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "loading-debug",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
+  }, [isPending, session]);
+  // #endregion
+
   const segments = useSegments();
   const router = useRouter();
 
@@ -54,15 +77,69 @@ function AppContent() {
   // #endregion
 
   // Get user profile to check if driver
-  const { data: userProfile } = trpc.profile.getMe.useQuery(undefined, {
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    error: profileError,
+  } = trpc.profile.getMe.useQuery(undefined, {
     enabled: !!session,
   });
 
+  // #region agent log
+  useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/_layout.tsx:profileQuery",
+        message: "Profile query state check",
+        data: {
+          profileLoading,
+          hasProfile: !!userProfile,
+          profileError: profileError?.message,
+          enabled: !!session,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "loading-debug",
+        hypothesisId: "B",
+      }),
+    }).catch(() => {});
+  }, [profileLoading, userProfile, profileError, session]);
+  // #endregion
+
   // Query for active/in_progress trips
-  const { data: trips } = trpc.trip.getTrips.useQuery(
-    {},
-    { enabled: !!session }
-  );
+  const {
+    data: trips,
+    isLoading: tripsLoading,
+    error: tripsError,
+  } = trpc.trip.getTrips.useQuery({}, { enabled: !!session });
+
+  // #region agent log
+  useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "app/_layout.tsx:tripsQuery",
+        message: "Trips query state check",
+        data: {
+          tripsLoading,
+          hasTrips: !!trips,
+          tripsCount: trips?.length,
+          tripsError: tripsError?.message,
+          enabled: !!session,
+          timestamp: Date.now(),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "loading-debug",
+        hypothesisId: "D",
+      }),
+    }).catch(() => {});
+  }, [tripsLoading, trips, tripsError, session]);
+  // #endregion
 
   // Auto-cleanup dummy passengers on app launch (for drivers)
   const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation();
