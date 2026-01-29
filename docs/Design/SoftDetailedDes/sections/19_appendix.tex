@@ -70,7 +70,16 @@ graduate attribute of Problem Analysis and Design.
   The team considered multiple architectural and implementation approaches. One option was to use a REST-based backend instead of tRPC, but this offered weaker type safety across the mobile app and API. Another option was building a native iOS/Android app, but Expo provided faster development and easier integration within the monorepo.  
   The team also explored using a monolithic architecture versus a modular service structure. Ultimately, the chosen modular design offered the best balance between clarity, extensibility, and meeting course expectations.  
   Alternative matching designs, such as a manually curated list instead of a scoring algorithm, were rejected because they reduced flexibility and diminished the quality of the user matching experience.  
-
-  
   (LO\_Explores)
+  
+\section*{Module Reflection}
+
+The process of implementing the UI.Search module for Team 1 benefited significantly from the clarity of the provided MIS documentation. The specification outlined requirements for state variables, access routines, and exception types clearly, which made it straightforward to translate requirements into code. Having explicit definitions for functions like submitQuery(), nextPage(), and 
+exportResults() meant there was little ambiguity about what needed to be built.
+The existing codebase was well-structured and followed consistent patterns throughout. The team had clear separation between services, types, components, and pages. This organization reduced the learning curve considerably and made it easy to understand where new code should be placed. Additionally, much of the backend infrastructure including Electron IPC handlers, fragment filtering logic, and database query support was already in place, allowing the new module to build upon existing foundations rather than starting from scratch.
+
+The most significant challenge was the absence of test data due to confidentiality constraints. The team's manuscript fragment images are sensitive research materials that cannot be included in the public repository. As a result, the data folder was empty, the database contained no fragment records. While the UI renders properly and displays appropriate empty states, end-to-end testing was difficult. 
+  
+Overall, this was a great learning experience that showed the importance of writing clear requirements and specifications for an application before beginning development.
+
 \end{enumerate}
