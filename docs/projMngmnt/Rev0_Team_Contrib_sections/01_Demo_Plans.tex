@@ -1,0 +1,129 @@
+% Sources:
+% - docs/DevelopmentPlan/DevelopmentPlan.tex (line 145): Rev 0 demo scheduled for Feb 2-12, 2026
+% - docs/SRS/SRS_meyer.tex (lines 812-852): Sprints 2-4 features to be completed by Rev 0
+% - docs/projMngmnt/POC_Team_Contrib.tex (lines 25-27): POC demo scope for comparison
+% - docs/ProblemStatementAndGoals/ProblemStatement.tex (lines 64-80): Core application features
+% - docs/Design/SoftArchitecture/sections/05_module_hierarchy.tex: Module definitions (M1-M12)
+% - docs/Design/SoftDetailedDes/sections/09_route_trip_module.tex: M3 Route & Trip Module
+% - docs/Design/SoftDetailedDes/sections/11_scheduling_module.tex: M5 Scheduling Module
+% - docs/Design/SoftDetailedDes/sections/14_safety_reporting_module.tex: M8 Safety & Reporting Module
+% - docs/Design/SoftDetailedDes/sections/18_admin_moderation_module.tex: M10 Admin & Moderation Module
+
+\section{Demo Plans}
+
+The Revision 0 demonstration will showcase a comprehensive, production-ready version of the Hitchly application with enhanced features beyond the Proof of Concept. Building upon the POC's foundation of McMaster email authentication and basic ride matching, the Rev 0 demo will demonstrate a complete end-to-end user experience with expanded functionality.
+
+\subsection{Core Features to Demonstrate}
+
+\begin{itemize}
+    \item \textbf{Complete User Authentication \& Verification}
+    \begin{itemize}
+        \item McMaster email verification during sign-up
+        \item Secure login and session management
+    \end{itemize}
+    
+    \item \textbf{Comprehensive Profile System}
+    \begin{itemize}
+        \item User profile creation and management (personal information, preferences)
+        \item Driver vehicle registration and details
+        \item Schedule input and timetable management
+        \item Profile editing and updates
+    \end{itemize}
+    
+    \item \textbf{Advanced Ride Matching}
+    \begin{itemize}
+        \item Multi-passenger matching based on vehicle capacity
+        \item Schedule and location-based matching algorithm
+        \item Matching filters (gender preferences, music preferences, vehicle type)
+        \item Real-time match notifications
+    \end{itemize}
+    
+    \item \textbf{Route \& Trip Management}
+    \begin{itemize}
+        \item Trip creation with origin, destination, departure time, and capacity
+        \item Visual route representation using mapping services
+        \item Trip lifecycle management (scheduled, active, completed states)
+        \item Trip cancellation and modification capabilities
+        \item Seat management and capacity tracking
+    \end{itemize}
+    
+    \item \textbf{Scheduling System}
+    \begin{itemize}
+        \item Recurring schedule creation (weekly patterns, day-of-week selection)
+        \item Automated trip generation from recurring schedules
+        \item One-time schedule support
+        \item Schedule viewing and cancellation
+        \item Integration with trip creation for seamless ride planning
+    \end{itemize}
+    
+    \item \textbf{Cost Calculation \& Trip Management}
+    \begin{itemize}
+        \item Complex fare calculation based on gas costs, number of passengers, and parking fees
+        \item Per-passenger cost breakdown
+        \item Trip confirmation workflow
+        \item Ride check-in system (start and end of trip)
+        \item Trip summary generation with detailed cost breakdown
+    \end{itemize}
+    
+    \item \textbf{Safety \& Reporting}
+    \begin{itemize}
+        \item User reporting system for safety incidents
+        \item Safety resources and information pages
+        \item Report submission and tracking
+        \item Safety flag management
+    \end{itemize}
+    
+    \item \textbf{Admin \& Moderation}
+    \begin{itemize}
+        \item Admin dashboard for platform oversight
+        \item User management and role assignment
+        \item Report review and resolution workflow
+        \item User warning and moderation actions
+        \item Application analytics and statistics
+    \end{itemize}
+    
+    \item \textbf{User Experience Enhancements}
+    \begin{itemize}
+        \item Polished mobile UI using NativeWind and shadcn/ui components
+        \item Smooth navigation between screens
+        \item Push notifications for matches and trip updates
+        \item Rating and review system for completed trips
+    \end{itemize}
+\end{itemize}
+
+\subsection{Demo Workflow}
+
+The demonstration will follow a complete user journey:
+
+\begin{enumerate}
+    \item \textbf{Driver Onboarding:} Show a driver signing up, verifying their McMaster email, registering their vehicle, and setting their schedule and cost preferences.
+    
+    \item \textbf{Rider Onboarding:} Demonstrate a rider creating their profile, inputting their schedule and location preferences, and setting matching filters.
+    
+    \item \textbf{Recurring Schedule Setup:} Demonstrate creating a recurring weekly schedule (e.g., Monday-Friday morning commute) that automatically generates trips, showing how the Scheduling Module integrates with trip creation.
+    
+    \item \textbf{Trip Creation \& Route Visualization:} Show a driver creating a trip with origin and destination, displaying the route on a map, and setting capacity. Demonstrate both one-time trips and trips generated from recurring schedules.
+    
+    \item \textbf{Matching Process:} Show the system matching multiple riders with a driver based on overlapping schedules, compatible locations, and user preferences. Display the matching algorithm's results and cost estimates.
+    
+    \item \textbf{Trip Confirmation:} Demonstrate the confirmation workflow where both driver and riders accept the match, leading to a confirmed trip.
+    
+    \item \textbf{Trip Execution:} Show the ride check-in process at the start and end of the trip, demonstrating real-time trip tracking.
+    
+    \item \textbf{Trip Completion:} Display the generated trip summary with detailed cost breakdown per passenger, and demonstrate the rating/review system.
+    
+    \item \textbf{Safety \& Reporting:} Demonstrate the safety reporting feature where a user can submit a report about another user or safety concern, showing the report submission workflow.
+    
+    \item \textbf{Admin Dashboard (Optional):} If time permits, briefly demonstrate the admin dashboard showing user management, report review, and application analytics capabilities.
+\end{enumerate}
+
+\subsection{Technical Demonstration}
+
+The demo will also highlight the technical robustness of the system:
+
+\begin{itemize}
+    \item Cross-platform functionality (iOS and Android)
+    \item Responsive UI and smooth user interactions
+\end{itemize}
+
+This comprehensive demonstration will validate that Hitchly has evolved from a proof-of-concept into a functional, user-ready application that addresses the core problem of safe, affordable, and sustainable commuting for the McMaster community.

@@ -1,0 +1,70 @@
+% Sources:
+% - .github/workflows/ci.yml (lines 1-264): Main CI workflow with code and LaTeX checks
+% - .github/workflows/buildtex.yml (lines 1-58): Automated PDF generation workflow
+% - docs/DevelopmentPlan/DevelopmentPlan.tex (lines 114-115): CI/CD overview and requirements
+
+\section{CICD}
+
+Hitchly employs a comprehensive Continuous Integration and Continuous Deployment (CI/CD) pipeline using GitHub Actions to ensure consistent quality, reliability, and maintainability across all project components. The pipeline is designed with intelligent path-based filtering to optimize build times by only running relevant checks when specific file types are modified.
+
+\subsection{Continuous Integration}
+
+The CI pipeline consists of two main workflows: \texttt{ci.yml} and \texttt{buildtex.yml}. The \texttt{ci.yml} workflow implements a change detection system that filters jobs based on whether code files or LaTeX documentation files were modified, ensuring efficient resource usage.
+
+\subsubsection{Code Quality Checks}
+
+% Source: .github/workflows/ci.yml (lines 39-110): Code quality check jobs (type-check, lint, format-check, build, test)
+
+For code changes (TypeScript, JavaScript, JSON, Markdown, and configuration files), the following automated checks are executed on every push and pull request:
+
+\begin{itemize}
+  \item \textbf{Type Check:} TypeScript type checking ensures type safety across the Turborepo monorepo.
+  \item \textbf{Lint:} ESLint runs to enforce code quality standards and catch potential errors.
+  \item \textbf{Format Check:} Prettier formatting validation ensures consistent code style. The check fails if files are not properly formatted, prompting developers to run the formatter.
+  \item \textbf{Build:} Full project build verification ensures all components compile successfully.
+  \item \textbf{Test:} Jest unit tests are executed with a PostgreSQL database service container. The test suite includes database schema migrations via Drizzle ORM before running tests.
+\end{itemize}
+
+All code quality checks must pass before a pull request can be merged into the main branch, guaranteeing that only validated, production-ready code enters the repository.
+
+\subsubsection{Documentation Quality Checks}
+
+% Source: .github/workflows/ci.yml (lines 115-170): LaTeX quality check jobs (latex-lint, latex-format-check, latex-compile)
+
+For LaTeX documentation changes, the pipeline performs specialized checks:
+
+\begin{itemize}
+  \item \textbf{LaTeX Lint:} ChkTeX analyzes LaTeX files for common errors and style issues.
+  \item \textbf{LaTeX Format Check:} \texttt{latexindent} validates that LaTeX files follow consistent formatting standards.
+  \item \textbf{LaTeX Compilation:} All LaTeX documents are compiled across multiple directories (Checklists, Design documents, SRS, VnV documents, project management documents, etc.) using a matrix strategy. The compilation process handles both simple documents and documents requiring BibTeX bibliography processing.
+\end{itemize}
+
+\subsection{Continuous Deployment}
+
+% Source: .github/workflows/buildtex.yml (lines 1-58): Automated PDF compilation and commit workflow
+
+The \texttt{buildtex.yml} workflow handles automated PDF generation for LaTeX documents. When LaTeX files are modified and merged to the main branch, the workflow:
+
+\begin{itemize}
+  \item Detects changed \texttt{.tex} files in the \texttt{docs/} directory.
+  \item Compiles each changed document using the full TeXLive distribution.
+  \item Automatically commits the generated PDF files back to the repository.
+\end{itemize}
+
+This ensures that PDF documentation is always up-to-date with the latest LaTeX source files without requiring manual compilation.
+
+\subsection{Design Considerations}
+
+% Source: .github/workflows/ci.yml (lines 9-11, 14-35, 177-192): Concurrency control, path filtering, matrix strategy
+% Source: docs/DevelopmentPlan/DevelopmentPlan.tex (lines 114-115): CI/CD design goals
+
+The CI/CD pipeline emphasizes speed, consistency, and modularity:
+
+\begin{itemize}
+  \item \textbf{Concurrency Control:} Workflows use GitHub's concurrency groups to cancel in-progress runs when new commits are pushed, preventing unnecessary resource consumption.
+  \item \textbf{Path-Based Filtering:} Change detection ensures that code checks only run when code files change, and LaTeX checks only run when documentation changes, significantly reducing build times.
+  \item \textbf{Matrix Strategy:} LaTeX compilation uses a matrix to compile documents in parallel across multiple directories, improving efficiency.
+  \item \textbf{Fail-Fast Strategy:} The pipeline uses a final aggregation job that checks all individual job results, providing clear feedback on which checks failed.
+\end{itemize}
+
+This automated pipeline maintains project stability and code quality as new features and documentation are introduced, while minimizing developer friction through intelligent optimization.
