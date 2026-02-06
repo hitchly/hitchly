@@ -56,21 +56,17 @@ vi.mock("../../../services/payment_service", () => ({
   createConnectOnboardingLink: vi
     .fn()
     .mockResolvedValue("https://stripe.com/onboarding"),
-  getConnectAccountStatus: vi
-    .fn()
-    .mockResolvedValue({
-      hasAccount: true,
-      accountId: "acct_123",
-      onboardingComplete: true,
-      payoutsEnabled: true,
-    }),
-  calculateFare: vi
-    .fn()
-    .mockReturnValue({
-      totalCents: 1000,
-      platformFeeCents: 150,
-      driverAmountCents: 850,
-    }),
+  getConnectAccountStatus: vi.fn().mockResolvedValue({
+    hasAccount: true,
+    accountId: "acct_123",
+    onboardingComplete: true,
+    payoutsEnabled: true,
+  }),
+  calculateFare: vi.fn().mockReturnValue({
+    totalCents: 1000,
+    platformFeeCents: 150,
+    driverAmountCents: 850,
+  }),
   getPaymentStatus: vi
     .fn()
     .mockResolvedValue({ status: "captured", amountCents: 1000 }),
