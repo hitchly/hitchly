@@ -93,6 +93,7 @@ export default function TripDetailScreen() {
     onSuccess: () => {
       utils.trip.getTripById.invalidate();
       utils.trip.getTripRequests.invalidate();
+      utils.trip.getTrips.invalidate();
       Alert.alert("Simulation complete", "Driver flow simulated for this trip");
     },
     onError: (error) => {

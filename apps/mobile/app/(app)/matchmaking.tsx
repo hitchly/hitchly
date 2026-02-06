@@ -143,6 +143,9 @@ export default function Matchmaking() {
   const [desiredDate, setDesiredDate] = useState<Date | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [includeDummyMatches, setIncludeDummyMatches] = useState(false);
+  const [direction, setDirection] = useState<"toMcmaster" | "fromMcmaster">(
+    "toMcmaster"
+  );
   const [swipedCardIds, setSwipedCardIds] = useState<Set<string>>(new Set());
   const [swipedCardsLoaded, setSwipedCardsLoaded] = useState(false);
   const toggleAnim = useRef(new Animated.Value(0)).current;
@@ -259,12 +262,20 @@ export default function Matchmaking() {
     ) {
       return null;
     }
+
+    const homeCoords = {
+      lat: userProfile.profile.defaultLat,
+      lng: userProfile.profile.defaultLong,
+    };
+
+    // Swap origin/destination based on direction
+    const origin = direction === "toMcmaster" ? homeCoords : MCMASTER_COORDS;
+    const destination =
+      direction === "toMcmaster" ? MCMASTER_COORDS : homeCoords;
+
     return {
-      origin: {
-        lat: userProfile.profile.defaultLat,
-        lng: userProfile.profile.defaultLong,
-      },
-      destination: MCMASTER_COORDS,
+      origin,
+      destination,
       desiredArrivalTime,
       desiredDate: desiredDate || undefined,
       maxOccupancy: 1,
@@ -277,6 +288,7 @@ export default function Matchmaking() {
     desiredArrivalTime,
     desiredDate,
     includeDummyMatches,
+    direction,
   ]);
 
   // Only fetch matches if user has location set and has clicked search
@@ -403,10 +415,12 @@ export default function Matchmaking() {
     return filtered;
   }, [matchesQuery.data, swipedCardIds, swipedCardsLoaded]);
 
+  const utils = trpc.useUtils();
+
   const requestRideMutation = trpc.trip.createTripRequest.useMutation({
     onSuccess: () => {
-      // Alert removed per user request
-      // Request sent silently
+      // Invalidate requests query so "My Requests" tab updates immediately
+      utils.trip.getTripRequests.invalidate();
     },
     onError: (error: any) => {
       console.error("Request ride mutation error:", error);
@@ -472,6 +486,10 @@ export default function Matchmaking() {
           tripId: matchData.rideId,
           pickupLat: searchParamsData.origin.lat,
           pickupLng: searchParamsData.origin.lng,
+          // Pass fare estimation from matchmaking for consistent pricing
+          estimatedDistanceKm: matchData.details?.estimatedDistanceKm,
+          estimatedDurationSec: matchData.details?.estimatedDurationSec,
+          estimatedDetourSec: (matchData.details?.detourMinutes ?? 0) * 60,
         });
       } catch (error) {
         console.error("Error in handleSwipeRight:", error);
@@ -614,57 +632,125 @@ export default function Matchmaking() {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
+            {/* Direction Selector */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                From
-              </Text>
-              <View
-                style={[
-                  styles.inputBox,
-                  {
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="location"
-                  size={20}
-                  color={colors.primary}
-                  style={{ marginRight: 10 }}
-                />
-                <Text
-                  style={[styles.inputText, { color: colors.text }]}
-                  numberOfLines={1}
+              <View style={styles.directionHeader}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Direction
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.swapButton,
+                    { backgroundColor: colors.primaryLight },
+                  ]}
+                  onPress={() =>
+                    setDirection(
+                      direction === "toMcmaster" ? "fromMcmaster" : "toMcmaster"
+                    )
+                  }
                 >
-                  {userProfile?.profile?.defaultAddress ||
-                    "Your default location"}
-                </Text>
+                  <Ionicons
+                    name="swap-vertical"
+                    size={18}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
               </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                To
-              </Text>
               <View
                 style={[
-                  styles.inputBox,
+                  styles.directionSelector,
                   {
                     backgroundColor: colors.background,
                     borderColor: colors.border,
                   },
                 ]}
               >
-                <Ionicons
-                  name="school"
-                  size={20}
-                  color={colors.primary}
-                  style={{ marginRight: 10 }}
-                />
-                <Text style={[styles.inputText, { color: colors.text }]}>
-                  McMaster University
-                </Text>
+                {/* From */}
+                <View style={styles.directionRow}>
+                  <View
+                    style={[
+                      styles.directionDot,
+                      { backgroundColor: colors.success },
+                    ]}
+                  />
+                  <View style={styles.directionInfo}>
+                    <Text
+                      style={[
+                        styles.directionLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      From
+                    </Text>
+                    <View style={styles.directionLocationRow}>
+                      <Ionicons
+                        name={
+                          direction === "toMcmaster" ? "location" : "school"
+                        }
+                        size={18}
+                        color={colors.primary}
+                      />
+                      <Text
+                        style={[styles.directionText, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {direction === "toMcmaster"
+                          ? userProfile?.profile?.defaultAddress ||
+                            "Your home address"
+                          : "McMaster University"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Vertical line connector */}
+                <View style={styles.directionConnector}>
+                  <View
+                    style={[
+                      styles.connectorLine,
+                      { backgroundColor: colors.border },
+                    ]}
+                  />
+                </View>
+
+                {/* To */}
+                <View style={styles.directionRow}>
+                  <View
+                    style={[
+                      styles.directionDot,
+                      { backgroundColor: colors.primary },
+                    ]}
+                  />
+                  <View style={styles.directionInfo}>
+                    <Text
+                      style={[
+                        styles.directionLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      To
+                    </Text>
+                    <View style={styles.directionLocationRow}>
+                      <Ionicons
+                        name={
+                          direction === "toMcmaster" ? "school" : "location"
+                        }
+                        size={18}
+                        color={colors.primary}
+                      />
+                      <Text
+                        style={[styles.directionText, { color: colors.text }]}
+                        numberOfLines={2}
+                      >
+                        {direction === "toMcmaster"
+                          ? "McMaster University"
+                          : userProfile?.profile?.defaultAddress ||
+                            "Your home address"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -1115,5 +1201,66 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     transform: [{ translateX: 22 }],
+  },
+
+  // Direction selector
+  directionSelector: {
+    flexDirection: "column",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  directionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  directionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  directionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  directionInfo: {
+    flex: 1,
+  },
+  directionLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  directionLocationRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  directionConnector: {
+    paddingLeft: 5,
+    paddingVertical: 2,
+  },
+  connectorLine: {
+    width: 2,
+    height: 16,
+    marginLeft: 0,
+  },
+  directionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+    lineHeight: 20,
+  },
+  swapButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

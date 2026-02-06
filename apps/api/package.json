@@ -50,9 +50,10 @@
     "@trpc/server": "^11.7.1",
     "better-auth": "^1.4.10",
     "cors": "^2.8.5",
+    "expo-server-sdk": "^3.10.0",
     "hono": "^4.11.4",
-    "zod": "^4.1.12",
-    "expo-server-sdk": "^3.10.0"
+    "stripe": "^20.3.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

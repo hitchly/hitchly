@@ -11,8 +11,26 @@ import { eq, and, sql, or, inArray, ne } from "drizzle-orm";
 import { getDetourAndRideDetails } from "./googlemaps";
 import { calculateEstimatedCost, calculateCostScore } from "./pricing_service";
 
-// --- TYPES ---
 export type Location = { lat: number; lng: number };
+
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export type RiderRequest = {
   riderId: string;
@@ -39,6 +57,8 @@ export type RideMatch = {
   uiLabel: string;
   details: {
     estimatedCost: number;
+    estimatedDistanceKm: number;
+    estimatedDurationSec: number;
     detourMinutes: number;
     arrivalAtPickup: string;
     availableSeats: number;
@@ -155,23 +175,17 @@ function computeScore(
   );
 }
 
-/**
- * findMatchesForUser - Retrieves candidate list, filters, and scores matches
- */
 export async function findMatchesForUser(
   request: RiderRequest
 ): Promise<RideMatch[]> {
-  // Get rider preferences for compatibility scoring
   const [riderPrefs] = await db
     .select()
     .from(preferences)
     .where(eq(preferences.userId, request.riderId))
     .limit(1);
 
-  // Build trip conditions - only active/pending trips
   const tripConditions = [
     or(eq(trips.status, "pending"), eq(trips.status, "active")),
-    // Exclude trips from the same rider (they can't request their own trips)
     ne(trips.driverId, request.riderId),
   ];
 
@@ -190,7 +204,6 @@ export async function findMatchesForUser(
     .leftJoin(preferences, eq(users.id, preferences.userId))
     .where(and(...tripConditions));
   // Filter out trips that the rider has active requests for (pending or accepted only)
-  // Don't filter out cancelled/completed requests - rider can see those drivers again
   const activeRequests = await db
     .select({
       tripId: tripRequests.tripId,
@@ -209,8 +222,7 @@ export async function findMatchesForUser(
 
   const activeRequestedTripIds = new Set(activeRequests.map((r) => r.tripId));
   // Filter out trips the rider has active requests for (pending or accepted)
-  // BUT allow trips that are completed or cancelled to appear again (even if request was accepted)
-  // This allows riders to see drivers again after completing a trip
+
   const filteredTrips = dbTrips.filter((t) => {
     const hasActiveRequest = activeRequestedTripIds.has(t.trip.id);
     const isTripCompleted =
@@ -220,12 +232,9 @@ export async function findMatchesForUser(
     if (isTripCompleted) {
       return true;
     }
-
-    // Otherwise, filter out trips with active requests
     return !hasActiveRequest;
   });
-  // Convert trips to ride format (for compatibility with existing scoring logic)
-  // Use filtered trips instead of all dbTrips
+
   const allRides = filteredTrips.map((row) => ({
     ride: {
       id: row.trip.id,
@@ -240,7 +249,7 @@ export async function findMatchesForUser(
       status: row.trip.status as "scheduled" | "pending" | "active",
     },
     user: row.user,
-    driverEmail: row.user.email, // Include email for debugging
+    driverEmail: row.user.email,
     profile: row.profile,
     vehicle: row.vehicle,
     prefs: row.prefs,
@@ -250,10 +259,8 @@ export async function findMatchesForUser(
     return [];
   }
 
-  // 4. For each trip, count accepted requests and get their pickup locations
   const tripIds = allRides.map((r) => r.ride.id);
 
-  // Store existing passenger pickup locations per trip
   const existingPickupsMap = new Map<string, Location[]>();
 
   try {
@@ -267,7 +274,6 @@ export async function findMatchesForUser(
       .from(tripRequests)
       .where(eq(tripRequests.status, "accepted"));
 
-    // Group pickup locations by tripId
     for (const passenger of acceptedPassengers) {
       if (tripIds.includes(passenger.tripId)) {
         const existingPickups = existingPickupsMap.get(passenger.tripId) || [];
@@ -279,10 +285,9 @@ export async function findMatchesForUser(
       }
     }
   } catch {
-    // Silently continue - trips will be processed with empty passenger data
+    // Ignore error
   }
 
-  // Get trip request counts for all trips
   let tripRequestCountMap = new Map<string, number>();
 
   if (tripIds.length > 0) {
@@ -305,9 +310,7 @@ export async function findMatchesForUser(
     );
   }
 
-  // 3. MAP & SCORE
   const candidates = allRides.map((row) => {
-    // Use bookedSeats from schema, fallback to calculated count from tripRequests
     const bookedFromSchema = row.ride.bookedSeats || 0;
     const bookedFromTripRequests = tripRequestCountMap.get(row.ride.id) ?? 0;
     const currentPassengers = Math.max(
@@ -319,7 +322,7 @@ export async function findMatchesForUser(
     return {
       rideId: row.ride.id,
       driverId: row.user.id,
-      driverEmail: (row as any).driverEmail || row.user.email, // Include email for debugging
+      driverEmail: (row as any).driverEmail || row.user.email,
       name: row.user.name || "Driver",
       image: row.user.image || "",
       vehicle: `${row.vehicle.color} ${row.vehicle.make} ${row.vehicle.model}`,
@@ -343,12 +346,34 @@ export async function findMatchesForUser(
   );
   if (availableCandidates.length === 0) return [];
 
-  const scoringPromises = availableCandidates.map(async (ride) => {
+  const DIRECTION_TOLERANCE_KM = 10; // Within 10km of destination
+
+  const directionCompatibleCandidates = availableCandidates.filter((ride) => {
+    // Calculate distance between driver's destination and rider's destination
+    const destDistanceKm = haversineDistance(
+      ride.destination.lat,
+      ride.destination.lng,
+      request.destination.lat,
+      request.destination.lng
+    );
+
+    const originDistanceKm = haversineDistance(
+      ride.origin.lat,
+      ride.origin.lng,
+      request.origin.lat,
+      request.origin.lng
+    );
+
+    // Must be going to roughly the same destination (within tolerance)
+    return destDistanceKm <= DIRECTION_TOLERANCE_KM && originDistanceKm <= 20;
+  });
+
+  if (directionCompatibleCandidates.length === 0) return [];
+
+  const scoringPromises = directionCompatibleCandidates.map(async (ride) => {
     try {
-      // Get existing passenger pickup locations for this trip
       const existingPickups = existingPickupsMap.get(ride.rideId) || [];
 
-      // A. Route Logic - include existing passengers in calculation
       const routeDetails = await getDetourAndRideDetails(
         {
           origin: ride.origin,
@@ -368,7 +393,6 @@ export async function findMatchesForUser(
         routeDetails.detourTimeInSeconds ?? 0
       );
 
-      // B. Scoring Logic
       const sSchedule = calculateScheduleScore(
         request.desiredArrivalTime,
         ride.plannedArrivalTime
@@ -383,7 +407,6 @@ export async function findMatchesForUser(
         request.maxOccupancy
       );
 
-      // C. Compatibility Check
       const sCompatibility = calculateCompatibilityScore(
         riderPrefs || null,
         ride.prefs || null
@@ -392,6 +415,8 @@ export async function findMatchesForUser(
         ride,
         cost,
         detourSeconds: routeDetails.detourTimeInSeconds ?? 0,
+        rideDistanceKm: routeDetails.rideDistanceKm ?? 0,
+        rideDurationSec: routeDetails.rideDurationSeconds ?? 0,
         scores: {
           schedule: sSchedule,
           location: sLocation,
@@ -412,14 +437,20 @@ export async function findMatchesForUser(
   const minCost = Math.min(...validScoredResults.map((r) => r.cost));
 
   const finalMatches: (RideMatch | null)[] = validScoredResults.map(
-    ({ ride, cost, detourSeconds, scores }) => {
+    ({
+      ride,
+      cost,
+      detourSeconds,
+      rideDistanceKm,
+      rideDurationSec,
+      scores,
+    }) => {
       const sCost = calculateCostScore(cost, minCost);
       const weights = WEIGHT_PRESETS[request.preference || "default"];
 
       const allScores = { ...scores, cost: sCost };
       const totalScore = computeScore(weights, allScores);
       const matchPercentage = normalizeScore(totalScore);
-      // Dealbreaker check
       if (scores.compatibility === 0) {
         return null;
       }
@@ -441,6 +472,8 @@ export async function findMatchesForUser(
               : "Fair Match",
         details: {
           estimatedCost: cost ?? 0,
+          estimatedDistanceKm: rideDistanceKm,
+          estimatedDurationSec: rideDurationSec,
           detourMinutes: Math.round((detourSeconds ?? 0) / 60),
           arrivalAtPickup: ride.plannedArrivalTime || "",
           availableSeats: ride.availableSeats ?? 0,
@@ -461,7 +494,6 @@ export async function findMatchesForUser(
     "aidan.test@mcmaster.ca",
   ];
 
-  // Get test driver user IDs by looking up their emails
   const testDriverUsers = await db
     .select({ id: users.id, email: users.email })
     .from(users)
@@ -469,20 +501,14 @@ export async function findMatchesForUser(
 
   const testDriverIds = new Set(testDriverUsers.map((u) => u.id));
 
-  // Filter out generated dummy matches (by rideId prefix)
   const matchesWithoutDummies = validMatches.filter(
     (m) => !m.rideId.startsWith("dummy-")
   );
 
-  // Filter out test driver trips (seeded trips) - but only if includeDummyMatches is false
   const realMatches = matchesWithoutDummies.filter((m) => {
-    // If driver is a test driver, filter it out (seeded trip) UNLESS includeDummyMatches is true
     if (testDriverIds.has(m.driverId)) {
-      // Keep test drivers only if dummy matches are enabled (for testing)
-      // Otherwise filter them out as they're seeded test data
       return request.includeDummyMatches === true;
     }
-    // Otherwise, keep it
     return true;
   });
 
@@ -578,6 +604,8 @@ function generateDummyMatches(request: RiderRequest): RideMatch[] {
             : "Fair Match",
       details: {
         estimatedCost,
+        estimatedDistanceKm: distanceKm,
+        estimatedDurationSec: Math.round(distanceKm * 60), // Rough estimate: 1 min per km
         detourMinutes: Math.round(Math.abs(timeVariation)),
         arrivalAtPickup: arrivalTime,
         availableSeats: Math.floor(Math.random() * 3) + 1, // 1-3 seats

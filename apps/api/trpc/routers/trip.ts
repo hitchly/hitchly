@@ -12,6 +12,15 @@ import {
   calculateTripDistance,
 } from "../../services/googlemaps";
 import { sendTripNotification } from "../../services/notification_service";
+import {
+  hasPaymentMethod,
+  createPaymentHold,
+  updatePaymentHold,
+  capturePayment,
+  cancelPaymentHold,
+  processTip,
+  calculateFare,
+} from "../../services/payment_service";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
@@ -420,6 +429,34 @@ export const tripRouter = router({
         ).catch((err) =>
           console.error("Failed to send cancel notification:", err)
         );
+
+        // Release payment holds for all accepted riders
+        const acceptedRequests = await ctx.db
+          .select({ id: tripRequests.id })
+          .from(tripRequests)
+          .where(
+            and(
+              eq(tripRequests.tripId, input.tripId),
+              eq(tripRequests.status, "accepted")
+            )
+          );
+
+        for (const req of acceptedRequests) {
+          cancelPaymentHold(req.id).catch((err) =>
+            console.error("Failed to cancel payment hold:", err)
+          );
+        }
+
+        // Cancel accepted requests
+        await ctx.db
+          .update(tripRequests)
+          .set({ status: "cancelled", updatedAt: new Date() })
+          .where(
+            and(
+              eq(tripRequests.tripId, input.tripId),
+              eq(tripRequests.status, "accepted")
+            )
+          );
       }
 
       return { success: true, trip: cancelledTrip };
@@ -596,6 +633,14 @@ export const tripRouter = router({
           createdAt: tripRequests.createdAt,
           updatedAt: tripRequests.updatedAt,
         });
+
+      if (input.action === "dropoff") {
+        const captureResult = await capturePayment(input.requestId);
+        if (!captureResult.success) {
+          console.error("Payment capture failed:", captureResult.error);
+        }
+      }
+
       return updatedRequest;
     }),
 
@@ -783,11 +828,65 @@ export const tripRouter = router({
     .input(
       z.object({
         tripId: z.string(),
-        tipCents: z.number().int().min(0).max(100000),
+        tipCents: z.number().int().min(50).max(50000), // $0.50 to $500
       })
     )
-    .mutation(async () => {
-      // Placeholder only (no DB tables yet)
+    .mutation(async ({ ctx, input }) => {
+      const riderId = ctx.userId!;
+
+      // Get trip
+      const [trip] = await ctx.db
+        .select()
+        .from(trips)
+        .where(eq(trips.id, input.tripId))
+        .limit(1);
+
+      if (!trip) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Trip not found" });
+      }
+
+      if (trip.status !== "completed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only tip for completed trips",
+        });
+      }
+
+      // Verify rider was on this trip
+      const [riderRequest] = await ctx.db
+        .select()
+        .from(tripRequests)
+        .where(
+          and(
+            eq(tripRequests.tripId, input.tripId),
+            eq(tripRequests.riderId, riderId),
+            eq(tripRequests.status, "completed")
+          )
+        )
+        .limit(1);
+
+      if (!riderRequest) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You were not a rider on this trip",
+        });
+      }
+
+      // Process the tip
+      const result = await processTip(
+        input.tripId,
+        riderId,
+        trip.driverId,
+        input.tipCents
+      );
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: result.error || "Failed to process tip",
+        });
+      }
+
       return { success: true };
     }),
 
@@ -882,6 +981,10 @@ export const tripRouter = router({
         tripId: z.string(),
         pickupLat: z.number(),
         pickupLng: z.number(),
+        // Fare estimation parameters from matchmaking (for consistent pricing)
+        estimatedDistanceKm: z.number().optional(),
+        estimatedDurationSec: z.number().optional(),
+        estimatedDetourSec: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -950,7 +1053,17 @@ export const tripRouter = router({
         });
       }
 
-      // Create trip request with pickup coordinates
+      // Check if rider has a payment method
+      const hasPM = await hasPaymentMethod(riderId);
+      if (!hasPM) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "You must add a payment method before requesting rides. Go to Profile -> Payment Methods.",
+        });
+      }
+
+      // Create trip request with pickup coordinates and fare estimation
       const requestId = crypto.randomUUID();
       const [request] = await ctx.db
         .insert(tripRequests)
@@ -960,6 +1073,10 @@ export const tripRouter = router({
           riderId,
           pickupLat: input.pickupLat,
           pickupLng: input.pickupLng,
+          // Store fare estimation parameters for consistent pricing
+          estimatedDistanceKm: input.estimatedDistanceKm,
+          estimatedDurationSec: input.estimatedDurationSec,
+          estimatedDetourSec: input.estimatedDetourSec,
           status: "pending",
         })
         .returning();
@@ -1109,7 +1226,73 @@ export const tripRouter = router({
           message: "Trip has no available seats",
         });
       }
-      // Update request status
+
+      let estimatedDistanceKm: number;
+      let estimatedDurationSec: number;
+      let estimatedDetourSec = 0;
+
+      if (
+        request.request.estimatedDistanceKm &&
+        request.request.estimatedDurationSec
+      ) {
+        estimatedDistanceKm = request.request.estimatedDistanceKm;
+        estimatedDurationSec = request.request.estimatedDurationSec;
+        estimatedDetourSec = request.request.estimatedDetourSec ?? 0;
+      } else {
+        estimatedDistanceKm = 10; // Default fallback
+        estimatedDurationSec = 20 * 60; // 20 minutes fallback
+
+        if (
+          request.request.pickupLat &&
+          request.request.pickupLng &&
+          request.trip.destLat &&
+          request.trip.destLng
+        ) {
+          try {
+            const routeResult = await calculateTripDistance(
+              {
+                lat: request.request.pickupLat,
+                lng: request.request.pickupLng,
+              },
+              { lat: request.trip.destLat, lng: request.trip.destLng }
+            );
+            if (routeResult) {
+              estimatedDistanceKm = routeResult.distanceKm;
+              estimatedDurationSec = routeResult.durationSeconds;
+            }
+          } catch (routeError) {
+            console.error(
+              "Failed to calculate route distance, using fallback:",
+              routeError
+            );
+          }
+        }
+      }
+
+      const { totalCents, platformFeeCents, driverAmountCents } = calculateFare(
+        estimatedDistanceKm,
+        estimatedDurationSec,
+        request.trip.bookedSeats,
+        estimatedDetourSec
+      );
+
+      // Create payment hold BEFORE marking as accepted
+      const paymentResult = await createPaymentHold(
+        input.requestId,
+        request.request.riderId,
+        request.trip.driverId,
+        totalCents,
+        platformFeeCents,
+        driverAmountCents
+      );
+
+      if (!paymentResult.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Payment failed: ${paymentResult.error}`,
+        });
+      }
+
       const [acceptedRequest] = await ctx.db
         .update(tripRequests)
         .set({
@@ -1118,6 +1301,7 @@ export const tripRouter = router({
         })
         .where(eq(tripRequests.id, input.requestId))
         .returning();
+
       // Increment booked seats and update trip status to "active" if this is the first accepted rider
       const newBookedSeats = request.trip.bookedSeats + 1;
       const shouldActivateTrip = request.trip.status === "pending";
@@ -1130,6 +1314,51 @@ export const tripRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(trips.id, request.trip.id));
+
+      // RETROACTIVE DISCOUNT: Update payment holds for all existing accepted riders
+      if (newBookedSeats > 1) {
+        const existingAcceptedRequests = await ctx.db
+          .select()
+          .from(tripRequests)
+          .where(
+            and(
+              eq(tripRequests.tripId, request.trip.id),
+              eq(tripRequests.status, "accepted"),
+              ne(tripRequests.id, input.requestId)
+            )
+          );
+
+        for (const existingRequest of existingAcceptedRequests) {
+          const existingDistanceKm = existingRequest.estimatedDistanceKm ?? 10;
+          const existingDurationSec =
+            existingRequest.estimatedDurationSec ?? 1200;
+          const existingDetourSec = existingRequest.estimatedDetourSec ?? 0;
+
+          const {
+            totalCents: newTotalCents,
+            platformFeeCents: newPlatformFee,
+            driverAmountCents: newDriverAmount,
+          } = calculateFare(
+            existingDistanceKm,
+            existingDurationSec,
+            newBookedSeats - 1,
+            existingDetourSec
+          );
+
+          const updateResult = await updatePaymentHold(
+            existingRequest.id,
+            newTotalCents,
+            newPlatformFee,
+            newDriverAmount
+          );
+
+          if (!updateResult.success) {
+            console.error(
+              `Failed to update payment for request ${existingRequest.id}: ${updateResult.error}`
+            );
+          }
+        }
+      }
 
       return acceptedRequest;
     }),
@@ -1237,7 +1466,7 @@ export const tripRouter = router({
         .where(eq(tripRequests.id, input.requestId))
         .returning();
 
-      // If request was accepted, decrement booked seats
+      // If request was accepted, decrement booked seats and release payment hold
       if (wasAccepted) {
         await ctx.db
           .update(trips)
@@ -1246,6 +1475,11 @@ export const tripRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(trips.id, request.trip.id));
+
+        // Release payment hold
+        cancelPaymentHold(input.requestId).catch((err) =>
+          console.error("Failed to cancel payment hold:", err)
+        );
       }
 
       return cancelledRequest;

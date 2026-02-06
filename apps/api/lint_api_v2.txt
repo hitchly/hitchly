@@ -1,0 +1,4 @@
+﻿
+> api@0.0.0 lint C:\dev\hitchly\apps\api
+> eslint . --ext .ts,.tsx,.js --max-warnings 0
+

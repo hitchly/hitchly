@@ -1,0 +1,22 @@
+﻿
+> mobile@1.0.0 lint C:\dev\hitchly\apps\mobile
+> expo lint
+
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+C:\dev\hitchly\apps\mobile\components\swipe\SwipeDeck.tsx
+  454:20  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  524:32  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  530:24  warning  'err' is defined but never used    @typescript-eslint/no-unused-vars
+  581:30  warning  'err' is defined but never used    @typescript-eslint/no-unused-vars
+  588:24  warning  'err' is defined but never used    @typescript-eslint/no-unused-vars
+  646:30  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  653:24  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  673:20  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  746:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  940:14  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+  955:14  warning  '_' is defined but never used      @typescript-eslint/no-unused-vars
+
+Γ£û 11 problems (0 errors, 11 warnings)
+

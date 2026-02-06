@@ -1268,6 +1268,18 @@ export const adminRouter = router({
           .update(tripRequests)
           .set({ status: "completed", updatedAt: new Date() })
           .where(inArray(tripRequests.id, toCompleteIds));
+
+        const { capturePayment } =
+          await import("../../services/payment_service");
+        for (const requestId of toCompleteIds) {
+          const captureResult = await capturePayment(requestId);
+          if (!captureResult.success) {
+            console.warn(
+              `Payment capture failed for request ${requestId}:`,
+              captureResult.error
+            );
+          }
+        }
       }
 
       const remaining = await ctx.db

@@ -91,9 +91,38 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     };
   }, [data]);
 
-  // Update visible cards when data changes
+  // Shared animation values - must be declared before effects that use them
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const rotation = useSharedValue(0);
+  const opacity = useSharedValue(1);
+  const scale = useSharedValue(1);
+
+  // Use shared value to store current card index (worklet-safe)
+  const currentCardIndex = useSharedValue(0);
+
+  // Track if swipe completion callback has been called (prevent multiple calls)
+  const swipeCallbackCalled = useSharedValue(false);
+
+  // Reset index when data changes significantly (e.g., after accepting a request)
+  // This handles the case where the data shrinks and currentIndex becomes invalid
   useEffect(() => {
-    if (data.length > 0 && currentIndex < data.length) {
+    if (data.length === 0) {
+      // Data is empty, reset to 0
+      setCurrentIndex(0);
+      setVisibleCards([]);
+    } else if (currentIndex >= data.length) {
+      // Current index is now past the end of data, reset to start
+      setCurrentIndex(0);
+      setVisibleCards(data.slice(0, 4));
+      // Also reset animation values
+      translateX.value = 0;
+      translateY.value = 0;
+      rotation.value = 0;
+      opacity.value = 1;
+      scale.value = 1;
+    } else {
+      // Normal case: update visible cards from current position
       const newVisible = data.slice(currentIndex, currentIndex + 4);
       setVisibleCards(newVisible);
       // #region agent log
@@ -111,19 +140,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
       );
       // #endregion
     }
-  }, [data, currentIndex]);
-
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const rotation = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const scale = useSharedValue(1);
-
-  // Use shared value to store current card index (worklet-safe)
-  const currentCardIndex = useSharedValue(0);
-
-  // Track if swipe completion callback has been called (prevent multiple calls)
-  const swipeCallbackCalled = useSharedValue(false);
+  }, [data, currentIndex, translateX, translateY, rotation, opacity, scale]);
 
   // Keep shared value in sync with state
   useEffect(() => {
@@ -434,7 +451,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
             rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
             opacity.value =
               1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
-          } catch (error) {
+          } catch (_) {
             // Silently handle errors in worklet - can't use console.log here
             // Reset to safe values
             translateX.value = 0;
@@ -504,7 +521,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                         if (foundItem) {
                           callback(foundItem);
                         }
-                      } catch (err) {
+                      } catch (_) {
                         // Error logged via runOnJS - can't use console in worklet
                       }
                     }
@@ -626,14 +643,14 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                           cardIdForCallback
                         );
                       }
-                    } catch (err) {
+                    } catch (_) {
                       // Silently handle errors in animation callback
                     }
                   }
                 );
                 opacity.value = withTiming(0, { duration: 300 });
                 scale.value = withTiming(0.8, { duration: 300 });
-              } catch (err) {
+              } catch (_) {
                 // Reset on error
                 translateX.value = withSpring(0, {
                   damping: 15,
@@ -653,7 +670,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
               opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
             }
-          } catch (error) {
+          } catch (_) {
             // Removed console.error from worklet - can cause crashes
             // Reset to center on error
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -920,7 +937,7 @@ function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
       return {
         opacity: overlayOpacity,
       };
-    } catch (error) {
+    } catch (_) {
       return { opacity: 0 };
     }
   });
@@ -935,7 +952,7 @@ function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
       return {
         opacity: overlayOpacity,
       };
-    } catch (error) {
+    } catch (_) {
       return { opacity: 0 };
     }
   });

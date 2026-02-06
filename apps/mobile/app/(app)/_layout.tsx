@@ -198,6 +198,36 @@ const AppRoutes = () => {
           ),
         }}
       />
+      {/* Payment Methods tab - only visible for riders */}
+      <Tabs.Screen
+        name="payment-methods"
+        options={{
+          title: "Payment",
+          href: isRider ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "card" : "card-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      {/* Driver Payouts tab - only visible for drivers */}
+      <Tabs.Screen
+        name="driver-payouts"
+        options={{
+          title: "Payouts",
+          href: isDriver ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "wallet" : "wallet-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
       {/* Hide unused screens and nested routes from tab bar */}
       <Tabs.Screen
         name="index"
