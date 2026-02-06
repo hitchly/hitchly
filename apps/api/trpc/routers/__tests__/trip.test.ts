@@ -8,18 +8,72 @@ import {
   createMockTripRequest,
 } from "../../../tests/utils/fixtures";
 
-// Mock geocodeAddress - must be before importing the router
-const mockGeocodeAddress = vi.fn();
-const mockCalculateTripDistance = vi.fn();
+// Hoist mocks to be available in factories
+const { mockGeocodeAddress, mockCalculateTripDistance } = vi.hoisted(() => {
+  return {
+    mockGeocodeAddress: vi.fn(),
+    mockCalculateTripDistance: vi.fn(),
+  };
+});
 
-vi.mock("../../services/googlemaps", () => ({
+vi.mock("../../../services/googlemaps", () => ({
   geocodeAddress: mockGeocodeAddress,
   calculateTripDistance: mockCalculateTripDistance,
 }));
 
 // Mock notification service
-vi.mock("../../services/notification_service", () => ({
+vi.mock("../../../services/notification_service", () => ({
   sendTripNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock payment service
+vi.mock("../../../services/payment_service", () => ({
+  hasPaymentMethod: vi.fn().mockResolvedValue(true),
+  createPaymentHold: vi
+    .fn()
+    .mockResolvedValue({ success: true, paymentId: "pay_123" }),
+  capturePayment: vi
+    .fn()
+    .mockResolvedValue({ success: true, paymentId: "pay_123" }),
+  cancelPaymentHold: vi.fn().mockResolvedValue({ success: true }),
+  updatePaymentHold: vi.fn().mockResolvedValue({ success: true }),
+  processTip: vi.fn().mockResolvedValue({ success: true }),
+  getStripeCustomerId: vi.fn().mockResolvedValue("cus_123"),
+  getOrCreateStripeCustomer: vi
+    .fn()
+    .mockResolvedValue({ stripeCustomerId: "cus_123", isNew: false }),
+  createSetupIntent: vi
+    .fn()
+    .mockResolvedValue({ clientSecret: "seti_secret_123" }),
+  listPaymentMethods: vi
+    .fn()
+    .mockResolvedValue([{ id: "pm_123", card: { last4: "4242" } }]),
+  deletePaymentMethod: vi.fn().mockResolvedValue(undefined),
+  setDefaultPaymentMethod: vi.fn().mockResolvedValue(undefined),
+  createConnectAccount: vi
+    .fn()
+    .mockResolvedValue({ accountId: "acct_123", isNew: false }),
+  createConnectOnboardingLink: vi
+    .fn()
+    .mockResolvedValue("https://stripe.com/onboarding"),
+  getConnectAccountStatus: vi
+    .fn()
+    .mockResolvedValue({
+      hasAccount: true,
+      accountId: "acct_123",
+      onboardingComplete: true,
+      payoutsEnabled: true,
+    }),
+  calculateFare: vi
+    .fn()
+    .mockReturnValue({
+      totalCents: 1000,
+      platformFeeCents: 150,
+      driverAmountCents: 850,
+    }),
+  getPaymentStatus: vi
+    .fn()
+    .mockResolvedValue({ status: "captured", amountCents: 1000 }),
 }));
 
 // Import router AFTER mocks are set up
