@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/card";
+import { SAFETY_CONTACT } from "../../constants/safety";
 import { useTheme } from "../../context/theme-context";
 
 export default function SafetyScreen() {
@@ -58,7 +59,39 @@ export default function SafetyScreen() {
           </Text>
         ) : null}
 
-        {/* Emergency Contact Section */}
+        <Card>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            Contact Hitchly Emergency
+          </Text>
+          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+            For immediate assistance, please use these to contact our safety team.
+          </Text>
+
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, fontFamily: fonts.bold },
+            ]}
+          >
+            Emergency Phone
+          </Text>
+          <Text style={[styles.contactValue, { color: colors.text }]}>
+            {SAFETY_CONTACT.phone}
+          </Text>
+
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, fontFamily: fonts.bold },
+            ]}
+          >
+            Emergency Email
+          </Text>
+          <Text style={[styles.contactValue, { color: colors.text }]}>
+            {SAFETY_CONTACT.email}
+          </Text>
+        </Card>
+
         <Card>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
             Emergency Contacts
@@ -246,6 +279,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 12,
   },
+  contactValue: { fontSize: 15, fontWeight: "600", marginBottom: 12 },
   textArea: {
     borderWidth: 1,
     borderRadius: 10,
