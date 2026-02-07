@@ -198,6 +198,21 @@ const AppRoutes = () => {
           ),
         }}
       />
+      <Tabs.Screen
+        name="safety"
+        options={{
+          title: "Safety",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "shield" : "shield-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+
       {/* Hide unused screens and nested routes from tab bar */}
       <Tabs.Screen
         name="index"

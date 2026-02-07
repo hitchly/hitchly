@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/card";
-import { SAFETY_CONTACT } from "../../constants/safety";
+import { SafetyContacts } from "../../constants/safety";
 import { useTheme } from "../../context/theme-context";
 
 export default function SafetyScreen() {
@@ -76,7 +76,7 @@ export default function SafetyScreen() {
             Emergency Phone
           </Text>
           <Text style={[styles.contactValue, { color: colors.text }]}>
-            {SAFETY_CONTACT.phone}
+            {SafetyContacts.phone}
           </Text>
 
           <Text
@@ -88,7 +88,7 @@ export default function SafetyScreen() {
             Emergency Email
           </Text>
           <Text style={[styles.contactValue, { color: colors.text }]}>
-            {SAFETY_CONTACT.email}
+            {SafetyContacts.email}
           </Text>
         </Card>
 
