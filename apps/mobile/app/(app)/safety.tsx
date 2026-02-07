@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/card";
 import { SafetyContacts } from "../../constants/safety";
 import { useTheme } from "../../context/theme-context";
+import { trpc } from "../../lib/trpc";
 
 export default function SafetyScreen() {
   const { colors, fonts } = useTheme();
@@ -24,7 +26,21 @@ export default function SafetyScreen() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [contact, setContact] = useState("");
+  const [targetUserId, setTargetUserId] = useState("");
   const [reason, setReason] = useState("");
+
+  const createComplaint = trpc.complaints.createComplaint.useMutation({
+    onSuccess: () => {
+      setReason("");
+      Alert.alert("Submitted", "Your report has been sent.");
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
+  const canSubmitReport =
+    targetUserId.trim().length > 0 && reason.trim().length > 0;
 
   return (
     <SafeAreaView
@@ -61,7 +77,7 @@ export default function SafetyScreen() {
 
         <Card>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Contact Hitchly Emergency
+            Contact Hitchly Safety Team
           </Text>
           <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
             For immediate assistance, please use these to contact our safety team.
@@ -198,6 +214,31 @@ export default function SafetyScreen() {
               { color: colors.textSecondary, fontFamily: fonts.bold },
             ]}
           >
+            Reported User ID
+          </Text>
+          <TextInput
+            placeholder="user-123"
+            value={targetUserId}
+            onChangeText={setTargetUserId}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: colors.background,
+                fontFamily: fonts.regular,
+              },
+            ]}
+            autoCapitalize="none"
+            placeholderTextColor={colors.textSecondary}
+          />
+
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, fontFamily: fonts.bold },
+            ]}
+          >
             Details
           </Text>
           <TextInput
@@ -218,10 +259,26 @@ export default function SafetyScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-            disabled
+            style={[
+              styles.primaryButton,
+              { backgroundColor: colors.primary },
+              !canSubmitReport || createComplaint.isPending
+                ? styles.primaryButtonDisabled
+                : null,
+            ]}
+            disabled={!canSubmitReport || createComplaint.isPending}
+            onPress={() => {
+              if (!canSubmitReport) return;
+              createComplaint.mutate({
+                targetUserId: targetUserId.trim(),
+                content: reason.trim(),
+                rideId: tripId,
+              });
+            }}
           >
-            <Text style={styles.primaryButtonText}>Submit Report (next)</Text>
+            <Text style={styles.primaryButtonText}>
+              {createComplaint.isPending ? "Submitting..." : "Submit Report"}
+            </Text>
           </TouchableOpacity>
         </Card>
 
@@ -294,6 +351,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     opacity: 0.6,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.4,
   },
   primaryButtonText: { color: "#fff", fontWeight: "600" },
   modeHint: { marginTop: 12, paddingHorizontal: 16, fontWeight: "600" },

@@ -435,24 +435,28 @@ export default function RideScreen() {
               <View style={styles.safetyButtons}>
                 <TouchableOpacity
                   style={styles.safetyButton}
-                  onPress={() =>
-                    Alert.alert(
-                      "Safety Feature",
-                      "Safety feature - to be implemented by team"
-                    )
-                  }
+                  onPress={() => {
+                    if (id) {
+                      router.push({
+                        pathname: "/safety" as any,
+                        params: { mode: "emergency", tripId: id },
+                      });
+                    }
+                  }}
                 >
                   <Ionicons name="shield-outline" size={20} color="#666" />
                   <Text style={styles.safetyButtonText}>Emergency Contact</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.safetyButton}
-                  onPress={() =>
-                    Alert.alert(
-                      "Safety Feature",
-                      "Safety feature - to be implemented by team"
-                    )
-                  }
+                  onPress={() => {
+                    if (id) {
+                      router.push({
+                        pathname: "/safety" as any,
+                        params: { mode: "report", tripId: id },
+                      });
+                    }
+                  }}
                 >
                   <Ionicons
                     name="alert-circle-outline"
