@@ -117,10 +117,10 @@ docker-compose up -d db
 cd apps/api
 
 # Generate migration files
-npm run db:generate
+pnpm run db:generate
 
 # Apply migrations to database
-npm run db:migrate
+pnpm run db:migrate
 ```
 
 ## Running the Application
