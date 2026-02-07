@@ -32,7 +32,7 @@ export default function SafetyScreen() {
   const createComplaint = trpc.complaints.createComplaint.useMutation({
     onSuccess: () => {
       setReason("");
-      Alert.alert("Submitted", "Your report has been sent.");
+      Alert.alert("Submitted", "Your concern has been noted. Our safety team will review it and follow up.");
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
