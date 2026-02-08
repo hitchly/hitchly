@@ -64,9 +64,9 @@ export default function SafetyScreen() {
 
   const { data: trip, isLoading: isTripLoading } =
     trpc.trip.getTripById.useQuery(
-    { tripId: effectiveTripId ?? "" },
-    { enabled: !!effectiveTripId }
-  );
+      { tripId: effectiveTripId ?? "" },
+      { enabled: !!effectiveTripId }
+    );
 
   const reportedUserLabel = useMemo(() => {
     if (!effectiveTripId) {
@@ -268,7 +268,8 @@ export default function SafetyScreen() {
               Contact Hitchly Safety Team
             </Text>
             <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
-              For immediate assistance, please use these to contact our safety team.
+              For immediate assistance, please use these to contact our safety
+              team.
             </Text>
 
             <Text
@@ -339,19 +340,19 @@ export default function SafetyScreen() {
             </Text>
             <TextInput
               placeholder="Describe the issue in detail..."
-            value={reason}
-            onChangeText={setReason}
-            style={[
-              styles.textArea,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.background,
-                fontFamily: fonts.regular,
-              },
-            ]}
-            multiline
-            placeholderTextColor={colors.textSecondary}
+              value={reason}
+              onChangeText={setReason}
+              style={[
+                styles.textArea,
+                {
+                  borderColor: colors.border,
+                  color: colors.text,
+                  backgroundColor: colors.background,
+                  fontFamily: fonts.regular,
+                },
+              ]}
+              multiline
+              placeholderTextColor={colors.textSecondary}
             />
 
             <TouchableOpacity
@@ -405,7 +406,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: { fontSize: 14, fontWeight: "600" },
   headerTitle: { fontSize: 16, fontWeight: "600" },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 4, paddingHorizontal: 16 },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 4,
+    paddingHorizontal: 16,
+  },
   subtitle: { marginBottom: 8 },
   tripHeaderRow: {
     paddingHorizontal: 16,

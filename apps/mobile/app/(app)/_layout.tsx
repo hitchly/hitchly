@@ -212,7 +212,6 @@ const AppRoutes = () => {
         }}
       />
 
-
       {/* Hide unused screens and nested routes from tab bar */}
       <Tabs.Screen
         name="index"
