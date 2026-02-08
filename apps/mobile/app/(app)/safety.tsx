@@ -207,7 +207,9 @@ export default function SafetyScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>
               Select a Trip
             </Text>
-            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            >
               Choose a trip to auto-fill the reported user.
             </Text>
             {trips.map((tripItem) => (
@@ -246,7 +248,9 @@ export default function SafetyScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>
               Select a Trip
             </Text>
-            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            >
               No trips found yet. Open Safety from a trip to auto-fill.
             </Text>
           </Card>
@@ -267,7 +271,9 @@ export default function SafetyScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>
               Contact Hitchly Safety Team
             </Text>
-            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            >
               For immediate assistance, please use these to contact our safety
               team.
             </Text>
@@ -314,7 +320,9 @@ export default function SafetyScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>
               Report an Issue
             </Text>
-            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+            <Text
+              style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            >
               Tell us what we can help you with.
             </Text>
 

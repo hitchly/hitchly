@@ -4,7 +4,6 @@ import { complaints } from "@hitchly/db/schema";
 import { protectedProcedure, router } from "../trpc";
 
 export const complaintsRouter = router({
-
   // Complaint for a user regarding another user
   createComplaint: protectedProcedure
     .input(

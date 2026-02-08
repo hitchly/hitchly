@@ -214,7 +214,6 @@ describe("Google Maps Service", () => {
         },
       });
 
-
       // Mock route with rider pickup
       mockClient.directions.mockResolvedValueOnce({
         data: {

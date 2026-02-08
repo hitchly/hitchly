@@ -276,7 +276,6 @@ describe("Trip Router", () => {
         },
       ];
 
-
       // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
