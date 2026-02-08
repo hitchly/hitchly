@@ -58,7 +58,7 @@ export default function SafetyScreen() {
   const canSubmitReport =
     targetUserId.trim().length > 0 && reason.trim().length > 0;
 
-  const effectiveTripId = activeTripId ?? null;
+  const effectiveTripId = activeTripId ?? tripId ?? null;
 
   const { data: trips } = trpc.trip.getTrips.useQuery();
 
@@ -104,6 +104,12 @@ export default function SafetyScreen() {
 
     return targetUserId;
   }, [effectiveTripId, isTripLoading, session?.user?.id, targetUserId, trip]);
+
+  useEffect(() => {
+    if (tripId && activeTripId === null) {
+      setActiveTripId(tripId);
+    }
+  }, [tripId, activeTripId]);
 
   useEffect(() => {
     if (!trip || !session?.user?.id) return;
@@ -187,6 +193,7 @@ export default function SafetyScreen() {
               onPress={() => {
                 setTargetUserId("");
                 setActiveTripId(null);
+                router.setParams({ tripId: undefined });
               }}
             >
               <Text style={[styles.changeTripLink, { color: colors.primary }]}>
