@@ -210,6 +210,11 @@ export const tripRouter = router({
         });
       }
 
+      const [driver] = await ctx.db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, trip.driverId));
+
       // Get trip requests with rider information
       // Wrap in try-catch to handle cases where requests query fails (e.g., schema issues)
       let requests: any[] = [];
@@ -297,6 +302,7 @@ export const tripRouter = router({
 
       return {
         ...trip,
+        driver: driver ?? null,
         requests: sortedRequests,
       };
     }),

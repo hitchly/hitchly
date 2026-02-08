@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -25,12 +25,18 @@ export default function SafetyScreen() {
     tripId?: string;
   }>();
   const { data: session } = authClient.useSession();
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [contact, setContact] = useState("");
+  const scrollRef = useRef<ScrollView | null>(null);
+  const highlightKeyRef = useRef<string | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(
     tripId ?? null
   );
+  const [emergencySectionY, setEmergencySectionY] = useState<number | null>(
+    null
+  );
+  const [reportSectionY, setReportSectionY] = useState<number | null>(null);
+  const [highlightSection, setHighlightSection] = useState<
+    "emergency" | "report" | null
+  >(null);
   const [targetUserId, setTargetUserId] = useState("");
   const [reason, setReason] = useState("");
 
@@ -74,6 +80,11 @@ export default function SafetyScreen() {
     }
 
     if (trip.driverId && trip.driverId !== currentUserId) {
+      if (trip.driver) {
+        const name = trip.driver.name || "Driver";
+        const contact = trip.driver.email || trip.driver.id;
+        return `${name} (${contact})`;
+      }
       return `Driver: ${targetUserId}`;
     }
 
@@ -110,12 +121,37 @@ export default function SafetyScreen() {
     }
   }, [session?.user?.id, targetUserId, trip]);
 
+  useEffect(() => {
+    if (!mode) {
+      highlightKeyRef.current = null;
+      return;
+    }
+
+    const targetY = mode === "emergency" ? emergencySectionY : reportSectionY;
+    if (targetY === null) return;
+
+    const highlightKey = `${mode}:${effectiveTripId ?? "none"}`;
+    if (highlightKeyRef.current === highlightKey) return;
+
+    highlightKeyRef.current = highlightKey;
+    scrollRef.current?.scrollTo({ y: targetY, animated: true });
+    setHighlightSection(mode);
+  }, [emergencySectionY, reportSectionY, mode, effectiveTripId]);
+
+  useEffect(() => {
+    if (!highlightSection) return;
+    const timeoutId = setTimeout(() => {
+      setHighlightSection(null);
+    }, 700);
+    return () => clearTimeout(timeoutId);
+  }, [highlightSection]);
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top", "left", "right"]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -192,161 +228,93 @@ export default function SafetyScreen() {
           </Card>
         )}
 
-        <Card>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Contact Hitchly Safety Team
-          </Text>
-          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
-            For immediate assistance, please use these to contact our safety team.
-          </Text>
-
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
+        <View
+          onLayout={(event) => {
+            setEmergencySectionY(event.nativeEvent.layout.y);
+          }}
+        >
+          <Card
+            style={
+              highlightSection === "emergency"
+                ? [styles.highlightCardActive, { borderColor: colors.primary }]
+                : undefined
+            }
           >
-            Emergency Phone
-          </Text>
-          <Text style={[styles.contactValue, { color: colors.text }]}>
-            {SafetyContacts.phone}
-          </Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Contact Hitchly Safety Team
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+              For immediate assistance, please use these to contact our safety team.
+            </Text>
 
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
-          >
-            Emergency Email
-          </Text>
-          <Text style={[styles.contactValue, { color: colors.text }]}>
-            {SafetyContacts.email}
-          </Text>
-        </Card>
+            <Text
+              style={[
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.bold },
+              ]}
+            >
+              Emergency Phone
+            </Text>
+            <Text style={[styles.contactValue, { color: colors.text }]}>
+              {SafetyContacts.phone}
+            </Text>
 
-        <Card>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Emergency Contacts
-          </Text>
-          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
-            Please provide the contact information for someone we can reach in an emergency.
-          </Text>
-
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
-          >
-            Emergency Email
-          </Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.background,
-                fontFamily: fonts.regular,
-              },
-            ]}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="name@example.com"
-            placeholderTextColor={colors.textSecondary}
-          />
-
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
-          >
-            Phone
-          </Text>
-          <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.background,
-                fontFamily: fonts.regular,
-              },
-            ]}
-            keyboardType="phone-pad"
-            placeholder="(555) 123-4567"
-            placeholderTextColor={colors.textSecondary}
-          />
-
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
-          >
-            Emergency Contact Name
-          </Text>
-          <TextInput
-            value={contact}
-            onChangeText={setContact}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.background,
-                fontFamily: fonts.regular,
-              },
-            ]}
-            placeholder="Full name"
-            placeholderTextColor={colors.textSecondary}
-          />
-
-          <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-            disabled
-          >
-            <Text style={styles.primaryButtonText}>Save Contacts (next)</Text>
-          </TouchableOpacity>
-        </Card>
+            <Text
+              style={[
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.bold },
+              ]}
+            >
+              Emergency Email
+            </Text>
+            <Text style={[styles.contactValue, { color: colors.text }]}>
+              {SafetyContacts.email}
+            </Text>
+          </Card>
+        </View>
 
         {/* Report Form */}
-        <Card>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Report an Issue
-          </Text>
-          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
-            Tell us what we can help you with.
-          </Text>
-
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
+        <View
+          onLayout={(event) => {
+            setReportSectionY(event.nativeEvent.layout.y);
+          }}
+        >
+          <Card
+            style={
+              highlightSection === "report"
+                ? [styles.highlightCardActive, { borderColor: colors.primary }]
+                : undefined
+            }
           >
-            Reported User
-          </Text>
-          <Text style={[styles.contactValue, { color: colors.text }]}>
-            {reportedUserLabel}
-          </Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Report an Issue
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+              Tell us what we can help you with.
+            </Text>
 
-          <Text
-            style={[
-              styles.label,
-              { color: colors.textSecondary, fontFamily: fonts.bold },
-            ]}
-          >
-            Details
-          </Text>
-          <TextInput
-            placeholder="Describe the issue in detail..."
+            <Text
+              style={[
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.bold },
+              ]}
+            >
+              Reported User
+            </Text>
+            <Text style={[styles.contactValue, { color: colors.text }]}>
+              {reportedUserLabel}
+            </Text>
+
+            <Text
+              style={[
+                styles.label,
+                { color: colors.textSecondary, fontFamily: fonts.bold },
+              ]}
+            >
+              Details
+            </Text>
+            <TextInput
+              placeholder="Describe the issue in detail..."
             value={reason}
             onChangeText={setReason}
             style={[
@@ -360,42 +328,32 @@ export default function SafetyScreen() {
             ]}
             multiline
             placeholderTextColor={colors.textSecondary}
-          />
+            />
 
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-              { backgroundColor: colors.primary },
-              !canSubmitReport || createComplaint.isPending
-                ? styles.primaryButtonDisabled
-                : null,
-            ]}
-            disabled={!canSubmitReport || createComplaint.isPending}
-            onPress={() => {
-              if (!canSubmitReport) return;
-              createComplaint.mutate({
-                targetUserId: targetUserId.trim(),
-                content: reason.trim(),
-                rideId: effectiveTripId ?? undefined,
-              });
-            }}
-          >
-            <Text style={styles.primaryButtonText}>
-              {createComplaint.isPending ? "Submitting..." : "Submit Report"}
-            </Text>
-          </TouchableOpacity>
-        </Card>
-
-        {mode === "emergency" && (
-          <Text style={[styles.modeHint, { color: colors.primary }]}>
-            Focused: Emergency Contacts
-          </Text>
-        )}
-        {mode === "report" && (
-          <Text style={[styles.modeHint, { color: colors.primary }]}>
-            Focused: Report an Issue
-          </Text>
-        )}
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                { backgroundColor: colors.primary },
+                !canSubmitReport || createComplaint.isPending
+                  ? styles.primaryButtonDisabled
+                  : null,
+              ]}
+              disabled={!canSubmitReport || createComplaint.isPending}
+              onPress={() => {
+                if (!canSubmitReport) return;
+                createComplaint.mutate({
+                  targetUserId: targetUserId.trim(),
+                  content: reason.trim(),
+                  rideId: effectiveTripId ?? undefined,
+                });
+              }}
+            >
+              <Text style={styles.primaryButtonText}>
+                {createComplaint.isPending ? "Submitting..." : "Submit Report"}
+              </Text>
+            </TouchableOpacity>
+          </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -469,4 +427,8 @@ const styles = StyleSheet.create({
   },
   tripTitle: { fontSize: 15, fontWeight: "600" },
   tripSubtext: { marginTop: 4, fontSize: 12 },
+  highlightCardActive: {
+    borderWidth: 2,
+    borderRadius: 16,
+  },
 });
