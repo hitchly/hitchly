@@ -27,7 +27,7 @@ export default function SafetyScreen() {
   const { data: session } = authClient.useSession();
   const scrollRef = useRef<ScrollView | null>(null);
   const highlightKeyRef = useRef<string | null>(null);
-  const [selectedTripId, setSelectedTripId] = useState<string | null>(
+  const [activeTripId, setActiveTripId] = useState<string | null>(
     tripId ?? null
   );
   const [emergencySectionY, setEmergencySectionY] = useState<number | null>(
@@ -43,7 +43,12 @@ export default function SafetyScreen() {
   const createComplaint = trpc.complaints.createComplaint.useMutation({
     onSuccess: () => {
       setReason("");
-      Alert.alert("Submitted", "Your concern has been noted. Our safety team will review it and follow up.");
+      setTargetUserId("");
+      setActiveTripId(null);
+      Alert.alert(
+        "Submitted",
+        "Your concern has been noted. Our safety team will review it and follow up accordingly."
+      );
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
@@ -53,7 +58,7 @@ export default function SafetyScreen() {
   const canSubmitReport =
     targetUserId.trim().length > 0 && reason.trim().length > 0;
 
-  const effectiveTripId = selectedTripId ?? tripId ?? null;
+  const effectiveTripId = activeTripId ?? null;
 
   const { data: trips } = trpc.trip.getTrips.useQuery();
 
@@ -174,9 +179,21 @@ export default function SafetyScreen() {
           Safety & Reporting
         </Text>
         {effectiveTripId ? (
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Trip ID: {effectiveTripId}
-          </Text>
+          <View style={styles.tripHeaderRow}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Trip ID: {effectiveTripId}
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setTargetUserId("");
+                setActiveTripId(null);
+              }}
+            >
+              <Text style={[styles.changeTripLink, { color: colors.primary }]}>
+                Change trip
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
         {!effectiveTripId && trips && trips.length > 0 && (
           <Card>
@@ -195,13 +212,13 @@ export default function SafetyScreen() {
                     borderColor: colors.border,
                     backgroundColor: colors.background,
                   },
-                  selectedTripId === tripItem.id
+                  activeTripId === tripItem.id
                     ? { borderColor: colors.primary }
                     : null,
                 ]}
                 onPress={() => {
                   setTargetUserId("");
-                  setSelectedTripId(tripItem.id);
+                  setActiveTripId(tripItem.id);
                 }}
               >
                 <Text style={[styles.tripTitle, { color: colors.text }]}>
@@ -382,7 +399,16 @@ const styles = StyleSheet.create({
   backButtonText: { fontSize: 14, fontWeight: "600" },
   headerTitle: { fontSize: 16, fontWeight: "600" },
   title: { fontSize: 22, fontWeight: "700", marginBottom: 4, paddingHorizontal: 16 },
-  subtitle: { marginBottom: 8, paddingHorizontal: 16 },
+  subtitle: { marginBottom: 8 },
+  tripHeaderRow: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  changeTripLink: { fontSize: 13, fontWeight: "600" },
   cardTitle: { fontSize: 17, fontWeight: "700" },
   cardSubtitle: { marginTop: 6, marginBottom: 12 },
   label: {
