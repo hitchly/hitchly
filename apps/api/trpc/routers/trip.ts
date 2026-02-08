@@ -295,7 +295,11 @@ export const tripRouter = router({
         });
       }
 
-      let driver: { id: string; name: string | null; email: string | null } | null = null;
+      let driver: {
+        id: string;
+        name: string | null;
+        email: string | null;
+      } | null = null;
       try {
         const [driverRow] = await ctx.db
           .select({ id: users.id, name: users.name, email: users.email })
