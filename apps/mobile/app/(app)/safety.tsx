@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card } from "../../components/ui/card";
 import { SafetyContacts } from "../../constants/safety";
 import { useTheme } from "../../context/theme-context";
+import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
 
 export default function SafetyScreen() {
@@ -23,9 +24,13 @@ export default function SafetyScreen() {
     mode?: "emergency" | "report";
     tripId?: string;
   }>();
+  const { data: session } = authClient.useSession();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [contact, setContact] = useState("");
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(
+    tripId ?? null
+  );
   const [targetUserId, setTargetUserId] = useState("");
   const [reason, setReason] = useState("");
 
@@ -41,6 +46,69 @@ export default function SafetyScreen() {
 
   const canSubmitReport =
     targetUserId.trim().length > 0 && reason.trim().length > 0;
+
+  const effectiveTripId = selectedTripId ?? tripId ?? null;
+
+  const { data: trips } = trpc.trip.getTrips.useQuery();
+
+  const { data: trip, isLoading: isTripLoading } =
+    trpc.trip.getTripById.useQuery(
+    { tripId: effectiveTripId ?? "" },
+    { enabled: !!effectiveTripId }
+  );
+
+  const reportedUserLabel = useMemo(() => {
+    if (!effectiveTripId) {
+      return "Select a trip to auto-fill";
+    }
+
+    if (!targetUserId) {
+      return isTripLoading
+        ? "Loading reported user..."
+        : "Unable to resolve reported user";
+    }
+
+    const currentUserId = session?.user?.id;
+    if (!trip || !currentUserId) {
+      return targetUserId;
+    }
+
+    if (trip.driverId && trip.driverId !== currentUserId) {
+      return `Driver: ${targetUserId}`;
+    }
+
+    const matchedRequest = Array.isArray(trip.requests)
+      ? trip.requests.find((req) => req.riderId === targetUserId)
+      : undefined;
+    if (matchedRequest?.rider) {
+      const name = matchedRequest.rider.name || "Rider";
+      const contact = matchedRequest.rider.email || matchedRequest.rider.id;
+      return `${name} (${contact})`;
+    }
+
+    return targetUserId;
+  }, [effectiveTripId, isTripLoading, session?.user?.id, targetUserId, trip]);
+
+  useEffect(() => {
+    if (!trip || !session?.user?.id) return;
+    if (targetUserId.trim().length > 0) return;
+
+    const currentUserId = session.user.id;
+    if (trip.driverId && trip.driverId !== currentUserId) {
+      setTargetUserId(trip.driverId);
+      return;
+    }
+
+    if (trip.driverId === currentUserId && Array.isArray(trip.requests)) {
+      const preferredRequest =
+        trip.requests.find(
+          (req) => req.status === "accepted" || req.status === "on_trip"
+        ) ?? trip.requests[0];
+      if (preferredRequest?.riderId) {
+        setTargetUserId(preferredRequest.riderId);
+      }
+    }
+  }, [session?.user?.id, targetUserId, trip]);
 
   return (
     <SafeAreaView
@@ -69,11 +137,60 @@ export default function SafetyScreen() {
         <Text style={[styles.title, { color: colors.text }]}>
           Safety & Reporting
         </Text>
-        {tripId ? (
+        {effectiveTripId ? (
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Trip ID: {tripId}
+            Trip ID: {effectiveTripId}
           </Text>
         ) : null}
+        {!effectiveTripId && trips && trips.length > 0 && (
+          <Card>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Select a Trip
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+              Choose a trip to auto-fill the reported user.
+            </Text>
+            {trips.map((tripItem) => (
+              <TouchableOpacity
+                key={tripItem.id}
+                style={[
+                  styles.tripRow,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
+                  },
+                  selectedTripId === tripItem.id
+                    ? { borderColor: colors.primary }
+                    : null,
+                ]}
+                onPress={() => {
+                  setTargetUserId("");
+                  setSelectedTripId(tripItem.id);
+                }}
+              >
+                <Text style={[styles.tripTitle, { color: colors.text }]}>
+                  {tripItem.origin} → {tripItem.destination}
+                </Text>
+                <Text
+                  style={[styles.tripSubtext, { color: colors.textSecondary }]}
+                >
+                  {new Date(tripItem.departureTime).toLocaleString()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </Card>
+        )}
+
+        {!effectiveTripId && trips && trips.length === 0 && (
+          <Card>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Select a Trip
+            </Text>
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+              No trips found yet. Open Safety from a trip to auto-fill.
+            </Text>
+          </Card>
+        )}
 
         <Card>
           <Text style={[styles.cardTitle, { color: colors.text }]}>
@@ -214,24 +331,11 @@ export default function SafetyScreen() {
               { color: colors.textSecondary, fontFamily: fonts.bold },
             ]}
           >
-            Reported User ID
+            Reported User
           </Text>
-          <TextInput
-            placeholder="user-123"
-            value={targetUserId}
-            onChangeText={setTargetUserId}
-            style={[
-              styles.input,
-              {
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.background,
-                fontFamily: fonts.regular,
-              },
-            ]}
-            autoCapitalize="none"
-            placeholderTextColor={colors.textSecondary}
-          />
+          <Text style={[styles.contactValue, { color: colors.text }]}>
+            {reportedUserLabel}
+          </Text>
 
           <Text
             style={[
@@ -272,7 +376,7 @@ export default function SafetyScreen() {
               createComplaint.mutate({
                 targetUserId: targetUserId.trim(),
                 content: reason.trim(),
-                rideId: tripId,
+                rideId: effectiveTripId ?? undefined,
               });
             }}
           >
@@ -357,4 +461,12 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: { color: "#fff", fontWeight: "600" },
   modeHint: { marginTop: 12, paddingHorizontal: 16, fontWeight: "600" },
+  tripRow: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  tripTitle: { fontSize: 15, fontWeight: "600" },
+  tripSubtext: { marginTop: 4, fontSize: 12 },
 });
