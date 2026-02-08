@@ -1,5 +1,6 @@
 import { router } from "../trpc";
 import { adminRouter } from "./admin";
+import { complaintsRouter } from "./complaints";
 import { healthRouter } from "./health";
 import { locationRouter } from "./location";
 import { profileRouter } from "./profile";
@@ -8,6 +9,7 @@ import { tripRouter } from "./trip";
 
 export const appRouter = router({
   admin: adminRouter,
+  complaints: complaintsRouter,
   profile: profileRouter,
   location: locationRouter,
   health: healthRouter,
