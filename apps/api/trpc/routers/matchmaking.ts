@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { trips, tripRequests } from "@hitchly/db/schema";
-import { eq } from "@hitchly/db/client";
+
+import { trips, tripRequests, reviews } from "@hitchly/db/schema";
+
+import { eq, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 
@@ -40,10 +42,39 @@ export const matchmakingRouter = router({
         includeDummyMatches: input.includeDummyMatches,
       });
 
-      return matches;
+      const realDriverIds = matches
+        .map((m) => m.driverId)
+        .filter((id) => id && !id.startsWith("dummy-"));
+
+      if (realDriverIds.length === 0) return matches;
+
+      const ratingResults = await ctx.db
+        .select({
+          targetUserId: reviews.targetUserId,
+          average: sql<number>`avg(${reviews.rating})`,
+        })
+        .from(reviews)
+        .where(inArray(reviews.targetUserId, realDriverIds))
+        .groupBy(reviews.targetUserId);
+
+      const ratingMap = new Map<string, number>();
+      ratingResults.forEach((r) => {
+        ratingMap.set(r.targetUserId, Number(r.average));
+      });
+
+      return matches.map((match) => {
+        if (match.driverId.startsWith("dummy-")) {
+          return match;
+        }
+
+        const realRating = ratingMap.get(match.driverId);
+        return {
+          ...match,
+          rating: realRating ? Number(realRating.toFixed(1)) : 5.0,
+        };
+      });
     }),
 
-  // Cancel a trip request - decrements bookedSeats if was accepted
   cancelRequest: protectedProcedure
     .input(z.object({ requestId: z.string() }))
     .mutation(async ({ ctx, input }) => {

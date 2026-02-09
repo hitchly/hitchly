@@ -6,6 +6,7 @@ import { locationRouter } from "./location";
 import { profileRouter } from "./profile";
 import { matchmakingRouter } from "./matchmaking";
 import { tripRouter } from "./trip";
+import { reviewsRouter } from "./reviews";
 
 export const appRouter = router({
   admin: adminRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   health: healthRouter,
   matchmaking: matchmakingRouter,
   trip: tripRouter,
+  reviews: reviewsRouter,
 });
 
 export type AppRouter = typeof appRouter;

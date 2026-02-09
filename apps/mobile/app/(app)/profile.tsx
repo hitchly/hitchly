@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { formatCoordinatePair } from "@hitchly/utils";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -28,6 +29,7 @@ const formatCurrency = (cents?: number | null) => {
 };
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
   const { colors, fonts } = useTheme();
@@ -38,6 +40,11 @@ export default function ProfileScreen() {
     refetch,
     isRefetching,
   } = trpc.profile.getMe.useQuery();
+
+  const { data: ratingData } = trpc.reviews.getUserScore.useQuery(
+    { userId: session?.user?.id as string },
+    { enabled: !!session?.user?.id }
+  );
 
   const [modalState, setModalState] = useState<EditModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -144,7 +151,18 @@ export default function ProfileScreen() {
             <Text style={[styles.heroEmail, { color: colors.textSecondary }]}>
               {session?.user?.email}
             </Text>
-            {/* ✅ PASTE THIS NEW BLOCK */}
+
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={18} color="#FFB300" />
+              <Text style={[styles.ratingText, { color: colors.text }]}>
+                {ratingData?.average === "New" || !ratingData?.average
+                  ? "No Rating(s)"
+                  : ratingData?.average}
+
+                {ratingData?.count ? ` (${ratingData.count})` : ""}
+              </Text>
+            </View>
+
             <View
               style={[styles.verificationPill, { backgroundColor: badge.bg }]}
             >
@@ -153,6 +171,32 @@ export default function ProfileScreen() {
                 {badge.label}
               </Text>
             </View>
+
+            {isAdmin && (
+              <TouchableOpacity
+                style={[
+                  styles.adminPill,
+                  { backgroundColor: colors.text, shadowColor: colors.text },
+                ]}
+                onPress={() => router.push("/admin/dashboard" as any)}
+              >
+                <Ionicons
+                  name="shield-checkmark"
+                  size={16}
+                  color={colors.background}
+                />
+                <Text
+                  style={[styles.adminPillText, { color: colors.background }]}
+                >
+                  Dashboard
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={colors.background}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -480,7 +524,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 4,
   },
-  heroEmail: { fontSize: 15, marginBottom: 12 },
+  heroEmail: { fontSize: 15, marginBottom: 8 },
+
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.03)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  ratingText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
   verificationPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -490,6 +550,25 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   verificationText: { fontSize: 13, fontWeight: "600" },
+
+  adminPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginTop: 16,
+    gap: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  adminPillText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
   cardsContainer: {
     gap: 6,
   },
