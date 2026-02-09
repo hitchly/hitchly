@@ -1,13 +1,12 @@
 import { and, eq, inArray, ne, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
 import { z } from "zod";
-// IMPORT COMPLAINTS TABLE
+
 import {
   trips,
   tripRequests,
   users,
   profiles,
-  reports,
   complaints,
 } from "@hitchly/db/schema";
 import { protectedProcedure, router } from "../trpc";
@@ -18,15 +17,12 @@ import { requireTestAccount } from "../../lib/test-accounts";
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 const MAIN_ST_COORDS = { lat: 43.2535, lng: -79.8889 };
 
-const checkAdmin = async (_userId: string, _db: any) => {
-  return true; // TODO: Add real admin check
+const checkAdmin = async () => {
+  return true;
 };
 
 export const adminRouter = router({
-  // 1. GET PLATFORM STATS
   getPlatformStats: protectedProcedure.query(async ({ ctx }) => {
-    await checkAdmin(ctx.userId!, ctx.db);
-
     const [userCount] = await ctx.db
       .select({ count: sql<number>`count(*)` })
       .from(users);
@@ -35,7 +31,6 @@ export const adminRouter = router({
       .select({ count: sql<number>`count(*)` })
       .from(trips);
 
-    // CHANGED: Now counting COMPLETED trips instead of active
     const [completedTripCount] = await ctx.db
       .select({ count: sql<number>`count(*)` })
       .from(trips)
@@ -48,15 +43,13 @@ export const adminRouter = router({
     return {
       totalUsers: Number(userCount?.count ?? 0),
       totalTrips: Number(tripCount?.count ?? 0),
-      completedTrips: Number(completedTripCount?.count ?? 0), // Renamed key
+      completedTrips: Number(completedTripCount?.count ?? 0),
       totalReports: Number(complaintCount?.count ?? 0),
       totalRevenue: 0,
     };
   }),
 
-  // 2. GET ALL USERS
   getAllUsers: protectedProcedure.query(async ({ ctx }) => {
-    await checkAdmin(ctx.userId!, ctx.db);
     return await ctx.db
       .select({
         id: users.id,
@@ -72,24 +65,18 @@ export const adminRouter = router({
       .orderBy(desc(users.createdAt));
   }),
 
-  // 3. GET REPORTS (Actually fetching COMPLAINTS now)
   getReports: protectedProcedure.query(async ({ ctx }) => {
-    await checkAdmin(ctx.userId!, ctx.db);
-
-    // Fetch from COMPLAINTS table
     const allComplaints = await ctx.db
       .select()
       .from(complaints)
       .orderBy(desc(complaints.createdAt));
 
-    // Gather User IDs
     const userIds = new Set<string>();
     allComplaints.forEach((c) => {
       if (c.reporterUserId) userIds.add(c.reporterUserId);
       if (c.targetUserId) userIds.add(c.targetUserId);
     });
 
-    // Fetch User Details
     const usersMap = new Map<string, typeof users.$inferSelect>();
     if (userIds.size > 0) {
       const relatedUsers = await ctx.db
@@ -99,25 +86,22 @@ export const adminRouter = router({
       relatedUsers.forEach((u) => usersMap.set(u.id, u));
     }
 
-    // Map to Dashboard Format
     return allComplaints.map((c) => ({
       id: c.id,
-      reason: "User Complaint", // Generic title
-      details: c.content, // The actual message from SafetyScreen
+      reason: "User Complaint",
+      details: c.content,
       createdAt: c.createdAt,
       reporterName: usersMap.get(c.reporterUserId)?.name || "Unknown",
       reporterEmail: usersMap.get(c.reporterUserId)?.email || "Unknown",
       targetName: usersMap.get(c.targetUserId)?.name || "Unknown",
       targetEmail: usersMap.get(c.targetUserId)?.email || "Unknown",
-      targetId: c.targetUserId, // Useful for the ban button
+      targetId: c.targetUserId,
     }));
   }),
 
-  // 4. BAN USER
   banUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await checkAdmin(ctx.userId!, ctx.db);
       await ctx.db
         .update(users)
         .set({ banned: true })
@@ -125,23 +109,17 @@ export const adminRouter = router({
       return { success: true };
     }),
 
-  // 5. UNBAN USER
   unbanUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await checkAdmin(ctx.userId!, ctx.db);
       await ctx.db
         .update(users)
         .set({ banned: false })
         .where(eq(users.id, input.userId));
       return { success: true };
     }),
-  // ========== EXISTING MANAGEMENT ENDPOINTS ==========
 
   getAnalytics: protectedProcedure.query(async ({ ctx }) => {
-    await checkAdmin(ctx.userId!, ctx.db);
-    // Keeping this for backward compatibility if needed,
-    // but getPlatformStats is preferred for the new dashboard
     const userCount = await ctx.db
       .select({ count: sql<number>`count(*)` })
       .from(users);
@@ -167,12 +145,10 @@ export const adminRouter = router({
   warnUser: protectedProcedure
     .input(z.object({ targetUserId: z.string(), reason: z.string() }))
     .mutation(async ({ ctx, input: _input }) => {
-      await checkAdmin(ctx.userId!, ctx.db);
-      // Placeholder logic maintained
       return { success: true };
     }),
 
-  // ========== TEST DATA CREATION ENDPOINTS (Unchanged) ==========
+  // ========== TEST DATA CREATION ENDPOINTS ==========
 
   createTestTrip: protectedProcedure
     .input(

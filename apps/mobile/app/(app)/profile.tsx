@@ -42,7 +42,7 @@ export default function ProfileScreen() {
   } = trpc.profile.getMe.useQuery();
 
   const { data: ratingData } = trpc.reviews.getUserScore.useQuery(
-    { userId: session?.user?.id as string },
+    { userId: session?.user?.id ?? "" },
     { enabled: !!session?.user?.id }
   );
 
