@@ -11,39 +11,6 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-// #region agent log
-const LOG_ENDPOINT =
-  "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-const getTimestamp = () => new Date().toISOString();
-const log = (
-  location: string,
-  message: string,
-  data: any,
-  hypothesisId?: string
-) => {
-  const timestamp = Date.now();
-  const logData = {
-    location,
-    message,
-    data,
-    timestamp,
-    timestampISO: getTimestamp(),
-    sessionId: "debug-session",
-    hypothesisId,
-  };
-  // Console fallback for debugging with timestamp
-  console.log(
-    `[${getTimestamp()}] [DEBUG ${hypothesisId || "?"}] ${location}: ${message}`,
-    data
-  );
-  fetch(LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(logData),
-  }).catch(() => {});
-};
-// #endregion
-
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 const SWIPE_THRESHOLD = 100;
@@ -59,7 +26,6 @@ interface SwipeDeckProps<T> {
   cardStyle?: ViewStyle;
 }
 
-// Helper to get item ID (supports both 'id' and 'rideId')
 const getItemId = <T,>(item: T): string => {
   if (typeof item === "object" && item !== null) {
     const obj = item as Record<string, any>;
@@ -82,8 +48,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
   const isMountedRef = React.useRef(true);
   const dataRef = React.useRef(data);
 
-  // Track if component is mounted and keep data reference
-  React.useEffect(() => {
+  useEffect(() => {
     isMountedRef.current = true;
     dataRef.current = data;
     return () => {
@@ -91,25 +56,9 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     };
   }, [data]);
 
-  // Update visible cards when data changes
   useEffect(() => {
     if (data.length > 0 && currentIndex < data.length) {
-      const newVisible = data.slice(currentIndex, currentIndex + 4);
-      setVisibleCards(newVisible);
-      // #region agent log
-      log(
-        "SwipeDeck.tsx:useEffect",
-        "Visible cards updated",
-        {
-          currentIndex,
-          newVisibleLength: newVisible.length,
-          firstCardId: newVisible[0] ? getItemId(newVisible[0]) : undefined,
-          allCardIds: newVisible.map((c) => getItemId(c)),
-          timestamp: Date.now(),
-        },
-        "D"
-      );
-      // #endregion
+      setVisibleCards(data.slice(currentIndex, currentIndex + 4));
     }
   }, [data, currentIndex]);
 
@@ -118,239 +67,57 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
   const rotation = useSharedValue(0);
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
-
-  // Use shared value to store current card index (worklet-safe)
   const currentCardIndex = useSharedValue(0);
-
-  // Track if swipe completion callback has been called (prevent multiple calls)
   const swipeCallbackCalled = useSharedValue(false);
 
-  // Keep shared value in sync with state
   useEffect(() => {
     currentCardIndex.value = currentIndex;
   }, [currentIndex, currentCardIndex]);
 
   const handleSwipeComplete = useCallback(
     (direction: "left" | "right", itemId: string) => {
-      // Check if component is still mounted
-      if (!isMountedRef.current) {
-        console.log(
-          "[DEBUG] Component unmounted, skipping handleSwipeComplete"
-        );
-        return;
+      if (!isMountedRef.current) return;
+
+      const currentData = dataRef.current;
+      const item = currentData.find((d) => getItemId(d) === itemId);
+      if (!item) return;
+
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {
+        // Haptics unavailable
       }
 
       try {
-        // #region agent log
-        log(
-          "SwipeDeck.tsx:handleSwipeComplete",
-          "Swipe complete - START",
-          {
-            direction,
-            itemId,
-            currentIndex,
-            dataLength: data.length,
-            isMounted: isMountedRef.current,
-            timestamp: Date.now(),
-          },
-          "B"
-        );
-        // #endregion
-
-        // Use ref to get current data to avoid stale closure issues
-        const currentData = dataRef.current;
-
-        // Find the item by ID from current data (supports both id and rideId)
-        const item = currentData.find((d) => getItemId(d) === itemId);
-        if (!item) {
-          log(
-            "SwipeDeck.tsx:handleSwipeComplete",
-            "Item not found",
-            { itemId, dataLength: currentData.length },
-            "B"
-          );
-          return;
+        if (direction === "right") {
+          onSwipeRight?.(item);
+        } else {
+          onSwipeLeft?.(item);
         }
-
-        try {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        } catch (hapticError) {
-          // Haptics might not be available, ignore
-          console.warn("Haptics error:", hapticError);
-        }
-
-        // Call callbacks first, but don't let errors stop state updates
-        try {
-          if (direction === "right") {
-            if (onSwipeRight) {
-              onSwipeRight(item);
-            }
-          } else {
-            if (onSwipeLeft) {
-              onSwipeLeft(item);
-            }
-          }
-        } catch (callbackError) {
-          log(
-            "SwipeDeck.tsx:handleSwipeComplete",
-            "Error in swipe callback",
-            {
-              error:
-                callbackError instanceof Error
-                  ? callbackError.message
-                  : String(callbackError),
-              direction,
-              itemId,
-            },
-            "B"
-          );
-          // Don't rethrow - continue with state update
-        }
-
-        // Move to next card - use ref to get current data length
-        const currentDataLength = dataRef.current.length;
-        const nextIndex = currentIndex + 1;
-        if (nextIndex >= currentDataLength) {
-          if (onDeckEmpty && isMountedRef.current) {
-            onDeckEmpty();
-          }
-          return;
-        }
-
-        // #region agent log
-        log(
-          "SwipeDeck.tsx:handleSwipeComplete",
-          "About to update state",
-          {
-            currentIndex,
-            nextIndex,
-            isMounted: isMountedRef.current,
-            timestamp: Date.now(),
-          },
-          "D"
-        );
-        // #endregion
-
-        // Check again if component is still mounted before updating state
-        if (!isMountedRef.current) {
-          console.log(
-            "[DEBUG] Component unmounted before state update, skipping"
-          );
-          return;
-        }
-
-        // Update state first - wrap in try-catch to prevent crashes
-        try {
-          // Use ref to get current data to avoid stale closure issues
-          const currentDataForUpdate = dataRef.current;
-
-          // Validate that nextIndex is still valid for current data
-          if (nextIndex < 0 || nextIndex > currentDataForUpdate.length) {
-            log(
-              "SwipeDeck.tsx:handleSwipeComplete",
-              "Invalid nextIndex, skipping state update",
-              {
-                nextIndex,
-                dataLength: currentDataForUpdate.length,
-                currentIndex,
-              },
-              "B"
-            );
-            return;
-          }
-
-          // Update state synchronously - React will batch updates
-          if (isMountedRef.current) {
-            setCurrentIndex(nextIndex);
-            const newVisible = currentDataForUpdate.slice(
-              nextIndex,
-              nextIndex + 4
-            );
-            setVisibleCards(newVisible);
-
-            // Update shared value immediately so gesture handlers use correct index
-            currentCardIndex.value = nextIndex;
-
-            // #region agent log
-            log(
-              "SwipeDeck.tsx:handleSwipeComplete",
-              "State updated, resetting animation",
-              {
-                nextIndex,
-                newVisibleLength: newVisible.length,
-                firstCardId: newVisible[0]
-                  ? getItemId(newVisible[0])
-                  : undefined,
-                allCardIds: newVisible.map((c: T) => getItemId(c)),
-                currentCardIndexValue: currentCardIndex.value,
-                translateXBefore: translateX.value,
-                translateYBefore: translateY.value,
-                timestamp: Date.now(),
-              },
-              "D"
-            );
-            // #endregion
-          }
-        } catch (stateError) {
-          log(
-            "SwipeDeck.tsx:handleSwipeComplete",
-            "Error preparing state update",
-            {
-              error:
-                stateError instanceof Error
-                  ? stateError.message
-                  : String(stateError),
-              nextIndex,
-              isMounted: isMountedRef.current,
-            },
-            "B"
-          );
-          // Try to at least update the shared value
-          try {
-            if (isMountedRef.current) {
-              currentCardIndex.value = nextIndex;
-            }
-          } catch {
-            // If even this fails, we're in a bad state
-          }
-          return;
-        }
-
-        // Reset animation values immediately - the previous card is off-screen
-        // The new top card needs fresh animation values to respond to gestures
-        translateX.value = 0;
-        translateY.value = 0;
-        rotation.value = 0;
-        opacity.value = 1;
-        scale.value = 1;
-
-        // #region agent log
-        log(
-          "SwipeDeck.tsx:handleSwipeComplete",
-          "Animation values reset",
-          {
-            nextIndex,
-            translateXAfter: translateX.value,
-            translateYAfter: translateY.value,
-            timestamp: Date.now(),
-          },
-          "D"
-        );
-        // #endregion
-      } catch (error) {
-        log(
-          "SwipeDeck.tsx:handleSwipeComplete",
-          "Error in handleSwipeComplete",
-          {
-            error: error instanceof Error ? error.message : String(error),
-          },
-          "B"
-        );
+      } catch {
+        // Callback failed
       }
+
+      const nextIndex = currentIndex + 1;
+      if (nextIndex >= currentData.length) {
+        onDeckEmpty?.();
+        return;
+      }
+
+      if (isMountedRef.current) {
+        setCurrentIndex(nextIndex);
+        setVisibleCards(currentData.slice(nextIndex, nextIndex + 4));
+        currentCardIndex.value = nextIndex;
+      }
+
+      translateX.value = 0;
+      translateY.value = 0;
+      rotation.value = 0;
+      opacity.value = 1;
+      scale.value = 1;
     },
     [
       currentIndex,
-      data,
       onSwipeLeft,
       onSwipeRight,
       onDeckEmpty,
@@ -363,348 +130,92 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     ]
   );
 
-  // #region agent log
-  useEffect(() => {
-    log(
-      "SwipeDeck.tsx:98",
-      "Checking Gesture import",
-      {
-        GestureExists: typeof Gesture !== "undefined",
-        GesturePanExists: typeof Gesture?.Pan === "function",
-        GestureType: typeof Gesture,
-      },
-      "A"
-    );
-  }, []);
-  // #endregion
-
-  // #region agent log
   const panGesture = useMemo(() => {
-    log(
-      "SwipeDeck.tsx:useMemo",
-      "Creating panGesture - START",
-      {
-        GestureExists: typeof Gesture !== "undefined",
-        GesturePanExists: typeof Gesture?.Pan === "function",
-        GestureType: typeof Gesture,
-        currentIndex,
-        currentCardIndexValue: currentCardIndex.value,
-        dataLength: data.length,
-        timestamp: Date.now(),
-      },
-      "E"
-    );
+    if (!Gesture || typeof Gesture.Pan !== "function") return null;
 
-    if (!Gesture || typeof Gesture.Pan !== "function") {
-      log(
-        "SwipeDeck.tsx:130",
-        "Gesture.Pan is not available",
-        {
-          Gesture: Gesture,
-          GestureType: typeof Gesture,
-        },
-        "A"
-      );
-      return null;
-    }
-
-    // Capture data array and callbacks for worklet closure
-    // Create a safe copy to avoid mutation issues
     const dataArray = Array.isArray(data) ? [...data] : [];
     const dataArrayLength = dataArray.length;
     const handleSwipeCompleteFn = handleSwipeComplete;
     const onCardTapFn = onCardTap;
 
-    try {
-      const gesture = Gesture.Pan()
-        .activeOffsetX([-1, 1]) // Activate on any horizontal movement (very permissive)
-        .onBegin(() => {
-          "worklet";
-          // Removed console.log from worklet - can cause crashes
-        })
-        .onStart(() => {
-          "worklet";
-          // Removed console.log from worklet - can cause crashes
-        })
-        .onUpdate((event) => {
-          "worklet";
-          try {
-            translateX.value = event.translationX;
-            translateY.value = event.translationY * 0.1; // Less vertical movement
-            rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
-            opacity.value =
-              1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
-          } catch (error) {
-            // Silently handle errors in worklet - can't use console.log here
-            // Reset to safe values
-            translateX.value = 0;
-            translateY.value = 0;
-            rotation.value = 0;
-            opacity.value = 1;
-          }
-        })
-        .onEnd((event) => {
-          "worklet";
-          // Removed console.log from worklet - can cause crashes
-          try {
-            const absTranslationX = Math.abs(event.translationX);
-            const shouldSwipeLeft = event.translationX < -SWIPE_THRESHOLD;
-            const shouldSwipeRight = event.translationX > SWIPE_THRESHOLD;
-            const velocityThreshold = 500;
-            const tapThreshold = 20; // If movement is less than 20px, treat as tap
+    return Gesture.Pan()
+      .activeOffsetX([-1, 1])
+      .onUpdate((event) => {
+        "worklet";
+        translateX.value = event.translationX;
+        translateY.value = event.translationY * 0.1;
+        rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
+        opacity.value = 1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
+      })
+      .onEnd((event) => {
+        "worklet";
+        const absTranslationX = Math.abs(event.translationX);
+        const velocityThreshold = 500;
+        const tapThreshold = 20;
 
-            // Check if this was a tap (very small movement)
-            if (
-              absTranslationX < tapThreshold &&
-              Math.abs(event.velocityX) < 100
-            ) {
-              // Removed console.log from worklet - can cause crashes
-              // Reset to center
-              translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-              translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-              rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
-              opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
-              // Trigger tap handler if provided - use current index to get card
-              // Only pass ID to avoid passing objects with refs through worklet boundary
-              try {
-                const idx = currentCardIndex.value;
-                let cardId = "";
-                // Safely access array - use captured length, check bounds and existence
-                if (
-                  idx >= 0 &&
-                  idx < dataArrayLength &&
-                  dataArray &&
-                  dataArray[idx]
-                ) {
-                  const item = dataArray[idx];
-                  // Worklet-safe ID extraction (inline check, no function call)
-                  if (item && typeof item === "object") {
-                    const obj = item as Record<string, any>;
-                    cardId = obj.id || obj.rideId || "";
-                  }
-                }
-                if (cardId && onCardTapFn) {
-                  // Create a safe callback - use captured values from closure
-                  runOnJS(
-                    (
-                      id: string,
-                      dataArr: T[],
-                      callback: ((item: T) => void) | undefined
-                    ) => {
-                      try {
-                        if (!callback || !dataArr) return;
-                        // Find item by ID (worklet-safe inline check in JS thread)
-                        const foundItem = dataArr.find((d: T) => {
-                          if (d && typeof d === "object") {
-                            const obj = d as Record<string, any>;
-                            return (obj.id || obj.rideId) === id;
-                          }
-                          return false;
-                        });
-                        if (foundItem) {
-                          callback(foundItem);
-                        }
-                      } catch (err) {
-                        // Error logged via runOnJS - can't use console in worklet
-                      }
-                    }
-                  )(cardId, dataArray, onCardTapFn);
-                }
-              } catch (err) {
-                // Silently handle tap errors
-              }
-              return;
+        if (absTranslationX < tapThreshold && Math.abs(event.velocityX) < 100) {
+          translateX.value = withSpring(0);
+          translateY.value = withSpring(0);
+          rotation.value = withSpring(0);
+          opacity.value = withSpring(1);
+
+          const idx = currentCardIndex.value;
+          if (idx >= 0 && idx < dataArrayLength && onCardTapFn) {
+            const item = dataArray[idx];
+            const cardId = item ? item.id || item.rideId || "" : "";
+            if (cardId) {
+              runOnJS((id: string, arr: T[], cb: (i: T) => void) => {
+                const found = arr.find((d) => (d.id || d.rideId) === id);
+                if (found) cb(found);
+              })(cardId, dataArray, onCardTapFn);
             }
-
-            if (
-              shouldSwipeLeft ||
-              (event.translationX < 0 && event.velocityX < -velocityThreshold)
-            ) {
-              // Swipe left - extract cardId BEFORE animation (worklet-safe)
-              try {
-                const idx = currentCardIndex.value;
-                let cardIdToUse = "";
-                // Safely access array - use captured length, check bounds first
-                if (
-                  idx >= 0 &&
-                  idx < dataArrayLength &&
-                  dataArray &&
-                  dataArray[idx]
-                ) {
-                  const item = dataArray[idx];
-                  if (item && typeof item === "object") {
-                    const obj = item as Record<string, any>;
-                    cardIdToUse = obj.id || obj.rideId || "";
-                  }
-                }
-                // Reset callback flag before starting animation
-                swipeCallbackCalled.value = false;
-                // Store cardId in a shared value to avoid closure issues
-                const cardIdForCallback = cardIdToUse;
-                translateX.value = withTiming(
-                  -SCREEN_WIDTH * 1.5,
-                  { duration: 300 },
-                  (finished) => {
-                    "worklet";
-                    try {
-                      if (swipeCallbackCalled.value) {
-                        return;
-                      }
-                      swipeCallbackCalled.value = true;
-                      if (
-                        finished &&
-                        cardIdForCallback &&
-                        handleSwipeCompleteFn
-                      ) {
-                        runOnJS(handleSwipeCompleteFn)(
-                          "left",
-                          cardIdForCallback
-                        );
-                      }
-                    } catch (err) {
-                      // Silently handle errors in animation callback
-                    }
-                  }
-                );
-                opacity.value = withTiming(0, { duration: 300 });
-                scale.value = withTiming(0.8, { duration: 300 });
-              } catch (err) {
-                // Reset on error
-                translateX.value = withSpring(0, {
-                  damping: 15,
-                  stiffness: 150,
-                });
-                translateY.value = withSpring(0, {
-                  damping: 15,
-                  stiffness: 150,
-                });
-                rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
-                opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
-              }
-            } else if (
-              shouldSwipeRight ||
-              (event.translationX > 0 && event.velocityX > velocityThreshold)
-            ) {
-              // Swipe right - extract cardId BEFORE animation (worklet-safe)
-              try {
-                const idx = currentCardIndex.value;
-                let cardIdToUse = "";
-                // Safely access array - use captured length, check bounds first
-                if (
-                  idx >= 0 &&
-                  idx < dataArrayLength &&
-                  dataArray &&
-                  dataArray[idx]
-                ) {
-                  const item = dataArray[idx];
-                  if (item && typeof item === "object") {
-                    const obj = item as Record<string, any>;
-                    cardIdToUse = obj.id || obj.rideId || "";
-                  }
-                }
-                // Reset callback flag before starting animation
-                swipeCallbackCalled.value = false;
-                // Store cardId in a shared value to avoid closure issues
-                const cardIdForCallback = cardIdToUse;
-                translateX.value = withTiming(
-                  SCREEN_WIDTH * 1.5,
-                  { duration: 300 },
-                  (finished) => {
-                    "worklet";
-                    try {
-                      if (swipeCallbackCalled.value) {
-                        return;
-                      }
-                      swipeCallbackCalled.value = true;
-                      if (
-                        finished &&
-                        cardIdForCallback &&
-                        handleSwipeCompleteFn
-                      ) {
-                        runOnJS(handleSwipeCompleteFn)(
-                          "right",
-                          cardIdForCallback
-                        );
-                      }
-                    } catch (err) {
-                      // Silently handle errors in animation callback
-                    }
-                  }
-                );
-                opacity.value = withTiming(0, { duration: 300 });
-                scale.value = withTiming(0.8, { duration: 300 });
-              } catch (err) {
-                // Reset on error
-                translateX.value = withSpring(0, {
-                  damping: 15,
-                  stiffness: 150,
-                });
-                translateY.value = withSpring(0, {
-                  damping: 15,
-                  stiffness: 150,
-                });
-                rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
-                opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
-              }
-            } else {
-              // Spring back to center
-              translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-              translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-              rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
-              opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
-            }
-          } catch (error) {
-            // Removed console.error from worklet - can cause crashes
-            // Reset to center on error
-            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-            rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
-            opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
           }
-        });
-      // Note: onCancel is not available in this version of react-native-gesture-handler
-      // The gesture will reset in onEnd if movement is below threshold
+          return;
+        }
 
-      log(
-        "SwipeDeck.tsx:useMemo",
-        "panGesture created successfully - END",
-        {
-          gestureType: typeof gesture,
-          gestureExists: !!gesture,
-          hasToGestureArray: typeof gesture?.toGestureArray === "function",
-          gestureKeys: gesture ? Object.keys(gesture) : [],
-          currentIndex,
-          currentCardIndexValue: currentCardIndex.value,
-          timestamp: Date.now(),
-        },
-        "E"
-      );
-      return gesture;
-    } catch (error) {
-      log(
-        "SwipeDeck.tsx:130",
-        "Error creating panGesture",
-        {
-          error: error instanceof Error ? error.message : String(error),
-          errorType: typeof error,
-          errorStack: error instanceof Error ? error.stack : undefined,
-        },
-        "A"
-      );
-      return null;
-    }
-    // Recreate when dependencies change
-    // NOTE: We intentionally don't include currentIndex, translateX, translateY, etc.
-    // here to avoid recreating the gesture on every swipe. Instead, we use
-    // currentCardIndex shared value which is updated synchronously in handleSwipeComplete
-    // Shared values (translateX, translateY, rotation, etc.) are stable references
-    // Included in deps to satisfy linter, but won't cause re-renders since they're stable
+        const isLeft =
+          event.translationX < -SWIPE_THRESHOLD ||
+          (event.translationX < 0 && event.velocityX < -velocityThreshold);
+        const isRight =
+          event.translationX > SWIPE_THRESHOLD ||
+          (event.translationX > 0 && event.velocityX > velocityThreshold);
+
+        if (isLeft || isRight) {
+          const idx = currentCardIndex.value;
+          const cardIdToUse =
+            idx >= 0 && idx < dataArrayLength
+              ? dataArray[idx]?.id || dataArray[idx]?.rideId || ""
+              : "";
+
+          swipeCallbackCalled.value = false;
+          translateX.value = withTiming(
+            isLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5,
+            { duration: 300 },
+            (finished) => {
+              "worklet";
+              if (!swipeCallbackCalled.value && finished && cardIdToUse) {
+                swipeCallbackCalled.value = true;
+                runOnJS(handleSwipeCompleteFn)(
+                  isLeft ? "left" : "right",
+                  cardIdToUse
+                );
+              }
+            }
+          );
+          opacity.value = withTiming(0, { duration: 300 });
+          scale.value = withTiming(0.8, { duration: 300 });
+        } else {
+          translateX.value = withSpring(0);
+          translateY.value = withSpring(0);
+          rotation.value = withSpring(0);
+          opacity.value = withSpring(1);
+        }
+      });
   }, [
     handleSwipeComplete,
     onCardTap,
     data,
     currentCardIndex,
-    currentIndex,
     translateX,
     translateY,
     rotation,
@@ -712,175 +223,39 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     scale,
     swipeCallbackCalled,
   ]);
-  // #endregion
 
-  const animatedStyle = useAnimatedStyle(() => {
-    "worklet";
-    try {
-      return {
-        transform: [
-          { translateX: translateX.value },
-          { translateY: translateY.value },
-          { rotate: `${rotation.value}deg` },
-          { scale: scale.value },
-        ],
-        opacity: opacity.value,
-      };
-    } catch (error) {
-      // Fallback to safe values on error
-      return {
-        transform: [
-          { translateX: 0 },
-          { translateY: 0 },
-          { rotate: "0deg" },
-          { scale: 1 },
-        ],
-        opacity: 1,
-      };
-    }
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value}deg` },
+      { scale: scale.value },
+    ],
+    opacity: opacity.value,
+  }));
+
+  const getCardStyle = (index: number): ViewStyle => ({
+    position: "absolute",
+    width: CARD_WIDTH,
+    transform: [{ scale: 1 - index * 0.05 }, { translateY: index * 8 }],
+    zIndex: 4 - index,
   });
 
-  const getCardStyle = (index: number): ViewStyle => {
-    const offset = index * 8;
-    const scale = 1 - index * 0.05;
-    return {
-      position: "absolute",
-      width: CARD_WIDTH,
-      transform: [{ scale }, { translateY: offset }],
-      zIndex: 4 - index,
-    };
-  };
-
-  if (data.length === 0 || currentIndex >= data.length) {
-    return null;
-  }
-
-  // #region agent log
-  // Log panGesture state before rendering
-  log(
-    "SwipeDeck.tsx:255",
-    "Before render check",
-    {
-      panGestureExists: !!panGesture,
-      panGestureType: typeof panGesture,
-      panGestureIsNull: panGesture === null,
-      panGestureIsUndefined: panGesture === undefined,
-      visibleCardsLength: visibleCards.length,
-    },
-    "C"
-  );
-  // #endregion
+  if (data.length === 0 || currentIndex >= data.length) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.deckContainer}>
         {visibleCards.map((item, index) => {
           const isTopCard = index === 0;
-          // #region agent log
-          log(
-            "SwipeDeck.tsx:268",
-            "Rendering card",
-            {
-              index,
-              isTopCard,
-              cardId: getItemId(item),
-              currentIndex,
-              actualCardIndex: currentIndex + index,
-              panGestureExists: !!panGesture,
-              panGestureType: typeof panGesture,
-              panGestureIsNull: panGesture === null,
-              visibleCardsLength: visibleCards.length,
-              timestamp: Date.now(),
-            },
-            "C"
-          );
-          // #endregion
-
-          // Determine the gesture to pass - never pass null
-          const gestureToPass =
-            isTopCard && panGesture ? panGesture : undefined;
-
-          // #region agent log
-          log(
-            "SwipeDeck.tsx:280",
-            "GestureDetector props",
-            {
-              isTopCard,
-              panGestureRaw: panGesture,
-              panGestureType: typeof panGesture,
-              panGestureIsNull: panGesture === null,
-              gestureToPass,
-              gestureToPassType: typeof gestureToPass,
-              gestureToPassExists: !!gestureToPass,
-              gestureToPassIsNull: gestureToPass === null,
-              GestureDetectorExists: typeof GestureDetector !== "undefined",
-            },
-            "C"
-          );
-          // #endregion
-
-          const cardContent = (
-            <Animated.View
-              style={styles.cardWrapper}
-              pointerEvents="box-none" // Allow touches to pass through to children, but still detect gestures
-            >
-              {(() => {
-                try {
-                  return renderCard(item, currentIndex + index);
-                } catch (error) {
-                  log(
-                    "SwipeDeck.tsx:renderCard",
-                    "Error rendering card",
-                    {
-                      error:
-                        error instanceof Error ? error.message : String(error),
-                      errorStack:
-                        error instanceof Error ? error.stack : undefined,
-                      itemId: getItemId(item),
-                      index,
-                    },
-                    "F"
-                  );
-                  return (
-                    <View style={{ padding: 20 }}>
-                      <Text>Error rendering card</Text>
-                    </View>
-                  );
-                }
-              })()}
+          const itemId = getItemId(item);
+          const content = (
+            <Animated.View style={styles.cardWrapper} pointerEvents="box-none">
+              {renderCard(item, currentIndex + index)}
               {isTopCard && <SwipeOverlay translateX={translateX} />}
             </Animated.View>
           );
 
-          // Don't use a separate tap gesture - handle taps in pan gesture's onEnd
-          // This prevents gesture conflicts
-          const combinedGesture = gestureToPass;
-
-          // #region agent log
-          console.log("[DEBUG C] Final gesture setup", {
-            isTopCard,
-            hasPanGesture: !!panGesture,
-            hasGestureToPass: !!gestureToPass,
-            hasCombinedGesture: !!combinedGesture,
-            willUseGestureDetector: !!combinedGesture,
-            onCardTapExists: !!onCardTap,
-          });
-          log(
-            "SwipeDeck.tsx:render",
-            "Final gesture setup",
-            {
-              isTopCard,
-              hasPanGesture: !!panGesture,
-              hasGestureToPass: !!gestureToPass,
-              hasCombinedGesture: !!combinedGesture,
-              willUseGestureDetector: !!combinedGesture,
-              onCardTapExists: !!onCardTap,
-            },
-            "C"
-          );
-          // #endregion
-
-          const itemId = getItemId(item);
           return (
             <Animated.View
               key={`${itemId}-${currentIndex + index}`}
@@ -889,17 +264,14 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                 isTopCard && animatedStyle,
                 cardStyle,
               ]}
-              pointerEvents={isTopCard ? "auto" : "none"} // Only top card should receive touches
+              pointerEvents={isTopCard ? "auto" : "none"}
             >
-              {combinedGesture ? (
-                <GestureDetector
-                  key={`gesture-${itemId}-${currentIndex}`}
-                  gesture={combinedGesture}
-                >
-                  {cardContent}
+              {isTopCard && panGesture ? (
+                <GestureDetector gesture={panGesture}>
+                  {content}
                 </GestureDetector>
               ) : (
-                cardContent
+                content
               )}
             </Animated.View>
           );
@@ -910,35 +282,19 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
 }
 
 function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
-  const leftOverlayStyle = useAnimatedStyle(() => {
-    "worklet";
-    try {
-      const overlayOpacity =
-        translateX.value < 0
-          ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
-          : 0;
-      return {
-        opacity: overlayOpacity,
-      };
-    } catch (error) {
-      return { opacity: 0 };
-    }
-  });
+  const leftOverlayStyle = useAnimatedStyle(() => ({
+    opacity:
+      translateX.value < 0
+        ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
+        : 0,
+  }));
 
-  const rightOverlayStyle = useAnimatedStyle(() => {
-    "worklet";
-    try {
-      const overlayOpacity =
-        translateX.value > 0
-          ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
-          : 0;
-      return {
-        opacity: overlayOpacity,
-      };
-    } catch (error) {
-      return { opacity: 0 };
-    }
-  });
+  const rightOverlayStyle = useAnimatedStyle(() => ({
+    opacity:
+      translateX.value > 0
+        ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
+        : 0,
+  }));
 
   return (
     <>
@@ -957,20 +313,11 @@ function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  deckContainer: {
-    width: CARD_WIDTH,
-    height: 500,
-    position: "relative",
-  },
+  container: { flex: 1, alignItems: "center", justifyContent: "center" },
+  deckContainer: { width: CARD_WIDTH, height: 500, position: "relative" },
   cardWrapper: {
     width: "100%",
     height: "100%",
-    // Ensure the wrapper can receive touch events
     backgroundColor: "transparent",
   },
   overlay: {
@@ -994,9 +341,5 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: "#22c55e",
   },
-  overlayText: {
-    fontSize: 80,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
+  overlayText: { fontSize: 80, fontWeight: "bold", color: "#ffffff" },
 });

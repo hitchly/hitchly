@@ -214,7 +214,7 @@ export default function AdminDashboard() {
             ]}
           >
             <Text style={[styles.reportDetails, { color: colors.text }]}>
-              "{item.details}"
+              &quot;{item.details}&quot;
             </Text>
           </View>
         )}
