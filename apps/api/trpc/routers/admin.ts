@@ -23,6 +23,7 @@ const checkAdmin = async () => {
 
 export const adminRouter = router({
   getPlatformStats: protectedProcedure.query(async ({ ctx }) => {
+    await checkAdmin();
     const [userCount] = await ctx.db
       .select({ count: sql<number>`count(*)` })
       .from(users);
@@ -144,7 +145,9 @@ export const adminRouter = router({
 
   warnUser: protectedProcedure
     .input(z.object({ targetUserId: z.string(), reason: z.string() }))
-    .mutation(async ({ ctx, input: _input }) => {
+    .mutation(async () => {
+      // Removed ctx and _input
+      await checkAdmin();
       return { success: true };
     }),
 
@@ -913,26 +916,22 @@ export const adminRouter = router({
       if (!tripRecord) {
         const dummyDriverId = crypto.randomUUID();
         const email = `dummy-driver-${Date.now()}@test.com`;
-        await ctx.db
-          .insert(users)
-          .values({
-            id: dummyDriverId,
-            email,
-            name: "Dummy Driver",
-            emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-        await ctx.db
-          .insert(profiles)
-          .values({
-            userId: dummyDriverId,
-            universityRole: "staff",
-            appRole: "driver",
-            defaultAddress: "1503 Main St W, Hamilton, ON",
-            defaultLat: MAIN_ST_COORDS.lat,
-            defaultLong: MAIN_ST_COORDS.lng,
-          });
+        await ctx.db.insert(users).values({
+          id: dummyDriverId,
+          email,
+          name: "Dummy Driver",
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await ctx.db.insert(profiles).values({
+          userId: dummyDriverId,
+          universityRole: "staff",
+          appRole: "driver",
+          defaultAddress: "1503 Main St W, Hamilton, ON",
+          defaultLat: MAIN_ST_COORDS.lat,
+          defaultLong: MAIN_ST_COORDS.lng,
+        });
 
         const departureTime = new Date(Date.now() + 45 * 60 * 1000);
         const [newTrip] = await ctx.db
