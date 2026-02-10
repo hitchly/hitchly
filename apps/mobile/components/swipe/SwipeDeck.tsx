@@ -56,19 +56,41 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     };
   }, [data]);
 
-  useEffect(() => {
-    if (data.length > 0 && currentIndex < data.length) {
-      setVisibleCards(data.slice(currentIndex, currentIndex + 4));
-    }
-  }, [data, currentIndex]);
-
+  // Shared animation values - must be declared before effects that use them
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
+
+  // Use shared value to store current card index (worklet-safe)
   const currentCardIndex = useSharedValue(0);
+
+  // Track if swipe completion callback has been called (prevent multiple calls)
   const swipeCallbackCalled = useSharedValue(false);
+
+  // Reset index when data changes significantly (e.g., after accepting a request)
+  useEffect(() => {
+    if (data.length === 0) {
+      // Data is empty, reset to 0
+      setCurrentIndex(0);
+      setVisibleCards([]);
+    } else if (currentIndex >= data.length) {
+      // Current index is now past the end of data, reset to start
+      setCurrentIndex(0);
+      setVisibleCards(data.slice(0, 4));
+      // Also reset animation values
+      translateX.value = 0;
+      translateY.value = 0;
+      rotation.value = 0;
+      opacity.value = 1;
+      scale.value = 1;
+    } else {
+      // Normal case: update visible cards from current position
+      const newVisible = data.slice(currentIndex, currentIndex + 4);
+      setVisibleCards(newVisible);
+    }
+  }, [data, currentIndex, translateX, translateY, rotation, opacity, scale]);
 
   useEffect(() => {
     currentCardIndex.value = currentIndex;
@@ -138,79 +160,142 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
     const handleSwipeCompleteFn = handleSwipeComplete;
     const onCardTapFn = onCardTap;
 
-    return Gesture.Pan()
-      .activeOffsetX([-1, 1])
-      .onUpdate((event) => {
-        "worklet";
-        translateX.value = event.translationX;
-        translateY.value = event.translationY * 0.1;
-        rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
-        opacity.value = 1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
-      })
-      .onEnd((event) => {
-        "worklet";
-        const absTranslationX = Math.abs(event.translationX);
-        const velocityThreshold = 500;
-        const tapThreshold = 20;
-
-        if (absTranslationX < tapThreshold && Math.abs(event.velocityX) < 100) {
-          translateX.value = withSpring(0);
-          translateY.value = withSpring(0);
-          rotation.value = withSpring(0);
-          opacity.value = withSpring(1);
-
-          const idx = currentCardIndex.value;
-          if (idx >= 0 && idx < dataArrayLength && onCardTapFn) {
-            const item = dataArray[idx];
-            const cardId = item ? item.id || item.rideId || "" : "";
-            if (cardId) {
-              runOnJS((id: string, arr: T[], cb: (i: T) => void) => {
-                const found = arr.find((d) => (d.id || d.rideId) === id);
-                if (found) cb(found);
-              })(cardId, dataArray, onCardTapFn);
-            }
+    try {
+      const gesture = Gesture.Pan()
+        .activeOffsetX([-1, 1]) // Activate on any horizontal movement (very permissive)
+        .onUpdate((event) => {
+          "worklet";
+          try {
+            translateX.value = event.translationX;
+            translateY.value = event.translationY * 0.1; // Less vertical movement
+            rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
+            opacity.value =
+              1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
+          } catch {
+            // Reset to safe values on error
+            translateX.value = 0;
+            translateY.value = 0;
+            rotation.value = 0;
+            opacity.value = 1;
           }
-          return;
-        }
+        })
+        .onEnd((event) => {
+          "worklet";
+          try {
+            const absTranslationX = Math.abs(event.translationX);
+            const velocityThreshold = 500;
+            const tapThreshold = 20; // If movement is less than 20px, treat as tap
 
-        const isLeft =
-          event.translationX < -SWIPE_THRESHOLD ||
-          (event.translationX < 0 && event.velocityX < -velocityThreshold);
-        const isRight =
-          event.translationX > SWIPE_THRESHOLD ||
-          (event.translationX > 0 && event.velocityX > velocityThreshold);
+            // Check if this was a tap (very small movement)
+            if (
+              absTranslationX < tapThreshold &&
+              Math.abs(event.velocityX) < 100
+            ) {
+              // Reset to center
+              translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+              translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+              rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+              opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
 
-        if (isLeft || isRight) {
-          const idx = currentCardIndex.value;
-          const cardIdToUse =
-            idx >= 0 && idx < dataArrayLength
-              ? dataArray[idx]?.id || dataArray[idx]?.rideId || ""
-              : "";
-
-          swipeCallbackCalled.value = false;
-          translateX.value = withTiming(
-            isLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5,
-            { duration: 300 },
-            (finished) => {
-              "worklet";
-              if (!swipeCallbackCalled.value && finished && cardIdToUse) {
-                swipeCallbackCalled.value = true;
-                runOnJS(handleSwipeCompleteFn)(
-                  isLeft ? "left" : "right",
-                  cardIdToUse
-                );
+              // Trigger tap handler if provided - use current index to get card
+              try {
+                const idx = currentCardIndex.value;
+                let cardId = "";
+                // Safely access array
+                if (
+                  idx >= 0 &&
+                  idx < dataArrayLength &&
+                  dataArray &&
+                  dataArray[idx]
+                ) {
+                  const item = dataArray[idx];
+                  if (item && typeof item === "object") {
+                    const obj = item as Record<string, any>;
+                    cardId = obj.id || obj.rideId || "";
+                  }
+                }
+                if (cardId && onCardTapFn) {
+                  runOnJS(
+                    (
+                      id: string,
+                      dataArr: T[],
+                      callback: ((item: T) => void) | undefined
+                    ) => {
+                      try {
+                        if (!callback || !dataArr) return;
+                        const foundItem = dataArr.find((d: T) => {
+                          if (d && typeof d === "object") {
+                            const obj = d as Record<string, any>;
+                            return (obj.id || obj.rideId) === id;
+                          }
+                          return false;
+                        });
+                        if (foundItem) {
+                          callback(foundItem);
+                        }
+                      } catch {
+                        // Silently handle errors
+                      }
+                    }
+                  )(cardId, dataArray, onCardTapFn);
+                }
+              } catch {
+                // Silently handle tap errors
               }
+              return;
             }
-          );
-          opacity.value = withTiming(0, { duration: 300 });
-          scale.value = withTiming(0.8, { duration: 300 });
-        } else {
-          translateX.value = withSpring(0);
-          translateY.value = withSpring(0);
-          rotation.value = withSpring(0);
-          opacity.value = withSpring(1);
-        }
-      });
+
+            const isLeft =
+              event.translationX < -SWIPE_THRESHOLD ||
+              (event.translationX < 0 && event.velocityX < -velocityThreshold);
+            const isRight =
+              event.translationX > SWIPE_THRESHOLD ||
+              (event.translationX > 0 && event.velocityX > velocityThreshold);
+
+            if (isLeft || isRight) {
+              const idx = currentCardIndex.value;
+              const cardIdToUse =
+                idx >= 0 && idx < dataArrayLength
+                  ? dataArray[idx]?.id || dataArray[idx]?.rideId || ""
+                  : "";
+
+              swipeCallbackCalled.value = false;
+              translateX.value = withTiming(
+                isLeft ? -SCREEN_WIDTH * 1.5 : SCREEN_WIDTH * 1.5,
+                { duration: 300 },
+                (finished) => {
+                  "worklet";
+                  if (!swipeCallbackCalled.value && finished && cardIdToUse) {
+                    swipeCallbackCalled.value = true;
+                    runOnJS(handleSwipeCompleteFn)(
+                      isLeft ? "left" : "right",
+                      cardIdToUse
+                    );
+                  }
+                }
+              );
+              opacity.value = withTiming(0, { duration: 300 });
+              scale.value = withTiming(0.8, { duration: 300 });
+            } else {
+              // Spring back to center
+              translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+              translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+              rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+              opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
+            }
+          } catch {
+            // Reset to center on error
+            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+            rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+            opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
+          }
+        });
+
+      return gesture;
+    } catch {
+      return null;
+    }
   }, [
     handleSwipeComplete,
     onCardTap,
@@ -282,19 +367,35 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
 }
 
 function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
-  const leftOverlayStyle = useAnimatedStyle(() => ({
-    opacity:
-      translateX.value < 0
-        ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
-        : 0,
-  }));
+  const leftOverlayStyle = useAnimatedStyle(() => {
+    "worklet";
+    try {
+      const overlayOpacity =
+        translateX.value < 0
+          ? Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 1) * 0.8
+          : 0;
+      return {
+        opacity: overlayOpacity,
+      };
+    } catch {
+      return { opacity: 0 };
+    }
+  });
 
-  const rightOverlayStyle = useAnimatedStyle(() => ({
-    opacity:
-      translateX.value > 0
-        ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
-        : 0,
-  }));
+  const rightOverlayStyle = useAnimatedStyle(() => {
+    "worklet";
+    try {
+      const overlayOpacity =
+        translateX.value > 0
+          ? Math.min(translateX.value / SWIPE_THRESHOLD, 1) * 0.8
+          : 0;
+      return {
+        opacity: overlayOpacity,
+      };
+    } catch {
+      return { opacity: 0 };
+    }
+  });
 
   return (
     <>

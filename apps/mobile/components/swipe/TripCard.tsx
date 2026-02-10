@@ -15,6 +15,8 @@ export type RideMatch = {
   uiLabel: string;
   details: {
     estimatedCost: number;
+    estimatedDistanceKm: number;
+    estimatedDurationSec: number;
     detourMinutes: number;
     arrivalAtPickup: string;
     availableSeats: number;

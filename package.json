@@ -13,7 +13,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "prepare": "husky",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -46,6 +48,8 @@
     ]
   },
   "dependencies": {
-    "expo": "~54.0.32"
+    "expo": "~54.0.32",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
   }
 }

@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { formatLocationData } from "@hitchly/utils";
 import * as Location from "expo-location";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Controller } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -108,65 +108,107 @@ export function ControlledLocationInput({
   const [results, setResults] = useState<LocationResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearch = async (query: string) => {
-    if (!query || query.length < 5) {
-      setResults([]);
-      setShowDropdown(false);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const geocoded = await Location.geocodeAsync(query);
-      const topMatches = geocoded.slice(0, 4);
-
-      if (topMatches.length === 0) {
+  // Handle search with useCallback to be stable
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query || query.length < 5) {
         setResults([]);
-        setIsSearching(false);
+        setShowDropdown(false);
         return;
       }
 
-      const formatted = await Promise.all(
-        topMatches.map(async (match, index) => {
-          try {
-            const [reverse] = await Location.reverseGeocodeAsync({
-              latitude: match.latitude,
-              longitude: match.longitude,
-            });
-
-            if (!reverse) return null;
-            const fmt = formatLocationData(reverse);
-            if (!fmt) return null;
-
-            return {
-              id: `${match.latitude}-${index}`,
-              title: fmt.title,
-              subtitle: fmt.subtitle,
-              fullAddress: fmt.full,
-              latitude: match.latitude,
-              longitude: match.longitude,
-            };
-          } catch (e) {
-            console.error("Error in geocoding:", e);
-            return null;
+      // Only request permission once
+      if (hasPermission === null) {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          setHasPermission(status === "granted");
+          if (status !== "granted") {
+            console.warn("Location permission denied - geocoding may not work");
           }
-        })
-      );
+        } catch (e) {
+          console.error("Permission request error:", e);
+          setHasPermission(false);
+        }
+      }
 
-      const valid = formatted.filter(Boolean) as LocationResult[];
-      const unique = valid.filter(
-        (v, i, a) => a.findIndex((t) => t.fullAddress === v.fullAddress) === i
-      );
+      setIsSearching(true);
+      try {
+        const geocoded = await Location.geocodeAsync(query);
+        const topMatches = geocoded.slice(0, 4);
 
-      setResults(unique);
-      setShowDropdown(unique.length > 0);
-    } catch (e) {
-      console.error("Location search error:", e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+        if (topMatches.length === 0) {
+          setResults([]);
+          setIsSearching(false);
+          return;
+        }
+
+        const formatted = await Promise.all(
+          topMatches.map(async (match, index) => {
+            try {
+              const [reverse] = await Location.reverseGeocodeAsync({
+                latitude: match.latitude,
+                longitude: match.longitude,
+              });
+
+              if (!reverse) return null;
+              const fmt = formatLocationData(reverse);
+              if (!fmt) return null;
+
+              return {
+                id: `${match.latitude}-${index}`,
+                title: fmt.title,
+                subtitle: fmt.subtitle,
+                fullAddress: fmt.full,
+                latitude: match.latitude,
+                longitude: match.longitude,
+              };
+            } catch (e) {
+              console.error("Error in geocoding:", e);
+              return null;
+            }
+          })
+        );
+
+        const valid = formatted.filter(Boolean) as LocationResult[];
+        const unique = valid.filter(
+          (v, i, a) => a.findIndex((t) => t.fullAddress === v.fullAddress) === i
+        );
+
+        setResults(unique);
+        setShowDropdown(unique.length > 0);
+      } catch (e) {
+        console.error("Location search error:", e);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [hasPermission]
+  );
+
+  // Debounced search to prevent rapid API calls
+  const debouncedSearch = useCallback(
+    (query: string) => {
+      // Clear any pending search
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      if (!query || query.length < 5) {
+        setResults([]);
+        setShowDropdown(false);
+        return;
+      }
+
+      // Wait 500ms after user stops typing
+      searchTimeoutRef.current = setTimeout(() => {
+        handleSearch(query);
+      }, 500);
+    },
+    [handleSearch]
+  );
 
   return (
     <Controller
@@ -190,10 +232,9 @@ export function ControlledLocationInput({
               ]}
               value={value}
               onChangeText={(text: string) => {
-                // Fixed implicit 'any'
                 onChange(text);
                 if (onTextChange) onTextChange(text);
-                if (text.length > 4) handleSearch(text);
+                debouncedSearch(text);
               }}
               placeholder={placeholder}
               placeholderTextColor={colors.textSecondary}

@@ -10,6 +10,7 @@ import { NavTheme } from "../constants/theme";
 import { AppThemeProvider } from "../context/theme-context";
 import { authClient } from "../lib/auth-client";
 import { trpc, trpcClient } from "../lib/trpc";
+import { StripeProviderWrapper } from "../lib/stripe-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -415,7 +416,9 @@ export default function RootLayout() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <AppContent />
+        <StripeProviderWrapper>
+          <AppContent />
+        </StripeProviderWrapper>
       </QueryClientProvider>
     </trpc.Provider>
   );

@@ -31,6 +31,25 @@ export type NewRiderInfo = {
 
 const mapsClient = new Client({});
 
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const toGoogleLatLng = (loc: Location) => ({
   lat: loc.lat,
   lng: loc.lng,
@@ -145,13 +164,10 @@ export async function geocodeAddress(
       errorMsg.includes("API restrictions settings");
 
     if (isApiNotEnabled) {
-      // Log the specific error for debugging
       console.warn(`Geocoding API error for address "${address}": ${errorMsg}`);
-      // Return null so the caller can handle it appropriately
       return null;
     }
 
-    // Log other errors but still throw them
     console.error(`Geocoding error for address "${address}":`, {
       status: errorStatus,
       message: errorMessage,
@@ -176,7 +192,27 @@ export async function getDetourAndRideDetails(
       true // Optimize the existing stops too
     );
 
-    const allWaypoints = [...driverTrip.existingWaypoints, rider.origin];
+    const distanceToPickupKm = haversineDistance(
+      driverTrip.origin.lat,
+      driverTrip.origin.lng,
+      rider.origin.lat,
+      rider.origin.lng
+    );
+
+    const SKIP_WAYPOINT_THRESHOLD_KM = 0.5;
+    const shouldAddPickupAsWaypoint =
+      distanceToPickupKm > SKIP_WAYPOINT_THRESHOLD_KM;
+
+    // Build waypoints: existing waypoints + rider pickup (if far enough) + rider drop-off
+    // The rider's journey is: pickup -> drop-off, so we need both as waypoints
+    const riderWaypoints: Location[] = [];
+
+    if (shouldAddPickupAsWaypoint) {
+      riderWaypoints.push(rider.origin);
+    }
+    riderWaypoints.push(rider.destination);
+
+    const allWaypoints = [...driverTrip.existingWaypoints, ...riderWaypoints];
 
     const newRoute = await getRouteDetails(
       driverTrip.origin,
@@ -208,7 +244,6 @@ export async function getDetourAndRideDetails(
     };
   } catch (error) {
     console.error("Error in getDetourAndRideDetails:", error);
-    // Return safe defaults instead of throwing
     return {
       detourTimeInSeconds: 0,
       rideDistanceKm: 0,
@@ -219,7 +254,6 @@ export async function getDetourAndRideDetails(
 
 // Cache expiry time (24 hours in milliseconds)
 const ROUTE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
 /**
  * Generate a cache key for route caching
  * Rounds coordinates to 4 decimal places (~11m precision) for better cache hits
@@ -244,10 +278,6 @@ export type TripDistanceResult = {
   durationSeconds: number;
 } | null;
 
-/**
- * Calculate trip distance with route caching
- * Checks cache first, calls Google Maps API if cache miss, and stores result
- */
 export async function calculateTripDistance(
   origin: Location,
   destination: Location,
@@ -282,7 +312,6 @@ export async function calculateTripDistance(
     const distanceKm = result.totalDistanceMeters / 1000;
     const durationMinutes = Math.round(result.totalDurationSeconds / 60);
 
-    // Store in cache (upsert)
     await db
       .insert(routes)
       .values({

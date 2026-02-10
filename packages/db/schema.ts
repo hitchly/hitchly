@@ -301,6 +301,11 @@ export const tripRequests = pgTable("trip_requests", {
   dropoffLat: doublePrecision("dropoff_lat"),
   dropoffLng: doublePrecision("dropoff_lng"),
 
+  // Fare estimation parameters (stored at request time for consistent pricing)
+  estimatedDistanceKm: doublePrecision("estimated_distance_km"),
+  estimatedDurationSec: integer("estimated_duration_sec"),
+  estimatedDetourSec: integer("estimated_detour_sec"),
+
   // Rider pickup confirmation (server-enforced)
   riderPickupConfirmedAt: timestamp("rider_pickup_confirmed_at"),
 
@@ -323,7 +328,8 @@ export const routes = pgTable("routes", {
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 });
 
-//USER REVIEWS
+// --- REVIEWS MODULE ---
+
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
 
@@ -344,8 +350,93 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// --- PAYMENT MODULE PLACEHOLDERS (future tables) ---
-// payments: store payment intents/authorizations/captures (funds on hold → capture at dropoff)
-// tips: store post-trip tips (available 1 hour after trip completion)
-// reviews: store rider reviews (rating + comment)
-// earnings: store driver earnings rollups (or compute from completed trips + payments)
+// --- PAYMENT MODULE TABLES ---
+
+// Payment status enum
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "authorized",
+  "captured",
+  "cancelled",
+  "refunded",
+  "failed",
+]);
+
+// Stripe Customers (for riders)
+export const stripeCustomers = pgTable("stripe_customers", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+  defaultPaymentMethodId: text("default_payment_method_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Stripe Connect Accounts (for drivers)
+export const stripeConnectAccounts = pgTable("stripe_connect_accounts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  stripeAccountId: text("stripe_account_id").notNull().unique(),
+  onboardingComplete: boolean("onboarding_complete").default(false).notNull(),
+  payoutsEnabled: boolean("payouts_enabled").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Payments (for ride payments with holds/captures)
+export const payments = pgTable("payments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  tripRequestId: text("trip_request_id")
+    .notNull()
+    .references(() => tripRequests.id, { onDelete: "cascade" }),
+  stripePaymentIntentId: text("stripe_payment_intent_id").notNull().unique(),
+  amountCents: integer("amount_cents").notNull(),
+  platformFeeCents: integer("platform_fee_cents").notNull(),
+  driverAmountCents: integer("driver_amount_cents").notNull(),
+  status: paymentStatusEnum("status").default("pending").notNull(),
+  authorizedAt: timestamp("authorized_at"),
+  capturedAt: timestamp("captured_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Tips (for post-trip tips)
+export const tips = pgTable("tips", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  riderId: text("rider_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  driverId: text("driver_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

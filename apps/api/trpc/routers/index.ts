@@ -6,6 +6,7 @@ import { locationRouter } from "./location";
 import { profileRouter } from "./profile";
 import { matchmakingRouter } from "./matchmaking";
 import { tripRouter } from "./trip";
+import { paymentRouter } from "./payment";
 import { reviewsRouter } from "./reviews";
 
 export const appRouter = router({
@@ -16,6 +17,7 @@ export const appRouter = router({
   health: healthRouter,
   matchmaking: matchmakingRouter,
   trip: tripRouter,
+  payment: paymentRouter,
   reviews: reviewsRouter,
 });
 

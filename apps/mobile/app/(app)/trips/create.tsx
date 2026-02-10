@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,9 @@ import { DateTimePickerComponent } from "../../../components/ui/datetime-picker"
 import { NumericStepper } from "../../../components/ui/numeric-stepper";
 import { trpc } from "../../../lib/trpc";
 
+// McMaster University address constant
+const MCMASTER_ADDRESS = "McMaster University, 1280 Main St W, Hamilton, ON";
+
 export default function CreateTripScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -23,6 +26,12 @@ export default function CreateTripScreen() {
   const isUserDriver = ["driver", "both"].includes(
     userProfile?.profile?.appRole || ""
   );
+
+  // Determine default direction based on time of day (morning = to campus)
+  const currentHour = new Date().getHours();
+  const defaultToCampus = currentHour < 12; // Before noon = going to campus
+
+  const [isToCampus, setIsToCampus] = useState(defaultToCampus);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [departureDateTime, setDepartureDateTime] = useState(
@@ -30,6 +39,25 @@ export default function CreateTripScreen() {
   );
   const [availableSeats, setAvailableSeats] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const userAddress = userProfile?.profile?.defaultAddress || "";
+
+    if (isToCampus) {
+      // Going TO campus: Home → McMaster
+      setOrigin(userAddress);
+      setDestination(MCMASTER_ADDRESS);
+    } else {
+      // Going FROM campus: McMaster → Home
+      setOrigin(MCMASTER_ADDRESS);
+      setDestination(userAddress);
+    }
+  }, [isToCampus, userProfile?.profile?.defaultAddress]);
+
+  const toggleDirection = (toCampus: boolean) => {
+    setIsToCampus(toCampus);
+    setErrors({});
+  };
 
   const createTrip = trpc.trip.createTrip.useMutation({
     onSuccess: () => {
@@ -124,6 +152,59 @@ export default function CreateTripScreen() {
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.form}>
+          {/* Direction Toggle */}
+          <View style={styles.directionToggle}>
+            <TouchableOpacity
+              style={[
+                styles.directionButton,
+                isToCampus && styles.directionButtonActive,
+              ]}
+              onPress={() => toggleDirection(true)}
+            >
+              <Ionicons
+                name="school-outline"
+                size={20}
+                color={isToCampus ? "#fff" : "#007AFF"}
+              />
+              <Text
+                style={[
+                  styles.directionButtonText,
+                  isToCampus && styles.directionButtonTextActive,
+                ]}
+              >
+                To McMaster
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.directionButton,
+                !isToCampus && styles.directionButtonActive,
+              ]}
+              onPress={() => toggleDirection(false)}
+            >
+              <Ionicons
+                name="home-outline"
+                size={20}
+                color={!isToCampus ? "#fff" : "#007AFF"}
+              />
+              <Text
+                style={[
+                  styles.directionButtonText,
+                  !isToCampus && styles.directionButtonTextActive,
+                ]}
+              >
+                From McMaster
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Show hint if no default address */}
+          {!userProfile?.profile?.defaultAddress && (
+            <Text style={styles.addressHint}>
+              💡 Set your home address in Profile to auto-fill
+            </Text>
+          )}
+
           <Text style={styles.label}>Origin</Text>
           <TextInput
             style={[styles.input, errors.origin && styles.inputError]}
@@ -269,5 +350,41 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  directionToggle: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  directionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#007AFF",
+    backgroundColor: "#fff",
+  },
+  directionButtonActive: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  directionButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  directionButtonTextActive: {
+    color: "#fff",
+  },
+  addressHint: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
 });
