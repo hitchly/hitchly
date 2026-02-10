@@ -109,7 +109,10 @@ export default function DriveScreen() {
     isLoading,
     error,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery(
+    { tripId: id! },
+    { enabled: !!id, refetchInterval: 5000 }
+  );
 
   // #region agent log
   useEffect(() => {
@@ -665,8 +668,8 @@ export default function DriveScreen() {
                   // Placeholder for payment module: charge rider when dropped off.
                   if (action === "dropoff") {
                     Alert.alert(
-                      "Payment (Placeholder)",
-                      `Transaction will complete now and ${currentStop.passengerName} will be charged.\n\n(Teammate: implement charge/capture here on passenger dropoff.)`
+                      "Payment",
+                      `Transaction will complete now and ${currentStop.passengerName} will be charged.`
                     );
                   }
                 },

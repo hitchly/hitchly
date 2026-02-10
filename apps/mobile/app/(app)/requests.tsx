@@ -59,7 +59,7 @@ export default function RequestsScreen() {
     refetch: refetchFirstTrip,
   } = trpc.trip.getTripRequests.useQuery(
     { tripId: firstTripId || "" },
-    { enabled: !!userId && !!firstTripId && isDriver }
+    { enabled: !!userId && !!firstTripId && isDriver, refetchInterval: 5000 }
   );
 
   // Get rider requests (requests made by user)
@@ -70,7 +70,7 @@ export default function RequestsScreen() {
     isRefetching: isRefetchingRiderRequests,
   } = trpc.trip.getTripRequests.useQuery(
     { riderId: userId },
-    { enabled: !!userId && !isDriver }
+    { enabled: !!userId && !isDriver, refetchInterval: 5000 }
   );
 
   // #region agent log
@@ -712,8 +712,8 @@ export default function RequestsScreen() {
                             request.rider?.email ||
                             "this rider";
                           Alert.alert(
-                            "Payment (Placeholder)",
-                            `Funds will be placed on hold for ${riderLabel} now.\n\n(Teammate: implement payment hold here when driver accepts.)`
+                            "Request Accepted",
+                            `${riderLabel} has been added to your trip.`
                           );
                         },
                       }
