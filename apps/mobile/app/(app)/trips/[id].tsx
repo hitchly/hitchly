@@ -407,12 +407,14 @@ export default function TripDetailScreen() {
                 <View style={styles.safetyButtons}>
                   <TouchableOpacity
                     style={[styles.safetyButton, styles.safetyButtonOutline]}
-                    onPress={() =>
-                      Alert.alert(
-                        "Safety",
-                        "Emergency Contact - to be implemented by team"
-                      )
-                    }
+                    onPress={() => {
+                      if (id) {
+                        router.push({
+                          pathname: "/safety" as any,
+                          params: { mode: "emergency", tripId: id },
+                        });
+                      }
+                    }}
                   >
                     <Text style={styles.safetyButtonText}>
                       Emergency Contact
@@ -420,12 +422,14 @@ export default function TripDetailScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.safetyButton, styles.safetyButtonOutline]}
-                    onPress={() =>
-                      Alert.alert(
-                        "Safety",
-                        "Report Issue - to be implemented by team"
-                      )
-                    }
+                    onPress={() => {
+                      if (id) {
+                        router.push({
+                          pathname: "/safety" as any,
+                          params: { mode: "report", tripId: id },
+                        });
+                      }
+                    }}
                   >
                     <Text style={styles.safetyButtonText}>Report Issue</Text>
                   </TouchableOpacity>

@@ -328,6 +328,28 @@ export const routes = pgTable("routes", {
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 });
 
+// --- REVIEWS MODULE ---
+
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+
+  reviewerId: text("reviewer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  targetUserId: text("target_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+
+  rating: integer("rating").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // --- PAYMENT MODULE TABLES ---
 
 // Payment status enum

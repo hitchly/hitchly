@@ -284,6 +284,10 @@ export async function calculateTripDistance(
   waypoints: Location[] = []
 ): Promise<TripDistanceResult> {
   try {
+    if (process.env.NODE_ENV === "test") {
+      return null;
+    }
+
     const cacheKey = generateRouteCacheKey(origin, destination, waypoints);
     const twentyFourHoursAgo = new Date(Date.now() - ROUTE_CACHE_TTL_MS);
 

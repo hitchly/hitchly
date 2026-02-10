@@ -198,7 +198,7 @@ const AppRoutes = () => {
           ),
         }}
       />
-      {/* Payment Methods tab - only visible for riders */}
+{/* Payment Methods tab - only visible for riders */}
       <Tabs.Screen
         name="payment-methods"
         options={{
@@ -213,6 +213,7 @@ const AppRoutes = () => {
           ),
         }}
       />
+
       {/* Driver Payouts tab - only visible for drivers */}
       <Tabs.Screen
         name="driver-payouts"
@@ -223,6 +224,21 @@ const AppRoutes = () => {
             <Ionicons
               size={28}
               name={focused ? "wallet" : "wallet-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      {/* Safety tab - visible for everyone */}
+      <Tabs.Screen
+        name="safety"
+        options={{
+          title: "Safety",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "shield" : "shield-outline"}
               color={color}
             />
           ),
