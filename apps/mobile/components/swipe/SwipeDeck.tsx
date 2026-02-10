@@ -171,7 +171,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
             rotation.value = (event.translationX / SCREEN_WIDTH) * ROTATION_MAX;
             opacity.value =
               1 - Math.abs(event.translationX) / (SCREEN_WIDTH * 0.5);
-          } catch (_) {
+          } catch {
             // Reset to safe values on error
             translateX.value = 0;
             translateY.value = 0;
@@ -183,8 +183,6 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
           "worklet";
           try {
             const absTranslationX = Math.abs(event.translationX);
-            const shouldSwipeLeft = event.translationX < -SWIPE_THRESHOLD;
-            const shouldSwipeRight = event.translationX > SWIPE_THRESHOLD;
             const velocityThreshold = 500;
             const tapThreshold = 20; // If movement is less than 20px, treat as tap
 
@@ -235,11 +233,13 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                         if (foundItem) {
                           callback(foundItem);
                         }
-                      } catch (_) {}
+                      } catch {
+                        // Silently handle errors
+                      }
                     }
                   )(cardId, dataArray, onCardTapFn);
                 }
-              } catch (err) {
+              } catch {
                 // Silently handle tap errors
               }
               return;
@@ -283,7 +283,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
               rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
               opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
             }
-          } catch (_) {
+          } catch {
             // Reset to center on error
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -293,7 +293,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
         });
 
       return gesture;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [
@@ -377,7 +377,7 @@ function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
       return {
         opacity: overlayOpacity,
       };
-    } catch (_) {
+    } catch {
       return { opacity: 0 };
     }
   });
@@ -392,7 +392,7 @@ function SwipeOverlay({ translateX }: { translateX: SharedValue<number> }) {
       return {
         opacity: overlayOpacity,
       };
-    } catch (_) {
+    } catch {
       return { opacity: 0 };
     }
   });

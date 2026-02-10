@@ -198,7 +198,7 @@ const AppRoutes = () => {
           ),
         }}
       />
-{/* Payment Methods tab - only visible for riders */}
+      {/* Payment Methods tab - only visible for riders */}
       <Tabs.Screen
         name="payment-methods"
         options={{
