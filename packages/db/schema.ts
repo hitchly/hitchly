@@ -323,6 +323,27 @@ export const routes = pgTable("routes", {
   cachedAt: timestamp("cached_at").defaultNow().notNull(),
 });
 
+//USER REVIEWS
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+
+  reviewerId: text("reviewer_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  targetUserId: text("target_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+
+  rating: integer("rating").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // --- PAYMENT MODULE PLACEHOLDERS (future tables) ---
 // payments: store payment intents/authorizations/captures (funds on hold → capture at dropoff)
 // tips: store post-trip tips (available 1 hour after trip completion)
