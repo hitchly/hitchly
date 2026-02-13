@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -11,8 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authClient } from "../../../lib/auth-client";
-import { trpc } from "../../../lib/trpc";
 import { isTestAccount } from "../../../lib/test-accounts";
+import { trpc } from "../../../lib/trpc";
 
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -128,21 +129,6 @@ export default function TripDetailScreen() {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const formatOrdinal = (n: number) => {
-    const s = ["th", "st", "nd", "rd"];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  };
-
-  const formatCityProvince = (address?: string | null) => {
-    if (!address) return "";
-    const parts = address.split(",").map((p) => p.trim());
-    if (parts.length < 2) return address;
-    const province = parts[parts.length - 1];
-    const city = parts[parts.length - 2];
-    return `${city}, ${province}`;
   };
 
   const canStartRide = (

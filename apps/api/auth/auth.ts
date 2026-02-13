@@ -2,7 +2,7 @@ import { expo } from "@better-auth/expo";
 import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, admin } from "better-auth/plugins";
+import { admin, emailOTP } from "better-auth/plugins";
 import { emailClient } from "../lib/email";
 
 export const auth = betterAuth({
@@ -24,7 +24,7 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
-  trustedOrigins: ["null", "exp://", "mobile://"],
+  trustedOrigins: ["null", "exp://", "mobile://", "http://localhost:3000"],
 
   advanced: {
     defaultCookieAttributes: {

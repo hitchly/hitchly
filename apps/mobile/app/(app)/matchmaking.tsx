@@ -1,33 +1,33 @@
-import {
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  InteractionManager,
-  ScrollView,
-  View,
-  Text,
-  TextInput,
-  Animated,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import React, {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
   Component,
   ErrorInfo,
   ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  InteractionManager,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../context/theme-context";
-import { useRouter } from "expo-router";
 import { SwipeDeck, TripCard, type RideMatch } from "../../components/swipe";
 import { DatePickerComponent } from "../../components/ui/date-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { trpc } from "../../lib/trpc";
+import { useTheme } from "../../context/theme-context";
 import { isTestAccount } from "../../lib/test-accounts";
+import { trpc } from "../../lib/trpc";
 
 // McMaster University coordinates (default destination)
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
@@ -46,40 +46,11 @@ class ErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // #region agent log
-    try {
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "matchmaking.tsx:ErrorBoundary:componentDidCatch",
-            message: "SwipeDeck crash caught by error boundary",
-            data: {
-              errorMessage: error.message,
-              errorName: error.name,
-              errorStack: error.stack,
-              componentStack: errorInfo.componentStack,
-              timestamp: Date.now(),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "crash-debug",
-            hypothesisId: "CRASH",
-          }),
-        }
-      ).catch(() => {});
-    } catch (fetchErr) {
-      // Fallback if fetch fails
-      console.error("Error logging crash:", fetchErr);
-    }
-    // #endregion
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("SwipeDeck Error:", error, errorInfo);
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <View
@@ -159,27 +130,6 @@ export default function Matchmaking() {
           const ids = JSON.parse(stored) as string[];
           const loadedSet = new Set(ids);
           setSwipedCardIds(loadedSet);
-          // #region agent log
-          log(
-            "matchmaking.tsx:loadSwipedCards",
-            "Loaded swiped cards from storage",
-            {
-              count: ids.length,
-              ids,
-              loadedSetSize: loadedSet.size,
-            },
-            "H"
-          );
-          // #endregion
-        } else {
-          // #region agent log
-          log(
-            "matchmaking.tsx:loadSwipedCards",
-            "No swiped cards in storage",
-            {},
-            "H"
-          );
-          // #endregion
         }
         setSwipedCardsLoaded(true);
       } catch (error) {
@@ -201,17 +151,6 @@ export default function Matchmaking() {
           // Clear storage if no swiped cards
           await AsyncStorage.removeItem("swipedCardIds");
         }
-        // #region agent log
-        log(
-          "matchmaking.tsx:saveSwipedCards",
-          "Saved swiped cards to storage",
-          {
-            count: ids.length,
-            ids,
-          },
-          "H"
-        );
-        // #endregion
       } catch (error) {
         console.error("Error saving swiped cards:", error);
       }
@@ -219,30 +158,6 @@ export default function Matchmaking() {
     // Always save (even if empty) to ensure storage is in sync
     saveSwipedCards();
   }, [swipedCardIds]);
-
-  // #region agent log
-  const LOG_ENDPOINT =
-    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-  const log = (
-    location: string,
-    message: string,
-    data: any,
-    hypothesisId?: string
-  ) => {
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location,
-        message,
-        data,
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        hypothesisId,
-      }),
-    }).catch(() => {});
-  };
-  // #endregion agent log
 
   useEffect(() => {
     Animated.timing(toggleAnim, {
@@ -301,117 +216,25 @@ export default function Matchmaking() {
 
   // React Query will automatically refetch when searchParams changes (since it's the query key)
   // No need for manual refetch - the query key includes includeDummyMatches
-  // #region agent log
-  useEffect(() => {
-    log(
-      "matchmaking.tsx:98",
-      "searchParams changed",
-      {
-        includeDummyMatches,
-        searchParamsIncludeDummy: searchParams?.includeDummyMatches,
-        hasSearchParams: !!searchParams,
-        queryEnabled: !!searchParams && hasSearched,
-      },
-      "J"
-    );
-  }, [searchParams, includeDummyMatches, hasSearched]);
-  // #endregion agent log
-
-  // #region agent log
-  useEffect(() => {
-    if (matchesQuery.data) {
-      log(
-        "matchmaking.tsx:72",
-        "Matches query data received",
-        {
-          matchCount: matchesQuery.data.length,
-          includeDummyMatches,
-          searchParamsIncludeDummy: searchParams?.includeDummyMatches,
-          rideIds: matchesQuery.data.map((m) => m.rideId),
-          dummyMatches: matchesQuery.data.filter((m) =>
-            m.rideId.startsWith("dummy-")
-          ).length,
-        },
-        "D"
-      );
-    }
-  }, [matchesQuery.data, includeDummyMatches, searchParams]);
-  // #endregion agent log
 
   // Filter out swiped cards - use useMemo to ensure stable reference
   // MUST be called before any early returns to follow Rules of Hooks
   // IMPORTANT: Only filter after swiped cards are loaded from storage
   const filteredMatches = useMemo(() => {
     if (!matchesQuery.data) {
-      // #region agent log
-      log(
-        "matchmaking.tsx:filteredMatches",
-        "No query data available",
-        {
-          swipedCount: swipedCardIds.size,
-          swipedIds: Array.from(swipedCardIds),
-          swipedCardsLoaded,
-        },
-        "H"
-      );
-      // #endregion
       return [];
     }
 
     // Wait for swiped cards to load before filtering
     if (!swipedCardsLoaded) {
-      // #region agent log
-      log(
-        "matchmaking.tsx:filteredMatches",
-        "Swiped cards not loaded yet, returning all matches temporarily",
-        {
-          totalMatches: matchesQuery.data.length,
-          swipedCardsLoaded,
-        },
-        "H"
-      );
-      // #endregion
       return matchesQuery.data; // Return all matches until swiped cards are loaded
     }
 
     const allMatchIds = matchesQuery.data.map((m) => m.rideId);
     const filtered = matchesQuery.data.filter((match) => {
       const isSwiped = swipedCardIds.has(match.rideId);
-      if (isSwiped) {
-        // #region agent log
-        log(
-          "matchmaking.tsx:filteredMatches",
-          "Filtering out swiped card",
-          {
-            rideId: match.rideId,
-            swipedIds: Array.from(swipedCardIds),
-            swipedCardsLoaded,
-          },
-          "H"
-        );
-        // #endregion
-      }
       return !isSwiped;
     });
-
-    // #region agent log
-    log(
-      "matchmaking.tsx:filteredMatches",
-      "Filtering matches",
-      {
-        totalMatches: matchesQuery.data.length,
-        swipedCount: swipedCardIds.size,
-        swipedIds: Array.from(swipedCardIds),
-        filteredCount: filtered.length,
-        filteredIds: filtered.map((m) => m.rideId),
-        allMatchIds,
-        matchesBeingFiltered: allMatchIds.filter((id) => swipedCardIds.has(id)),
-        swipedCardsLoaded,
-      },
-      "H"
-    );
-    // #endregion
-
     return filtered;
   }, [matchesQuery.data, swipedCardIds, swipedCardsLoaded]);
 
@@ -443,19 +266,6 @@ export default function Matchmaking() {
         ).catch((err) => {
           console.error("Error saving swiped card immediately:", err);
         });
-        // #region agent log
-        log(
-          "matchmaking.tsx:handleSwipeRight",
-          "Card swiped right - tracking",
-          {
-            rideId: match.rideId,
-            swipedCount: newSet.size,
-            swipedIds: Array.from(newSet),
-            prevCount: prev.size,
-          },
-          "H"
-        );
-        // #endregion
         return newSet;
       });
     }
@@ -515,19 +325,6 @@ export default function Matchmaking() {
         ).catch((err) => {
           console.error("Error saving swiped card immediately:", err);
         });
-        // #region agent log
-        log(
-          "matchmaking.tsx:handleSwipeLeft",
-          "Card swiped left - tracking",
-          {
-            rideId: match.rideId,
-            swipedCount: newSet.size,
-            swipedIds: Array.from(newSet),
-            prevCount: prev.size,
-          },
-          "H"
-        );
-        // #endregion
         return newSet;
       });
     }
@@ -551,19 +348,6 @@ export default function Matchmaking() {
       );
       return;
     }
-    // #region agent log
-    log(
-      "matchmaking.tsx:handleSearch",
-      "Search initiated",
-      {
-        swipedCount: swipedCardIds.size,
-        swipedIds: Array.from(swipedCardIds),
-        desiredArrivalTime,
-        desiredDate: desiredDate?.toISOString(),
-      },
-      "H"
-    );
-    // #endregion
     setHasSearched(true);
     // Don't clear swiped cards - keep them tracked across searches
   };
@@ -821,17 +605,6 @@ export default function Matchmaking() {
                       },
                     ]}
                     onPress={() => {
-                      // #region agent log
-                      log(
-                        "matchmaking.tsx:315",
-                        "Toggle clicked",
-                        {
-                          currentValue: includeDummyMatches,
-                          newValue: !includeDummyMatches,
-                        },
-                        "A"
-                      );
-                      // #endregion agent log
                       setIncludeDummyMatches(!includeDummyMatches);
                     }}
                   >
@@ -915,17 +688,6 @@ export default function Matchmaking() {
           <TouchableOpacity
             style={[styles.secondaryButton, { borderColor: colors.primary }]}
             onPress={async () => {
-              // #region agent log
-              log(
-                "matchmaking.tsx:NewSearchButton",
-                "New Search clicked - clearing state",
-                {
-                  swipedCountBefore: swipedCardIds.size,
-                  swipedIdsBefore: Array.from(swipedCardIds),
-                },
-                "H"
-              );
-              // #endregion
               setHasSearched(false);
               setDesiredDate(null);
               setIncludeDummyMatches(false);

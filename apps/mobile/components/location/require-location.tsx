@@ -36,30 +36,6 @@ export const RequireLocation = ({
     error: profileError,
   } = trpc.profile.getMe.useQuery();
 
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "components/location/require-location.tsx:profileQuery",
-        message: "RequireLocation profile query state",
-        data: {
-          isLoading,
-          hasProfile: !!profile,
-          profileError: profileError?.message,
-          hasDefaultAddress: !!profile?.profile?.defaultAddress,
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "loading-debug",
-        hypothesisId: "B",
-      }),
-    }).catch(() => {});
-  }, [isLoading, profile, profileError]);
-  // #endregion
-
   const saveAddressMutation = trpc.location.saveDefaultAddress.useMutation({
     onSuccess: () => {
       utils.profile.getMe.invalidate();

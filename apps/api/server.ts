@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
+import type { TRPCError } from "@trpc/server";
 import "dotenv/config";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
@@ -7,7 +8,6 @@ import { logger } from "hono/logger";
 import { auth } from "./auth/auth";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";
-import type { TRPCError } from "@trpc/server";
 
 const app = new Hono();
 
@@ -118,7 +118,7 @@ app.post("/stripe/webhook", async (c: Context) => {
   return c.json({ received: true });
 });
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 4000;
 
 serve({
   fetch: app.fetch,

@@ -1,11 +1,11 @@
 {
-  "name": "api",
+  "name": "@hitchly/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "node scripts/kill-port.js 3000 && tsx watch server.ts",
+    "dev": "tsx watch server.ts",
     "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
     "test": "vitest",
     "type-check": "tsc --noEmit",
@@ -44,6 +44,8 @@
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@hitchly/db": "workspace:*",
     "@hitchly/emails": "workspace:*",
+    "@hitchly/eslint-config": "workspace:*",
+    "@hitchly/tsconfig": "workspace:*",
     "@hono/node-server": "^1.19.9",
     "@hono/trpc-server": "^0.4.2",
     "@trpc/client": "^11.7.1",

@@ -1,18 +1,18 @@
-import { and, eq, inArray, ne, or, sql, desc } from "drizzle-orm";
 import crypto from "crypto";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
-  trips,
-  tripRequests,
-  users,
-  profiles,
   complaints,
+  profiles,
+  tripRequests,
+  trips,
+  users,
 } from "@hitchly/db/schema";
-import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
-import { geocodeAddress } from "../../services/googlemaps";
 import { requireTestAccount } from "../../lib/test-accounts";
+import { geocodeAddress } from "../../services/googlemaps";
+import { protectedProcedure, router } from "../trpc";
 
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 const MAIN_ST_COORDS = { lat: 43.2535, lng: -79.8889 };
@@ -261,7 +261,7 @@ export const adminRouter = router({
           .values({
             id: requestId,
             tripId,
-            riderId,
+            riderId: rider.id,
             pickupLat: passenger.pickupLat || originLat,
             pickupLng: passenger.pickupLng || originLng,
             dropoffLat: passenger.dropoffLat || destLat,
@@ -467,13 +467,14 @@ export const adminRouter = router({
       for (let i = 0; i < scenario.requests.length && i < riders.length; i++) {
         const requestConfig = scenario.requests[i];
         const rider = riders[i];
+        if (!rider || !requestConfig) continue;
         const requestId = crypto.randomUUID();
         const [request] = await ctx.db
           .insert(tripRequests)
           .values({
             id: requestId,
             tripId,
-            riderId: rider.id,
+            riderId: rider!.id,
             pickupLat: MAIN_ST_COORDS.lat + (Math.random() - 0.5) * 0.01,
             pickupLng: MAIN_ST_COORDS.lng + (Math.random() - 0.5) * 0.01,
             dropoffLat: MCMASTER_COORDS.lat,
@@ -598,6 +599,7 @@ export const adminRouter = router({
       const createdRequests = [];
       for (let i = 0; i < input.passengerCount; i++) {
         const rider = riders[i];
+        if (!rider) continue;
         const dropoffCoords = passengerCoords[i] || destCoords;
         const requestId = crypto.randomUUID();
         const [request] = await ctx.db
@@ -738,10 +740,16 @@ export const adminRouter = router({
             status: "active",
           });
           targetTripId = autoTripId;
-        } else {
+        } else if (availableTrips[0]) {
           targetTripId = availableTrips[0].id;
         }
       }
+
+      if (!targetTripId)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to find or create trip",
+        });
 
       const [trip] = await ctx.db
         .select()
@@ -953,6 +961,12 @@ export const adminRouter = router({
           .returning();
         tripRecord = newTrip;
       }
+
+      if (!tripRecord)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create or find trip",
+        });
 
       tripId = tripRecord.id;
       const requestId = crypto.randomUUID();

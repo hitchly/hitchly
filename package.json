@@ -18,6 +18,8 @@
     "ios": "expo run:ios"
   },
   "devDependencies": {
+    "@hitchly/eslint-config": "workspace:*",
+    "@hitchly/tsconfig": "workspace:*",
     "@eslint/js": "^9.39.1",
     "@types/react": "~19.1.10",
     "eslint": "^9.39.1",

@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCityProvince } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,21 +13,6 @@ import {
 } from "react-native";
 import { authClient } from "../../../../lib/auth-client";
 import { trpc } from "../../../../lib/trpc";
-
-const formatCityProvince = (address?: string | null) => {
-  if (!address) return "Location";
-  const parts = address
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const province =
-      parts[parts.length - 1].split(" ")[0] || parts[parts.length - 1];
-    return `${city}, ${province}`;
-  }
-  return address;
-};
 
 export default function TripReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

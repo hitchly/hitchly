@@ -50,33 +50,6 @@ export default function TripsScreen() {
     [trips]
   );
 
-  // #region agent log - Performance debug
-  useEffect(() => {
-    if (trips) {
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "trips/index.tsx:render",
-            message: "Trips screen render",
-            data: {
-              tripsCount: trips.length,
-              activeTripsCount: activeTrips.length,
-              timestamp: Date.now(),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "perf-debug",
-            hypothesisId: "PERF1",
-          }),
-        }
-      ).catch(() => {});
-    }
-  }, [trips, activeTrips.length]);
-  // #endregion
-
   // Memoize formatters to prevent recreation on every render
   const formatDate = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
@@ -128,21 +101,6 @@ export default function TripsScreen() {
   }
 
   const handleAddTestTrip = () => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "trips/index.tsx:handleAddTestTrip",
-        message: "Creating test trip",
-        data: { passengerCount },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "M",
-      }),
-    }).catch(() => {});
-    // #endregion
     createTorontoTestTrip.mutate({ passengerCount });
   };
 
@@ -188,24 +146,6 @@ export default function TripsScreen() {
               <NumericStepper
                 value={passengerCount}
                 onValueChange={(value) => {
-                  // #region agent log
-                  fetch(
-                    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        location: "trips/index.tsx:passengerCountChange",
-                        message: "Passenger count changed",
-                        data: { oldValue: passengerCount, newValue: value },
-                        timestamp: Date.now(),
-                        sessionId: "debug-session",
-                        runId: "run1",
-                        hypothesisId: "M",
-                      }),
-                    }
-                  ).catch(() => {});
-                  // #endregion
                   setPassengerCount(value);
                 }}
                 min={1}

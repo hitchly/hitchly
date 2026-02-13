@@ -31,33 +31,6 @@ interface TripCardProps {
 export function TripCard({ match }: TripCardProps) {
   const { colors } = useTheme();
 
-  // #region agent log
-  const LOG_ENDPOINT =
-    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-  React.useEffect(() => {
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "TripCard.tsx:useEffect",
-        message: "TripCard rendered",
-        data: {
-          rideId: match.rideId,
-          hasDetails: !!match.details,
-          availableSeats: match.details?.availableSeats,
-          availableSeatsType: typeof match.details?.availableSeats,
-          detailsKeys: match.details ? Object.keys(match.details) : [],
-          matchKeys: Object.keys(match),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "swipe-crash-debug",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-  }, [match]);
-  // #endregion
-
   const formatTime = (timeString: string) => {
     // If it's already formatted, return as is
     if (timeString.includes(":")) {

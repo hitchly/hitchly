@@ -38,18 +38,18 @@ const AppRoutes = () => {
     (segment) => (segment as string) === "drive"
   );
   const isOnRideScreen = segments.some(
-    (segment) => (segment as string) === "ride"
+    (segment) => (segment as any) === "ride"
   );
 
   // Role-based landing: when switching roles, ensure we don't land on a screen that is hidden/incorrect for that role.
   useEffect(() => {
     if (!userProfile?.profile?.appRole) return;
     if (isDriver && pathname === "/matchmaking") {
-      router.replace("/requests");
+      router.replace("/requests" as any);
       return;
     }
     if (isRider && pathname === "/trips") {
-      router.replace("/requests");
+      router.replace("/requests" as any);
       return;
     }
     if (isRider && pathname === "/requests") {
@@ -57,66 +57,6 @@ const AppRoutes = () => {
       return;
     }
   }, [isDriver, isRider, pathname, router, userProfile?.profile?.appRole]);
-
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "app/(app)/_layout.tsx:navState",
-        message: "Tabs nav state",
-        data: {
-          appRole,
-          isDriver,
-          isRider,
-          discoverScreenName,
-          isOnDriveScreen,
-          pathname,
-          segments: segments.map(String),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "nav-debug",
-        hypothesisId: "H2",
-      }),
-    }).catch(() => {});
-  }, [
-    appRole,
-    isDriver,
-    isRider,
-    discoverScreenName,
-    isOnDriveScreen,
-    pathname,
-    segments,
-  ]);
-  // #endregion
-
-  // #region agent log
-  useEffect(() => {
-    const isReviewRoute = segments.some((s) => s === "review");
-    const isTripDetailRoute =
-      segments.some((s) => s === "[id]") || pathname.includes("/trips/");
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "app/(app)/_layout.tsx:routeClassify",
-        message: "Route classification",
-        data: {
-          pathname,
-          isReviewRoute,
-          isTripDetailRoute,
-          segments: segments.map(String),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "nav-debug",
-        hypothesisId: "H1",
-      }),
-    }).catch(() => {});
-  }, [pathname, segments]);
-  // #endregion
 
   if (banCheck.isLoading) {
     return (

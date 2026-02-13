@@ -116,24 +116,6 @@ export default function CreateTripScreen() {
 
   // Handle back navigation - drivers should go to trips list
   const handleBack = () => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "app/(app)/trips/create.tsx:85",
-        message: "Back button pressed from create trip",
-        data: {
-          isUserDriver,
-          willNavigateTo: isUserDriver ? "/trips" : "back",
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "O",
-      }),
-    }).catch(() => {});
-    // #endregion
     if (isUserDriver) {
       router.push("/trips" as any);
     } else {

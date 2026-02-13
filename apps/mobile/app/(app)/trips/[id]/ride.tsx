@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
@@ -10,31 +11,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { trpc } from "../../../../lib/trpc";
-import { openStopNavigation } from "../../../../lib/navigation";
 import { authClient } from "../../../../lib/auth-client";
+import { openStopNavigation } from "../../../../lib/navigation";
 import { isTestAccount } from "../../../../lib/test-accounts";
-
-const formatOrdinal = (n: number) => {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
-
-const formatCityProvince = (address?: string | null) => {
-  if (!address) return "Location";
-  const parts = address
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const province =
-      parts[parts.length - 1].split(" ")[0] || parts[parts.length - 1];
-    return `${city}, ${province}`;
-  }
-  return address;
-};
+import { trpc } from "../../../../lib/trpc";
 
 export default function RideScreen() {
   const { id } = useLocalSearchParams<{

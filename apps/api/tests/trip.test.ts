@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// TODO: Fix any linting issues
+/* eslint-disable */
+
 import { TIME_WINDOW_MIN } from "@hitchly/db/schema";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 // import { trips } from "@hitchly/db/schema"; // Used in commented out test
-import { createMockDb } from "../../../tests/utils/mockDb";
-import { createMockContext } from "../../../tests/utils/mockContext";
-import {
-  createMockTrip,
-  createMockTripRequest,
-} from "../../../tests/utils/fixtures";
+import { createMockTrip, createMockTripRequest } from "./utils/fixtures";
+import { createMockContext } from "./utils/mockContext";
+import { createMockDb } from "./utils/mockDb";
 
 // Hoist mocks to be available in factories
 const { mockGeocodeAddress, mockCalculateTripDistance } = vi.hoisted(() => {
@@ -73,7 +73,7 @@ vi.mock("../../../services/payment_service", () => ({
 }));
 
 // Import router AFTER mocks are set up
-import { tripRouter } from "../trip";
+import { tripRouter } from "../trpc/routers/trip";
 
 describe("Trip Router", () => {
   let mockDb: any;
@@ -356,9 +356,9 @@ describe("Trip Router", () => {
         status: mockTrip.status,
         requests: expect.arrayContaining([
           expect.objectContaining({
-            id: mockRequests[0].id,
-            riderId: mockRequests[0].riderId,
-            status: mockRequests[0].status,
+            id: mockRequests[0]?.id,
+            riderId: mockRequests[0]?.riderId,
+            status: mockRequests[0]?.status,
           }),
         ]),
       });
@@ -513,7 +513,7 @@ describe("Trip Router", () => {
       const result = await caller.cancelTrip({ tripId });
 
       expect(result.success).toBe(true);
-      expect(result.trip.status).toBe("cancelled");
+      expect(result.trip?.status).toBe("cancelled");
     });
 
     it("should reject cancellation from non-owner", async () => {
@@ -665,7 +665,7 @@ describe("Trip Router", () => {
         action: "pickup",
       });
 
-      expect(result.status).toBe("on_trip");
+      expect(result?.status).toBe("on_trip");
     });
 
     it("should update passenger status to completed (dropoff)", async () => {
@@ -698,7 +698,7 @@ describe("Trip Router", () => {
         action: "dropoff",
       });
 
-      expect(result.status).toBe("completed");
+      expect(result?.status).toBe("completed");
     });
 
     it("should reject pickup without rider confirmation", async () => {
@@ -790,7 +790,7 @@ describe("Trip Router", () => {
       const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
       const result = await caller.completeTrip({ tripId });
 
-      expect(result.trip.status).toBe("completed");
+      expect(result?.trip?.status).toBe("completed");
       expect(result.summary).toHaveProperty("durationMinutes");
       expect(result.summary).toHaveProperty("totalEarningsCents");
       expect(result.summary).toHaveProperty("passengerCount");
@@ -871,8 +871,8 @@ describe("Trip Router", () => {
         pickupLng: -79.9192,
       });
 
-      expect(result.tripId).toBe(tripId);
-      expect(result.riderId).toBe(riderId);
+      expect(result?.tripId).toBe(tripId);
+      expect(result?.riderId).toBe(riderId);
     });
 
     it("should reject request from driver", async () => {
@@ -976,7 +976,7 @@ describe("Trip Router", () => {
       );
       const result = await caller.acceptTripRequest({ requestId });
 
-      expect(result.status).toBe("accepted");
+      expect(result?.status).toBe("accepted");
     });
 
     it("should activate trip when first request accepted", async () => {

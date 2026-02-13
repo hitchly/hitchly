@@ -23,51 +23,11 @@ export const ActiveTripBanner = ({
       ? "/matchmaking"
       : currentPath;
 
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "components/trip/active-trip-banner.tsx:17",
-        message: "Banner clicked",
-        data: {
-          tripId,
-          navigatingTo: `/trips/${tripId}/${targetRoute}`,
-          referrer,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run4",
-        hypothesisId: "F",
-      }),
-    }).catch(() => {});
-    // #endregion
     router.push({
       pathname: `/trips/${tripId}/${targetRoute}` as any,
       params: { referrer },
     });
   };
-
-  // #region agent log
-  fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "components/trip/active-trip-banner.tsx:19",
-      message: "Banner style values",
-      data: {
-        backgroundColor: styles.banner.backgroundColor,
-        paddingTop: styles.banner.paddingTop,
-        paddingBottom: styles.banner.paddingBottom,
-        topInset,
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "post-fix",
-      hypothesisId: "C",
-    }),
-  }).catch(() => {});
-  // #endregion
 
   return (
     <TouchableOpacity
