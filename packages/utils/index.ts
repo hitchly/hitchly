@@ -104,3 +104,24 @@ export const formatOrdinal = (n: number) => {
         : (s[0] ?? "th");
   return n + (suffix ?? "th");
 };
+
+/**
+ * Formats a number of cents into a currency string (e.g., 1234 → "$12.34").
+ */
+export const formatCurrency = (cents: number | null | undefined): string => {
+  if (cents == null) return "TBD";
+  return `$${(cents / 100).toFixed(2)}`;
+};
+
+/**
+ * Formats a duration given in minutes into a human-readable string (e.g., 90 → "1 hr 30 min").
+ */
+export const formatDuration = (minutes: number | null | undefined): string => {
+  if (minutes == null) return "TBD";
+
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+
+  if (h <= 0) return `${m} min`;
+  return `${h} hr ${m} min`;
+};

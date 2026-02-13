@@ -1,5 +1,5 @@
 import { StripeProvider } from "@stripe/stripe-react-native";
-import React from "react";
+import type { ReactNode } from "react";
 
 // Note: The publishable key should be added to the mobile .env as:
 // EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -7,7 +7,7 @@ const STRIPE_PUBLISHABLE_KEY =
   process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 
 interface StripeProviderWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**

@@ -6,10 +6,10 @@ import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
-import { Button } from "../../components/ui/button";
-import { ControlledInput, SubmitButton } from "../../components/ui/form";
-import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { authClient } from "../../lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { ControlledInput, SubmitButton } from "@/components/ui/form";
+import { OnboardingLayout } from "@/components/ui/screen-layout";
+import { authClient } from "@/lib/auth-client";
 
 export default function Verify() {
   const router = useRouter();

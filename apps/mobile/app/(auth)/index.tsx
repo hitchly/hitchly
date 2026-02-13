@@ -3,8 +3,8 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Button } from "../../components/ui/button";
-import { useTheme } from "../../context/theme-context";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/theme-context";
 
 export default function LandingPage() {
   const { colors } = useTheme();

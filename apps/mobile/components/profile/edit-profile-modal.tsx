@@ -4,7 +4,7 @@ import type {
   UpdatePreferencesInput,
   UpdateProfileInput,
   UpdateVehicleInput,
-} from "@hitchly/db"; // Ensure this matches your export location
+} from "@hitchly/db";
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -17,14 +17,13 @@ import {
   View,
 } from "react-native";
 
-import { useTheme } from "../../context/theme-context";
-
 import {
   LocationForm,
   PreferencesForm,
   ProfileForm,
   VehicleForm,
-} from "./profile-forms";
+} from "@/components/profile/profile-forms";
+import { useTheme } from "@/context/theme-context";
 
 export type EditModalState =
   | { type: "profile"; initialData: UpdateProfileInput }

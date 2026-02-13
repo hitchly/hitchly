@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import { useTheme } from "../../context/theme-context";
+import { useTheme } from "@/context/theme-context";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -60,7 +60,7 @@ export function Button({
         disabled && styles.disabled,
         style,
       ]}
-      disabled={disabled || isLoading}
+      disabled={disabled ?? isLoading}
       activeOpacity={0.8}
       onPress={onPress}
       {...props}

@@ -7,9 +7,9 @@ import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
-import { ControlledInput, SubmitButton } from "../../components/ui/form";
-import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { authClient } from "../../lib/auth-client";
+import { ControlledInput, SubmitButton } from "@/components/ui/form";
+import { OnboardingLayout } from "@/components/ui/screen-layout";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignIn() {
   const router = useRouter();

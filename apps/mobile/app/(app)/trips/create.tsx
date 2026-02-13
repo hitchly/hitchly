@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import type { Href } from "expo-router";
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,19 +14,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { DateTimePickerComponent } from "../../../components/ui/datetime-picker";
-import { NumericStepper } from "../../../components/ui/numeric-stepper";
-import { trpc } from "../../../lib/trpc";
-
-// McMaster University address constant
-const MCMASTER_ADDRESS = "McMaster University, 1280 Main St W, Hamilton, ON";
+import { DateTimePickerComponent } from "@/components/ui/datetime-picker";
+import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { McMaster } from "@/constants/location";
+import { trpc } from "@/lib/trpc";
 
 export default function CreateTripScreen() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const isUserDriver = ["driver", "both"].includes(
-    userProfile?.profile?.appRole || ""
+    userProfile?.profile.appRole ?? ""
   );
 
   // Determine default direction based on time of day (morning = to campus)
@@ -42,18 +41,18 @@ export default function CreateTripScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const userAddress = userProfile?.profile?.defaultAddress || "";
+    const userAddress = userProfile?.profile.defaultAddress ?? "";
 
     if (isToCampus) {
       // Going TO campus: Home → McMaster
       setOrigin(userAddress);
-      setDestination(MCMASTER_ADDRESS);
+      setDestination(McMaster.address);
     } else {
       // Going FROM campus: McMaster → Home
-      setOrigin(MCMASTER_ADDRESS);
+      setOrigin(McMaster.address);
       setDestination(userAddress);
     }
-  }, [isToCampus, userProfile?.profile?.defaultAddress]);
+  }, [isToCampus, userProfile?.profile.defaultAddress]);
 
   const toggleDirection = (toCampus: boolean) => {
     setIsToCampus(toCampus);
@@ -63,12 +62,14 @@ export default function CreateTripScreen() {
   const createTrip = trpc.trip.createTrip.useMutation({
     onSuccess: () => {
       // Invalidate trips query to refresh the list
-      utils.trip.getTrips.invalidate();
+      utils.trip.getTrips.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Trip created successfully!", [
         {
           text: "OK",
           onPress: () => {
-            router.push("/trips" as any);
+            router.push("/trips" as Href);
           },
         },
       ]);
@@ -120,7 +121,7 @@ export default function CreateTripScreen() {
   // Handle back navigation - drivers should go to trips list
   const handleBack = () => {
     if (isUserDriver) {
-      router.push("/trips" as any);
+      router.push("/trips" as Href);
     } else {
       router.back();
     }
@@ -188,7 +189,7 @@ export default function CreateTripScreen() {
           </View>
 
           {/* Show hint if no default address */}
-          {!userProfile?.profile?.defaultAddress && (
+          {!userProfile?.profile.defaultAddress && (
             <Text style={styles.addressHint}>
               💡 Set your home address in Profile to auto-fill
             </Text>

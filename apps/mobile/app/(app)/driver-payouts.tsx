@@ -1,69 +1,76 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { WebBrowserResultType } from "expo-web-browser";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
   ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useTheme } from "../../context/theme-context";
-import { trpc } from "../../lib/trpc";
+import type { AppColors } from "@/constants/theme";
+import { useTheme } from "@/context/theme-context";
+import { trpc } from "@/lib/trpc";
 
 export default function DriverPayoutsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const utils = trpc.useUtils();
 
-  // Fetch Connect account status
-  const {
-    data: connectStatus,
-    isLoading: statusLoading,
-    refetch,
-  } = trpc.payment.getConnectStatus.useQuery();
+  const { data: connectStatus, isLoading: statusLoading } =
+    trpc.payment.getConnectStatus.useQuery();
 
-  // Fetch driver payout history
   const { data: payoutHistory } =
     trpc.payment.getDriverPayoutHistory.useQuery();
 
-  // Create onboarding link mutation
   const createOnboarding = trpc.payment.createConnectOnboarding.useMutation({
-    onSuccess: async (data) => {
-      // Open onboarding in an in-app browser
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.onboardingUrl,
-        "hitchly://stripe-callback"
-      );
+    onSuccess: (data) => {
+      const handleOnboarding = async () => {
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.onboardingUrl,
+          "hitchly://stripe-callback"
+        );
 
-      // Refresh status when user returns (regardless of how they return)
-      if (result.type === "success" || result.type === "dismiss") {
-        refetch();
-      }
+        if (
+          result.type === "success" ||
+          result.type === WebBrowserResultType.DISMISS
+        ) {
+          await utils.payment.getConnectStatus.invalidate();
+        }
+      };
+
+      handleOnboarding().catch(() => {
+        /* Silently fail background invalidation */
+      });
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
     },
   });
 
-  const handleSetupPayouts = async () => {
-    // Stripe requires valid HTTPS URLs for return/refresh
-    // The webhook handles status updates - these URLs are just for Stripe validation
-    const baseUrl = process.env.EXPO_PUBLIC_API_URL || "https://hitchly.app";
-
+  const handleSetupPayouts = () => {
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? "https://hitchly.app";
     createOnboarding.mutate({
       returnUrl: `${baseUrl}/stripe/return`,
       refreshUrl: `${baseUrl}/stripe/refresh`,
     });
   };
 
+  const handleRefresh = () => {
+    utils.payment.getConnectStatus.invalidate().catch(() => {
+      /* Silently fail background refresh */
+    });
+  };
+
   const getStatusColor = () => {
     if (!connectStatus?.hasAccount) return colors.textSecondary;
     if (connectStatus.payoutsEnabled) return colors.success;
-    if (connectStatus.onboardingComplete) return colors.warning || "#f59e0b";
+    if (connectStatus.onboardingComplete) return colors.warning;
     return colors.primary;
   };
 
@@ -85,7 +92,6 @@ export default function DriverPayoutsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
@@ -100,7 +106,6 @@ export default function DriverPayoutsScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        {/* Status Card */}
         {statusLoading ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
@@ -119,7 +124,6 @@ export default function DriverPayoutsScreen() {
               </View>
             </View>
 
-            {/* Detailed Status */}
             {connectStatus?.hasAccount && (
               <View style={styles.detailsSection}>
                 <View style={styles.detailRow}>
@@ -159,7 +163,6 @@ export default function DriverPayoutsScreen() {
           </View>
         )}
 
-        {/* Action Button */}
         {!connectStatus?.payoutsEnabled && (
           <TouchableOpacity
             style={styles.setupButton}
@@ -169,30 +172,28 @@ export default function DriverPayoutsScreen() {
             {createOnboarding.isPending ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Ionicons name="wallet-outline" size={24} color="#fff" />
                 <Text style={styles.setupButtonText}>
                   {connectStatus?.hasAccount
                     ? "Complete Payout Setup"
                     : "Set Up Payouts"}
                 </Text>
-              </>
+              </View>
             )}
           </TouchableOpacity>
         )}
 
-        {/* Refresh Button */}
         {connectStatus?.hasAccount && !connectStatus.payoutsEnabled && (
           <TouchableOpacity
             style={styles.refreshButton}
-            onPress={() => refetch()}
+            onPress={handleRefresh}
           >
             <Ionicons name="refresh-outline" size={20} color={colors.primary} />
             <Text style={styles.refreshButtonText}>Refresh Status</Text>
           </TouchableOpacity>
         )}
 
-        {/* Info Section */}
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>How Payouts Work</Text>
           <View style={styles.infoItem}>
@@ -223,7 +224,6 @@ export default function DriverPayoutsScreen() {
           </View>
         </View>
 
-        {/* Earnings Summary */}
         {connectStatus?.payoutsEnabled && payoutHistory && (
           <View style={styles.earningsCard}>
             <Text style={styles.infoTitle}>Earnings Summary</Text>
@@ -239,10 +239,7 @@ export default function DriverPayoutsScreen() {
               </View>
               <View style={styles.earningsStat}>
                 <Text
-                  style={[
-                    styles.earningsAmount,
-                    { color: colors.warning || "#f59e0b" },
-                  ]}
+                  style={[styles.earningsAmount, { color: colors.warning }]}
                 >
                   $
                   {((payoutHistory.summary.pendingCents || 0) / 100).toFixed(2)}
@@ -259,7 +256,6 @@ export default function DriverPayoutsScreen() {
           </View>
         )}
 
-        {/* Transaction History */}
         {connectStatus?.payoutsEnabled &&
           payoutHistory &&
           payoutHistory.payments.length > 0 && (
@@ -272,8 +268,8 @@ export default function DriverPayoutsScreen() {
                       {payment.riderName}
                     </Text>
                     <Text style={styles.transactionRoute} numberOfLines={1}>
-                      {payment.origin?.split(",")[0]} →{" "}
-                      {payment.destination?.split(",")[0]}
+                      {payment.origin.split(",")[0]} →{" "}
+                      {payment.destination.split(",")[0]}
                     </Text>
                     <Text style={styles.transactionDate}>
                       {payment.capturedAt
@@ -294,7 +290,6 @@ export default function DriverPayoutsScreen() {
             </View>
           )}
 
-        {/* Empty History State */}
         {connectStatus?.payoutsEnabled &&
           payoutHistory?.payments.length === 0 && (
             <View style={styles.emptyCard}>
@@ -314,7 +309,7 @@ export default function DriverPayoutsScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: AppColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -382,13 +377,12 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     setupButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
       backgroundColor: colors.primary,
       padding: 16,
       borderRadius: 12,
       marginBottom: 12,
+      alignItems: "center",
+      justifyContent: "center",
     },
     setupButtonText: {
       color: "#fff",
@@ -441,7 +435,7 @@ const createStyles = (colors: any) =>
       backgroundColor: colors.surface,
       borderRadius: 16,
       padding: 20,
-      marginBottom: 16,
+      marginVertical: 16,
       borderWidth: 1,
       borderColor: colors.border,
     },

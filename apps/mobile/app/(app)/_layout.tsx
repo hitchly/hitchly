@@ -1,13 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import type { Href } from "expo-router";
 import { Tabs, usePathname, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import { authClient } from "../../lib/auth-client";
-import { trpc } from "../../lib/trpc";
-
 import { RequireLocation } from "@/components/location/require-location";
 import { LocationProvider } from "@/context/location-context";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 const AppRoutes = () => {
   const router = useRouter();
@@ -17,7 +17,7 @@ const AppRoutes = () => {
   const pathname = usePathname();
 
   const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
     refetchOnMount: true,
     retry: false,
   });
@@ -28,7 +28,7 @@ const AppRoutes = () => {
     }
   }, [banCheck.data?.isBanned, router]);
 
-  const appRole = userProfile?.profile?.appRole || "rider";
+  const appRole = userProfile?.profile.appRole ?? "rider";
   const isDriver = appRole === "driver";
   const isRider = appRole === "rider";
 
@@ -40,25 +40,25 @@ const AppRoutes = () => {
     (segment) => (segment as string) === "drive"
   );
   const isOnRideScreen = segments.some(
-    (segment) => (segment as any) === "ride"
+    (segment) => (segment as string) === "ride"
   );
 
   // Role-based landing: when switching roles, ensure we don't land on a screen that is hidden/incorrect for that role.
   useEffect(() => {
-    if (!userProfile?.profile?.appRole) return;
+    if (!userProfile?.profile.appRole) return;
     if (isDriver && pathname === "/matchmaking") {
-      router.replace("/requests" as any);
+      router.replace("/requests" as Href);
       return;
     }
     if (isRider && pathname === "/trips") {
-      router.replace("/requests" as any);
+      router.replace("/requests" as Href);
       return;
     }
     if (isRider && pathname === "/requests") {
       // ok for riders (My Requests)
       return;
     }
-  }, [isDriver, isRider, pathname, router, userProfile?.profile?.appRole]);
+  }, [isDriver, isRider, pathname, router, userProfile?.profile.appRole]);
 
   if (banCheck.isLoading) {
     return (

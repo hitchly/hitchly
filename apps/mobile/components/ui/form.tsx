@@ -19,9 +19,8 @@ import {
   View,
 } from "react-native";
 
-import { useTheme } from "../../context/theme-context";
-
-import { Button } from "./button";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/theme-context";
 
 // --- 1. Controlled Text Input ---
 interface ControlledInputProps extends TextInputProps {

@@ -1,4 +1,4 @@
-import React from "react";
+import { formatCurrency, formatDuration } from "@hitchly/utils";
 import {
   Modal,
   ScrollView,
@@ -18,19 +18,6 @@ export interface TripCompletionSummaryData {
   }[];
   totalDistanceKm?: number | null;
 }
-
-const formatCurrency = (cents?: number | null) => {
-  if (cents === null || cents === undefined) return "TBD";
-  return `$${(cents / 100).toFixed(2)}`;
-};
-
-const formatDuration = (minutes?: number | null) => {
-  if (minutes === null || minutes === undefined) return "TBD";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h <= 0) return `${m} min`;
-  return `${h} hr ${m} min`;
-};
 
 export const TripCompletionSummary = ({
   visible,
@@ -52,7 +39,10 @@ export const TripCompletionSummary = ({
         <View style={styles.card}>
           <Text style={styles.title}>Trip Completed</Text>
 
-          <ScrollView style={styles.body} contentContainerStyle={{ gap: 12 }}>
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.scrollGap}
+          >
             <View style={styles.row}>
               <Text style={styles.label}>Duration</Text>
               <Text style={styles.value}>
@@ -63,20 +53,17 @@ export const TripCompletionSummary = ({
             <View style={styles.row}>
               <Text style={styles.label}>Passengers</Text>
               <Text style={styles.value}>
-                {summary?.passengerCount === null ||
-                summary?.passengerCount === undefined
-                  ? "TBD"
-                  : summary.passengerCount}
+                {summary?.passengerCount ?? "TBD"}
               </Text>
             </View>
 
             <View style={styles.row}>
               <Text style={styles.label}>Total Distance</Text>
               <Text style={styles.value}>
-                {summary?.totalDistanceKm === null ||
-                summary?.totalDistanceKm === undefined
-                  ? "TBD"
-                  : `${summary.totalDistanceKm.toFixed(1)} km`}
+                {summary?.totalDistanceKm !== null &&
+                summary?.totalDistanceKm !== undefined
+                  ? `${summary.totalDistanceKm.toFixed(1)} km`
+                  : "TBD"}
               </Text>
             </View>
 
@@ -87,13 +74,13 @@ export const TripCompletionSummary = ({
               </Text>
             </View>
 
-            <View style={{ gap: 8 }}>
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Per Passenger</Text>
-              {(summary?.perPassenger?.length || 0) > 0 ? (
-                summary!.perPassenger!.map((p, idx) => (
+              {(summary?.perPassenger?.length ?? 0) > 0 ? (
+                summary?.perPassenger?.map((p, idx) => (
                   <View key={idx} style={styles.row}>
                     <Text style={styles.label}>
-                      {p.riderName || "Passenger"}
+                      {p.riderName ?? "Passenger"}
                     </Text>
                     <Text style={styles.value}>
                       {formatCurrency(p.amountCents)}
@@ -138,6 +125,12 @@ const styles = StyleSheet.create({
   },
   body: {
     marginBottom: 12,
+  },
+  scrollGap: {
+    gap: 12,
+  },
+  section: {
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 14,

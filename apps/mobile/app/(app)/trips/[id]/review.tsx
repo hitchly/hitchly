@@ -1,29 +1,39 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { formatCityProvince } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { authClient } from "../../../../lib/auth-client";
-import { trpc } from "../../../../lib/trpc";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
+
+interface TripRequest {
+  id: string;
+  riderId: string;
+  status: string;
+  rider?: {
+    name?: string | null;
+    email?: string | null;
+  } | null;
+}
 
 export default function TripReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const userId = session?.user.id;
 
   const { data: trip } = trpc.trip.getTripById.useQuery(
     { tripId: id },
-    { enabled: !!id }
+    { enabled: typeof id === "string" }
   );
 
   const isDriver = !!userId && trip?.driverId === userId;
@@ -43,7 +53,7 @@ export default function TripReviewScreen() {
   });
 
   const handleRiderSubmit = () => {
-    if (!trip?.driverId) return;
+    if (!trip?.driverId || !id) return;
 
     submitRatingMutation.mutate(
       {
@@ -61,7 +71,8 @@ export default function TripReviewScreen() {
   };
 
   const handleDriverSubmit = (riderId: string) => {
-    const score = driverRatings[riderId] || 5;
+    if (!id) return;
+    const score = driverRatings[riderId] ?? 5;
 
     submitRatingMutation.mutate(
       {
@@ -100,16 +111,12 @@ export default function TripReviewScreen() {
     );
   }
 
-  const driverRateableRequests =
-    trip.requests?.filter(
-      (r) =>
-        r.status === "completed" ||
-        r.status === "on_trip" ||
-        r.status === "accepted"
-    ) || [];
+  const driverRateableRequests: TripRequest[] = (trip.requests ?? []).filter(
+    (r) => ["completed", "on_trip", "accepted"].includes(r.status)
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
@@ -145,11 +152,15 @@ export default function TripReviewScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>How was your ride?</Text>
 
-              <View style={[styles.stars, isDriverRated && { opacity: 0.5 }]}>
+              <View
+                style={[styles.stars, isDriverRated && styles.opacityMuted]}
+              >
                 {[1, 2, 3, 4, 5].map((v) => (
                   <TouchableOpacity
                     key={v}
-                    onPress={() => !isDriverRated && setRating(v)}
+                    onPress={() => {
+                      if (!isDriverRated) setRating(v);
+                    }}
                     disabled={isDriverRated}
                     accessibilityRole="button"
                   >
@@ -189,20 +200,23 @@ export default function TripReviewScreen() {
                 <Text style={styles.muted}>No riders to rate.</Text>
               ) : (
                 driverRateableRequests.map((riderRequest) => {
-                  const riderId = riderRequest.riderId;
-                  const currentRating = driverRatings[riderId] || 5;
+                  const riderId: string = riderRequest.riderId;
+                  const currentRating = driverRatings[riderId] ?? 5;
                   const isRated = ratedRiderIds.has(riderId);
 
                   return (
                     <View key={riderRequest.id} style={styles.driverCard}>
                       <Text style={styles.riderName}>
-                        {riderRequest.rider?.name ||
-                          riderRequest.rider?.email ||
+                        {riderRequest.rider?.name ??
+                          riderRequest.rider?.email ??
                           "Passenger"}
                       </Text>
 
                       <View
-                        style={[styles.starsSmall, isRated && { opacity: 0.5 }]}
+                        style={[
+                          styles.starsSmall,
+                          isRated && styles.opacityMuted,
+                        ]}
                       >
                         {[1, 2, 3, 4, 5].map((v) => (
                           <TouchableOpacity
@@ -274,7 +288,6 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
   body: { padding: 16, gap: 16 },
-
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -289,7 +302,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
   line: { fontSize: 15, color: "#111" },
   muted: { color: "#6B7280", fontSize: 14 },
-
   stars: {
     flexDirection: "row",
     justifyContent: "center",
@@ -301,7 +313,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginVertical: 8,
   },
-
   primaryBtn: {
     backgroundColor: "#111",
     borderRadius: 10,
@@ -310,12 +321,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
-
   btnDisabled: {
     backgroundColor: "#9CA3AF",
     opacity: 1,
   },
-
   driverCard: {
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
@@ -330,4 +339,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryBtnText: { color: "#374151", fontWeight: "600" },
+  opacityMuted: { opacity: 0.5 },
 });

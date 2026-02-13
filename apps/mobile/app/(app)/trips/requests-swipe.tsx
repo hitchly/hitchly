@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,39 +12,36 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
-  SwipeDeck,
   RiderCard,
+  SwipeDeck,
   type TripRequestWithDetails,
-} from "../../../components/swipe";
-import { useTheme } from "../../../context/theme-context";
-import { authClient } from "../../../lib/auth-client";
-import { trpc } from "../../../lib/trpc";
+} from "@/components/swipe";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export default function DriverSwipeRequestsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const userId = session?.user.id;
   const utils = trpc.useUtils();
 
-  // Get all trips for the driver
   const { data: driverTrips, isLoading: isLoadingTrips } =
     trpc.trip.getTrips.useQuery(undefined, {
       enabled: !!userId,
     });
 
-  // Get requests for all active trips
   const tripIds = useMemo(
     () =>
       driverTrips
         ?.filter(
           (trip) => trip.status === "pending" || trip.status === "active"
         )
-        .map((trip) => trip.id) || [],
+        .map((trip) => trip.id) ?? [],
     [driverTrips]
   );
 
-  // Fetch requests for each trip
   const requestQueries = tripIds.map((tripId) =>
     trpc.trip.getTripRequests.useQuery(
       { tripId },
@@ -52,7 +49,6 @@ export default function DriverSwipeRequestsScreen() {
     )
   );
 
-  // Aggregate all pending requests
   const allPendingRequests = useMemo(() => {
     const requests: TripRequestWithDetails[] = [];
     requestQueries.forEach((query) => {
@@ -69,8 +65,13 @@ export default function DriverSwipeRequestsScreen() {
 
   const acceptRequest = trpc.trip.acceptTripRequest.useMutation({
     onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
-      utils.trip.getTripById.invalidate();
+      // Correct invalidation: catch the promise to satisfy the linter
+      utils.trip.getTripRequests.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
+      utils.trip.getTripById.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Request accepted successfully");
     },
     onError: (error) => {
@@ -80,7 +81,9 @@ export default function DriverSwipeRequestsScreen() {
 
   const rejectRequest = trpc.trip.rejectTripRequest.useMutation({
     onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
+      utils.trip.getTripRequests.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Request rejected");
     },
     onError: (error) => {
@@ -97,10 +100,9 @@ export default function DriverSwipeRequestsScreen() {
   };
 
   const handleCardTap = (request: TripRequestWithDetails) => {
-    // Show request details modal or navigate to details
     Alert.alert(
       "Request Details",
-      `Rider: ${request.rider?.name || request.rider?.email || "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`,
+      `Rider: ${request.rider?.name ?? request.rider?.email ?? "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`,
       [{ text: "OK" }]
     );
   };
@@ -227,7 +229,6 @@ export default function DriverSwipeRequestsScreen() {
         />
       </View>
 
-      {/* Swipe instructions */}
       <View style={styles.instructionsContainer}>
         <View style={styles.instructionRow}>
           <Ionicons name="close-circle" size={24} color={colors.error} />

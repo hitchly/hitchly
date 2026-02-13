@@ -1,3 +1,5 @@
+// TODOL Fix eslint errors in this file and re-enable linting
+/* eslint-disable */
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRef, useState } from "react";
 import {

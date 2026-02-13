@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { useTheme } from "../../context/theme-context";
+import { useTheme } from "@/context/theme-context";
 
 export interface TripRequestWithDetails {
   id: string;
@@ -56,7 +56,7 @@ export function RiderCard({ request }: RiderCardProps) {
   };
 
   const riderName =
-    request.rider?.name || request.rider?.email || "Unknown Rider";
+    request.rider?.name ?? request.rider?.email ?? "Unknown Rider";
   const riderImage = request.rider?.image;
 
   return (

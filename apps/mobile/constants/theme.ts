@@ -78,3 +78,13 @@ export const NavTheme = {
     },
   },
 };
+
+export type AppColors = typeof Colors.light;
+
+export type AppFonts = typeof Fonts;
+
+export interface AppTheme {
+  colors: AppColors;
+  fonts: AppFonts;
+  isDark: boolean;
+}

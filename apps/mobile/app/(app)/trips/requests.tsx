@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,27 +12,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Button } from "../../../components/ui/button";
-import { Card } from "../../../components/ui/card";
-import { useTheme } from "../../../context/theme-context";
-import { authClient } from "../../../lib/auth-client";
-import { trpc } from "../../../lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export default function TripRequestsScreen() {
   const { tripId } = useLocalSearchParams<{ tripId?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const userId = session?.user.id;
   const utils = trpc.useUtils();
 
-  // Get all trips for the user to determine if they're a driver
   const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
     enabled: !!userId && !tripId,
   });
 
-  // Get requests - filter by tripId if provided
-  // If no tripId, get all requests for driver's trips (as driver) or own requests (as rider)
   const {
     data: requestsData,
     isLoading,
@@ -44,35 +40,29 @@ export default function TripRequestsScreen() {
     { enabled: !!userId }
   );
 
-  // Get all requests for driver's trips if user is a driver and viewing all requests
   trpc.trip.getTripRequests.useQuery(
-    { tripId: driverTrips?.[0]?.id || "" },
+    { tripId: driverTrips?.[0]?.id ?? "" },
     {
-      enabled:
-        !!userId &&
-        !tripId &&
-        !!driverTrips &&
-        driverTrips &&
-        driverTrips.length > 0,
+      enabled: !!userId && !tripId && !!driverTrips && driverTrips.length > 0,
     }
   );
 
-  // Determine if user is viewing as driver or rider
   const isDriverView =
-    tripId !== undefined || (driverTrips && driverTrips.length > 0);
+    tripId !== undefined || (!!driverTrips && driverTrips.length > 0);
 
-  // If driver viewing all requests, we need to get requests for all their trips
-  const requests = tripId
-    ? requestsData || []
-    : isDriverView
-      ? requestsData || [] // This will need to be enhanced to get all driver trip requests
-      : requestsData || [];
+  const requests = requestsData ?? [];
 
   const acceptRequest = trpc.trip.acceptTripRequest.useMutation({
     onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
-      utils.trip.getTripById.invalidate();
-      utils.trip.getAvailableTrips.invalidate();
+      utils.trip.getTripRequests.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
+      utils.trip.getTripById.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
+      utils.trip.getAvailableTrips.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Request accepted successfully");
     },
     onError: (error) => {
@@ -82,7 +72,9 @@ export default function TripRequestsScreen() {
 
   const rejectRequest = trpc.trip.rejectTripRequest.useMutation({
     onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
+      utils.trip.getTripRequests.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Request rejected");
     },
     onError: (error) => {
@@ -92,9 +84,15 @@ export default function TripRequestsScreen() {
 
   const cancelRequest = trpc.trip.cancelTripRequest.useMutation({
     onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
-      utils.trip.getTripById.invalidate();
-      utils.trip.getAvailableTrips.invalidate();
+      utils.trip.getTripRequests.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
+      utils.trip.getTripById.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
+      utils.trip.getAvailableTrips.invalidate().catch(() => {
+        /* Silently fail background refresh */
+      });
       Alert.alert("Success", "Request cancelled");
     },
     onError: (error) => {
@@ -183,19 +181,21 @@ export default function TripRequestsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={refetch}
+              onRefresh={() => {
+                refetch().catch(() => {
+                  /* Refetch failed */
+                });
+              }}
               tintColor={colors.primary}
             />
           }
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => {
-            const request = item; // The item itself is the request
-            const trip = item.trip;
-            const rider = item.rider;
+          renderItem={({ item: request }) => {
+            const trip = request.trip;
+            const rider = request.rider;
 
             return (
               <Card style={styles.requestCard}>
-                {/* Trip Info */}
                 {trip && (
                   <View style={styles.tripInfo}>
                     <View style={styles.routeRow}>
@@ -234,7 +234,6 @@ export default function TripRequestsScreen() {
                   </View>
                 )}
 
-                {/* Rider/Driver Info */}
                 {isDriverView && rider && (
                   <View style={styles.userInfo}>
                     <Ionicons
@@ -248,7 +247,6 @@ export default function TripRequestsScreen() {
                   </View>
                 )}
 
-                {/* Status Badge */}
                 <View
                   style={[
                     styles.statusBadge,
@@ -265,14 +263,12 @@ export default function TripRequestsScreen() {
                   </Text>
                 </View>
 
-                {/* Request Time */}
                 <Text
                   style={[styles.timeText, { color: colors.textSecondary }]}
                 >
                   Requested {formatDate(request.createdAt)}
                 </Text>
 
-                {/* Action Buttons */}
                 {isDriverView
                   ? request.status === "pending" && (
                       <View style={styles.actionRow}>
@@ -281,7 +277,7 @@ export default function TripRequestsScreen() {
                           onPress={() => {
                             Alert.alert(
                               "Accept Request",
-                              `Accept ${rider?.name || rider?.email || "this rider"}'s request?`,
+                              `Accept ${rider?.name ?? rider?.email ?? "this rider"}'s request?`,
                               [
                                 { text: "Cancel", style: "cancel" },
                                 {
@@ -304,7 +300,7 @@ export default function TripRequestsScreen() {
                           onPress={() => {
                             Alert.alert(
                               "Reject Request",
-                              `Reject ${rider?.name || rider?.email || "this rider"}'s request?`,
+                              `Reject ${rider?.name ?? rider?.email ?? "this rider"}'s request?`,
                               [
                                 { text: "Cancel", style: "cancel" },
                                 {

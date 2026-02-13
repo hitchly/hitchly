@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 import { useColorScheme } from "react-native";
 
-import { Colors, Fonts } from "../constants/theme";
+import type { AppColors, AppFonts } from "@/constants/theme";
+import { Colors, Fonts } from "@/constants/theme";
 
 interface Theme {
-  colors: typeof Colors.light;
-  fonts: typeof Fonts;
+  colors: AppColors;
+  fonts: AppFonts;
   isDark: boolean;
 }
 

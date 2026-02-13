@@ -1,17 +1,18 @@
+import type { Href } from "expo-router";
 import { Link, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
   ActivityIndicator,
+  Button,
   StyleSheet,
   Text,
   View,
-  Button,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useTheme } from "../../context/theme-context";
-import { authClient } from "../../lib/auth-client";
-import { trpc } from "../../lib/trpc";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -20,7 +21,7 @@ export default function HomeScreen() {
     trpc.profile.getMe.useQuery();
 
   const { data: session } = authClient.useSession();
-  const userId = session?.user?.id || "";
+  const userId = session?.user.id;
 
   const adminCheck = trpc.admin.amIAdmin.useQuery(undefined, {
     enabled: !!userId,
@@ -28,18 +29,16 @@ export default function HomeScreen() {
 
   const { data, isLoading, error } = trpc.health.ping.useQuery();
 
-  // Redirect to appropriate discover screen based on role
   useEffect(() => {
     if (profileLoading) return;
 
-    const appRole = userProfile?.profile?.appRole || "rider";
+    const appRole = userProfile?.profile.appRole ?? "rider";
     const isDriver = appRole === "driver";
 
-    // Redirect to the appropriate discover screen
     if (isDriver) {
-      router.replace("/requests" as any);
+      router.replace("/requests" as Href);
     } else {
-      router.replace("/matchmaking" as any);
+      router.replace("/matchmaking" as Href);
     }
   }, [userProfile, profileLoading, router]);
 
@@ -67,14 +66,14 @@ export default function HomeScreen() {
         <View style={styles.loadingContainer}>
           <Text style={{ color: colors.text, marginBottom: 20 }}>
             Health Check:{" "}
-            {isLoading ? "Loading..." : data?.message || "Unknown"}
+            {isLoading ? "Loading..." : (data?.message ?? "Unknown")}
           </Text>
           {error && (
             <Text style={{ color: colors.error, marginBottom: 20 }}>
               Error: {error.message}
             </Text>
           )}
-          <Link href={"/admin/dashboard" as any} asChild>
+          <Link href={"/admin/dashboard"} asChild>
             <Button title="Go to Admin Dashboard" color={colors.primary} />
           </Link>
         </View>

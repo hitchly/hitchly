@@ -1,18 +1,16 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import React, { type ComponentProps } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import { useTheme } from "../../context/theme-context";
+import { useTheme } from "@/context/theme-context";
 
-export const Chip = ({
-  icon,
-  label,
-  active,
-}: {
-  icon: any;
+interface ChipProps {
+  icon: ComponentProps<typeof Ionicons>["name"];
   label: string;
   active: boolean;
-}) => {
+}
+
+export const Chip = ({ icon, label, active }: ChipProps) => {
   const { colors } = useTheme();
 
   return (
@@ -52,19 +50,26 @@ export const LoadingSkeleton = ({ text = "Loading..." }: { text?: string }) => {
         styles.skeletonContainer,
         {
           backgroundColor: colors.background,
-          justifyContent: "center",
-          alignItems: "center",
         },
       ]}
     >
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={{ marginTop: 16, color: colors.textSecondary }}>{text}</Text>
+      <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+        {text}
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  skeletonContainer: { flex: 1 },
+  skeletonContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+  },
   chip: {
     flexDirection: "row",
     alignItems: "center",
@@ -73,6 +78,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  chipText: { fontSize: 13, marginLeft: 6, fontWeight: "500" },
-  chipTextActive: { fontWeight: "600" },
+  chipText: {
+    fontSize: 13,
+    marginLeft: 6,
+    fontWeight: "500",
+  },
+  chipTextActive: {
+    fontWeight: "600",
+  },
 });
