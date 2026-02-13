@@ -11,7 +11,7 @@
     "web": "expo start --web",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "build": "expo export"
+    "build": "expo export --platform ios --platform android"
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",
