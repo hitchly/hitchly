@@ -1,6 +1,27 @@
-# Run lint-staged (handles formatting and linting)
+# 1. SECRET SCANNING
+
+# Prevents committing .env files or hardcoded keys
+
+git diff --cached --name-only | grep -E '\.env$|\.pem$|\.key$' && echo "❌ Error: Sensitive file detected!" && exit 1
+
+# 2. LINTING & FORMATTING
+
+# This only runs on your staged files (fast)
+
 pnpm exec lint-staged
 
-# Type check
-pnpm type-check
+# 3. TYPE-CHECKING (Turbo filter)
 
+# Only runs type-check for packages affected by the current changes.
+
+# Using --filter=[HEAD] is the standard way to scope to changed packages.
+
+pnpm turbo run type-check --filter=[HEAD]
+
+# 3. TYPE-CHECKING (Turbo filter)
+
+# Only runs type-check for packages affected by the current changes
+
+# Using --filter=[HEAD] is the standard way to scope to changed packages
+
+pnpm turbo run type-check --filter=[HEAD]
