@@ -12,9 +12,7 @@ export const auth = betterAuth({
     admin(),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        emailClient.sendOtp(email, otp).catch((err) => {
-          console.error("Failed to send OTP email:", err);
-        });
+        await emailClient.sendOtp(email, otp);
       },
       sendVerificationOnSignUp: true,
     }),

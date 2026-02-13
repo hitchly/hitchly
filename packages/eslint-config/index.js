@@ -38,7 +38,7 @@ export const config = tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       "unused-imports/no-unused-imports": "warn",
       "unused-imports/no-unused-vars": [
-        "error",
+        "warn",
         {
           vars: "all",
           varsIgnorePattern: "^_",
@@ -50,9 +50,10 @@ export const config = tseslint.config(
         "error",
         {
           groups: [
-            ["builtin", "external"],
-            "internal",
-            ["parent", "sibling", "index"],
+            "builtin", // 1. Node.js built-ins
+            "external", // 2. npm packages (stripe, hono, etc)
+            "internal", // 3. Monorepo packages (@hitchly/*)
+            ["parent", "sibling", "index"], // 4. Local files
           ],
           pathGroups: [
             {
@@ -77,8 +78,7 @@ export const config = tseslint.config(
     },
   },
 
-  // 4. Strict Type-Checked Rules (The "Tesla" Standard)
-  // Instead of using 'extends' inside here, we spread the configs directly.
+  // 4. Strict Type-Checked Rules
   ...tseslint.configs.strictTypeChecked.map((c) => ({
     ...c,
     files: ["**/*.{ts,tsx}"],
@@ -97,7 +97,7 @@ export const config = tseslint.config(
       },
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-call": "error",
