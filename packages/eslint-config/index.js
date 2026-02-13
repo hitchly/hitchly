@@ -5,7 +5,8 @@ import unusedImports from "eslint-plugin-unused-imports";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-export const config = [
+export const config = tseslint.config(
+  // 1. Global Ignores
   {
     ignores: [
       "**/node_modules/**",
@@ -18,10 +19,12 @@ export const config = [
     ],
   },
 
+  // 2. Base Configs
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettier,
 
+  // 3. Plugin Definitions & General Rules
   {
     plugins: {
       "unused-imports": unusedImports,
@@ -64,12 +67,19 @@ export const config = [
     },
   },
 
+  // 4. Strict Type-Checked Rules (The "Tesla" Standard)
+  // Instead of using 'extends' inside here, we spread the configs directly.
+  ...tseslint.configs.strictTypeChecked.map((c) => ({
+    ...c,
+    files: ["**/*.{ts,tsx}"],
+  })),
+  ...tseslint.configs.stylisticTypeChecked.map((c) => ({
+    ...c,
+    files: ["**/*.{ts,tsx}"],
+  })),
+
   {
     files: ["**/*.{ts,tsx}"],
-    extends: [
-      ...tseslint.configs.strictTypeChecked,
-      ...tseslint.configs.stylisticTypeChecked,
-    ],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -88,7 +98,7 @@ export const config = [
         { prefer: "type-imports" },
       ],
     },
-  },
-];
+  }
+);
 
 export default config;
