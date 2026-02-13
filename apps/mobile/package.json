@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "type-check": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build": "expo export"
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",

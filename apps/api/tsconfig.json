@@ -1,3 +1,6 @@
 {
-  "extends": "@hitchly/tsconfig/base"
+  "extends": "@hitchly/tsconfig/base",
+  "compilerOptions": {
+    "outDir": "./dist"
+  }
 }

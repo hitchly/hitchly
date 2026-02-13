@@ -19,26 +19,6 @@
     "verify:dev": "tsx scripts/verify-dev-accounts.ts",
     "migrate:rides-to-trips": "tsx scripts/migrate-rides-to-trips.ts"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.ts",
-      "**/?(*.)+(spec|test).ts"
-    ],
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.ts",
-      "!**/*.d.ts",
-      "!**/node_modules/**",
-      "!**/dist/**"
-    ]
-  },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",
     "@googlemaps/google-maps-services-js": "^3.4.2",
@@ -59,7 +39,6 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/jest": "^29.5.14",
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.3",
     "dotenv": "^17.2.3",
@@ -67,8 +46,6 @@
     "esbuild": "^0.25.12",
     "esbuild-register": "^3.6.0",
     "eslint": "^9.39.1",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.21.0",
