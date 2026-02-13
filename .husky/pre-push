@@ -1,7 +1,0 @@
-echo "🚀 Running final build check before push..."
-
-# This ensures all workspace packages (Mobile, API, Admin, Types) 
-# can build and communicate correctly.
-pnpm turbo run build
-
-echo "✨ Build verified. Pushing to remote..."
