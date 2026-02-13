@@ -38,8 +38,8 @@ export const env = {
   email: {
     host: process.env.EMAIL_HOST ?? "smtp.example.com",
     port: Number(process.env.EMAIL_PORT ?? 587),
-    user: getRequiredEnv("EMAIL_USER"),
-    password: getRequiredEnv("EMAIL_PASSWORD"),
+    user: getRequiredEnv("GMAIL_USER"),
+    password: getRequiredEnv("GMAIL_APP_PASS"),
   },
   origins: {
     client: process.env.CLIENT_ORIGIN ?? "http://localhost:3000",
