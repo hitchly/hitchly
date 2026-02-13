@@ -47,16 +47,27 @@ export const config = tseslint.config(
         },
       ],
       "import/order": [
-        "warn",
+        "error",
         {
           groups: [
-            "builtin",
-            "external",
+            ["builtin", "external"],
             "internal",
-            "parent",
-            "sibling",
-            "index",
+            ["parent", "sibling", "index"],
           ],
+          pathGroups: [
+            {
+              pattern: "react",
+              group: "builtin",
+              position: "before",
+            },
+            {
+              pattern: "@hitchly/**",
+              group: "internal",
+              position: "before",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["react"],
+          "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },
         },
       ],
