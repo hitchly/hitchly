@@ -15,7 +15,7 @@ export async function createContext({
   return {
     req,
     db,
-    userId: session?.user?.id ?? undefined,
+    userId: session?.user.id ?? undefined,
     resHeaders,
   };
 }

@@ -1,6 +1,5 @@
 // apps/api/config/env.ts
-import path from "path";
-import { dirname } from "path";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
 import { config } from "dotenv";
@@ -12,6 +11,18 @@ const __dirname = dirname(__filename);
 config({ path: path.resolve(__dirname, "../../../.env") });
 // Then load .env from apps/api (for API-specific config like Google Maps API)
 config({ path: path.resolve(__dirname, "../.env") });
+
+/**
+ * Helper to ensure required environment variables are set.
+ * This satisfies the linter and prevents runtime "undefined" bugs.
+ */
+function getRequiredEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`❌ Missing required environment variable: ${key}`);
+  }
+  return value;
+}
 
 export const env = {
   db: {
@@ -27,13 +38,16 @@ export const env = {
   email: {
     host: process.env.EMAIL_HOST ?? "smtp.example.com",
     port: Number(process.env.EMAIL_PORT ?? 587),
-    user: process.env.EMAIL_USER!,
-    password: process.env.EMAIL_PASSWORD!,
+    user: getRequiredEnv("EMAIL_USER"),
+    password: getRequiredEnv("EMAIL_PASSWORD"),
   },
   origins: {
     client: process.env.CLIENT_ORIGIN ?? "http://localhost:3000",
   },
   google: {
-    apiKey: process.env.GOOGLE_MAPS_API_KEY!,
+    apiKey: getRequiredEnv("GOOGLE_MAPS_API_KEY"),
+  },
+  stripe: {
+    secretKey: getRequiredEnv("STRIPE_SECRET_KEY"),
   },
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -22,37 +23,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: "/",
-      fetchOptions: {
-        onResponse: () => {
-          setLoading(false);
+    authClient.signIn
+      .email({
+        email,
+        password,
+        callbackURL: "/",
+        fetchOptions: {
+          onResponse: () => {
+            setLoading(false);
+          },
+          onRequest: () => {
+            setLoading(true);
+          },
+          onError: (ctx) => {
+            toast.error("Login failed", {
+              description:
+                ctx.error.message || "Please check your credentials.",
+            });
+          },
+          onSuccess: () => {
+            toast.success("Welcome back!", {
+              description: "Redirecting to dashboard...",
+            });
+            router.push("/");
+          },
         },
-        onRequest: () => {
-          setLoading(true);
-        },
-        onError: (ctx) => {
-          // Trigger the toast notification on error
-          toast.error("Login failed", {
-            description:
-              ctx.error.message ||
-              "Please check your credentials and try again.",
-          });
-        },
-        onSuccess: () => {
-          toast.success("Welcome back!", {
-            description: "Redirecting to dashboard...",
-          });
-          router.push("/");
-        },
-      },
-    });
+      })
+      .catch(() => {
+        toast.error("A connection error occurred. Please try again.");
+        setLoading(false);
+      });
   };
 
   return (

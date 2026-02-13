@@ -1,28 +1,31 @@
-import { users, trips, tripRequests, payments, tips } from "@hitchly/db/schema";
+import { payments, tips, tripRequests, trips, users } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
-import { eq, and, desc, ne } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import Stripe from "stripe";
 import { z } from "zod";
 
+import { env } from "../../config/env";
 import {
-  getOrCreateStripeCustomer,
-  getStripeCustomerId,
-  createSetupIntent,
-  listPaymentMethods,
-  deletePaymentMethod,
-  setDefaultPaymentMethod,
-  hasPaymentMethod,
   createConnectAccount,
   createConnectOnboardingLink,
+  createSetupIntent,
+  deletePaymentMethod,
   getConnectAccountStatus,
-  processTip,
+  getOrCreateStripeCustomer,
   getPaymentStatus,
+  getStripeCustomerId,
+  hasPaymentMethod,
+  listPaymentMethods,
+  processTip,
+  setDefaultPaymentMethod,
 } from "../../services/payment_service";
 import { protectedProcedure, router } from "../trpc";
 
+const stripe = new Stripe(env.stripe.secretKey);
+
 export const paymentRouter = router({
   createSetupIntent: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.userId!;
+    const userId = ctx.userId;
 
     const [user] = await ctx.db
       .select({ email: users.email, name: users.name })
@@ -46,7 +49,7 @@ export const paymentRouter = router({
   }),
 
   getPaymentMethods: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.userId!;
+    const userId = ctx.userId;
 
     const customerId = await getStripeCustomerId(userId);
     if (!customerId) {
@@ -55,17 +58,18 @@ export const paymentRouter = router({
 
     const methods = await listPaymentMethods(customerId);
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    // Use the pre-initialized stripe instance
     const customer = (await stripe.customers.retrieve(
       customerId
     )) as Stripe.Customer;
+
     const defaultPaymentMethodId = customer.invoice_settings
-      ?.default_payment_method as string | null;
+      .default_payment_method as string | null;
 
     const mappedMethods = methods.map((m) => ({
       id: m.id,
-      brand: m.card?.brand || "unknown",
-      last4: m.card?.last4 || "****",
+      brand: m.card?.brand ?? "unknown",
+      last4: m.card?.last4 ?? "****",
       expMonth: m.card?.exp_month,
       expYear: m.card?.exp_year,
       isDefault: m.id === defaultPaymentMethodId,
@@ -82,7 +86,7 @@ export const paymentRouter = router({
   deletePaymentMethod: protectedProcedure
     .input(z.object({ paymentMethodId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.userId!;
+      const userId = ctx.userId;
 
       const customerId = await getStripeCustomerId(userId);
       if (!customerId) {
@@ -110,7 +114,7 @@ export const paymentRouter = router({
   setDefaultPaymentMethod: protectedProcedure
     .input(z.object({ paymentMethodId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.userId!;
+      const userId = ctx.userId;
 
       await setDefaultPaymentMethod(userId, input.paymentMethodId);
 
@@ -118,7 +122,7 @@ export const paymentRouter = router({
     }),
 
   hasPaymentMethod: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.userId!;
+    const userId = ctx.userId;
     const hasPM = await hasPaymentMethod(userId);
     return { hasPaymentMethod: hasPM };
   }),
@@ -126,12 +130,12 @@ export const paymentRouter = router({
   createConnectOnboarding: protectedProcedure
     .input(
       z.object({
-        returnUrl: z.string().url(),
-        refreshUrl: z.string().url(),
+        returnUrl: z.url({}),
+        refreshUrl: z.url({}),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.userId!;
+      const userId = ctx.userId;
 
       const [user] = await ctx.db
         .select({ email: users.email, name: users.name })
@@ -159,7 +163,7 @@ export const paymentRouter = router({
     }),
 
   getConnectStatus: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.userId!;
+    const userId = ctx.userId;
     const status = await getConnectAccountStatus(userId);
     return status;
   }),
@@ -172,7 +176,7 @@ export const paymentRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const riderId = ctx.userId!;
+      const riderId = ctx.userId;
 
       const [trip] = await ctx.db
         .select()
@@ -219,7 +223,7 @@ export const paymentRouter = router({
       if (!result.success) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: result.error || "Failed to process tip",
+          message: result.error ?? "Failed to process tip",
         });
       }
 
@@ -234,7 +238,7 @@ export const paymentRouter = router({
     }),
 
   getDriverPayoutHistory: protectedProcedure.query(async ({ ctx }) => {
-    const driverId = ctx.userId!;
+    const driverId = ctx.userId;
 
     const driverPayments = await ctx.db
       .select({
@@ -300,7 +304,7 @@ export const paymentRouter = router({
   }),
 
   getRiderPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
-    const riderId = ctx.userId!;
+    const riderId = ctx.userId;
 
     const riderPayments = await ctx.db
       .select({

@@ -15,16 +15,17 @@ export const locationRouter = router({
         speed: z.number().nullable().optional(),
       })
     )
-    .mutation(async () => {
+    .mutation(() => {
       return { success: true };
     }),
+
   saveDefaultAddress: protectedProcedure
     .input(saveAddressSchema)
     .mutation(async ({ ctx, input }) => {
       await db
         .insert(profiles)
         .values({
-          userId: ctx.userId!,
+          userId: ctx.userId,
           defaultAddress: input.address,
           defaultLat: input.latitude,
           defaultLong: input.longitude,

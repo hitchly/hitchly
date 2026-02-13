@@ -12,9 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: `${process.env.NEXT_PUBLIC_API_URL}/trpc`, // Point to Hono tRPC endpoint
-
-          // CRITICAL: Pass auth cookies to Hono
+          url: `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"}/trpc`,
           headers() {
             return {
               // specific headers if needed, but 'credentials: include' handles cookies
@@ -23,7 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           fetch(url, options) {
             return fetch(url, {
               ...options,
-              credentials: "include", // Ensure cookies (session) are sent to Hono
+              credentials: "include",
             });
           },
         }),
