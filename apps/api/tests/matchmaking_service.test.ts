@@ -1,21 +1,24 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { RiderRequest } from "../services/matchmaking_service";
 import {
   findMatchesForUser,
-  MAX_CANDIDATES,
   MATCH_THRESHOLD,
-} from "../matchmaking_service";
+  MAX_CANDIDATES,
+} from "../services/matchmaking_service";
 import {
+  createMockProfile,
   createMockTrip,
   createMockUser,
-  createMockProfile,
   createMockVehicle,
-} from "../../tests/utils/fixtures";
+} from "./utils/fixtures";
+
 // Mock the database and googlemaps service
 vi.mock("@hitchly/db/client", () => ({
   db: {
     select: vi.fn(),
   },
 }));
+
 vi.mock("../googlemaps", () => ({
   getDetourAndRideDetails: vi.fn().mockResolvedValue({
     detourSeconds: 300,
@@ -24,29 +27,34 @@ vi.mock("../googlemaps", () => ({
     rideDistanceKm: 15,
   }),
 }));
+
 vi.mock("../pricing_service", () => ({
   calculateEstimatedCost: vi.fn().mockReturnValue(10.5),
   calculateCostScore: vi.fn().mockReturnValue(0.9),
 }));
+
 describe("Matchmaking Service", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     // Re-import db to get fresh mock after clearing
     const { db } = await import("@hitchly/db/client");
     // Reset db.select mock and clear all return values
-    db.select.mockClear();
-    db.select.mockReset();
+    (db.select as any).mockClear();
+    (db.select as any).mockReset();
   });
+
   describe("Constants", () => {
     it("should have correct MAX_CANDIDATES", () => {
       expect(MAX_CANDIDATES).toBe(20);
     });
+
     it("should have correct MATCH_THRESHOLD", () => {
       expect(MATCH_THRESHOLD).toBe(0.3);
     });
   });
+
   describe("findMatchesForUser", () => {
-    const baseRequest = {
+    const baseRequest: RiderRequest = {
       riderId: "rider-123",
       origin: { lat: 43.2609, lng: -79.9192 },
       destination: { lat: 43.2557, lng: -79.8711 },
@@ -54,18 +62,21 @@ describe("Matchmaking Service", () => {
       maxOccupancy: 1,
       preference: "default",
     };
+
     it("should return empty array when no trips found", async () => {
       const { db } = await import("@hitchly/db/client");
+
       // Mock preferences query (first db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([null]), // No preferences found
           }),
         }),
       });
+
       // Mock trips query (second db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
@@ -78,31 +89,37 @@ describe("Matchmaking Service", () => {
           }),
         }),
       });
+
       // Mock active requests query (third db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([]), // No active requests
         }),
       });
+
       const matches = await findMatchesForUser(baseRequest);
       expect(matches).toEqual([]);
     });
+
     it("should filter trips with active requests", async () => {
       const { db } = await import("@hitchly/db/client");
+
       const mockTrip = createMockTrip({ id: "trip-1", status: "active" });
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
       // Mock preferences query (first db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([null]), // No preferences found
           }),
         }),
       });
+
       // Mock trips query
-      db.select
+      (db.select as any)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
@@ -146,15 +163,19 @@ describe("Matchmaking Service", () => {
             }),
           }),
         });
+
       const matches = await findMatchesForUser({
         ...baseRequest,
         riderId: "rider-123",
       });
+
       // Should filter out trip with active request
       expect(matches.length).toBe(0);
     });
+
     it("should return matches above threshold", async () => {
       const { db } = await import("@hitchly/db/client");
+
       const mockTrip = createMockTrip({
         id: "trip-1",
         status: "active",
@@ -163,16 +184,18 @@ describe("Matchmaking Service", () => {
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
       // Mock preferences query (first db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockImplementation(() => ({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([null]), // No preferences found
           }),
         })),
       });
+
       // Mock all queries
-      db.select
+      (db.select as any)
         .mockReturnValueOnce({
           from: vi.fn().mockImplementation(() => ({
             innerJoin: vi.fn().mockReturnValue({
@@ -217,12 +240,16 @@ describe("Matchmaking Service", () => {
             where: vi.fn().mockResolvedValue([]), // No test drivers
           }),
         });
+
       const matches = await findMatchesForUser(baseRequest);
+
       // Should process and return matches (mocked scoring will determine results)
       expect(Array.isArray(matches)).toBe(true);
     });
+
     it("should handle trips with existing passengers", async () => {
       const { db } = await import("@hitchly/db/client");
+
       const mockTrip = createMockTrip({
         id: "trip-1",
         status: "active",
@@ -232,16 +259,18 @@ describe("Matchmaking Service", () => {
       const mockUser = createMockUser({ id: "driver-1" });
       const mockProfile = createMockProfile({ userId: "driver-1" });
       const mockVehicle = createMockVehicle({ userId: "driver-1" });
+
       // Mock preferences query (first db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockImplementation(() => ({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([null]),
           }),
         })),
       });
+
       // Mock trips query (second db.select call)
-      db.select.mockReturnValueOnce({
+      (db.select as any).mockReturnValueOnce({
         from: vi.fn().mockImplementation(() => ({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
@@ -262,8 +291,9 @@ describe("Matchmaking Service", () => {
           }),
         })),
       });
+
       // Mock active requests query (third db.select call)
-      db.select
+      (db.select as any)
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([]), // No active requests
@@ -296,7 +326,9 @@ describe("Matchmaking Service", () => {
             where: vi.fn().mockResolvedValue([]), // No test drivers
           }),
         });
+
       const matches = await findMatchesForUser(baseRequest);
+
       // Should handle existing passengers correctly
       expect(Array.isArray(matches)).toBe(true);
     });
