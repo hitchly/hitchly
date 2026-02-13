@@ -1,6 +1,11 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import type { Href } from "expo-router";
-import { Tabs, usePathname, useRouter, useSegments } from "expo-router";
+import {
+  Tabs,
+  usePathname,
+  useRouter,
+  useSegments,
+  type Href,
+} from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
@@ -13,7 +18,10 @@ const AppRoutes = () => {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
-  const segments = useSegments();
+
+  const rawSegments = useSegments();
+  const segments: readonly string[] = rawSegments;
+
   const pathname = usePathname();
 
   const banCheck = trpc.profile.getBanStatus.useQuery(undefined, {
@@ -32,18 +40,11 @@ const AppRoutes = () => {
   const isDriver = appRole === "driver";
   const isRider = appRole === "rider";
 
-  // Determine which screen to show on initial entry
   const discoverScreenName = isDriver ? "requests" : "matchmaking";
 
-  // Hide tab bar only when on drive screen or ride screen (not trip detail screen)
-  const isOnDriveScreen = segments.some(
-    (segment) => (segment as string) === "drive"
-  );
-  const isOnRideScreen = segments.some(
-    (segment) => (segment as string) === "ride"
-  );
+  const isOnDriveScreen = segments.includes("drive");
+  const isOnRideScreen = segments.includes("ride");
 
-  // Role-based landing: when switching roles, ensure we don't land on a screen that is hidden/incorrect for that role.
   useEffect(() => {
     if (!userProfile?.profile.appRole) return;
     if (isDriver && pathname === "/matchmaking") {
@@ -55,7 +56,6 @@ const AppRoutes = () => {
       return;
     }
     if (isRider && pathname === "/requests") {
-      // ok for riders (My Requests)
       return;
     }
   }, [isDriver, isRider, pathname, router, userProfile?.profile.appRole]);
@@ -82,7 +82,6 @@ const AppRoutes = () => {
         },
       }}
     >
-      {/* Discover/Passengers tab - role-aware */}
       <Tabs.Screen
         name="matchmaking"
         options={{
@@ -111,7 +110,6 @@ const AppRoutes = () => {
           ),
         }}
       />
-      {/* My Trips tab - only visible for drivers */}
       <Tabs.Screen
         name="trips/index"
         options={{
@@ -126,7 +124,6 @@ const AppRoutes = () => {
           ),
         }}
       />
-      {/* Profile tab */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -140,7 +137,6 @@ const AppRoutes = () => {
           ),
         }}
       />
-      {/* Payment Methods tab - only visible for riders */}
       <Tabs.Screen
         name="payment-methods"
         options={{
@@ -155,8 +151,6 @@ const AppRoutes = () => {
           ),
         }}
       />
-
-      {/* Driver Payouts tab - only visible for drivers */}
       <Tabs.Screen
         name="driver-payouts"
         options={{
@@ -171,8 +165,6 @@ const AppRoutes = () => {
           ),
         }}
       />
-
-      {/* Safety tab - visible for everyone */}
       <Tabs.Screen
         name="safety"
         options={{
@@ -186,55 +178,15 @@ const AppRoutes = () => {
           ),
         }}
       />
-      {/* Hide unused screens and nested routes from tab bar */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/[id]"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/create"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/requests-swipe"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/requests"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/[id]/drive"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/[id]/ride"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="trips/[id]/review"
-        options={{
-          href: null,
-        }}
-      />
+
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="trips/[id]" options={{ href: null }} />
+      <Tabs.Screen name="trips/create" options={{ href: null }} />
+      <Tabs.Screen name="trips/requests-swipe" options={{ href: null }} />
+      <Tabs.Screen name="trips/requests" options={{ href: null }} />
+      <Tabs.Screen name="trips/[id]/drive" options={{ href: null }} />
+      <Tabs.Screen name="trips/[id]/ride" options={{ href: null }} />
+      <Tabs.Screen name="trips/[id]/review" options={{ href: null }} />
     </Tabs>
   );
 };
