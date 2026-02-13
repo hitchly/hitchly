@@ -1,9 +1,8 @@
+import { trips, tripRequests, reviews } from "@hitchly/db/schema";
+import { TRPCError } from "@trpc/server";
+import { eq, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
-import { trips, tripRequests, reviews } from "@hitchly/db/schema";
-
-import { eq, sql, inArray } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 
 const locationSchema = z.object({

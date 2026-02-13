@@ -3,6 +3,7 @@ import { formatLocationData } from "@hitchly/utils";
 import * as Location from "expo-location";
 import { useState, useRef, useCallback } from "react";
 import { Controller } from "react-hook-form";
+import type { TextInputProps } from "react-native";
 import {
   ActivityIndicator,
   Keyboard,
@@ -11,11 +12,12 @@ import {
   Switch,
   Text,
   TextInput,
-  TextInputProps,
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
+
 import { Button } from "./button";
 
 // --- 1. Controlled Text Input ---
@@ -87,14 +89,14 @@ interface ControlledLocationInputProps {
   onTextChange?: (text: string) => void;
 }
 
-type LocationResult = {
+interface LocationResult {
   id: string;
   title: string;
   subtitle: string;
   fullAddress: string;
   latitude: number;
   longitude: number;
-};
+}
 
 export function ControlledLocationInput({
   control,
@@ -359,7 +361,9 @@ export function ControlledNumberSelector({
                       borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
-                  onPress={() => onChange(num)}
+                  onPress={() => {
+                    onChange(num);
+                  }}
                 >
                   <Text
                     style={[
@@ -420,7 +424,9 @@ export function ControlledSegmentedControl({
                       { backgroundColor: colors.surface },
                     ],
                   ]}
-                  onPress={() => onChange(option.value)}
+                  onPress={() => {
+                    onChange(option.value);
+                  }}
                 >
                   <Text
                     style={[
@@ -476,7 +482,9 @@ export function ControlledChipGroup({ control, name, label, options }: any) {
                       borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
-                  onPress={() => onChange(option.value)}
+                  onPress={() => {
+                    onChange(option.value);
+                  }}
                 >
                   <Text
                     style={[

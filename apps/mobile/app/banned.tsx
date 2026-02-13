@@ -1,3 +1,5 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   View,
@@ -7,9 +9,8 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Ionicons from "@expo/vector-icons/Ionicons";
+
 import { authClient } from "../lib/auth-client";
-import { useRouter } from "expo-router";
 import { trpc } from "../lib/trpc";
 
 export default function BannedScreen() {

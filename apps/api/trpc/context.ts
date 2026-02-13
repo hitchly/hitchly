@@ -1,6 +1,7 @@
 // apps/api/trpc/context.ts
 import { db } from "@hitchly/db/client";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
+
 import { auth } from "../auth/auth";
 
 export async function createContext({

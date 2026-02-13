@@ -1,5 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,9 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,7 +74,9 @@ export default function LoginPage() {
                 placeholder="admin@hitchly.app"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
               />
             </div>
             <div className="grid gap-2">
@@ -83,7 +86,9 @@ export default function LoginPage() {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
               />
             </div>
 

@@ -2,7 +2,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -40,7 +39,9 @@ export const RequireLocation = ({
     onSuccess: () => {
       utils.profile.getMe.invalidate();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({

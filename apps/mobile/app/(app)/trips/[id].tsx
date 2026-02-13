@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { authClient } from "../../../lib/auth-client";
 import { isTestAccount } from "../../../lib/test-accounts";
 import { trpc } from "../../../lib/trpc";
@@ -32,7 +33,7 @@ export default function TripDetailScreen() {
     data: trip,
     isLoading,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery({ tripId: id }, { enabled: !!id });
 
   // Check if current user already has a request (computed early for logging)
   // Prioritize active requests (pending/accepted) over cancelled/rejected ones
@@ -58,12 +59,14 @@ export default function TripDetailScreen() {
     onSuccess: async () => {
       utils.trip.getTrips.invalidate();
       utils.trip.getTripRequests.invalidate();
-      await utils.trip.getTripById.invalidate({ tripId: id! });
+      await utils.trip.getTripById.invalidate({ tripId: id });
       await refetch();
       Alert.alert("Success", "Trip cancelled successfully", [
         {
           text: "OK",
-          onPress: () => router.push("/trips" as any),
+          onPress: () => {
+            router.push("/trips" as any);
+          },
         },
       ]);
     },
@@ -74,7 +77,7 @@ export default function TripDetailScreen() {
 
   const cancelTripRequest = trpc.trip.cancelTripRequest.useMutation({
     onSuccess: async () => {
-      await utils.trip.getTripById.invalidate({ tripId: id! });
+      await utils.trip.getTripById.invalidate({ tripId: id });
       utils.trip.getTripRequests.invalidate();
       utils.trip.getTrips.invalidate();
       // Refetch trip data to ensure UI updates

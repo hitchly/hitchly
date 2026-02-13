@@ -10,8 +10,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "../../context/theme-context";
-import { trpc } from "../../lib/trpc";
 import { authClient } from "../../lib/auth-client";
+import { trpc } from "../../lib/trpc";
 
 export default function HomeScreen() {
   const { colors } = useTheme();

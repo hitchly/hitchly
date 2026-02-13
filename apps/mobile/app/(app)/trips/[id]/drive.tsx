@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import {
   TripCompletionSummary,
   type TripCompletionSummaryData,
@@ -18,14 +19,14 @@ import {
 import { openStopNavigation } from "../../../../lib/navigation";
 import { trpc } from "../../../../lib/trpc";
 
-type Stop = {
+interface Stop {
   type: "pickup" | "dropoff";
   requestId: string;
   passengerName: string;
   location: string;
   lat: number;
   lng: number;
-};
+}
 
 const getCurrentStop = (trip: any, requests: any[]): Stop | null => {
   if (!trip || !requests || requests.length === 0) {
@@ -95,7 +96,7 @@ export default function DriveScreen() {
     isLoading,
     error,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery({ tripId: id }, { enabled: !!id });
 
   const updatePassengerStatus = trpc.trip.updatePassengerStatus.useMutation({
     onSuccess: () => {
@@ -129,7 +130,7 @@ export default function DriveScreen() {
     onSuccess: (result: any) => {
       // Invalidate queries to refresh UI
       utils.trip.getTrips.invalidate();
-      utils.trip.getTripById.invalidate({ tripId: id! });
+      utils.trip.getTripById.invalidate({ tripId: id });
       // Show driver completion summary (placeholder values until payment module is implemented).
       setSummaryData((result?.summary as TripCompletionSummaryData) ?? null);
       setSummaryVisible(true);
@@ -166,7 +167,9 @@ export default function DriveScreen() {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -187,7 +190,9 @@ export default function DriveScreen() {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -197,7 +202,12 @@ export default function DriveScreen() {
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Trip not found</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              router.back();
+            }}
+          >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -241,7 +251,7 @@ export default function DriveScreen() {
           onPress: () => {
             updatePassengerStatus.mutate(
               {
-                tripId: id!,
+                tripId: id,
                 requestId: currentStop.requestId,
                 action,
               },
@@ -280,7 +290,9 @@ export default function DriveScreen() {
       />
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />

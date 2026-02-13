@@ -1,3 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import {
   View,
   Text,
@@ -8,11 +11,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
-import { trpc } from "../../lib/trpc";
+
 import { useTheme } from "../../context/theme-context";
+import { trpc } from "../../lib/trpc";
 
 export default function DriverPayoutsScreen() {
   const router = useRouter();
@@ -87,7 +88,9 @@ export default function DriverPayoutsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -293,8 +296,7 @@ export default function DriverPayoutsScreen() {
 
         {/* Empty History State */}
         {connectStatus?.payoutsEnabled &&
-          payoutHistory &&
-          payoutHistory.payments.length === 0 && (
+          payoutHistory?.payments.length === 0 && (
             <View style={styles.emptyCard}>
               <Ionicons
                 name="receipt-outline"

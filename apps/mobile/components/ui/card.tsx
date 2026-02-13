@@ -1,13 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native";
+import type { StyleProp, ViewStyle } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 
 interface CardProps {

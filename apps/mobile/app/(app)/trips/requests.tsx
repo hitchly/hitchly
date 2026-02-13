@@ -12,8 +12,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card } from "../../../components/ui/card";
+
 import { Button } from "../../../components/ui/button";
+import { Card } from "../../../components/ui/card";
 import { useTheme } from "../../../context/theme-context";
 import { authClient } from "../../../lib/auth-client";
 import { trpc } from "../../../lib/trpc";
@@ -146,7 +147,9 @@ export default function TripRequestsScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -283,10 +286,11 @@ export default function TripRequestsScreen() {
                                 { text: "Cancel", style: "cancel" },
                                 {
                                   text: "Accept",
-                                  onPress: () =>
+                                  onPress: () => {
                                     acceptRequest.mutate({
                                       requestId: request.id,
-                                    }),
+                                    });
+                                  },
                                 },
                               ]
                             );
@@ -306,10 +310,11 @@ export default function TripRequestsScreen() {
                                 {
                                   text: "Reject",
                                   style: "destructive",
-                                  onPress: () =>
+                                  onPress: () => {
                                     rejectRequest.mutate({
                                       requestId: request.id,
-                                    }),
+                                    });
+                                  },
                                 },
                               ]
                             );
@@ -333,10 +338,11 @@ export default function TripRequestsScreen() {
                               {
                                 text: "Yes",
                                 style: "destructive",
-                                onPress: () =>
+                                onPress: () => {
                                   cancelRequest.mutate({
                                     requestId: request.id,
-                                  }),
+                                  });
+                                },
                               },
                             ]
                           );

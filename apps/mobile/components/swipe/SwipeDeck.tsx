@@ -1,5 +1,7 @@
+import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Dimensions, StyleSheet, Text, View, ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -9,7 +11,6 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
@@ -202,12 +203,7 @@ export function SwipeDeck<T extends { id?: string; rideId?: string }>({
                 const idx = currentCardIndex.value;
                 let cardId = "";
                 // Safely access array
-                if (
-                  idx >= 0 &&
-                  idx < dataArrayLength &&
-                  dataArray &&
-                  dataArray[idx]
-                ) {
+                if (idx >= 0 && idx < dataArrayLength && dataArray?.[idx]) {
                   const item = dataArray[idx];
                   if (item && typeof item === "object") {
                     const obj = item as Record<string, any>;

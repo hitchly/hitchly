@@ -1,7 +1,8 @@
-import { Providers } from "@/components/providers";
 import type { Metadata } from "next";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Toaster } from "sonner";
+
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {

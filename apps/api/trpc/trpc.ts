@@ -1,8 +1,9 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import type { Context } from "./context";
 import { db } from "@hitchly/db/client";
 import { eq } from "@hitchly/db/client";
 import { users } from "@hitchly/db/schema";
+import { initTRPC, TRPCError } from "@trpc/server";
+
+import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create();
 

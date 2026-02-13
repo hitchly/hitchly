@@ -1,15 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, {
-  Component,
-  ErrorInfo,
-  ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import type { ErrorInfo, ReactNode } from "react";
+import React, { Component, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { SwipeDeck, TripCard, type RideMatch } from "../../components/swipe";
 import { DatePickerComponent } from "../../components/ui/date-picker";
 import { useTheme } from "../../context/theme-context";
@@ -310,7 +304,9 @@ export default function Matchmaking() {
     });
 
     // Return cancellation function in case component unmounts
-    return () => handle.cancel();
+    return () => {
+      handle.cancel();
+    };
   };
 
   const handleSwipeLeft = (match: RideMatch) => {
@@ -427,11 +423,11 @@ export default function Matchmaking() {
                     styles.swapButton,
                     { backgroundColor: colors.primaryLight },
                   ]}
-                  onPress={() =>
+                  onPress={() => {
                     setDirection(
                       direction === "toMcmaster" ? "fromMcmaster" : "toMcmaster"
-                    )
-                  }
+                    );
+                  }}
                 >
                   <Ionicons
                     name="swap-vertical"
@@ -544,7 +540,9 @@ export default function Matchmaking() {
               </Text>
               <DatePickerComponent
                 value={desiredDate || new Date()}
-                onChange={(date) => setDesiredDate(date)}
+                onChange={(date) => {
+                  setDesiredDate(date);
+                }}
                 minimumDate={new Date()}
                 backgroundColor={colors.background}
                 borderColor={colors.border}

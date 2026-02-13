@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
-import { z } from "zod";
 
 import {
   complaints,
@@ -10,6 +8,9 @@ import {
   users,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { z } from "zod";
+
 import { requireTestAccount } from "../../lib/test-accounts";
 import { geocodeAddress } from "../../services/googlemaps";
 import { protectedProcedure, router } from "../trpc";
@@ -474,7 +475,7 @@ export const adminRouter = router({
           .values({
             id: requestId,
             tripId,
-            riderId: rider!.id,
+            riderId: rider.id,
             pickupLat: MAIN_ST_COORDS.lat + (Math.random() - 0.5) * 0.01,
             pickupLng: MAIN_ST_COORDS.lng + (Math.random() - 0.5) * 0.01,
             dropoffLat: MCMASTER_COORDS.lat,

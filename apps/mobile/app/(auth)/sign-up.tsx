@@ -1,9 +1,11 @@
-import { SignUpInput, signUpSchema } from "@hitchly/db";
+import type { SignUpInput } from "@hitchly/db";
+import { signUpSchema } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
+
 import { ControlledInput, SubmitButton } from "../../components/ui/form";
 import { OnboardingLayout } from "../../components/ui/screen-layout";
 import { authClient } from "../../lib/auth-client";

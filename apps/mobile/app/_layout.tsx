@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { ActiveTripBanner } from "../components/trip/active-trip-banner";
 import { NavTheme } from "../constants/theme";
 import { AppThemeProvider } from "../context/theme-context";
@@ -124,18 +125,18 @@ function AppContent() {
 
   // Get current stop info for banner
   const getCurrentStopText = () => {
-    if (!tripDetails || tripDetails.status !== "in_progress") return undefined;
+    if (tripDetails?.status !== "in_progress") return undefined;
     if (!tripDetails.requests || tripDetails.requests.length === 0)
       return undefined;
 
     // Find first incomplete stop
     for (const request of tripDetails.requests) {
       if (request.status === "accepted") {
-        const passengerName = (request as any).rider?.name || "Passenger";
+        const passengerName = request.rider?.name || "Passenger";
         return `Next: Pickup ${passengerName}`;
       }
       if (request.status === "on_trip") {
-        const passengerName = (request as any).rider?.name || "Passenger";
+        const passengerName = request.rider?.name || "Passenger";
         return `Next: Drop off ${passengerName}`;
       }
     }

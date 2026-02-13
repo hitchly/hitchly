@@ -1,12 +1,11 @@
+import type { StyleProp, TouchableOpacityProps, ViewStyle } from "react-native";
 import {
   ActivityIndicator,
-  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableOpacityProps,
-  ViewStyle,
 } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 
 interface ButtonProps extends TouchableOpacityProps {

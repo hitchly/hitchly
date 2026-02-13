@@ -12,14 +12,14 @@ export const COST_DISCOUNT_TIERS: Record<number, number> = {
 };
 
 // --- TYPES ---
-export type CostEstimate = {
+export interface CostEstimate {
   baseCost: number;
   detourSurcharge: number;
   passengerDiscount: number;
   finalCost: number;
-};
+}
 
-export type CostBreakdown = {
+export interface CostBreakdown {
   distanceCharge: number;
   timeCharge: number;
   baseFare: number;
@@ -27,13 +27,13 @@ export type CostBreakdown = {
   detourSurchargePercent: number;
   discountPercent: number;
   finalCost: number;
-};
+}
 
 export function calculateEstimatedCost(
   distKm: number,
   durSeconds: number,
   currentPassengers: number,
-  detourSeconds: number = 0
+  detourSeconds = 0
 ): number {
   const durMins = durSeconds / 60;
   const rawCost =
@@ -58,7 +58,7 @@ export function calculateCostBreakdown(
   distKm: number,
   durSeconds: number,
   currentPassengers: number,
-  detourSeconds: number = 0
+  detourSeconds = 0
 ): CostBreakdown {
   const durMins = durSeconds / 60;
   const distanceCharge = distKm * PLATFORM_RATE_PER_KM;

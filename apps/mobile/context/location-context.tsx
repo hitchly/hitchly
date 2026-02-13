@@ -1,5 +1,6 @@
 import * as Location from "expo-location";
 import { createContext, useEffect, useMemo } from "react";
+
 import { trpc } from "../lib/trpc";
 
 const LocationContext = createContext({});

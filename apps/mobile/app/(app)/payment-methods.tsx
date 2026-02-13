@@ -1,3 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
+import { CardField, useStripe } from "@stripe/stripe-react-native";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   View,
@@ -9,11 +12,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { CardField, useStripe } from "@stripe/stripe-react-native";
-import { trpc } from "../../lib/trpc";
+
 import { useTheme } from "../../context/theme-context";
+import { trpc } from "../../lib/trpc";
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
@@ -66,7 +67,9 @@ export default function PaymentMethodsScreen() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Set Default",
-          onPress: () => setDefaultPaymentMethod.mutate({ paymentMethodId }),
+          onPress: () => {
+            setDefaultPaymentMethod.mutate({ paymentMethodId });
+          },
         },
       ]
     );
@@ -115,7 +118,9 @@ export default function PaymentMethodsScreen() {
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => deletePaymentMethod.mutate({ paymentMethodId }),
+          onPress: () => {
+            deletePaymentMethod.mutate({ paymentMethodId });
+          },
         },
       ]
     );
@@ -141,7 +146,9 @@ export default function PaymentMethodsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -204,7 +211,9 @@ export default function PaymentMethodsScreen() {
                     </View>
                   </View>
                   <TouchableOpacity
-                    onPress={() => handleDeleteCard(method.id, method.last4)}
+                    onPress={() => {
+                      handleDeleteCard(method.id, method.last4);
+                    }}
                     style={styles.deleteButton}
                     disabled={deletePaymentMethod.isPending}
                   >
@@ -253,7 +262,9 @@ export default function PaymentMethodsScreen() {
             <View style={styles.addCardButtons}>
               <TouchableOpacity
                 style={[styles.button, styles.cancelButton]}
-                onPress={() => setShowAddCard(false)}
+                onPress={() => {
+                  setShowAddCard(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -277,7 +288,9 @@ export default function PaymentMethodsScreen() {
         ) : (
           <TouchableOpacity
             style={styles.addCardButton}
-            onPress={() => setShowAddCard(true)}
+            onPress={() => {
+              setShowAddCard(true);
+            }}
           >
             <Ionicons
               name="add-circle-outline"

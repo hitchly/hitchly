@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { DateTimePickerComponent } from "../../../components/ui/datetime-picker";
 import { NumericStepper } from "../../../components/ui/numeric-stepper";
 import { trpc } from "../../../lib/trpc";
@@ -66,7 +67,9 @@ export default function CreateTripScreen() {
       Alert.alert("Success", "Trip created successfully!", [
         {
           text: "OK",
-          onPress: () => router.push("/trips" as any),
+          onPress: () => {
+            router.push("/trips" as any);
+          },
         },
       ]);
     },
@@ -141,7 +144,9 @@ export default function CreateTripScreen() {
                 styles.directionButton,
                 isToCampus && styles.directionButtonActive,
               ]}
-              onPress={() => toggleDirection(true)}
+              onPress={() => {
+                toggleDirection(true);
+              }}
             >
               <Ionicons
                 name="school-outline"
@@ -162,7 +167,9 @@ export default function CreateTripScreen() {
                 styles.directionButton,
                 !isToCampus && styles.directionButtonActive,
               ]}
-              onPress={() => toggleDirection(false)}
+              onPress={() => {
+                toggleDirection(false);
+              }}
             >
               <Ionicons
                 name="home-outline"

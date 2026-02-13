@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { authClient } from "../../../../lib/auth-client";
 import { trpc } from "../../../../lib/trpc";
 
@@ -21,7 +22,7 @@ export default function TripReviewScreen() {
   const userId = session?.user?.id;
 
   const { data: trip } = trpc.trip.getTripById.useQuery(
-    { tripId: id! },
+    { tripId: id },
     { enabled: !!id }
   );
 
@@ -36,7 +37,9 @@ export default function TripReviewScreen() {
   const [ratedRiderIds, setRatedRiderIds] = useState<Set<string>>(new Set());
 
   const submitRatingMutation = trpc.reviews.submitRating.useMutation({
-    onError: (e) => Alert.alert("Error", e.message),
+    onError: (e) => {
+      Alert.alert("Error", e.message);
+    },
   });
 
   const handleRiderSubmit = () => {
@@ -44,7 +47,7 @@ export default function TripReviewScreen() {
 
     submitRatingMutation.mutate(
       {
-        tripId: id!,
+        tripId: id,
         targetUserId: trip.driverId,
         rating: rating,
       },
@@ -62,7 +65,7 @@ export default function TripReviewScreen() {
 
     submitRatingMutation.mutate(
       {
-        tripId: id!,
+        tripId: id,
         targetUserId: riderId,
         rating: score,
       },
@@ -80,7 +83,9 @@ export default function TripReviewScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backBtn}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -106,7 +111,12 @@ export default function TripReviewScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => {
+            router.back();
+          }}
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
@@ -198,12 +208,12 @@ export default function TripReviewScreen() {
                           <TouchableOpacity
                             key={v}
                             disabled={isRated}
-                            onPress={() =>
+                            onPress={() => {
                               setDriverRatings((prev) => ({
                                 ...prev,
                                 [riderId]: v,
-                              }))
-                            }
+                              }));
+                            }}
                           >
                             <Ionicons
                               name={
@@ -221,7 +231,9 @@ export default function TripReviewScreen() {
                           styles.secondaryBtn,
                           isRated && styles.btnDisabled,
                         ]}
-                        onPress={() => handleDriverSubmit(riderId)}
+                        onPress={() => {
+                          handleDriverSubmit(riderId);
+                        }}
                         disabled={isRated}
                       >
                         <Text style={styles.secondaryBtnText}>

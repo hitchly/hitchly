@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-export type TripCompletionSummaryData = {
+export interface TripCompletionSummaryData {
   durationMinutes?: number | null;
   totalEarningsCents?: number | null;
   passengerCount?: number | null;
@@ -17,7 +17,7 @@ export type TripCompletionSummaryData = {
     amountCents?: number | null;
   }[];
   totalDistanceKm?: number | null;
-};
+}
 
 const formatCurrency = (cents?: number | null) => {
   if (cents === null || cents === undefined) return "TBD";

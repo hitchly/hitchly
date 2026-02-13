@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import {
   SwipeDeck,
   RiderCard,
@@ -133,7 +134,9 @@ export default function DriverSwipeRequestsScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -163,7 +166,9 @@ export default function DriverSwipeRequestsScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -198,7 +203,9 @@ export default function DriverSwipeRequestsScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />

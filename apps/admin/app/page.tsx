@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { authClient } from "@/lib/auth";
 import { Loader2 } from "lucide-react"; // Import the loader icon
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { authClient } from "@/lib/auth";
 
 export default function AdminDashboard() {
   const router = useRouter();

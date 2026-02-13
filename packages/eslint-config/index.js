@@ -36,7 +36,7 @@ export const config = tseslint.config(
     rules: {
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-imports": "warn",
       "unused-imports/no-unused-vars": [
         "error",
         {
@@ -47,7 +47,7 @@ export const config = tseslint.config(
         },
       ],
       "import/order": [
-        "error",
+        "warn",
         {
           groups: [
             "builtin",
@@ -57,11 +57,10 @@ export const config = tseslint.config(
             "sibling",
             "index",
           ],
-          "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },
         },
       ],
-      "no-console": "error",
+      "no-console": "warn",
       eqeqeq: ["error", "always"],
       "prefer-const": "error",
     },

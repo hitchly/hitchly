@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 
-export type RideMatch = {
+export interface RideMatch {
   rideId: string;
   driverId: string;
   name: string;
@@ -22,7 +23,7 @@ export type RideMatch = {
     availableSeats: number;
   };
   debugScores?: any;
-};
+}
 
 interface TripCardProps {
   match: RideMatch;

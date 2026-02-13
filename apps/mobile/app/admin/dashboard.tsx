@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useTheme } from "../../context/theme-context";
 import { trpc } from "../../lib/trpc";
 
@@ -56,7 +57,9 @@ export default function AdminDashboard() {
       Alert.alert("Success", "User banned.");
       refetchUsers();
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const unbanUserMutation = trpc.admin.unbanUser.useMutation({
@@ -64,7 +67,9 @@ export default function AdminDashboard() {
       Alert.alert("Success", "User unbanned.");
       refetchUsers();
     },
-    onError: (err: any) => Alert.alert("Error", err.message),
+    onError: (err: any) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const handleBanToggle = (userId: string, isBanned: boolean) => {
@@ -79,7 +84,9 @@ export default function AdminDashboard() {
           {
             text: "Ban",
             style: "destructive",
-            onPress: () => banUserMutation.mutate({ userId }),
+            onPress: () => {
+              banUserMutation.mutate({ userId });
+            },
           },
         ]
       );
@@ -160,7 +167,9 @@ export default function AdminDashboard() {
           styles.actionBtn,
           { backgroundColor: item.banned ? colors.success : colors.error },
         ]}
-        onPress={() => handleBanToggle(item.id, item.banned || false)}
+        onPress={() => {
+          handleBanToggle(item.id, item.banned || false);
+        }}
       >
         <Ionicons
           name={item.banned ? "shield-checkmark" : "ban"}
@@ -222,7 +231,9 @@ export default function AdminDashboard() {
         {/* Quick Action: Ban Target */}
         <TouchableOpacity
           style={[styles.banTargetBtn, { backgroundColor: colors.error }]}
-          onPress={() => handleBanToggle(item.targetId, false)}
+          onPress={() => {
+            handleBanToggle(item.targetId, false);
+          }}
         >
           <Ionicons name="ban" size={16} color="white" />
           <Text style={styles.banTargetText}>Ban Target User</Text>
@@ -236,7 +247,12 @@ export default function AdminDashboard() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => {
+            router.back();
+          }}
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>
@@ -266,7 +282,9 @@ export default function AdminDashboard() {
                   styles.tab,
                   activeTab === "users" && { backgroundColor: colors.text },
                 ]}
-                onPress={() => setActiveTab("users")}
+                onPress={() => {
+                  setActiveTab("users");
+                }}
               >
                 <Text
                   style={[
@@ -287,7 +305,9 @@ export default function AdminDashboard() {
                   styles.tab,
                   activeTab === "reports" && { backgroundColor: colors.text },
                 ]}
-                onPress={() => setActiveTab("reports")}
+                onPress={() => {
+                  setActiveTab("reports");
+                }}
               >
                 <Text
                   style={[

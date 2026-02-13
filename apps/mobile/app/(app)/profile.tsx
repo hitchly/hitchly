@@ -13,10 +13,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  EditModalState,
-  EditProfileModal,
-} from "../../components/profile/edit-profile-modal";
+
+import type { EditModalState } from "../../components/profile/edit-profile-modal";
+import { EditProfileModal } from "../../components/profile/edit-profile-modal";
 import { InfoCard, InfoRow } from "../../components/ui/card";
 import { Chip, LoadingSkeleton } from "../../components/ui/display";
 import { useTheme } from "../../context/theme-context";
@@ -49,7 +48,9 @@ export default function ProfileScreen() {
   const [modalState, setModalState] = useState<EditModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleCloseModal = () => setModalState(null);
+  const handleCloseModal = () => {
+    setModalState(null);
+  };
 
   const onSuccess = () => {
     utils.profile.getMe.invalidate();
@@ -178,7 +179,9 @@ export default function ProfileScreen() {
                   styles.adminPill,
                   { backgroundColor: colors.text, shadowColor: colors.text },
                 ]}
-                onPress={() => router.push("/admin/dashboard" as any)}
+                onPress={() => {
+                  router.push("/admin/dashboard" as any);
+                }}
               >
                 <Ionicons
                   name="shield-checkmark"
@@ -203,7 +206,7 @@ export default function ProfileScreen() {
         <View style={styles.cardsContainer}>
           <InfoCard
             title="Address"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "location",
                 initialData: {
@@ -211,8 +214,8 @@ export default function ProfileScreen() {
                   latitude: userRecord?.profile?.defaultLat ?? 0,
                   longitude: userRecord?.profile?.defaultLong ?? 0,
                 },
-              })
-            }
+              });
+            }}
             empty={!locationDisplay}
             emptyText="Set your primary pickup address."
             actionLabel="Edit Address"
@@ -248,7 +251,7 @@ export default function ProfileScreen() {
 
           <InfoCard
             title="About Me"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "profile",
                 initialData: {
@@ -259,8 +262,8 @@ export default function ProfileScreen() {
                   universityRole:
                     userRecord?.profile?.universityRole ?? "student",
                 },
-              })
-            }
+              });
+            }}
             empty={!userRecord?.profile}
             emptyText="Complete your profile to start riding."
           >
@@ -299,7 +302,7 @@ export default function ProfileScreen() {
 
           <InfoCard
             title="Ride Preferences"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "preferences",
                 initialData: {
@@ -308,8 +311,8 @@ export default function ProfileScreen() {
                   pets: userRecord?.preferences?.pets ?? false,
                   smoking: userRecord?.preferences?.smoking ?? false,
                 },
-              })
-            }
+              });
+            }}
             empty={!userRecord?.preferences}
             emptyText="Set your ride comfort settings."
           >
@@ -379,7 +382,7 @@ export default function ProfileScreen() {
           {isDriver && (
             <InfoCard
               title="Vehicle Details"
-              onEdit={() =>
+              onEdit={() => {
                 setModalState({
                   type: "vehicle",
                   initialData: {
@@ -389,8 +392,8 @@ export default function ProfileScreen() {
                     plate: userRecord?.vehicle?.plate ?? "",
                     seats: userRecord?.vehicle?.seats ?? 4,
                   },
-                })
-              }
+                });
+              }}
               empty={!userRecord?.vehicle}
               emptyText="Add your vehicle to start driving."
               actionLabel="Add Vehicle"

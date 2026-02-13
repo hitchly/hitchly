@@ -1,6 +1,7 @@
 import type { AppRouter } from "@hitchly/api-types";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+
 import { authClient } from "./auth-client";
 
 const getBaseUrl = () => {

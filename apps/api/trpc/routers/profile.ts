@@ -14,6 +14,7 @@ import {
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
 import { protectedProcedure, router } from "../trpc";
 
 const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder

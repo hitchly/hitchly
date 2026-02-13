@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,10 +12,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { NumericStepper } from "../../../components/ui/numeric-stepper";
-import { trpc } from "../../../lib/trpc";
-import { isTestAccount } from "../../../lib/test-accounts";
 import { authClient } from "../../../lib/auth-client";
+import { isTestAccount } from "../../../lib/test-accounts";
+import { trpc } from "../../../lib/trpc";
 
 export default function TripsScreen() {
   const router = useRouter();
@@ -112,14 +113,18 @@ export default function TripsScreen() {
           {isTestUser && (
             <TouchableOpacity
               style={styles.testButton}
-              onPress={() => setShowTestTripModal(true)}
+              onPress={() => {
+                setShowTestTripModal(true);
+              }}
             >
               <Text style={styles.testButtonText}>Add Test Trip</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={styles.createButton}
-            onPress={() => router.push("/trips/create" as any)}
+            onPress={() => {
+              router.push("/trips/create" as any);
+            }}
           >
             <Text style={styles.createButtonText}>+ Create Trip</Text>
           </TouchableOpacity>
@@ -130,7 +135,9 @@ export default function TripsScreen() {
         visible={showTestTripModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowTestTripModal(false)}
+        onRequestClose={() => {
+          setShowTestTripModal(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -156,7 +163,9 @@ export default function TripsScreen() {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setShowTestTripModal(false)}
+                onPress={() => {
+                  setShowTestTripModal(false);
+                }}
               >
                 <Text style={styles.modalButtonCancelText}>Cancel</Text>
               </TouchableOpacity>
@@ -197,7 +206,9 @@ export default function TripsScreen() {
             <TouchableOpacity
               key={trip.id}
               style={styles.tripCard}
-              onPress={() => router.push(`/trips/${trip.id}` as any)}
+              onPress={() => {
+                router.push(`/trips/${trip.id}` as any);
+              }}
             >
               <View style={styles.tripHeader}>
                 <View style={styles.tripInfo}>

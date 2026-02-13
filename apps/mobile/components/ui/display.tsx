@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 
 export const Chip = ({

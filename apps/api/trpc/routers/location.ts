@@ -2,6 +2,7 @@ import { saveAddressSchema } from "@hitchly/db";
 import { db } from "@hitchly/db/client";
 import { profiles } from "@hitchly/db/schema";
 import { z } from "zod";
+
 import { protectedProcedure, router } from "../trpc";
 
 export const locationRouter = router({

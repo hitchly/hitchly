@@ -16,7 +16,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
+
 import {
   LocationForm,
   PreferencesForm,

@@ -29,6 +29,7 @@ vi.mock("@hitchly/db/schema", () => ({
 
 // Import after mocks are set up
 import { Client } from "@googlemaps/google-maps-services-js";
+
 import {
   geocodeAddress,
   getDetourAndRideDetails,

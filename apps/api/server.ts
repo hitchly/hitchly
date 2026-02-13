@@ -5,6 +5,7 @@ import "dotenv/config";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+
 import { auth } from "./auth/auth";
 import { createContext } from "./trpc/context";
 import { appRouter } from "./trpc/routers";

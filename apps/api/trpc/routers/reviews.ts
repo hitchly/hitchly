@@ -1,9 +1,10 @@
-import { router, protectedProcedure } from "../trpc";
-import { z } from "zod";
 import { db } from "@hitchly/db/client";
-import { and, eq, sql } from "drizzle-orm";
 import { reviews, trips } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
+import { and, eq, sql } from "drizzle-orm";
+import { z } from "zod";
+
+import { router, protectedProcedure } from "../trpc";
 
 export const reviewsRouter = router({
   submitRating: protectedProcedure

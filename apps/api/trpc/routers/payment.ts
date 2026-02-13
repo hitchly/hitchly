@@ -1,7 +1,9 @@
-import { z } from "zod";
-import Stripe from "stripe";
+import { users, trips, tripRequests, payments, tips } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../trpc";
+import { eq, and, desc, ne } from "drizzle-orm";
+import Stripe from "stripe";
+import { z } from "zod";
+
 import {
   getOrCreateStripeCustomer,
   getStripeCustomerId,
@@ -16,8 +18,7 @@ import {
   processTip,
   getPaymentStatus,
 } from "../../services/payment_service";
-import { users, trips, tripRequests, payments, tips } from "@hitchly/db/schema";
-import { eq, and, desc, ne } from "drizzle-orm";
+import { protectedProcedure, router } from "../trpc";
 
 export const paymentRouter = router({
   createSetupIntent: protectedProcedure.mutation(async ({ ctx }) => {

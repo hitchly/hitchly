@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 
-export type TripRequestWithDetails = {
+export interface TripRequestWithDetails {
   id: string;
   tripId: string;
   riderId: string;
@@ -26,7 +27,7 @@ export type TripRequestWithDetails = {
     email: string;
     image: string | null;
   } | null;
-};
+}
 
 interface RiderCardProps {
   request: TripRequestWithDetails;

@@ -1,9 +1,10 @@
 import "dotenv/config";
 import { db } from "@hitchly/db/client";
 import { trips, tripRequests } from "@hitchly/db/schema";
-import { geocodeAddress } from "../services/googlemaps";
 import { eq } from "drizzle-orm";
 import { Pool } from "pg";
+
+import { geocodeAddress } from "../services/googlemaps";
 
 /**
  * Migration script to merge rides table into trips table
@@ -45,7 +46,7 @@ async function migrateRidesToTrips() {
           SELECT * FROM rides;
         `);
 
-      const rides = ridesResult.rows as any[];
+      const rides = ridesResult.rows;
 
       if (rides.length === 0) {
         console.log("ℹ️  No rides found to migrate.");
@@ -112,7 +113,7 @@ async function migrateRidesToTrips() {
           SELECT * FROM ride_requests;
         `);
 
-        const rideRequests = requestsResult.rows as any[];
+        const rideRequests = requestsResult.rows;
 
         if (rideRequests.length > 0) {
           console.log(
@@ -185,7 +186,7 @@ async function migrateRidesToTrips() {
       LIMIT 100;
     `);
 
-    const tripsToGeocode = tripsToGeocodeResult.rows as any[];
+    const tripsToGeocode = tripsToGeocodeResult.rows;
 
     if (tripsToGeocode.length === 0) {
       console.log("ℹ️  No trips need geocoding.");

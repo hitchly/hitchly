@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -15,15 +15,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../context/theme-context";
-import { authClient } from "../../lib/auth-client";
-import { trpc } from "../../lib/trpc";
-import { isTestAccount } from "../../lib/test-accounts";
+
 import {
   SwipeDeck,
   RiderCard,
   type TripRequestWithDetails,
 } from "../../components/swipe";
+import { useTheme } from "../../context/theme-context";
+import { authClient } from "../../lib/auth-client";
+import { isTestAccount } from "../../lib/test-accounts";
+import { trpc } from "../../lib/trpc";
 
 export default function RequestsScreen() {
   const { colors } = useTheme();

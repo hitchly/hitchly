@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import type { RiderRequest } from "../services/matchmaking_service";
 import {
   findMatchesForUser,
   MATCH_THRESHOLD,
   MAX_CANDIDATES,
 } from "../services/matchmaking_service";
+
 import {
   createMockProfile,
   createMockTrip,

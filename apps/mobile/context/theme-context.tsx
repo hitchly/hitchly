@@ -1,12 +1,13 @@
 import React, { createContext, useContext } from "react";
 import { useColorScheme } from "react-native";
+
 import { Colors, Fonts } from "../constants/theme";
 
-type Theme = {
+interface Theme {
   colors: typeof Colors.light;
   fonts: typeof Fonts;
   isDark: boolean;
-};
+}
 
 const ThemeContext = createContext<Theme>({
   colors: Colors.light,

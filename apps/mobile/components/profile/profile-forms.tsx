@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { useTheme } from "../../context/theme-context";
 import { useGPSLocation } from "../../hooks/use-gps-location";
 import { trpc } from "../../lib/trpc";
@@ -90,7 +91,9 @@ export function ProfileForm({
 
       <SubmitButton
         title="Save Profile"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleSubmit((data) => {
+          mutation.mutate(data);
+        })}
         isPending={mutation.isPending}
       />
     </View>
@@ -126,7 +129,9 @@ export function PreferencesForm({
       </View>
       <SubmitButton
         title="Save Preferences"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleSubmit((data) => {
+          mutation.mutate(data);
+        })}
         isPending={mutation.isPending}
       />
     </View>
@@ -197,7 +202,9 @@ export function VehicleForm({
 
       <SubmitButton
         title="Save Vehicle"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleSubmit((data) => {
+          mutation.mutate(data);
+        })}
         isPending={mutation.isPending}
       />
     </View>
@@ -226,8 +233,12 @@ export function LocationForm({
   const isVerified = lat !== 0 && long !== 0;
 
   const mutation = trpc.location.saveDefaultAddress.useMutation({
-    onSuccess: () => onSuccess(),
-    onError: (err) => Alert.alert("Error", err.message),
+    onSuccess: () => {
+      onSuccess();
+    },
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const { getLocation, isGeocoding } = useGPSLocation((loc) => {

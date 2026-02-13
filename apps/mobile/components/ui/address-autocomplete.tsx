@@ -167,7 +167,9 @@ export const AddressAutocomplete = ({
                   styles.suggestionItem,
                   pressed && styles.suggestionItemPressed,
                 ]}
-                onPress={() => handleSelect(item)}
+                onPress={() => {
+                  handleSelect(item);
+                }}
               >
                 <Ionicons name="location" size={20} color="#007AFF" />
                 <Text style={styles.suggestionText}>{item}</Text>

@@ -1,5 +1,3 @@
-import { and, desc, eq, gte, lte, ne, or, sql } from "drizzle-orm";
-import { z } from "zod";
 import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
@@ -7,6 +5,10 @@ import {
   tripRequests,
   users,
 } from "@hitchly/db/schema";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, gte, lte, ne, or, sql } from "drizzle-orm";
+import { z } from "zod";
+
 import {
   geocodeAddress,
   calculateTripDistance,
@@ -22,7 +24,6 @@ import {
   calculateFare,
 } from "../../services/payment_service";
 import { protectedProcedure, router } from "../trpc";
-import { TRPCError } from "@trpc/server";
 
 const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder (teammate will replace with real fare calc)
 
@@ -443,9 +444,9 @@ export const tripRouter = router({
           "Trip Cancelled",
           `Your trip from ${trip.origin} to ${trip.destination} has been cancelled by the driver.`,
           { tripId: input.tripId, action: "cancelled" }
-        ).catch((err) =>
-          console.error("Failed to send cancel notification:", err)
-        );
+        ).catch((err) => {
+          console.error("Failed to send cancel notification:", err);
+        });
 
         // Release payment holds for all accepted riders
         const acceptedRequests = await ctx.db
@@ -459,9 +460,9 @@ export const tripRouter = router({
           );
 
         for (const req of acceptedRequests) {
-          cancelPaymentHold(req.id).catch((err) =>
-            console.error("Failed to cancel payment hold:", err)
-          );
+          cancelPaymentHold(req.id).catch((err) => {
+            console.error("Failed to cancel payment hold:", err);
+          });
         }
 
         // Cancel accepted requests
@@ -538,9 +539,9 @@ export const tripRouter = router({
           "Trip Starting",
           "Your driver is on the way! Get ready for pickup.",
           { tripId: input.tripId, action: "started" }
-        ).catch((err) =>
-          console.error("Failed to send start notification:", err)
-        );
+        ).catch((err) => {
+          console.error("Failed to send start notification:", err);
+        });
       }
 
       return startedTrip;
@@ -816,9 +817,9 @@ export const tripRouter = router({
             "Trip Completed",
             `Your trip from ${trip.origin} to ${trip.destination} is complete. Thanks for riding with Hitchly!`,
             { tripId: input.tripId, action: "completed", summary }
-          ).catch((err) =>
-            console.error("Failed to send complete notification:", err)
-          );
+          ).catch((err) => {
+            console.error("Failed to send complete notification:", err);
+          });
         }
       }
 
@@ -1212,7 +1213,7 @@ export const tripRouter = router({
         .leftJoin(trips, eq(tripRequests.tripId, trips.id))
         .limit(1);
 
-      if (!request || !request.trip) {
+      if (!request?.trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Trip request not found",
@@ -1396,7 +1397,7 @@ export const tripRouter = router({
         .leftJoin(trips, eq(tripRequests.tripId, trips.id))
         .limit(1);
 
-      if (!request || !request.trip) {
+      if (!request?.trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Trip request not found",
@@ -1448,7 +1449,7 @@ export const tripRouter = router({
         .leftJoin(trips, eq(tripRequests.tripId, trips.id))
         .limit(1);
 
-      if (!request || !request.trip) {
+      if (!request?.trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Trip request not found",
@@ -1494,9 +1495,9 @@ export const tripRouter = router({
           .where(eq(trips.id, request.trip.id));
 
         // Release payment hold
-        cancelPaymentHold(input.requestId).catch((err) =>
-          console.error("Failed to cancel payment hold:", err)
-        );
+        cancelPaymentHold(input.requestId).catch((err) => {
+          console.error("Failed to cancel payment hold:", err);
+        });
       }
 
       return cancelledRequest;

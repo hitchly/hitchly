@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { authClient } from "../../../../lib/auth-client";
 import { openStopNavigation } from "../../../../lib/navigation";
 import { isTestAccount } from "../../../../lib/test-accounts";
@@ -32,7 +33,7 @@ export default function RideScreen() {
     data: trip,
     isLoading,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id! }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery({ tripId: id }, { enabled: !!id });
 
   const userRequest = trip?.requests?.find(
     (req) => req.riderId === currentUserId
@@ -137,7 +138,9 @@ export default function RideScreen() {
           <Text style={styles.errorText}>Trip or request not found</Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push(`/trips/${id}` as any)}
+            onPress={() => {
+              router.push(`/trips/${id}` as any);
+            }}
           >
             <Text style={styles.buttonText}>Go Back</Text>
           </TouchableOpacity>
@@ -232,7 +235,9 @@ export default function RideScreen() {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -295,7 +300,7 @@ export default function RideScreen() {
                             text: "Confirm",
                             onPress: () => {
                               simulateDriverPickup.mutate({
-                                tripId: id!,
+                                tripId: id,
                                 requestId: userRequest.id,
                               });
                             },
@@ -330,7 +335,7 @@ export default function RideScreen() {
                             text: "Confirm",
                             onPress: () => {
                               simulateDriverDropoff.mutate({
-                                tripId: id!,
+                                tripId: id,
                                 requestId: userRequest.id,
                               });
                             },
@@ -361,7 +366,7 @@ export default function RideScreen() {
                         { backgroundColor: "#007AFF" },
                       ]}
                       onPress={() => {
-                        simulateTripStartNotification.mutate({ tripId: id! });
+                        simulateTripStartNotification.mutate({ tripId: id });
                       }}
                       disabled={simulateTripStartNotification.isPending}
                     >
@@ -386,7 +391,7 @@ export default function RideScreen() {
                         { backgroundColor: "#FF3B30" },
                       ]}
                       onPress={() => {
-                        simulateTripCancelNotification.mutate({ tripId: id! });
+                        simulateTripCancelNotification.mutate({ tripId: id });
                       }}
                       disabled={simulateTripCancelNotification.isPending}
                     >
