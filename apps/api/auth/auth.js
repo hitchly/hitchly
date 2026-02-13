@@ -1,0 +1,41 @@
+import { expo } from "@better-auth/expo";
+import { db } from "@hitchly/db/client";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin, emailOTP } from "better-auth/plugins";
+import { emailClient } from "../lib/email";
+export const auth = betterAuth({
+  plugins: [
+    expo(),
+    admin(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp }) {
+        emailClient.sendOtp(email, otp).catch((err) => {
+          console.error("Failed to send OTP email:", err);
+        });
+      },
+      sendVerificationOnSignUp: true,
+    }),
+  ],
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    usePlural: true,
+  }),
+  trustedOrigins: ["null", "exp://", "mobile://", "http://localhost:3000"],
+  advanced: {
+    defaultCookieAttributes: {
+      secure: false,
+      sameSite: "lax",
+    },
+  },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+    validateSignUpInput(input) {
+      if (!input.email.endsWith("@mcmaster.ca")) {
+        throw new Error("Only @mcmaster.ca emails are allowed");
+      }
+      return input;
+    },
+  },
+});
