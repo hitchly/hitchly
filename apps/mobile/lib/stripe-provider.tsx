@@ -4,7 +4,7 @@ import React from "react";
 // Note: The publishable key should be added to the mobile .env as:
 // EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 const STRIPE_PUBLISHABLE_KEY =
-  process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+  process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 
 interface StripeProviderWrapperProps {
   children: React.ReactNode;
@@ -19,6 +19,7 @@ export function StripeProviderWrapper({
 }: StripeProviderWrapperProps) {
   if (!STRIPE_PUBLISHABLE_KEY) {
     // In development, show warning but don't crash
+    // eslint-disable-next-line no-console
     console.warn(
       "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set. Payment features will not work."
     );

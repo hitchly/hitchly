@@ -1,15 +1,12 @@
 import * as Location from "expo-location";
+import type { ReactNode } from "react";
 import { createContext, useEffect, useMemo } from "react";
 
 import { trpc } from "../lib/trpc";
 
 const LocationContext = createContext({});
 
-export const LocationProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const { mutate } = trpc.location.update.useMutation();
 
   useEffect(() => {
@@ -18,7 +15,7 @@ export const LocationProvider = ({
     const startWatching = async () => {
       const { status } = await Location.getForegroundPermissionsAsync();
 
-      if (status === "granted") {
+      if (status === Location.PermissionStatus.GRANTED) {
         subscriber = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,

@@ -15,7 +15,8 @@ export const useGPSLocation = (
     setIsGeocoding(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+
+      if (status !== Location.PermissionStatus.GRANTED) {
         Alert.alert("Permission Denied", "Please enter your address manually.");
         return;
       }
@@ -35,7 +36,7 @@ export const useGPSLocation = (
           place.street,
           place.city,
         ]
-          .filter(Boolean)
+          .filter((item): item is string => Boolean(item))
           .join(", ");
 
         onLocationFound({
@@ -44,7 +45,10 @@ export const useGPSLocation = (
           longitude: loc.coords.longitude,
         });
       }
-    } catch (e) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      // eslint-disable-next-line no-console
+      console.error("GPS Fetch Error:", message);
       Alert.alert("Error", "Could not fetch location.");
     } finally {
       setIsGeocoding(false);

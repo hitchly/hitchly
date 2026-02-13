@@ -3,11 +3,11 @@ import { Tabs, usePathname, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import { RequireLocation } from "@/components/location/require-location";
-import { LocationProvider } from "@/context/location-context";
-
 import { authClient } from "../../lib/auth-client";
 import { trpc } from "../../lib/trpc";
+
+import { RequireLocation } from "@/components/location/require-location";
+import { LocationProvider } from "@/context/location-context";
 
 const AppRoutes = () => {
   const router = useRouter();

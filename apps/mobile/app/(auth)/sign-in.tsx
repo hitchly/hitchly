@@ -3,6 +3,7 @@ import { signInSchema } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
@@ -22,7 +23,7 @@ export default function SignIn() {
     },
   });
 
-  const onSubmit = async (data: SignInInput) => {
+  const onSubmit: SubmitHandler<SignInInput> = async (data) => {
     setLoading(true);
     try {
       await authClient.signIn.email(
@@ -31,14 +32,12 @@ export default function SignIn() {
           password: data.password,
         },
         {
-          onSuccess: () => {
-            // Root Layout handles redirect automatically
-          },
           onError: async (ctx) => {
-            if (
+            const isUnverified =
               ctx.error.code === "EMAIL_NOT_VERIFIED" ||
-              ctx.error.message?.includes("verified")
-            ) {
+              ctx.error.message.toLowerCase().includes("verified");
+
+            if (isUnverified) {
               Alert.alert(
                 "Verification Required",
                 "Your account is not verified. We are sending a new code.",
@@ -51,8 +50,8 @@ export default function SignIn() {
               });
 
               router.push({
-                pathname: "/verify" as any,
-                params: { email: data.email, password: data.password },
+                pathname: "/verify",
+                params: { email: data.email },
               });
             } else {
               Alert.alert(
@@ -63,9 +62,7 @@ export default function SignIn() {
           },
         }
       );
-    } catch (err) {
-      console.error("Unexpected Sign In Error:", err);
-
+    } catch {
       Alert.alert(
         "Login Failed",
         "An unexpected error occurred. Please try again."
@@ -73,6 +70,13 @@ export default function SignIn() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOnPress = () => {
+    const processSubmit = handleSubmit(onSubmit);
+    processSubmit().catch(() => {
+      // Handled by react-hook-form validation or internal catch
+    });
   };
 
   return (
@@ -96,8 +100,9 @@ export default function SignIn() {
 
       <SubmitButton
         title="Sign In"
-        onPress={handleSubmit(onSubmit)}
+        onPress={handleOnPress}
         isPending={loading}
+        disabled={loading}
       />
     </OnboardingLayout>
   );

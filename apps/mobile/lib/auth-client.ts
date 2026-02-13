@@ -8,7 +8,7 @@ const getBaseUrl = () => {
   // For Expo testing:
   // - iOS Simulator / Android Emulator / Web: Use localhost
   // - Physical Device: Use your computer's local IP address
-  const baseUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+  const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
   return baseUrl;
 };

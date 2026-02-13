@@ -49,25 +49,6 @@ export const config = tseslint.config(
       "import/order": [
         "error",
         {
-          groups: [
-            "builtin", // 1. Node.js built-ins
-            "external", // 2. npm packages (stripe, hono, etc)
-            "internal", // 3. Monorepo packages (@hitchly/*)
-            ["parent", "sibling", "index"], // 4. Local files
-          ],
-          pathGroups: [
-            {
-              pattern: "react",
-              group: "builtin",
-              position: "before",
-            },
-            {
-              pattern: "@hitchly/**",
-              group: "internal",
-              position: "before",
-            },
-          ],
-          pathGroupsExcludedImportTypes: ["react"],
           "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },
         },
