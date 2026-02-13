@@ -111,8 +111,8 @@ export default function TripReviewScreen() {
     );
   }
 
-  const driverRateableRequests: TripRequest[] = (trip.requests ?? []).filter(
-    (r) => ["completed", "on_trip", "accepted"].includes(r.status)
+  const driverRateableRequests = (trip.requests as TripRequest[]).filter((r) =>
+    ["completed", "on_trip", "accepted"].includes(r.status)
   );
 
   return (
