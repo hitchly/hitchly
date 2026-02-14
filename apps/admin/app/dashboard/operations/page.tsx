@@ -1,6 +1,5 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   Car,
@@ -19,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,52 +43,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface TripData {
-  id: string;
-  driver: string;
-  origin: string;
-  destination: string;
-  status: "searching" | "en-route" | "completed" | "cancelled";
-  detourTime: number;
-  seats: number;
-}
-
-const DUMMY_TRIPS: TripData[] = [
+const OPERATIONAL_KPIs = [
   {
-    id: "T1",
-    driver: "Aidan M.",
-    origin: "Main St W",
-    destination: "McMaster",
-    status: "en-route",
-    detourTime: 4,
-    seats: 3,
+    title: "Active Rides",
+    value: "24",
+    icon: Car,
+    status: "info" as const,
   },
   {
-    id: "T2",
-    driver: "Sarah C.",
-    origin: "Dundas",
-    destination: "McMaster",
-    status: "completed",
-    detourTime: 2,
-    seats: 1,
+    title: "Avg. Detour",
+    value: "4.2m",
+    icon: Clock,
+    status: "success" as const,
   },
   {
-    id: "T3",
-    driver: "Marcus L.",
-    origin: "McMaster",
-    destination: "Burlington",
-    status: "searching",
-    detourTime: 0,
-    seats: 4,
+    title: "Search Rate",
+    value: "82%",
+    icon: Zap,
+    status: "success" as const,
   },
   {
-    id: "T4",
-    driver: "Julia K.",
-    origin: "Ancaster",
-    destination: "McMaster",
-    status: "cancelled",
-    detourTime: 0,
-    seats: 2,
+    title: "Seat Utilization",
+    value: "68%",
+    icon: Users,
+    status: "warning" as const,
   },
 ];
 
@@ -102,7 +80,59 @@ const THROUGHPUT_DATA = [
   { time: "20:00", active: 10 },
 ];
 
-function TripStatusBadge({ status }: { status: TripData["status"] }) {
+const HOTSPOTS = [
+  { name: "McMaster Student Centre", percentage: "42%" },
+  { name: "Westdale Hub", percentage: "28%" },
+  { name: "Main St @ Emerson", percentage: "15%" },
+];
+
+interface Trip {
+  id: string;
+  driver: string;
+  origin: string;
+  destination: string;
+  status: "searching" | "en-route" | "completed" | "cancelled";
+  detourTime: number;
+}
+
+const DUMMY_TRIPS: Trip[] = [
+  {
+    id: "T1",
+    driver: "Aidan M.",
+    origin: "Main St W",
+    destination: "McMaster",
+    status: "en-route",
+    detourTime: 4,
+  },
+  {
+    id: "T2",
+    driver: "Sarah C.",
+    origin: "Dundas",
+    destination: "McMaster",
+    status: "completed",
+    detourTime: 2,
+  },
+  {
+    id: "T3",
+    driver: "Marcus L.",
+    origin: "McMaster",
+    destination: "Burlington",
+    status: "searching",
+    detourTime: 0,
+  },
+  {
+    id: "T4",
+    driver: "Julia K.",
+    origin: "Ancaster",
+    destination: "McMaster",
+    status: "cancelled",
+    detourTime: 0,
+  },
+];
+
+// --- Reusable Sub-components ---
+
+function TripStatusBadge({ status }: { status: Trip["status"] }) {
   const styles = {
     searching: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     "en-route": "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
@@ -117,72 +147,44 @@ function TripStatusBadge({ status }: { status: TripData["status"] }) {
   );
 }
 
-interface MetricCardProps {
-  title: string;
-  value: string;
-  icon: LucideIcon;
-  trend: string;
-}
-
-function MetricCard({ title, value, icon: Icon, trend }: MetricCardProps) {
+function HotspotItem({
+  name,
+  percentage,
+}: {
+  name: string;
+  percentage: string;
+}) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="p-2 bg-muted rounded-lg">
-            <Icon className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            {trend}
-          </span>
-        </div>
-        <div className="mt-4">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="text-2xl font-bold font-mono">{value}</h3>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center gap-2 font-medium">
+        <MapPin className="h-4 w-4 text-primary" />
+        <span className="truncate max-w-[180px]">{name}</span>
+      </div>
+      <span className="font-mono text-muted-foreground">{percentage}</span>
+    </div>
   );
 }
 
-export default function TripsPage() {
+export default function OperationsPage() {
   return (
     <div className="p-8 space-y-8">
-      {/* Header with Global Pulse Metrics */}
-      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Operations</h1>
-          <p className="text-muted-foreground">
-            Live system throughput and trip management.
-          </p>
-        </div>
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Operations</h1>
+        <p className="text-muted-foreground">
+          Live system throughput and trip management.
+        </p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Active Rides"
-          value="24"
-          icon={Car}
-          trend="+2 vs last hr"
-        />
-        <MetricCard
-          title="Avg. Detour"
-          value="4.2m"
-          icon={Clock}
-          trend="Optimal"
-        />
-        <MetricCard
-          title="Search Rate"
-          value="82%"
-          icon={Zap}
-          trend="+5% success"
-        />
-        <MetricCard
-          title="Seat Utilization"
-          value="68%"
-          icon={Users}
-          trend="-2% vs avg"
-        />
+        {OPERATIONAL_KPIs.map((kpi) => (
+          <MetricCard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            icon={kpi.icon}
+            status={kpi.status}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-7">
@@ -230,19 +232,13 @@ export default function TripsPage() {
             <CardDescription>Most frequent destinations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 font-medium">
-                <MapPin className="h-4 w-4 text-primary" /> McMaster Student
-                Centre
-              </div>
-              <span className="font-mono text-muted-foreground">42%</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 font-medium">
-                <MapPin className="h-4 w-4 text-primary" /> Westdale Hub
-              </div>
-              <span className="font-mono text-muted-foreground">28%</span>
-            </div>
+            {HOTSPOTS.map((spot) => (
+              <HotspotItem
+                key={spot.name}
+                name={spot.name}
+                percentage={spot.percentage}
+              />
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -287,7 +283,7 @@ export default function TripsPage() {
                   <TableCell>
                     <div className="flex items-center gap-1 text-xs">
                       <Clock className="h-3 w-3 text-muted-foreground" />
-                      {String(trip.detourTime)}m
+                      {trip.detourTime}m
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

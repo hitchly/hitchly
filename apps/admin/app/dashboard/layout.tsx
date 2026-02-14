@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-import EnvironmentBadge from "@/components/dev-badge";
+import EnvironmentBadge from "@/components/dashboard/dev-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {

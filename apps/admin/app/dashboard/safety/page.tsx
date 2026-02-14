@@ -9,8 +9,11 @@ import {
   MoreHorizontal,
   Search,
   ShieldAlert,
+  Timer,
+  Users,
 } from "lucide-react";
 
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +40,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+const SAFETY_KPIs = [
+  {
+    title: "Unresolved Reports",
+    value: "08",
+    icon: ShieldAlert,
+    status: "error" as const,
+  },
+  {
+    title: "Avg Resolution",
+    value: "4.2h",
+    icon: Timer,
+    status: "info" as const,
+  },
+  {
+    title: "Trust Score",
+    value: "98.4%",
+    icon: Users,
+    status: "success" as const,
+  },
+];
 
 interface IncidentReport {
   id: string;
@@ -121,52 +145,33 @@ export default function SafetyPage() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Unresolved Reports
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">08</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Avg Resolution Time
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4.2h</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              System Trust Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">98.4%</div>
-          </CardContent>
-        </Card>
+        {SAFETY_KPIs.map((kpi) => (
+          <MetricCard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            icon={kpi.icon}
+            status={kpi.status}
+          />
+        ))}
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <CardTitle>Incident Log</CardTitle>
+              <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                Incident Log
+              </CardTitle>
               <CardDescription>
                 Review and resolve community reported issues.
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Filter by User or Trip ID..."
-                className="pl-8"
+                className="pl-8 h-9 text-sm"
               />
             </div>
           </div>
@@ -174,18 +179,30 @@ export default function SafetyPage() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Severity</TableHead>
-                <TableHead>Details</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[100px] text-[10px] uppercase tracking-wider">
+                  ID
+                </TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider">
+                  Status
+                </TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider">
+                  Severity
+                </TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider">
+                  Details
+                </TableHead>
+                <TableHead className="text-[10px] uppercase tracking-wider">
+                  Timestamp
+                </TableHead>
+                <TableHead className="text-right text-[10px] uppercase tracking-wider">
+                  Action
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {DUMMY_INCIDENTS.map((incident) => (
-                <TableRow key={incident.id}>
+                <TableRow key={incident.id} className="group">
                   <TableCell className="font-mono text-xs font-bold">
                     {incident.id}
                   </TableCell>
@@ -210,7 +227,7 @@ export default function SafetyPage() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                  <TableCell className="text-xs text-muted-foreground font-mono whitespace-nowrap">
                     {incident.timestamp}
                   </TableCell>
                   <TableCell className="text-right">
@@ -228,7 +245,6 @@ export default function SafetyPage() {
 
 function IncidentActions({ incident }: { incident: IncidentReport }) {
   const handleAction = (action: string) => {
-    // Sync wrapper for future tRPC mutations
     const perform = () => {
       // eslint-disable-next-line no-console
       console.log(`Action: ${action} for Incident: ${incident.id}`);
@@ -244,7 +260,9 @@ function IncidentActions({ incident }: { incident: IncidentReport }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Incident Management</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Safety Protocol
+        </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => {
             handleAction("view");
@@ -271,7 +289,7 @@ function IncidentActions({ incident }: { incident: IncidentReport }) {
           onClick={() => {
             handleAction("resolve");
           }}
-          className="text-emerald-500"
+          className="text-emerald-500 focus:text-emerald-500 focus:bg-emerald-500/10"
         >
           <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Resolved
         </DropdownMenuItem>
@@ -280,7 +298,7 @@ function IncidentActions({ incident }: { incident: IncidentReport }) {
           onClick={() => {
             handleAction("ban");
           }}
-          className="text-destructive font-semibold"
+          className="text-destructive font-semibold focus:bg-destructive/10 focus:text-destructive"
         >
           <ShieldAlert className="mr-2 h-4 w-4" /> Suspend Reported User
         </DropdownMenuItem>

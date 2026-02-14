@@ -8,18 +8,17 @@ import {
   History,
   Search,
   Wallet,
-  type LucideIcon,
 } from "lucide-react";
 import {
   Bar,
   BarChart,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface PayoutData {
+interface Payout {
   id: string;
   driver: string;
   amount: number;
@@ -48,7 +47,55 @@ interface PayoutData {
   lastPayout: string;
 }
 
-const DUMMY_PAYOUTS: PayoutData[] = [
+const PAYMENT_KPIs = [
+  {
+    title: "Gross Volume",
+    value: "$12,450",
+    icon: Wallet,
+    description: "total driver earnings",
+    status: "default" as const,
+  },
+  {
+    title: "Net Revenue",
+    value: "$842.20",
+    icon: CreditCard,
+    description: "hitchly platform fees",
+    status: "success" as const,
+  },
+  {
+    title: "Active Connect",
+    value: "124",
+    icon: CheckCircle2,
+    description: "verified accounts",
+    status: "info" as const,
+  },
+  {
+    title: "Payouts Pending",
+    value: "$1,204",
+    icon: History,
+    description: "in-flight transfers",
+    status: "warning" as const,
+  },
+];
+
+const RAW_REVENUE_DATA = [
+  { month: "Sep", total: 1200 },
+  { month: "Oct", total: 1900 },
+  { month: "Nov", total: 2400 },
+  { month: "Dec", total: 1100 },
+  { month: "Jan", total: 2800 },
+  { month: "Feb", total: 3400 },
+];
+
+const REVENUE_DATA = RAW_REVENUE_DATA.map((item, index) => ({
+  ...item,
+  fill:
+    index === RAW_REVENUE_DATA.length - 1
+      ? "hsl(var(--primary))"
+      : "hsl(var(--muted-foreground) / 0.2)",
+}));
+
+const DUMMY_PAYOUTS: Payout[] = [
   {
     id: "P1",
     driver: "Aidan Marshall",
@@ -83,17 +130,8 @@ const DUMMY_PAYOUTS: PayoutData[] = [
   },
 ];
 
-const REVENUE_DATA = [
-  { month: "Sep", total: 1200 },
-  { month: "Oct", total: 1900 },
-  { month: "Nov", total: 2400 },
-  { month: "Dec", total: 1100 },
-  { month: "Jan", total: 2800 },
-  { month: "Feb", total: 3400 },
-];
-
-function PayoutStatus({ status }: { status: PayoutData["status"] }) {
-  const variants = {
+function PayoutStatus({ status }: { status: Payout["status"] }) {
+  const styles = {
     paid: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     pending: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     "action-required":
@@ -107,38 +145,10 @@ function PayoutStatus({ status }: { status: PayoutData["status"] }) {
   };
 
   return (
-    <Badge variant="outline" className={variants[status]}>
+    <Badge variant="outline" className={styles[status]}>
       {icons[status]}
       {status.replace("-", " ")}
     </Badge>
-  );
-}
-
-interface MetricCardProps {
-  title: string;
-  value: string;
-  icon: LucideIcon;
-  trend: string;
-}
-
-function MetricCard({ title, value, icon: Icon, trend }: MetricCardProps) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="p-2 bg-muted rounded-md text-primary">
-            <Icon className="h-4 w-4" />
-          </div>
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            {trend}
-          </span>
-        </div>
-        <div className="mt-4">
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
-          <h3 className="text-2xl font-bold font-mono">{value}</h3>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -158,41 +168,29 @@ export default function PaymentsPage() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Gross Volume"
-          value="$12,450"
-          icon={Wallet}
-          trend="+20% MoM"
-        />
-        <MetricCard
-          title="Net Revenue"
-          value="$842.20"
-          icon={CreditCard}
-          trend="10% fee avg"
-        />
-        <MetricCard
-          title="Active Connect"
-          value="124"
-          icon={CheckCircle2}
-          trend="Verified"
-        />
-        <MetricCard
-          title="Payouts Pending"
-          value="$1,204"
-          icon={AlertCircle}
-          trend="In-flight"
-        />
+        {PAYMENT_KPIs.map((kpi) => (
+          <MetricCard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            icon={kpi.icon}
+            description={kpi.description}
+            status={kpi.status}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Fee Accrual</CardTitle>
+            <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Fee Accrual
+            </CardTitle>
             <CardDescription>
               Monthly Hitchly platform fees (CAD).
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-75">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={REVENUE_DATA}>
                 <XAxis
@@ -215,18 +213,7 @@ export default function PaymentsPage() {
                     border: "1px solid hsl(var(--border))",
                   }}
                 />
-                <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                  {REVENUE_DATA.map((_, index) => (
-                    <Cell
-                      key={`cell-${String(index)}`}
-                      fill={
-                        index === REVENUE_DATA.length - 1
-                          ? "hsl(var(--primary))"
-                          : "hsl(var(--muted-foreground) / 0.2)"
-                      }
-                    />
-                  ))}
-                </Bar>
+                <Bar dataKey="total" radius={[4, 4, 0, 0]} fill="fill" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -234,17 +221,17 @@ export default function PaymentsPage() {
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-medium">
-                  Connect Accounts
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                  Connect Audit
                 </CardTitle>
                 <CardDescription>Driver payout status audit.</CardDescription>
               </div>
-              <div className="relative w-32">
+              <div className="relative w-32 shrink-0">
                 <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder="Filter..."
                   className="h-8 pl-7 text-[10px]"
                 />
               </div>
@@ -253,7 +240,7 @@ export default function PaymentsPage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="text-[10px] uppercase tracking-wider">
                     Driver
                   </TableHead>
@@ -267,7 +254,7 @@ export default function PaymentsPage() {
               </TableHeader>
               <TableBody>
                 {DUMMY_PAYOUTS.map((payout) => (
-                  <TableRow key={payout.id} className="group">
+                  <TableRow key={payout.id} className="group border-muted/50">
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold">

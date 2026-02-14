@@ -5,13 +5,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   Database,
-  Globe,
-  Server,
   Smartphone,
   Zap,
-  type LucideIcon,
 } from "lucide-react";
 
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -22,44 +20,73 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-interface HealthCardProps {
-  title: string;
-  value: string;
-  description: string;
-  icon: LucideIcon;
-  status?: "success" | "warning" | "error";
-}
+const SYSTEM_KPIs = [
+  {
+    title: "API Latency",
+    value: "42ms",
+    description: "P95 Response Time",
+    icon: Activity,
+    status: "success" as const,
+  },
+  {
+    title: "Cache Hit Rate",
+    value: "84.2%",
+    description: "Drizzle Route Cache",
+    icon: Database,
+    status: "success" as const,
+  },
+  {
+    title: "Mobile Installs",
+    value: "152",
+    description: "Active iOS/Android",
+    icon: Smartphone,
+    status: "default" as const,
+  },
+  {
+    title: "Error Rate",
+    value: "0.04%",
+    description: "Last 24 Hours",
+    icon: AlertTriangle,
+    status: "warning" as const,
+  },
+];
 
-function HealthCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  status = "success",
-}: HealthCardProps) {
-  const statusColors = {
-    success: "text-emerald-500",
-    warning: "text-amber-500",
-    error: "text-destructive",
-  };
+const MAPS_QUOTA = {
+  monthlyCredit: 200,
+  estimatedSpend: 0.0,
+  endpoints: [
+    { name: "Directions API", current: 420, limit: 2500 },
+    { name: "Geocoding API", current: 1120, limit: 5000 },
+  ],
+};
 
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className={statusColors[status] + " h-4 w-4"} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold font-mono">{value}</div>
-        <p className="text-[10px] text-muted-foreground mt-1">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
+const MOBILE_HEALTH = {
+  version: "v1.0.4-build.82",
+  pushServiceStatus: "ONLINE",
+  crashFreeRate: "99.8%",
+};
+
+const SYSTEM_LOGS = [
+  {
+    level: "INFO",
+    message: "Route cache hit for key 43.2644,-79.9177",
+    type: "default",
+  },
+  {
+    level: "WARN",
+    message: "Maps API latency exceeded 150ms",
+    type: "warning",
+  },
+  {
+    level: "INFO",
+    message: "User verified via @mcmaster.ca domain (ID: u_9921)",
+    type: "default",
+  },
+];
 
 export default function HealthPage() {
+  const currentTime = new Date().toLocaleTimeString();
+
   return (
     <div className="p-8 space-y-8">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -79,31 +106,16 @@ export default function HealthPage() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <HealthCard
-          title="API Latency"
-          value="42ms"
-          description="P95 Response Time"
-          icon={Activity}
-        />
-        <HealthCard
-          title="Cache Hit Rate"
-          value="84.2%"
-          description="Drizzle Route Cache"
-          icon={Database}
-        />
-        <HealthCard
-          title="Mobile Installs"
-          value="152"
-          description="Active iOS/Android"
-          icon={Smartphone}
-        />
-        <HealthCard
-          title="Error Rate"
-          value="0.04%"
-          description="Last 24 Hours"
-          icon={AlertTriangle}
-          status="warning"
-        />
+        {SYSTEM_KPIs.map((kpi) => (
+          <MetricCard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            description={kpi.description}
+            icon={kpi.icon}
+            status={kpi.status}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -113,27 +125,29 @@ export default function HealthPage() {
               <Zap className="h-4 w-4 text-amber-500" /> Google Maps Quota Usage
             </CardTitle>
             <CardDescription>
-              Free tier monitoring ($200 Monthly Credit).
+              Free tier monitoring (${MAPS_QUOTA.monthlyCredit} Monthly Credit).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs font-medium">
-                <span>Directions API</span>
-                <span className="font-mono">420 / 2,500 calls</span>
+            {MAPS_QUOTA.endpoints.map((api) => (
+              <div key={api.name} className="space-y-2">
+                <div className="flex justify-between text-xs font-medium">
+                  <span>{api.name}</span>
+                  <span className="font-mono">
+                    {api.current} / {api.limit} calls
+                  </span>
+                </div>
+                <Progress
+                  value={(api.current / api.limit) * 100}
+                  className="h-2"
+                />
               </div>
-              <Progress value={16.8} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs font-medium">
-                <span>Geocoding API</span>
-                <span className="font-mono">1,120 / 5,000 calls</span>
-              </div>
-              <Progress value={22.4} className="h-2" />
-            </div>
+            ))}
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center">
               Estimated Monthly Spend:{" "}
-              <span className="text-emerald-500 font-bold">$0.00</span>
+              <span className="text-emerald-500 font-bold">
+                ${MAPS_QUOTA.estimatedSpend.toFixed(2)}
+              </span>
             </p>
           </CardContent>
         </Card>
@@ -151,7 +165,7 @@ export default function HealthPage() {
             <div className="flex items-center justify-between border-b pb-2">
               <span className="text-xs font-medium">Production Version</span>
               <Badge variant="secondary" className="font-mono text-[10px]">
-                v1.0.4-build.82
+                {MOBILE_HEALTH.version}
               </Badge>
             </div>
             <div className="flex items-center justify-between border-b pb-2">
@@ -159,13 +173,14 @@ export default function HealthPage() {
                 Push Notification Service
               </span>
               <div className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
-                <CheckCircle2 className="h-3 w-3" /> ONLINE
+                <CheckCircle2 className="h-3 w-3" />{" "}
+                {MOBILE_HEALTH.pushServiceStatus}
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium">Crash-Free Users</span>
               <span className="text-xs font-bold text-emerald-500 font-mono">
-                99.8%
+                {MOBILE_HEALTH.crashFreeRate}
               </span>
             </div>
           </CardContent>
@@ -180,24 +195,15 @@ export default function HealthPage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-lg bg-black p-4 font-mono text-[11px] text-emerald-500/80 space-y-1.5 overflow-x-auto">
-            <p>
-              <span className="text-muted-foreground">
-                [{new Date().toLocaleTimeString()}]
-              </span>{" "}
-              INFO: Route cache hit for key 43.2644,-79.9177
-            </p>
-            <p className="text-amber-500">
-              <span className="text-muted-foreground">
-                [{new Date().toLocaleTimeString()}]
-              </span>{" "}
-              WARN: Maps API latency exceeded 150ms
-            </p>
-            <p>
-              <span className="text-muted-foreground">
-                [{new Date().toLocaleTimeString()}]
-              </span>{" "}
-              INFO: User verified via @mcmaster.ca domain (ID: u_9921)
-            </p>
+            {SYSTEM_LOGS.map((log, i) => (
+              <p
+                key={i}
+                className={log.type === "warning" ? "text-amber-500" : ""}
+              >
+                <span className="text-muted-foreground">[{currentTime}]</span>{" "}
+                {log.level}: {log.message}
+              </p>
+            ))}
             <p className="text-emerald-400 font-bold animate-pulse">
               _ Waiting for incoming events...
             </p>
