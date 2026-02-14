@@ -9,7 +9,9 @@ import {
   UserCheck,
   UserX,
   Users,
+  type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
@@ -38,95 +40,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { trpc } from "@/lib/trpc";
 
-// --- Data Objects (Swap with tRPC hooks) ---
-
-const USER_KPIs = [
-  {
-    title: "Total Users",
-    value: "856",
-    icon: Users,
-    description: "McMaster Verified",
-    status: "info" as const,
-  },
-  {
-    title: "Pending Audit",
-    value: "12",
-    icon: ShieldAlert,
-    description: "Requires Manual Action",
-    status: "warning" as const,
-  },
-  {
-    title: "Active Drivers",
-    value: "124",
-    icon: UserCheck,
-    description: "Stripe Onboarded",
-    status: "success" as const,
-  },
-  {
-    title: "Banned",
-    value: "3",
-    icon: UserX,
-    description: "Safety Violations",
-    status: "error" as const,
-  },
-];
+interface UserMetric {
+  title: string;
+  value: string;
+  icon: LucideIcon;
+  description: string;
+  status: "info" | "warning" | "success" | "error";
+}
 
 interface UserData {
   id: string;
   name: string;
   email: string;
   status: "verified" | "pending" | "banned";
-  role: "student" | "admin";
   rating: number;
   tripsCompleted: number;
   joinedDate: string;
 }
-
-const DUMMY_USERS: UserData[] = [
-  {
-    id: "1",
-    name: "Aidan Marshall",
-    email: "marshala@mcmaster.ca",
-    status: "verified",
-    role: "admin",
-    rating: 5.0,
-    tripsCompleted: 42,
-    joinedDate: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Sarah Chen",
-    email: "chens12@mcmaster.ca",
-    status: "verified",
-    role: "student",
-    rating: 4.8,
-    tripsCompleted: 12,
-    joinedDate: "2024-02-01",
-  },
-  {
-    id: "3",
-    name: "John Doe",
-    email: "doej@mcmaster.ca",
-    status: "pending",
-    role: "student",
-    rating: 0,
-    tripsCompleted: 0,
-    joinedDate: "2024-02-10",
-  },
-  {
-    id: "4",
-    name: "Bad Actor",
-    email: "bad@mcmaster.ca",
-    status: "banned",
-    role: "student",
-    rating: 1.2,
-    tripsCompleted: 2,
-    joinedDate: "2023-11-20",
-  },
-];
-
-// --- Sub-components ---
 
 function StatusBadge({ status }: { status: UserData["status"] }) {
   const styles = {
@@ -142,19 +74,117 @@ function StatusBadge({ status }: { status: UserData["status"] }) {
   );
 }
 
-// --- Main Page ---
+const UserActions = ({ user }: { user: UserData }) => {
+  const utils = trpc.useUtils();
 
-export default function UsersPage() {
+  const verify = trpc.admin.users.verify.useMutation({
+    onSuccess: () => {
+      toast.success(`Verified ${user.name}`);
+      void utils.admin.users.metrics.invalidate();
+    },
+  });
+
+  const toggleBan = trpc.admin.users.toggleBan.useMutation({
+    onSuccess: (_, variables) => {
+      toast.success(
+        variables.shouldBan
+          ? `Restricted ${user.name}`
+          : `Restored ${user.name}`
+      );
+      void utils.admin.users.metrics.invalidate();
+    },
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Audit Flow
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        {user.status === "pending" && (
+          <DropdownMenuItem
+            onClick={() => {
+              verify.mutate({ userId: user.id });
+            }}
+          >
+            <ShieldCheck className="mr-2 h-4 w-4 text-emerald-500" />
+            <span>Approve Student</span>
+          </DropdownMenuItem>
+        )}
+
+        {user.status !== "banned" ? (
+          <DropdownMenuItem
+            className="text-destructive font-medium focus:bg-destructive/10 focus:text-destructive"
+            onClick={() => {
+              toggleBan.mutate({ userId: user.id, shouldBan: true });
+            }}
+          >
+            <UserX className="mr-2 h-4 w-4" />
+            <span>Restrict Access</span>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            onClick={() => {
+              toggleBan.mutate({ userId: user.id, shouldBan: false });
+            }}
+          >
+            <ShieldCheck className="mr-2 h-4 w-4 text-emerald-500" />
+            <span>Restore Access</span>
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const UsersPage = () => {
+  const { data, isLoading } = trpc.admin.users.metrics.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
+
+  const stats = data?.kpis ?? { total: 0, pending: 0, drivers: 0, banned: 0 };
+  const userList = (data?.users ?? []) as UserData[];
+
+  const USER_KPIs: UserMetric[] = [
+    {
+      title: "Total Users",
+      value: isLoading ? "-" : String(stats.total),
+      icon: Users,
+      description: "McMaster Verified",
+      status: "info",
+    },
+    {
+      title: "Pending Audit",
+      value: isLoading ? "-" : String(stats.pending),
+      icon: ShieldAlert,
+      description: "Requires Manual Action",
+      status: "warning",
+    },
+    {
+      title: "Active Drivers",
+      value: isLoading ? "-" : String(stats.drivers),
+      icon: UserCheck,
+      description: "Stripe Onboarded",
+      status: "success",
+    },
+    {
+      title: "Banned",
+      value: isLoading ? "-" : String(stats.banned),
+      icon: UserX,
+      description: "Safety Violations",
+      status: "error",
+    },
+  ];
+
   return (
     <div className="p-8 space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Community Audit</h1>
-        <p className="text-muted-foreground">
-          Verify student identities and manage account standings.
-        </p>
-      </header>
-
-      {/* 1. Standardized Metric Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {USER_KPIs.map((kpi) => (
           <MetricCard
@@ -168,7 +198,6 @@ export default function UsersPage() {
         ))}
       </div>
 
-      {/* 2. Main Data Table */}
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -192,7 +221,7 @@ export default function UsersPage() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
+              <TableRow className="hover:bg-transparent border-none">
                 <TableHead className="text-[10px] uppercase tracking-wider">
                   Student
                 </TableHead>
@@ -214,8 +243,8 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {DUMMY_USERS.map((user) => (
-                <TableRow key={user.id} className="group">
+              {userList.map((user) => (
+                <TableRow key={user.id} className="group border-muted/50">
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-semibold text-sm">{user.name}</span>
@@ -250,67 +279,6 @@ export default function UsersPage() {
       </Card>
     </div>
   );
-}
+};
 
-function UserActions({ user }: { user: UserData }) {
-  const handleAction = (action: string) => {
-    // Sync wrapper for tRPC mutations
-    const perform = () => {
-      // eslint-disable-next-line no-console
-      console.log(`Action: ${action} on user ${user.id}`);
-    };
-    perform();
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Audit Flow
-        </DropdownMenuLabel>
-        <DropdownMenuItem
-          onClick={() => {
-            handleAction("view");
-          }}
-        >
-          View Trip History
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {user.status === "pending" && (
-          <DropdownMenuItem
-            onClick={() => {
-              handleAction("verify");
-            }}
-          >
-            <ShieldCheck className="mr-2 h-4 w-4 text-emerald-500" />
-            <span>Approve Student</span>
-          </DropdownMenuItem>
-        )}
-        {user.status !== "banned" ? (
-          <DropdownMenuItem
-            className="text-destructive font-medium focus:bg-destructive/10 focus:text-destructive"
-            onClick={() => {
-              handleAction("ban");
-            }}
-          >
-            <UserX className="mr-2 h-4 w-4" />
-            <span>Restrict Access</span>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            onClick={() => {
-              handleAction("unban");
-            }}
-          >
-            Restore Access
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+export default UsersPage;

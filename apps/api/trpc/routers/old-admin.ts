@@ -24,7 +24,7 @@ const checkAdmin = async () => {
   return true;
 };
 
-export const adminRouter = router({
+export const oldAdminRouter = router({
   getPlatformStats: protectedProcedure.query(async ({ ctx }) => {
     await checkAdmin();
     const [userCount] = await ctx.db

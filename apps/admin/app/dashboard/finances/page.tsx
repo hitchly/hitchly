@@ -2,12 +2,12 @@
 
 import {
   AlertCircle,
-  ArrowUpRight,
   CheckCircle2,
   CreditCard,
   History,
   Search,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Bar,
@@ -20,7 +20,6 @@ import {
 
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { trpc } from "@/lib/trpc";
 
 interface Payout {
   id: string;
@@ -47,90 +47,15 @@ interface Payout {
   lastPayout: string;
 }
 
-const PAYMENT_KPIs = [
-  {
-    title: "Gross Volume",
-    value: "$12,450",
-    icon: Wallet,
-    description: "total driver earnings",
-    status: "default" as const,
-  },
-  {
-    title: "Net Revenue",
-    value: "$842.20",
-    icon: CreditCard,
-    description: "hitchly platform fees",
-    status: "success" as const,
-  },
-  {
-    title: "Active Connect",
-    value: "124",
-    icon: CheckCircle2,
-    description: "verified accounts",
-    status: "info" as const,
-  },
-  {
-    title: "Payouts Pending",
-    value: "$1,204",
-    icon: History,
-    description: "in-flight transfers",
-    status: "warning" as const,
-  },
-];
+interface FinancialKPI {
+  title: string;
+  value: string;
+  icon: LucideIcon;
+  description: string;
+  status: "default" | "success" | "info" | "warning";
+}
 
-const RAW_REVENUE_DATA = [
-  { month: "Sep", total: 1200 },
-  { month: "Oct", total: 1900 },
-  { month: "Nov", total: 2400 },
-  { month: "Dec", total: 1100 },
-  { month: "Jan", total: 2800 },
-  { month: "Feb", total: 3400 },
-];
-
-const REVENUE_DATA = RAW_REVENUE_DATA.map((item, index) => ({
-  ...item,
-  fill:
-    index === RAW_REVENUE_DATA.length - 1
-      ? "hsl(var(--primary))"
-      : "hsl(var(--muted-foreground) / 0.2)",
-}));
-
-const DUMMY_PAYOUTS: Payout[] = [
-  {
-    id: "P1",
-    driver: "Aidan Marshall",
-    amount: 154.2,
-    status: "paid",
-    stripeId: "acct_1Ou",
-    lastPayout: "Feb 12, 2026",
-  },
-  {
-    id: "P2",
-    driver: "Sarah Chen",
-    amount: 89.5,
-    status: "pending",
-    stripeId: "acct_1Pv",
-    lastPayout: "Pending",
-  },
-  {
-    id: "P3",
-    driver: "John Doe",
-    amount: 0.0,
-    status: "action-required",
-    stripeId: "acct_1Qw",
-    lastPayout: "N/A",
-  },
-  {
-    id: "P4",
-    driver: "Marcus Lee",
-    amount: 210.0,
-    status: "paid",
-    stripeId: "acct_1Rx",
-    lastPayout: "Feb 10, 2026",
-  },
-];
-
-function PayoutStatus({ status }: { status: Payout["status"] }) {
+const PayoutStatus = ({ status }: { status: Payout["status"] }) => {
   const styles = {
     paid: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     pending: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -150,25 +75,63 @@ function PayoutStatus({ status }: { status: Payout["status"] }) {
       {status.replace("-", " ")}
     </Badge>
   );
-}
+};
 
-export default function PaymentsPage() {
+const FinancesPage = () => {
+  const { data, isLoading } = trpc.admin.finances.metrics.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
+
+  const stats = data?.kpis ?? {
+    grossVolume: 0,
+    netRevenue: 0,
+    activeConnect: 0,
+    payoutsPending: 0,
+  };
+  const chartData = (data?.revenueChart ?? []).map((item, index, arr) => ({
+    ...item,
+    fill:
+      index === arr.length - 1
+        ? "hsl(var(--primary))"
+        : "hsl(var(--muted-foreground) / 0.2)",
+  }));
+  const payoutList = (data?.payouts ?? []) as Payout[];
+
+  const paymentKPIs: FinancialKPI[] = [
+    {
+      title: "Gross Volume",
+      value: isLoading ? "-" : `$${stats.grossVolume.toLocaleString()}`,
+      icon: Wallet,
+      description: "total driver earnings",
+      status: "default",
+    },
+    {
+      title: "Net Revenue",
+      value: isLoading ? "-" : `$${stats.netRevenue.toFixed(2)}`,
+      icon: CreditCard,
+      description: "hitchly platform fees",
+      status: "success",
+    },
+    {
+      title: "Active Connect",
+      value: isLoading ? "-" : String(stats.activeConnect),
+      icon: CheckCircle2,
+      description: "verified accounts",
+      status: "info",
+    },
+    {
+      title: "Payouts Pending",
+      value: isLoading ? "-" : `$${stats.payoutsPending.toLocaleString()}`,
+      icon: History,
+      description: "in-flight transfers",
+      status: "warning",
+    },
+  ];
+
   return (
     <div className="p-8 space-y-8">
-      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financials</h1>
-          <p className="text-muted-foreground font-medium">
-            Stripe Connect integrity and platform fee capture.
-          </p>
-        </div>
-        <Button className="gap-2" variant="outline">
-          Stripe Dashboard <ArrowUpRight className="h-4 w-4" />
-        </Button>
-      </header>
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {PAYMENT_KPIs.map((kpi) => (
+        {paymentKPIs.map((kpi) => (
           <MetricCard
             key={kpi.title}
             title={kpi.title}
@@ -192,7 +155,7 @@ export default function PaymentsPage() {
           </CardHeader>
           <CardContent className="h-75">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={REVENUE_DATA}>
+              <BarChart data={chartData}>
                 <XAxis
                   dataKey="month"
                   axisLine={false}
@@ -202,7 +165,7 @@ export default function PaymentsPage() {
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v: number) => `$${String(v)}`}
+                  tickFormatter={(v) => `$${String(v)}`}
                   tick={{ fontSize: 11 }}
                 />
                 <Tooltip
@@ -213,7 +176,7 @@ export default function PaymentsPage() {
                     border: "1px solid hsl(var(--border))",
                   }}
                 />
-                <Bar dataKey="total" radius={[4, 4, 0, 0]} fill="fill" />
+                <Bar dataKey="total" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -253,7 +216,7 @@ export default function PaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {DUMMY_PAYOUTS.map((payout) => (
+                {payoutList.map((payout) => (
                   <TableRow key={payout.id} className="group border-muted/50">
                     <TableCell>
                       <div className="flex flex-col">
@@ -280,4 +243,6 @@ export default function PaymentsPage() {
       </div>
     </div>
   );
-}
+};
+
+export default FinancesPage;
