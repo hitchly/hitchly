@@ -1,42 +1,39 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatCityProvince } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { authClient } from "../../../../lib/auth-client";
-import { trpc } from "../../../../lib/trpc";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const formatCityProvince = (address?: string | null) => {
-  if (!address) return "Location";
-  const parts = address
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const province =
-      parts[parts.length - 1].split(" ")[0] || parts[parts.length - 1];
-    return `${city}, ${province}`;
-  }
-  return address;
-};
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
+
+interface TripRequest {
+  id: string;
+  riderId: string;
+  status: string;
+  rider?: {
+    name?: string | null;
+    email?: string | null;
+  } | null;
+}
 
 export default function TripReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const userId = session?.user.id;
 
   const { data: trip } = trpc.trip.getTripById.useQuery(
-    { tripId: id! },
-    { enabled: !!id }
+    { tripId: id },
+    { enabled: typeof id === "string" }
   );
 
   const isDriver = !!userId && trip?.driverId === userId;
@@ -50,15 +47,17 @@ export default function TripReviewScreen() {
   const [ratedRiderIds, setRatedRiderIds] = useState<Set<string>>(new Set());
 
   const submitRatingMutation = trpc.reviews.submitRating.useMutation({
-    onError: (e) => Alert.alert("Error", e.message),
+    onError: (e) => {
+      Alert.alert("Error", e.message);
+    },
   });
 
   const handleRiderSubmit = () => {
-    if (!trip?.driverId) return;
+    if (!trip?.driverId || !id) return;
 
     submitRatingMutation.mutate(
       {
-        tripId: id!,
+        tripId: id,
         targetUserId: trip.driverId,
         rating: rating,
       },
@@ -72,11 +71,12 @@ export default function TripReviewScreen() {
   };
 
   const handleDriverSubmit = (riderId: string) => {
-    const score = driverRatings[riderId] || 5;
+    if (!id) return;
+    const score = driverRatings[riderId] ?? 5;
 
     submitRatingMutation.mutate(
       {
-        tripId: id!,
+        tripId: id,
         targetUserId: riderId,
         rating: score,
       },
@@ -94,7 +94,9 @@ export default function TripReviewScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             style={styles.backBtn}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -109,18 +111,19 @@ export default function TripReviewScreen() {
     );
   }
 
-  const driverRateableRequests =
-    trip.requests?.filter(
-      (r) =>
-        r.status === "completed" ||
-        r.status === "on_trip" ||
-        r.status === "accepted"
-    ) || [];
+  const driverRateableRequests = (trip.requests as TripRequest[]).filter((r) =>
+    ["completed", "on_trip", "accepted"].includes(r.status)
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => {
+            router.back();
+          }}
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
@@ -149,11 +152,15 @@ export default function TripReviewScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>How was your ride?</Text>
 
-              <View style={[styles.stars, isDriverRated && { opacity: 0.5 }]}>
+              <View
+                style={[styles.stars, isDriverRated && styles.opacityMuted]}
+              >
                 {[1, 2, 3, 4, 5].map((v) => (
                   <TouchableOpacity
                     key={v}
-                    onPress={() => !isDriverRated && setRating(v)}
+                    onPress={() => {
+                      if (!isDriverRated) setRating(v);
+                    }}
                     disabled={isDriverRated}
                     accessibilityRole="button"
                   >
@@ -193,31 +200,34 @@ export default function TripReviewScreen() {
                 <Text style={styles.muted}>No riders to rate.</Text>
               ) : (
                 driverRateableRequests.map((riderRequest) => {
-                  const riderId = riderRequest.riderId;
-                  const currentRating = driverRatings[riderId] || 5;
+                  const riderId: string = riderRequest.riderId;
+                  const currentRating = driverRatings[riderId] ?? 5;
                   const isRated = ratedRiderIds.has(riderId);
 
                   return (
                     <View key={riderRequest.id} style={styles.driverCard}>
                       <Text style={styles.riderName}>
-                        {riderRequest.rider?.name ||
-                          riderRequest.rider?.email ||
+                        {riderRequest.rider?.name ??
+                          riderRequest.rider?.email ??
                           "Passenger"}
                       </Text>
 
                       <View
-                        style={[styles.starsSmall, isRated && { opacity: 0.5 }]}
+                        style={[
+                          styles.starsSmall,
+                          isRated && styles.opacityMuted,
+                        ]}
                       >
                         {[1, 2, 3, 4, 5].map((v) => (
                           <TouchableOpacity
                             key={v}
                             disabled={isRated}
-                            onPress={() =>
+                            onPress={() => {
                               setDriverRatings((prev) => ({
                                 ...prev,
                                 [riderId]: v,
-                              }))
-                            }
+                              }));
+                            }}
                           >
                             <Ionicons
                               name={
@@ -235,7 +245,9 @@ export default function TripReviewScreen() {
                           styles.secondaryBtn,
                           isRated && styles.btnDisabled,
                         ]}
-                        onPress={() => handleDriverSubmit(riderId)}
+                        onPress={() => {
+                          handleDriverSubmit(riderId);
+                        }}
                         disabled={isRated}
                       >
                         <Text style={styles.secondaryBtnText}>
@@ -276,7 +288,6 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
   body: { padding: 16, gap: 16 },
-
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -291,7 +302,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
   line: { fontSize: 15, color: "#111" },
   muted: { color: "#6B7280", fontSize: 14 },
-
   stars: {
     flexDirection: "row",
     justifyContent: "center",
@@ -303,7 +313,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginVertical: 8,
   },
-
   primaryBtn: {
     backgroundColor: "#111",
     borderRadius: 10,
@@ -312,12 +321,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
-
   btnDisabled: {
     backgroundColor: "#9CA3AF",
     opacity: 1,
   },
-
   driverCard: {
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
@@ -332,4 +339,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryBtnText: { color: "#374151", fontWeight: "600" },
+  opacityMuted: { opacity: 0.5 },
 });

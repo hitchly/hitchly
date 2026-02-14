@@ -1,13 +1,9 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "@hitchly/tsconfig/react-native",
   "compilerOptions": {
-    "strict": true,
-    "jsx": "react-native",
-    "moduleResolution": "Bundler",
-    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "api/*": ["../api/*"]
+      "@/*": ["./*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]

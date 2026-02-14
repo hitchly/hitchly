@@ -2,28 +2,12 @@
   "files": [],
   "references": [
     { "path": "./apps/api" },
+    { "path": "./apps/admin" },
     { "path": "./apps/mobile" },
     { "path": "./packages/db" },
+    { "path": "./packages/tsconfig" },
+    { "path": "./packages/eslint-config" },
     { "path": "./packages/utils" },
-    { "path": "./packages/types" }
-  ],
-  "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@hitchly/db/*": ["packages/db/*"]
-    }
-  },
-  "extends": "expo/tsconfig.base"
+    { "path": "./packages/api-types" }
+  ]
 }

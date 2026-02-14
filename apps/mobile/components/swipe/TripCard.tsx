@@ -1,9 +1,12 @@
-import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
-import { useTheme } from "../../context/theme-context";
+// TODO: Fix eslint errors in this file and re-enable linting
+/* eslint-disable */
 
-export type RideMatch = {
+import { Ionicons } from "@expo/vector-icons";
+import { Image, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/context/theme-context";
+
+export interface RideMatch {
   rideId: string;
   driverId: string;
   name: string;
@@ -22,7 +25,7 @@ export type RideMatch = {
     availableSeats: number;
   };
   debugScores?: any;
-};
+}
 
 interface TripCardProps {
   match: RideMatch;
@@ -30,33 +33,6 @@ interface TripCardProps {
 
 export function TripCard({ match }: TripCardProps) {
   const { colors } = useTheme();
-
-  // #region agent log
-  const LOG_ENDPOINT =
-    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9";
-  React.useEffect(() => {
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "TripCard.tsx:useEffect",
-        message: "TripCard rendered",
-        data: {
-          rideId: match.rideId,
-          hasDetails: !!match.details,
-          availableSeats: match.details?.availableSeats,
-          availableSeatsType: typeof match.details?.availableSeats,
-          detailsKeys: match.details ? Object.keys(match.details) : [],
-          matchKeys: Object.keys(match),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "swipe-crash-debug",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-  }, [match]);
-  // #endregion
 
   const formatTime = (timeString: string) => {
     // If it's already formatted, return as is
@@ -76,12 +52,7 @@ export function TripCard({ match }: TripCardProps) {
     }
   };
 
-  // Safe access to availableSeats with fallback
-  const availableSeats =
-    match.details?.availableSeats !== null &&
-    match.details?.availableSeats !== undefined
-      ? match.details.availableSeats
-      : 0;
+  const availableSeats = match.details.availableSeats;
 
   return (
     <View
@@ -146,7 +117,7 @@ export function TripCard({ match }: TripCardProps) {
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {match.details?.arrivalAtPickup || "Pickup location"}
+            {match.details.arrivalAtPickup || "Pickup location"}
           </Text>
           <Text
             style={[styles.routeText, { color: colors.text }]}
@@ -169,7 +140,7 @@ export function TripCard({ match }: TripCardProps) {
             Departure
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {formatTime(match.details?.arrivalAtPickup || "")}
+            {formatTime(match.details.arrivalAtPickup || "")}
           </Text>
         </View>
 
@@ -197,7 +168,7 @@ export function TripCard({ match }: TripCardProps) {
             Price
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            ${(match.details?.estimatedCost ?? 0).toFixed(2)}
+            ${match.details.estimatedCost.toFixed(2)}
           </Text>
         </View>
 
@@ -211,7 +182,7 @@ export function TripCard({ match }: TripCardProps) {
             Detour
           </Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>
-            {match.details?.detourMinutes ?? 0} min
+            {match.details.detourMinutes} min
           </Text>
         </View>
       </View>

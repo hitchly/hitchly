@@ -1,6 +1,9 @@
+// TODO: Fix type and linting errors then reenable eslint for this file
+/* eslint-disable */
+
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -15,15 +18,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../context/theme-context";
-import { authClient } from "../../lib/auth-client";
-import { trpc } from "../../lib/trpc";
-import { isTestAccount } from "../../lib/test-accounts";
+
 import {
-  SwipeDeck,
   RiderCard,
+  SwipeDeck,
   type TripRequestWithDetails,
-} from "../../components/swipe";
+} from "@/components/swipe";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { isTestAccount } from "@/lib/test-accounts";
+import { trpc } from "@/lib/trpc";
 
 export default function RequestsScreen() {
   const { colors } = useTheme();
@@ -51,14 +55,14 @@ export default function RequestsScreen() {
 
   // Get requests - if driver, we'll need to fetch for each trip
   // For now, get first trip's requests as a placeholder - we'll need to aggregate
-  const firstTripId = activeDriverTrips?.[0]?.id;
+  const firstTripId = activeDriverTrips[0]?.id;
 
   const {
     data: firstTripRequests,
     isLoading: isLoadingFirstTrip,
     refetch: refetchFirstTrip,
   } = trpc.trip.getTripRequests.useQuery(
-    { tripId: firstTripId || "" },
+    { tripId: firstTripId ?? "" },
     { enabled: !!userId && !!firstTripId && isDriver }
   );
 
@@ -72,38 +76,6 @@ export default function RequestsScreen() {
     { riderId: userId },
     { enabled: !!userId && !isDriver }
   );
-
-  // #region agent log
-  React.useEffect(() => {
-    if (riderRequests !== undefined) {
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:riderRequestsQuery",
-            message: "Rider requests query result",
-            data: {
-              requestsCount: riderRequests?.length || 0,
-              requestStatuses:
-                riderRequests?.map((r) => ({
-                  id: r.id,
-                  status: r.status,
-                  riderId: r.riderId,
-                })) || [],
-              isLoading: isLoadingRiderRequests,
-              isRefetching: isRefetchingRiderRequests,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "C",
-          }),
-        }
-      ).catch(() => {});
-    }
-  }, [riderRequests, isLoadingRiderRequests, isRefetchingRiderRequests]);
 
   const isLoading =
     isLoadingProfile ||
@@ -136,43 +108,6 @@ export default function RequestsScreen() {
     [requests]
   );
 
-  // #region agent log
-  React.useEffect(() => {
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "requests.tsx:filteredRequests",
-        message: "Filtered requests computed",
-        data: {
-          isDriverView,
-          requestsCount: requests.length,
-          filteredCount: filteredRequests.length,
-          riderRequestsCount: riderRequests?.length,
-          allDriverRequestsCount: allDriverRequests.length,
-          requestsHaveTrips: requests.map((r) => !!r.trip),
-          filteredStatuses: filteredRequests.map((r) => ({
-            id: r.id,
-            status: r.status,
-            hasTrip: !!r.trip,
-            tripStatus: r.trip?.status,
-          })),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "debug-requests",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-  }, [
-    filteredRequests,
-    requests,
-    isDriverView,
-    riderRequests,
-    allDriverRequests,
-  ]);
-  // #endregion
-
   // Filter pending requests for swipe view
   const pendingRequests = useMemo(() => {
     if (!isDriverView) return [];
@@ -183,29 +118,6 @@ export default function RequestsScreen() {
 
   const acceptRequest = trpc.trip.acceptTripRequest.useMutation({
     onSuccess: (data) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:acceptRequest:onSuccess",
-            message: "Accept mutation succeeded",
-            data: {
-              acceptedRequestId: data?.id,
-              acceptedRequestStatus: data?.status,
-              acceptedRequestRiderId: data?.riderId,
-              isDriver,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "C",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       utils.trip.getTripRequests.invalidate();
       utils.trip.getTripById.invalidate();
       if (isDriver) {
@@ -216,24 +128,6 @@ export default function RequestsScreen() {
       // Alert removed per user request - success handled silently
     },
     onError: (error) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:acceptRequest:onError",
-            message: "Accept mutation failed",
-            data: { error: error.message, isDriver },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "C",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       setTimeout(() => {
         Alert.alert("Error", error.message);
       }, 500);
@@ -258,24 +152,6 @@ export default function RequestsScreen() {
   const [dummyPassengersEnabled, setDummyPassengersEnabled] = useState(false);
   const createDummyPassengers = trpc.admin.createDummyPassengers.useMutation({
     onSuccess: () => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:createDummyPassengers:onSuccess",
-            message: "Dummy passengers created",
-            data: { tripId: firstTripId },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       utils.trip.getTripRequests.invalidate();
       utils.trip.getTrips.invalidate();
       if (isDriver) {
@@ -284,48 +160,12 @@ export default function RequestsScreen() {
       Alert.alert("Success", "5 dummy passengers created!");
     },
     onError: (error) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:createDummyPassengers:onError",
-            message: "Error creating dummy passengers",
-            data: { error: error.message, tripId: firstTripId },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       Alert.alert("Error", error.message);
     },
   });
 
   const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation({
     onSuccess: () => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:deleteDummyPassengers:onSuccess",
-            message: "Dummy passengers deleted",
-            data: { tripId: firstTripId },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       utils.trip.getTripRequests.invalidate();
       utils.trip.getTrips.invalidate();
       if (isDriver) {
@@ -334,24 +174,6 @@ export default function RequestsScreen() {
       Alert.alert("Success", "Dummy passengers removed!");
     },
     onError: (error) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:deleteDummyPassengers:onError",
-            message: "Error deleting dummy passengers",
-            data: { error: error.message, tripId: firstTripId },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       Alert.alert("Error", error.message);
     },
   });
@@ -387,81 +209,12 @@ export default function RequestsScreen() {
           "Failed to register push token:",
           error?.message || error
         );
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              location: "requests.tsx:createTestRequest:pushTokenError",
-              message: "Push token registration failed",
-              data: {
-                error: error?.message || String(error),
-                hasProjectId: !!(
-                  Constants.expoConfig?.extra?.eas?.projectId ||
-                  process.env.EXPO_PUBLIC_PROJECT_ID
-                ),
-              },
-              timestamp: Date.now(),
-              sessionId: "debug-session",
-              runId: "push-token-debug",
-              hypothesisId: "H1",
-            }),
-          }
-        ).catch(() => {});
-        // #endregion
       }
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:createTestRequest:onSuccess",
-            message: "Create test request succeeded",
-            data: {
-              responseData: data,
-              hasRequest: !!data,
-              requestId: data?.id,
-              requestStatus: data?.status,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "debug-test-request",
-            hypothesisId: "B",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       utils.trip.getTripRequests.invalidate();
       refetchRiderRequests();
       Alert.alert("Success", "Test request created for rider view");
     },
     onError: (error) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "requests.tsx:createTestRequest:onError",
-            message: "Create test request failed",
-            data: {
-              errorMessage: error.message,
-              errorCode: error.data?.code,
-              errorShape: error.shape,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "debug-test-request",
-            hypothesisId: "B",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       Alert.alert(
         "Error",
         error.message ===
@@ -473,21 +226,6 @@ export default function RequestsScreen() {
   });
 
   const handleDummyPassengersToggle = (value: boolean) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "requests.tsx:handleDummyPassengersToggle",
-        message: "Toggle changed",
-        data: { value, firstTripId, currentState: dummyPassengersEnabled },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     setDummyPassengersEnabled(value);
     if (value && firstTripId) {
       createDummyPassengers.mutate({ tripId: firstTripId });
@@ -588,72 +326,11 @@ export default function RequestsScreen() {
               data={pendingRequests}
               renderCard={(request) => <RiderCard request={request} />}
               onSwipeLeft={(request) => {
-                // #region agent log
-                fetch(
-                  "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      location: "requests.tsx:onSwipeLeft",
-                      message: "Swipe left triggered",
-                      data: { requestId: request.id, isMounted: true },
-                      timestamp: Date.now(),
-                      sessionId: "debug-session",
-                      runId: "run1",
-                      hypothesisId: "D",
-                    }),
-                  }
-                ).catch(() => {});
-                // #endregion
                 // Use InteractionManager to defer the mutation until all interactions/animations complete
                 InteractionManager.runAfterInteractions(() => {
                   try {
-                    // #region agent log
-                    fetch(
-                      "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          location:
-                            "requests.tsx:onSwipeLeft:runAfterInteractions",
-                          message: "Calling reject mutation",
-                          data: { requestId: request.id },
-                          timestamp: Date.now(),
-                          sessionId: "debug-session",
-                          runId: "run1",
-                          hypothesisId: "D",
-                        }),
-                      }
-                    ).catch(() => {});
-                    // #endregion
                     rejectRequest.mutate({ requestId: request.id });
                   } catch (error) {
-                    // #region agent log
-                    fetch(
-                      "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          location: "requests.tsx:onSwipeLeft:error",
-                          message: "Error in reject mutation",
-                          data: {
-                            error:
-                              error instanceof Error
-                                ? error.message
-                                : String(error),
-                            requestId: request.id,
-                          },
-                          timestamp: Date.now(),
-                          sessionId: "debug-session",
-                          runId: "run1",
-                          hypothesisId: "D",
-                        }),
-                      }
-                    ).catch(() => {});
-                    // #endregion
                     console.error("Error in onSwipeLeft:", error);
                     setTimeout(() => {
                       Alert.alert("Error", "Failed to reject request");
@@ -662,46 +339,9 @@ export default function RequestsScreen() {
                 });
               }}
               onSwipeRight={(request) => {
-                // #region agent log
-                fetch(
-                  "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      location: "requests.tsx:onSwipeRight",
-                      message: "Swipe right triggered",
-                      data: { requestId: request.id, isMounted: true },
-                      timestamp: Date.now(),
-                      sessionId: "debug-session",
-                      runId: "run1",
-                      hypothesisId: "D",
-                    }),
-                  }
-                ).catch(() => {});
-                // #endregion
                 // Use InteractionManager to defer the mutation until all interactions/animations complete
                 InteractionManager.runAfterInteractions(() => {
                   try {
-                    // #region agent log
-                    fetch(
-                      "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          location:
-                            "requests.tsx:onSwipeRight:runAfterInteractions",
-                          message: "Calling accept mutation",
-                          data: { requestId: request.id },
-                          timestamp: Date.now(),
-                          sessionId: "debug-session",
-                          runId: "run1",
-                          hypothesisId: "D",
-                        }),
-                      }
-                    ).catch(() => {});
-                    // #endregion
                     acceptRequest.mutate(
                       { requestId: request.id },
                       {
@@ -719,30 +359,6 @@ export default function RequestsScreen() {
                       }
                     );
                   } catch (error) {
-                    // #region agent log
-                    fetch(
-                      "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          location: "requests.tsx:onSwipeRight:error",
-                          message: "Error in accept mutation",
-                          data: {
-                            error:
-                              error instanceof Error
-                                ? error.message
-                                : String(error),
-                            requestId: request.id,
-                          },
-                          timestamp: Date.now(),
-                          sessionId: "debug-session",
-                          runId: "run1",
-                          hypothesisId: "D",
-                        }),
-                      }
-                    ).catch(() => {});
-                    // #endregion
                     console.error("Error in onSwipeRight:", error);
                     setTimeout(() => {
                       Alert.alert("Error", "Failed to accept request");

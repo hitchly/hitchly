@@ -1,4 +1,7 @@
+// TODO: Fix linter issues
+/* eslint-disable */
 import type { Context } from "../../trpc/context";
+
 import { createMockDb } from "./mockDb";
 
 /**

@@ -2,8 +2,9 @@ import { Link } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "../../components/ui/button";
-import { useTheme } from "../../context/theme-context";
+
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/theme-context";
 
 export default function LandingPage() {
   const { colors } = useTheme();
@@ -21,11 +22,11 @@ export default function LandingPage() {
         </Text>
 
         <View style={styles.buttonContainer}>
-          <Link href={"/(auth)/sign-in" as any} asChild>
+          <Link href="/(auth)/sign-in" asChild>
             <Button title="Sign In" variant="primary" />
           </Link>
 
-          <Link href={"/(auth)/sign-up" as any} asChild>
+          <Link href="/(auth)/sign-up" asChild>
             <Button title="Create Account" variant="secondary" />
           </Link>
         </View>

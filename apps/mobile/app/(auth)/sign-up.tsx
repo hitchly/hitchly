@@ -1,12 +1,15 @@
-import { SignUpInput, signUpSchema } from "@hitchly/db";
+import type { SignUpInput } from "@hitchly/db";
+import { signUpSchema } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
-import { ControlledInput, SubmitButton } from "../../components/ui/form";
-import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { authClient } from "../../lib/auth-client";
+
+import { ControlledInput, SubmitButton } from "@/components/ui/form";
+import { OnboardingLayout } from "@/components/ui/screen-layout";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignUp() {
   const router = useRouter();
@@ -21,7 +24,7 @@ export default function SignUp() {
     },
   });
 
-  const onSubmit = async (data: SignUpInput) => {
+  const onSubmit: SubmitHandler<SignUpInput> = async (data) => {
     setLoading(true);
 
     try {
@@ -34,8 +37,8 @@ export default function SignUp() {
         {
           onSuccess: () => {
             router.push({
-              pathname: "/verify" as any,
-              params: { email: data.email, password: data.password },
+              pathname: "/verify",
+              params: { email: data.email },
             });
           },
           onError: (ctx) => {
@@ -43,8 +46,7 @@ export default function SignUp() {
           },
         }
       );
-    } catch (err) {
-      console.error("Unexpected Sign Up Error:", err);
+    } catch {
       Alert.alert(
         "Registration Failed",
         "An unexpected error occurred. Please try again."
@@ -52,6 +54,13 @@ export default function SignUp() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOnPress = () => {
+    const processSubmit = handleSubmit(onSubmit);
+    processSubmit().catch(() => {
+      // Handled by validation or catch block
+    });
   };
 
   return (
@@ -86,8 +95,9 @@ export default function SignUp() {
 
       <SubmitButton
         title="Create Account"
-        onPress={handleSubmit(onSubmit)}
+        onPress={handleOnPress}
         isPending={loading}
+        disabled={loading}
       />
     </OnboardingLayout>
   );

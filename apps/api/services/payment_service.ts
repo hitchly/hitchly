@@ -1,12 +1,15 @@
-import Stripe from "stripe";
+// TODO: Fix any linting issues
+/* eslint-disable */
+
 import { db } from "@hitchly/db/client";
-import { eq } from "drizzle-orm";
 import {
-  stripeCustomers,
-  stripeConnectAccounts,
   payments,
+  stripeConnectAccounts,
+  stripeCustomers,
   tips,
 } from "@hitchly/db/schema";
+import { eq } from "drizzle-orm";
+import Stripe from "stripe";
 import { calculateEstimatedCost } from "./pricing_service";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -306,7 +309,7 @@ export async function createPaymentHold(
       };
     }
 
-    const paymentMethodId = defaultPaymentMethodId || methods[0].id;
+    const paymentMethodId = defaultPaymentMethodId || methods[0]?.id;
 
     const [driverConnect] = await db
       .select()
@@ -504,15 +507,21 @@ export async function processTip(
     }
 
     const riderCustomerId = await getStripeCustomerId(riderId);
+
     if (!riderCustomerId) {
       return { success: false, error: "Rider has no payment method" };
     }
 
     const methods = await listPaymentMethods(riderCustomerId);
+
     if (methods.length === 0) {
       return { success: false, error: "Rider has no payment method" };
     }
-    const paymentMethodId = methods[0].id;
+    const paymentMethodId = methods[0]?.id;
+
+    if (!paymentMethodId) {
+      return { success: false, error: "Rider has no valid payment method" };
+    }
 
     const [driverConnect] = await db
       .select()

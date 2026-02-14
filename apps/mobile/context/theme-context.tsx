@@ -1,20 +1,19 @@
-import React, { createContext, useContext } from "react";
+import type { ReactNode } from "react";
+import { createContext, useContext } from "react";
 import { useColorScheme } from "react-native";
-import { Colors, Fonts } from "../constants/theme";
 
-type Theme = {
-  colors: typeof Colors.light;
-  fonts: typeof Fonts;
+import type { AppColors, AppFonts } from "@/constants/theme";
+import { Colors, Fonts } from "@/constants/theme";
+
+interface Theme {
+  colors: AppColors;
+  fonts: AppFonts;
   isDark: boolean;
-};
+}
 
-const ThemeContext = createContext<Theme>({
-  colors: Colors.light,
-  fonts: Fonts,
-  isDark: false,
-});
+const ThemeContext = createContext<Theme | null>(null);
 
-export function AppThemeProvider({ children }: { children: React.ReactNode }) {
+export function AppThemeProvider({ children }: { children: ReactNode }) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -31,8 +30,10 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+
   if (!context) {
     throw new Error("useTheme must be used within an AppThemeProvider");
   }
+
   return context;
 };

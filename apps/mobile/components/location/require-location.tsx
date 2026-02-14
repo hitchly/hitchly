@@ -1,8 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ReactNode } from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,54 +18,26 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useTheme } from "../../context/theme-context";
-import { useGPSLocation } from "../../hooks/use-gps-location";
-import { trpc } from "../../lib/trpc";
-import { ControlledLocationInput, SubmitButton } from "../ui/form";
+import { ControlledLocationInput, SubmitButton } from "@/components/ui/form";
+import { useTheme } from "@/context/theme-context";
+import { useGPSLocation } from "@/hooks/use-gps-location";
+import { trpc } from "@/lib/trpc";
 
-export const RequireLocation = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const RequireLocation = ({ children }: { children: ReactNode }) => {
   const { colors } = useTheme();
   const utils = trpc.useUtils();
 
-  const {
-    data: profile,
-    isLoading,
-    error: profileError,
-  } = trpc.profile.getMe.useQuery();
-
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "components/location/require-location.tsx:profileQuery",
-        message: "RequireLocation profile query state",
-        data: {
-          isLoading,
-          hasProfile: !!profile,
-          profileError: profileError?.message,
-          hasDefaultAddress: !!profile?.profile?.defaultAddress,
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "loading-debug",
-        hypothesisId: "B",
-      }),
-    }).catch(() => {});
-  }, [isLoading, profile, profileError]);
-  // #endregion
+  const { data: profile, isLoading } = trpc.profile.getMe.useQuery();
 
   const saveAddressMutation = trpc.location.saveDefaultAddress.useMutation({
     onSuccess: () => {
-      utils.profile.getMe.invalidate();
+      utils.profile.getMe.invalidate().catch(() => {
+        /* Invalidation failed silently */
+      });
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
@@ -85,12 +58,24 @@ export const RequireLocation = ({
   const [lat, long] = watch(["latitude", "longitude"]);
   const isAddressVerified = lat !== 0 && long !== 0;
 
-  const onSubmit = (data: SaveAddressInput) => {
+  const onSubmit: SubmitHandler<SaveAddressInput> = (data) => {
     if (data.latitude === 0 || data.longitude === 0) {
       Alert.alert("Invalid Address", "Please select from the dropdown.");
       return;
     }
     saveAddressMutation.mutate(data);
+  };
+
+  const handleOnPress = () => {
+    handleSubmit(onSubmit)().catch(() => {
+      /* Handled by validation */
+    });
+  };
+
+  const handleGetLocation = () => {
+    getLocation().catch(() => {
+      /* Handled internally by hook */
+    });
   };
 
   if (isLoading) {
@@ -100,7 +85,8 @@ export const RequireLocation = ({
       </View>
     );
   }
-  if (profile?.profile?.defaultAddress) {
+
+  if (profile?.profile.defaultAddress) {
     return <>{children}</>;
   }
 
@@ -129,12 +115,10 @@ export const RequireLocation = ({
               name="address"
               label="Address"
               placeholder="1280 Main St W, Hamilton"
-              // Invalidate verification on manual type
               onTextChange={() => {
                 setValue("latitude", 0);
                 setValue("longitude", 0);
               }}
-              // Validate on selection
               onSelect={(details) => {
                 setValue("latitude", details.lat);
                 setValue("longitude", details.long);
@@ -143,7 +127,7 @@ export const RequireLocation = ({
 
             <TouchableOpacity
               style={styles.gpsButton}
-              onPress={getLocation}
+              onPress={handleGetLocation}
               disabled={isGeocoding}
             >
               <Ionicons
@@ -165,7 +149,7 @@ export const RequireLocation = ({
                     ? "Save Address"
                     : "Select an Address"
               }
-              onPress={handleSubmit(onSubmit)}
+              onPress={handleOnPress}
               isPending={saveAddressMutation.isPending}
             />
           </View>

@@ -1,6 +1,10 @@
-# Run lint-staged (handles formatting and linting)
+echo "🛡️ Checking for secrets..."
+git diff --cached --name-only | grep -E '\.env$|\.pem$|\.key$' && echo "❌ Error: Sensitive file detected!" && exit 1
+
+echo "💅 Running lint-staged (formatting & linting)..."
 pnpm exec lint-staged
 
-# Type check
-pnpm type-check
+echo "⌨️ Running type-check on affected packages..."
+pnpm turbo run type-check --filter=[HEAD]
 
+echo "✅ Pre-commit checks passed!"

@@ -11,11 +11,10 @@ import {
 } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useTheme } from "../../context/theme-context";
-import { useGPSLocation } from "../../hooks/use-gps-location";
-import { trpc } from "../../lib/trpc";
+
 import {
   ControlledChipGroup,
   ControlledInput,
@@ -24,7 +23,10 @@ import {
   ControlledSegmentedControl,
   ControlledSwitch,
   SubmitButton,
-} from "../ui/form";
+} from "@/components/ui/form";
+import { useTheme } from "@/context/theme-context";
+import { useGPSLocation } from "@/hooks/use-gps-location";
+import { trpc } from "@/lib/trpc";
 
 export function ProfileForm({
   initialData,
@@ -40,6 +42,14 @@ export function ProfileForm({
 
   const mutation = trpc.profile.updateProfile.useMutation({ onSuccess });
 
+  const handleOnPress = () => {
+    handleSubmit((data) => {
+      mutation.mutate(data);
+    })().catch(() => {
+      /* Handled by validation */
+    });
+  };
+
   return (
     <View style={styles.container}>
       <ControlledInput
@@ -49,14 +59,12 @@ export function ProfileForm({
         placeholder="Tell us about yourself..."
         multiline
       />
-
       <ControlledInput
         control={control}
         name="faculty"
         label="Faculty"
         placeholder="Engineering"
       />
-
       <ControlledNumberSelector
         control={control}
         name="year"
@@ -64,7 +72,6 @@ export function ProfileForm({
         min={1}
         max={10}
       />
-
       <ControlledSegmentedControl
         control={control}
         name="appRole"
@@ -74,7 +81,6 @@ export function ProfileForm({
           { label: "Driver", value: "driver" },
         ]}
       />
-
       <ControlledChipGroup
         control={control}
         name="universityRole"
@@ -87,10 +93,9 @@ export function ProfileForm({
           { label: "Other", value: "other" },
         ]}
       />
-
       <SubmitButton
         title="Save Profile"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleOnPress}
         isPending={mutation.isPending}
       />
     </View>
@@ -112,6 +117,14 @@ export function PreferencesForm({
 
   const mutation = trpc.profile.updatePreferences.useMutation({ onSuccess });
 
+  const handleOnPress = () => {
+    handleSubmit((data) => {
+      mutation.mutate(data);
+    })().catch(() => {
+      /* Handled by validation */
+    });
+  };
+
   return (
     <View style={styles.container}>
       <View style={[styles.switchList, { backgroundColor: colors.background }]}>
@@ -126,7 +139,7 @@ export function PreferencesForm({
       </View>
       <SubmitButton
         title="Save Preferences"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleOnPress}
         isPending={mutation.isPending}
       />
     </View>
@@ -146,6 +159,14 @@ export function VehicleForm({
   });
 
   const mutation = trpc.profile.updateVehicle.useMutation({ onSuccess });
+
+  const handleOnPress = () => {
+    handleSubmit((data) => {
+      mutation.mutate(data);
+    })().catch(() => {
+      /* Handled by validation */
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -167,7 +188,6 @@ export function VehicleForm({
           />
         </View>
       </View>
-
       <View style={styles.row}>
         <View style={{ flex: 1, marginRight: 8 }}>
           <ControlledInput
@@ -194,10 +214,9 @@ export function VehicleForm({
         min={1}
         max={10}
       />
-
       <SubmitButton
         title="Save Vehicle"
-        onPress={handleSubmit((data) => mutation.mutate(data))}
+        onPress={handleOnPress}
         isPending={mutation.isPending}
       />
     </View>
@@ -215,19 +234,19 @@ export function LocationForm({
 
   const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
     resolver: zodResolver(saveAddressSchema),
-    defaultValues: {
-      address: initialData.address,
-      latitude: initialData.latitude ?? 0,
-      longitude: initialData.longitude ?? 0,
-    },
+    defaultValues: initialData,
   });
 
   const [lat, long] = watch(["latitude", "longitude"]);
   const isVerified = lat !== 0 && long !== 0;
 
   const mutation = trpc.location.saveDefaultAddress.useMutation({
-    onSuccess: () => onSuccess(),
-    onError: (err) => Alert.alert("Error", err.message),
+    onSuccess: () => {
+      onSuccess();
+    },
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
   });
 
   const { getLocation, isGeocoding } = useGPSLocation((loc) => {
@@ -236,7 +255,7 @@ export function LocationForm({
     setValue("longitude", loc.longitude);
   });
 
-  const onSubmit = (data: SaveAddressInput) => {
+  const onSubmit: SubmitHandler<SaveAddressInput> = (data) => {
     if (!isVerified) {
       Alert.alert(
         "Invalid Address",
@@ -245,6 +264,18 @@ export function LocationForm({
       return;
     }
     mutation.mutate(data);
+  };
+
+  const handleOnPress = () => {
+    handleSubmit(onSubmit)().catch(() => {
+      /* Handled by validation */
+    });
+  };
+
+  const handleGetLocation = () => {
+    getLocation().catch(() => {
+      /* Handled internally by hook */
+    });
   };
 
   return (
@@ -263,10 +294,9 @@ export function LocationForm({
           setValue("longitude", d.long);
         }}
       />
-
       <TouchableOpacity
         style={styles.gpsRow}
-        onPress={getLocation}
+        onPress={handleGetLocation}
         disabled={isGeocoding}
       >
         <Ionicons name="navigate-circle" size={20} color={colors.primary} />
@@ -274,10 +304,9 @@ export function LocationForm({
           Use Current Location
         </Text>
       </TouchableOpacity>
-
       <SubmitButton
         title={isVerified ? "Save Address" : "Select an Address"}
-        onPress={handleSubmit(onSubmit)}
+        onPress={handleOnPress}
         isPending={mutation.isPending || isGeocoding}
         disabled={!isVerified || isGeocoding}
       />

@@ -1,17 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native";
-import { useTheme } from "../../context/theme-context";
+import type { ReactNode } from "react";
+import type { StyleProp, ViewStyle } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import { useTheme } from "@/context/theme-context";
 
 interface CardProps {
-  children: React.ReactNode;
+  children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -28,7 +23,7 @@ export const Card = ({ children, style }: CardProps) => {
 interface InfoCardProps {
   title: string;
   onEdit?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   empty?: boolean;
   emptyText?: string;
   actionLabel?: string;

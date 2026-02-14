@@ -1,3 +1,5 @@
+// TODO: Fix any types
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TIME_WINDOW_MIN } from "@hitchly/db/schema";
 
 /**

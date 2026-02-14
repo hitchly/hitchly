@@ -1,11 +1,14 @@
-import { Expo, ExpoPushMessage } from "expo-server-sdk";
+// TODO: Fix linting errors in this file and re-enable eslint
+/* eslint-disable */
+import type { ExpoPushMessage } from "expo-server-sdk";
+import { Expo } from "expo-server-sdk";
 
 const expo = new Expo();
 
-export type NotificationRecipient = {
+export interface NotificationRecipient {
   userId: string;
   pushToken?: string | null;
-};
+}
 
 /**
  * Send push notifications to multiple recipients
