@@ -1,9 +1,10 @@
+import "dotenv/config";
+
 import { db } from "@hitchly/db/client";
 import { stripeConnectAccounts } from "@hitchly/db/schema";
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
 import type { TRPCError } from "@trpc/server";
-import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";

@@ -4,16 +4,6 @@
 import { Client } from "@googlemaps/google-maps-services-js";
 import { and, db, eq, gte } from "@hitchly/db/client";
 import { routes } from "@hitchly/db/schema";
-import { env } from "../config/env";
-
-// Verify API key is loaded at startup
-if (!env.google.apiKey) {
-  console.error(
-    "ERROR: GOOGLE_MAPS_API_KEY is not set in environment variables!"
-  );
-} else {
-  // API key loaded successfully
-}
 
 export type Location = {
   lat: number;
@@ -72,7 +62,7 @@ export async function getRouteDetails(
   const params: any = {
     origin: toGoogleLatLng(origin),
     destination: toGoogleLatLng(destination),
-    key: env.google.apiKey,
+    key: process.env.GOOGLE_MAPS_API_KEY,
     departure_time: safeDepTime,
   };
 
@@ -133,7 +123,11 @@ export async function geocodeAddress(
   address: string
 ): Promise<Location | null> {
   try {
-    const apiKey = env.google.apiKey;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("Google Maps API key is not configured");
+    }
 
     const response = await mapsClient.geocode({
       params: {

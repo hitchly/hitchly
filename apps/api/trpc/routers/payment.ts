@@ -4,7 +4,6 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import Stripe from "stripe";
 import { z } from "zod";
 
-import { env } from "../../config/env";
 import {
   createConnectAccount,
   createConnectOnboardingLink,
@@ -21,7 +20,13 @@ import {
 } from "../../services/payment_service";
 import { protectedProcedure, router } from "../trpc";
 
-const stripe = new Stripe(env.stripe.secretKey);
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+
+if (!STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export const paymentRouter = router({
   createSetupIntent: protectedProcedure.mutation(async ({ ctx }) => {
