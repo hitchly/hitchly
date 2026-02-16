@@ -17,18 +17,18 @@ const { mockGeocodeAddress, mockCalculateTripDistance } = vi.hoisted(() => {
   };
 });
 
-vi.mock("../services/googlemaps", () => ({
+vi.mock("../../../services/googlemaps", () => ({
   geocodeAddress: mockGeocodeAddress,
   calculateTripDistance: mockCalculateTripDistance,
 }));
 
 // Mock notification service
-vi.mock("../services/notification_service", () => ({
+vi.mock("../../../services/notification", () => ({
   sendTripNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock payment service
-vi.mock("../services/payment_service", () => ({
+vi.mock("../../../services/payment", () => ({
   hasPaymentMethod: vi.fn().mockResolvedValue(true),
   createPaymentHold: vi
     .fn()
