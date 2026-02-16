@@ -25,7 +25,6 @@ export default function RideScreen() {
     id: string;
   }>();
   const router = useRouter();
-  const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user.id;
   const { data: userProfile } = trpc.profile.getMe.useQuery();
@@ -52,50 +51,6 @@ export default function RideScreen() {
     },
   });
 
-  const simulateDriverPickup = trpc.admin.simulateDriverPickup.useMutation({
-    onSuccess: () => {
-      refetch();
-      utils.trip.getTripRequests.invalidate();
-      Alert.alert("Success", "Driver pickup simulated");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  const simulateDriverDropoff = trpc.admin.simulateDriverDropoff.useMutation({
-    onSuccess: () => {
-      refetch();
-      utils.trip.getTripRequests.invalidate();
-      Alert.alert("Success", "Driver dropoff simulated");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  const simulateTripStartNotification =
-    trpc.admin.simulateTripStartNotification.useMutation({
-      onSuccess: () => {
-        Alert.alert("Success", "Trip Start notification sent!");
-      },
-      onError: (error) => {
-        Alert.alert("Error", error.message);
-      },
-    });
-
-  const simulateTripCancelNotification =
-    trpc.admin.simulateTripCancelNotification.useMutation({
-      onSuccess: () => {
-        Alert.alert("Success", "Trip Cancel notification sent!");
-      },
-      onError: (error) => {
-        Alert.alert("Error", error.message);
-      },
-    });
-
-  // Auto-redirect to review page when trip is completed
-  // Must be before conditional returns to maintain hook order
   const isCompleted = userRequest?.status === "completed";
   useEffect(() => {
     if (isCompleted && id) {
@@ -103,8 +58,6 @@ export default function RideScreen() {
     }
   }, [id, isCompleted, router]);
 
-  // Centralized back navigation handler
-  // Always go to trip details - most predictable behavior
   const handleBack = () => {
     router.push(`/trips/${id}` as Href);
   };
@@ -156,7 +109,6 @@ export default function RideScreen() {
   const isOnTrip = userRequest.status === "on_trip";
   const pickupConfirmed = !!userRequest.riderPickupConfirmedAt;
 
-  // Calculate dropoff order if on trip
   const dropoffOrder = (() => {
     if (!isOnTrip) return null;
     const onTripRequests =
@@ -302,27 +254,31 @@ export default function RideScreen() {
                           {
                             text: "Confirm",
                             onPress: () => {
-                              simulateDriverPickup.mutate({
-                                tripId: id,
-                                requestId: userRequest.id,
-                              });
+                              // TODO implement confirm pickup
+                              console.log("Fix me: confirm pickup");
                             },
                           },
                         ]
                       );
                     }}
-                    disabled={simulateDriverPickup.isPending}
+                    disabled={
+                      // TODO implement confirm pickup
+                      false
+                    }
                   >
-                    {simulateDriverPickup.isPending ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <Ionicons name="car-outline" size={20} color="#fff" />
-                        <Text style={styles.testButtonText}>
-                          Test Driver Pickup
-                        </Text>
-                      </>
-                    )}
+                    {
+                      // TODO implement confirm pickup
+                      false ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="car-outline" size={20} color="#fff" />
+                          <Text style={styles.testButtonText}>
+                            Test Driver Pickup
+                          </Text>
+                        </>
+                      )
+                    }
                   </TouchableOpacity>
                 )}
                 {isOnTrip && (
@@ -337,27 +293,34 @@ export default function RideScreen() {
                           {
                             text: "Confirm",
                             onPress: () => {
-                              simulateDriverDropoff.mutate({
-                                tripId: id,
-                                requestId: userRequest.id,
-                              });
+                              dropoffOrder;
                             },
                           },
                         ]
                       );
                     }}
-                    disabled={simulateDriverDropoff.isPending}
+                    disabled={
+                      false
+                      // TODO: implement real drop off
+                    }
                   >
-                    {simulateDriverDropoff.isPending ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <Ionicons name="exit-outline" size={20} color="#fff" />
-                        <Text style={styles.testButtonText}>
-                          Test Driver Drop Off
-                        </Text>
-                      </>
-                    )}
+                    {
+                      // TODO: implement real drop off
+                      false ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="exit-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.testButtonText}>
+                            Test Driver Drop Off
+                          </Text>
+                        </>
+                      )
+                    }
                   </TouchableOpacity>
                 )}
                 {/* Notification Test Buttons */}
@@ -369,24 +332,31 @@ export default function RideScreen() {
                         { backgroundColor: "#007AFF" },
                       ]}
                       onPress={() => {
-                        simulateTripStartNotification.mutate({ tripId: id });
+                        // TODO implement real start trip
+                        console.log("Fix me: Starting trip notification!");
                       }}
-                      disabled={simulateTripStartNotification.isPending}
+                      disabled={
+                        // TODO implement real start trip
+                        false
+                      }
                     >
-                      {simulateTripStartNotification.isPending ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <>
-                          <Ionicons
-                            name="notifications-outline"
-                            size={20}
-                            color="#fff"
-                          />
-                          <Text style={styles.testButtonText}>
-                            Test Trip Start Notification
-                          </Text>
-                        </>
-                      )}
+                      {
+                        // TODO implement real start trip
+                        false ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons
+                              name="notifications-outline"
+                              size={20}
+                              color="#fff"
+                            />
+                            <Text style={styles.testButtonText}>
+                              Test Trip Start Notification
+                            </Text>
+                          </>
+                        )
+                      }
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
@@ -394,24 +364,31 @@ export default function RideScreen() {
                         { backgroundColor: "#FF3B30" },
                       ]}
                       onPress={() => {
-                        simulateTripCancelNotification.mutate({ tripId: id });
+                        // TODO: Implement cancelling trip functionality
+                        console.log("Fix me: cancel trip");
                       }}
-                      disabled={simulateTripCancelNotification.isPending}
+                      disabled={
+                        // TODO: Implement cancelling trip functionality
+                        false
+                      }
                     >
-                      {simulateTripCancelNotification.isPending ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <>
-                          <Ionicons
-                            name="close-circle-outline"
-                            size={20}
-                            color="#fff"
-                          />
-                          <Text style={styles.testButtonText}>
-                            Test Trip Cancel Notification
-                          </Text>
-                        </>
-                      )}
+                      {
+                        // TODO: Implement cancelling trip functionality
+                        false ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons
+                              name="close-circle-outline"
+                              size={20}
+                              color="#fff"
+                            />
+                            <Text style={styles.testButtonText}>
+                              Test Trip Cancel Notification
+                            </Text>
+                          </>
+                        )
+                      }
                     </TouchableOpacity>
                   </>
                 )}

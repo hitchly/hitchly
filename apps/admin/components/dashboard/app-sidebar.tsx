@@ -1,5 +1,6 @@
 "use client";
 
+import type { User } from "better-auth/types";
 import {
   Activity,
   Car,
@@ -35,23 +36,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth";
-
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  image?: string | null;
-}
-
-interface AuthSession {
-  user: AuthUser;
-  session: {
-    id: string;
-    userId: string;
-    expiresAt: Date;
-  };
-}
+import { authClient } from "@/lib/auth/client";
 
 interface NavItem {
   label: string;
@@ -67,10 +52,11 @@ const navItems: NavItem[] = [
   { label: "Health", href: "/dashboard/health", icon: Activity },
 ];
 
-export function AppSidebar({ session }: { session: AuthSession }) {
+export function AppSidebar({ user }: { user: User }) {
   const pathname = usePathname();
   const router = useRouter();
-  const userInitials = (session.user.name || "U").charAt(0).toUpperCase();
+
+  const userInitials = (user.name || "U").charAt(0).toUpperCase();
 
   const handleSignOut = async (): Promise<void> => {
     try {
@@ -129,20 +115,15 @@ export function AppSidebar({ session }: { session: AuthSession }) {
                   className="data-[state=open]:bg-sidebar-accent"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage
-                      src={session.user.image ?? ""}
-                      alt={session.user.name}
-                    />
+                    <AvatarImage src={user.image ?? ""} alt={user.name} />
                     <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                    <span className="truncate font-semibold">
-                      {session.user.name}
-                    </span>
+                    <span className="truncate font-semibold">{user.name}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {session.user.email}
+                      {user.email}
                     </span>
                   </div>
                   <ChevronUp className="ml-auto h-4 w-4 group-data-[collapsible=icon]:hidden" />
@@ -155,9 +136,9 @@ export function AppSidebar({ session }: { session: AuthSession }) {
               >
                 <div className="flex items-center gap-2 p-2">
                   <div className="flex flex-col space-y-0.5">
-                    <p className="text-sm font-medium">{session.user.name}</p>
+                    <p className="text-sm font-medium">{user.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {session.user.email}
+                      {user.email}
                     </p>
                   </div>
                 </div>

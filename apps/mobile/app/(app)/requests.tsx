@@ -1,18 +1,16 @@
-// TODO: Fix type and linting errors then reenable eslint for this file
+// TODO: Fix lint and type errors then add back linting
 /* eslint-disable */
 
 import Ionicons from "@expo/vector-icons/Ionicons";
-import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
+import type { Href } from "expo-router";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
   InteractionManager,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -40,7 +38,7 @@ export default function RequestsScreen() {
   const { data: userProfile, isLoading: isLoadingProfile } =
     trpc.profile.getMe.useQuery(undefined, { enabled: !!userId });
 
-  const appRole = userProfile?.profile?.appRole || "rider";
+  const appRole = userProfile?.profile.appRole ?? "rider";
   const isDriver = appRole === "driver";
   const userEmail = userProfile?.email;
   const isTestUser = isTestAccount(userEmail);
@@ -51,7 +49,7 @@ export default function RequestsScreen() {
 
   // Filter out cancelled trips
   const activeDriverTrips =
-    driverTrips?.filter((trip) => trip.status !== "cancelled") || [];
+    driverTrips?.filter((trip) => trip.status !== "cancelled") ?? [];
 
   // Get requests - if driver, we'll need to fetch for each trip
   // For now, get first trip's requests as a placeholder - we'll need to aggregate
@@ -71,7 +69,6 @@ export default function RequestsScreen() {
     data: riderRequests,
     isLoading: isLoadingRiderRequests,
     refetch: refetchRiderRequests,
-    isRefetching: isRefetchingRiderRequests,
   } = trpc.trip.getTripRequests.useQuery(
     { riderId: userId },
     { enabled: !!userId && !isDriver }
@@ -88,13 +85,13 @@ export default function RequestsScreen() {
   const allDriverRequests = useMemo(() => {
     if (!isDriver) return [];
     // For now, return first trip's requests - in production, aggregate all trips
-    return firstTripRequests || [];
+    return firstTripRequests ?? [];
   }, [firstTripRequests, isDriver]);
 
   // Determine if user is viewing as driver or rider
   const isDriverView = isDriver;
   const requests = useMemo(
-    () => (isDriverView ? allDriverRequests : riderRequests || []),
+    () => (isDriverView ? allDriverRequests : (riderRequests ?? [])),
     [isDriverView, allDriverRequests, riderRequests]
   );
 
@@ -149,91 +146,6 @@ export default function RequestsScreen() {
     },
   });
 
-  const [dummyPassengersEnabled, setDummyPassengersEnabled] = useState(false);
-  const createDummyPassengers = trpc.admin.createDummyPassengers.useMutation({
-    onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
-      utils.trip.getTrips.invalidate();
-      if (isDriver) {
-        refetchFirstTrip();
-      }
-      Alert.alert("Success", "5 dummy passengers created!");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation({
-    onSuccess: () => {
-      utils.trip.getTripRequests.invalidate();
-      utils.trip.getTrips.invalidate();
-      if (isDriver) {
-        refetchFirstTrip();
-      }
-      Alert.alert("Success", "Dummy passengers removed!");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  const registerPushToken = trpc.profile.updatePushToken.useMutation();
-
-  const createTestRequest = trpc.admin.createTestRequest.useMutation({
-    onSuccess: async (data) => {
-      // Register push token when creating test request
-      try {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === "granted") {
-          // Get projectId from Constants or environment variable
-          const projectId =
-            Constants.expoConfig?.extra?.eas?.projectId ||
-            process.env.EXPO_PUBLIC_PROJECT_ID ||
-            Constants.expoConfig?.extra?.projectId;
-
-          // Only try to get push token if projectId is available
-          // In Expo Go, push notifications may not work anyway
-          if (projectId) {
-            const tokenData = await Notifications.getExpoPushTokenAsync({
-              projectId,
-            });
-            await registerPushToken.mutateAsync({
-              pushToken: tokenData.data,
-            });
-          }
-        }
-      } catch (error: any) {
-        // Don't block test request creation if push token registration fails
-        console.error(
-          "Failed to register push token:",
-          error?.message || error
-        );
-      }
-      utils.trip.getTripRequests.invalidate();
-      refetchRiderRequests();
-      Alert.alert("Success", "Test request created for rider view");
-    },
-    onError: (error) => {
-      Alert.alert(
-        "Error",
-        error.message ===
-          "You already have a pending or accepted request for this trip"
-          ? "You already have a pending or accepted test request. Cancel it from the Trips screen before creating another."
-          : error.message
-      );
-    },
-  });
-
-  const handleDummyPassengersToggle = (value: boolean) => {
-    setDummyPassengersEnabled(value);
-    if (value && firstTripId) {
-      createDummyPassengers.mutate({ tripId: firstTripId });
-    } else if (!value && firstTripId) {
-      deleteDummyPassengers.mutate({ tripId: firstTripId });
-    }
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView
@@ -265,41 +177,7 @@ export default function RequestsScreen() {
             >
               Test Mode
             </Text>
-            <Switch
-              value={dummyPassengersEnabled}
-              onValueChange={handleDummyPassengersToggle}
-              disabled={
-                createDummyPassengers.isPending ||
-                deleteDummyPassengers.isPending
-              }
-            />
           </View>
-        )}
-        {!isDriverView && isTestUser && (
-          <TouchableOpacity
-            style={[
-              styles.testButton,
-              createTestRequest.isPending && styles.testButtonDisabled,
-            ]}
-            onPress={() => {
-              const hasActiveRequest = filteredRequests.some(
-                (req) => req.status === "pending" || req.status === "accepted"
-              );
-              if (hasActiveRequest) {
-                Alert.alert(
-                  "Request Exists",
-                  "You already have a pending or accepted test request. Cancel it from the Trips screen before creating another."
-                );
-                return;
-              }
-              createTestRequest.mutate({});
-            }}
-            disabled={createTestRequest.isPending}
-          >
-            <Text style={[styles.testButtonText, { color: colors.text }]}>
-              {createTestRequest.isPending ? "Creating..." : "Add Test Request"}
-            </Text>
-          </TouchableOpacity>
         )}
       </View>
 
@@ -348,8 +226,8 @@ export default function RequestsScreen() {
                         onSuccess: () => {
                           // Placeholder for payment module: place rider funds on hold when driver accepts.
                           const riderLabel =
-                            request.rider?.name ||
-                            request.rider?.email ||
+                            request.rider?.name ??
+                            request.rider?.email ??
                             "this rider";
                           Alert.alert(
                             "Payment (Placeholder)",
@@ -370,7 +248,7 @@ export default function RequestsScreen() {
                 setTimeout(() => {
                   Alert.alert(
                     "Request Details",
-                    `Rider: ${request.rider?.name || request.rider?.email || "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`
+                    `Rider: ${request.rider?.name ?? request.rider?.email ?? "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`
                   );
                 }, 500);
               }}
@@ -414,17 +292,17 @@ export default function RequestsScreen() {
             const getRequestStatusColor = (status: string) => {
               switch (status) {
                 case "pending":
-                  return colors.warning || "#FFA500";
+                  return colors.warning;
                 case "accepted":
-                  return colors.success || "#34C759";
+                  return colors.success;
                 case "rejected":
-                  return colors.error || "#FF3B30";
+                  return colors.error;
                 case "completed":
-                  return colors.success || "#34C759";
+                  return colors.success;
                 case "cancelled":
-                  return colors.textSecondary || "#666";
+                  return colors.textSecondary;
                 default:
-                  return colors.textSecondary || "#666";
+                  return colors.textSecondary;
               }
             };
 
@@ -444,15 +322,15 @@ export default function RequestsScreen() {
                 ]}
                 onPress={() => {
                   if (request.trip) {
-                    router.push(`/trips/${request.trip.id}` as any);
+                    router.push(`/trips/${request.trip.id}` as Href);
                   }
                 }}
               >
                 <View style={styles.requestHeader}>
                   <View style={styles.requestInfo}>
                     <Text style={[styles.requestRoute, { color: colors.text }]}>
-                      {request.trip?.origin || "Unknown"} →{" "}
-                      {request.trip?.destination || "Unknown"}
+                      {request.trip?.origin ?? "Unknown"} →{" "}
+                      {request.trip?.destination ?? "Unknown"}
                     </Text>
                     {request.trip?.departureTime && (
                       <Text

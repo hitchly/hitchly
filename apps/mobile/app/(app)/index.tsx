@@ -1,17 +1,10 @@
 import type { Href } from "expo-router";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "@/context/theme-context";
-import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
 export default function HomeScreen() {
@@ -19,15 +12,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const { data: userProfile, isLoading: profileLoading } =
     trpc.profile.getMe.useQuery();
-
-  const { data: session } = authClient.useSession();
-  const userId = session?.user.id;
-
-  const adminCheck = trpc.admin.amIAdmin.useQuery(undefined, {
-    enabled: !!userId,
-  });
-
-  const { data, isLoading, error } = trpc.health.ping.useQuery();
 
   useEffect(() => {
     if (profileLoading) return;
@@ -42,7 +26,7 @@ export default function HomeScreen() {
     }
   }, [userProfile, profileLoading, router]);
 
-  if (profileLoading || adminCheck.isLoading) {
+  if (profileLoading) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -54,34 +38,6 @@ export default function HomeScreen() {
       </SafeAreaView>
     );
   }
-
-  // Show admin dashboard link if user is admin (before redirect)
-  // Note: This will briefly flash before redirect happens
-  if (adminCheck.data?.isAdmin) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={["top", "left", "right"]}
-      >
-        <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.text, marginBottom: 20 }}>
-            Health Check:{" "}
-            {isLoading ? "Loading..." : (data?.message ?? "Unknown")}
-          </Text>
-          {error && (
-            <Text style={{ color: colors.error, marginBottom: 20 }}>
-              Error: {error.message}
-            </Text>
-          )}
-          <Link href={"/admin/dashboard"} asChild>
-            <Button title="Go to Admin Dashboard" color={colors.primary} />
-          </Link>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // This should not render as we redirect, but keep as fallback
   return null;
 }
 

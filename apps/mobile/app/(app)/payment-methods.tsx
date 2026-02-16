@@ -227,7 +227,7 @@ export default function PaymentMethodsScreen() {
                     <Ionicons
                       name="trash-outline"
                       size={20}
-                      color={colors.error || "#ff4444"}
+                      color={colors.error}
                     />
                   </TouchableOpacity>
                 </TouchableOpacity>

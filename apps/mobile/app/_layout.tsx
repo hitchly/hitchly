@@ -47,66 +47,6 @@ function AppContent() {
     { enabled: !!session }
   );
 
-  // Auto-cleanup dummy passengers on app launch (for drivers)
-  const deleteDummyPassengers = trpc.admin.deleteDummyPassengers.useMutation();
-  const cleanupRanRef = useRef(false);
-
-  useEffect(() => {
-    // Only run cleanup once per session, not on every trips change
-    if (!session || !userProfile || !trips || cleanupRanRef.current) return;
-
-    const isDriver = userProfile.profile.appRole === "driver";
-    if (!isDriver) return;
-
-    // Mark cleanup as run to prevent infinite loop
-    cleanupRanRef.current = true;
-
-    // Clean up dummy passengers for each trip (batch all mutations, don't invalidate until all done)
-    const tripIds = trips.map((trip) => trip.id);
-    let completedCount = 0;
-    const totalTrips = tripIds.length;
-
-    tripIds.forEach((tripId) => {
-      deleteDummyPassengers.mutate(
-        { tripId },
-        {
-          onSuccess: () => {
-            completedCount++;
-            // Only invalidate once all cleanup mutations are done
-            if (completedCount === totalTrips) {
-              utils.trip.getTrips.invalidate().catch(() => {
-                /* Silently fail background refresh */
-              });
-              utils.trip.getTripRequests.invalidate().catch(() => {
-                /* Silently fail background refresh */
-              });
-            }
-          },
-          onError: (err) => {
-            completedCount++;
-            // Silently fail - dummy passengers might not exist
-            // Still invalidate when all are done (even if some failed)
-            if (completedCount === totalTrips) {
-              utils.trip.getTrips.invalidate().catch(() => {
-                /* Silently fail background refresh */
-              });
-              utils.trip.getTripRequests.invalidate().catch(() => {
-                /* Silently fail background refresh */
-              });
-            }
-          },
-        }
-      );
-    });
-  }, [
-    session,
-    userProfile,
-    trips,
-    deleteDummyPassengers,
-    utils.trip.getTrips,
-    utils.trip.getTripRequests,
-  ]);
-
   // Find in_progress trip (banner only shows for in_progress trips)
   const activeTrip =
     trips?.find((trip) => trip.status === "in_progress") || null;

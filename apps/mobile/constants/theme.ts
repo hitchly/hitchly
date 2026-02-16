@@ -1,48 +1,165 @@
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { Platform } from "react-native";
 
-const maroon = "#7A003C";
-const maroonLight = "#FFF0F5";
-const greyBackground = "#F5F7FA";
+const Palette = {
+  maroon: {
+    900: "#3e1a26",
+    700: "#58002b",
+    500: "#7A003C", // Brand Primary
+    300: "#E8C4D0",
+    50: "#FFF0F5",
+  },
+  grey: {
+    900: "#11181C", // High contrast text
+    800: "#232628", // Dark surface
+    700: "#3E4347", // Dark border
+    500: "#687076", // Secondary text / Icons
+    400: "#9BA1A6",
+    300: "#D1D5DB",
+    200: "#E5E7EB", // Light border
+    100: "#F3F4F6", // Divider
+    50: "#F9FAFB", // Secondary surface
+    0: "#FFFFFF",
+  },
+  // Semantic Colors
+  red: {
+    main: "#EF4444",
+    light: "#F87171",
+    bg: "#FEF2F2",
+    darkBg: "#450a0a",
+  },
+  green: {
+    main: "#065F46",
+    light: "#34D399",
+    bg: "#ECFDF5",
+    darkBg: "#064e3b",
+  },
+  orange: {
+    main: "#F59E0B", // Warning / Pending
+    dark: "#92400E",
+    bg: "#FFFBEB",
+    darkBg: "#451a03",
+  },
+  blue: {
+    main: "#006FEE", // Info / Processing
+    light: "#60A5FA",
+    bg: "#EFF6FF",
+    darkBg: "#172554",
+  },
+  purple: {
+    main: "#7E22CE", // Often used for "Active" states distinct from primary
+    bg: "#FAF5FF",
+  },
+};
 
 export const Colors = {
   light: {
-    text: "#11181C",
-    textSecondary: "#687076",
-    background: greyBackground,
-    surface: "#ffffff",
-    tint: maroon,
-    primary: maroon,
-    primaryLight: maroonLight,
-    border: "#eeeeee",
-    error: "#EF4444",
-    errorBackground: "#FEF2F2",
-    success: "#065F46",
-    successBackground: "#ECFDF5",
-    warning: "#92400E",
-    warningBackground: "#FFFBEB",
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: maroon,
+    // --- Brand ---
+    primary: Palette.maroon[500],
+    primaryActive: Palette.maroon[700],
+    primaryLight: Palette.maroon[50],
+    tint: Palette.maroon[500],
+
+    // --- Backgrounds ---
+    background: "#F5F7FA", // App background
+    surface: Palette.grey[0], // Cards/Modals
+    surfaceSecondary: Palette.grey[50], // Grouped lists
+    inputBackground: Palette.grey[0],
+
+    // --- Text ---
+    text: Palette.grey[900],
+    textSecondary: Palette.grey[500],
+    textTertiary: Palette.grey[400],
+    placeholder: Palette.grey[400],
+
+    // --- Borders ---
+    border: Palette.grey[200],
+    borderFocus: Palette.maroon[500],
+    divider: Palette.grey[100],
+
+    // --- Statuses (Added Pending/Processing) ---
+    success: Palette.green.main,
+    successBackground: Palette.green.bg,
+
+    error: Palette.red.main,
+    errorBackground: Palette.red.bg,
+
+    warning: Palette.orange.dark, // Severe warnings
+    warningBackground: Palette.orange.bg,
+
+    pending: Palette.orange.main,
+    pendingBackground: Palette.orange.bg,
+
+    processing: Palette.blue.main,
+    processingBackground: Palette.blue.bg,
+
+    info: Palette.blue.main,
+    infoBackground: Palette.blue.bg,
+
+    // --- Interaction ---
+    disabled: Palette.grey[200],
+    disabledText: Palette.grey[400],
+    icon: Palette.grey[500],
+    overlay: "rgba(0, 0, 0, 0.5)",
+    shadow: "#000000",
+
+    // --- Navigation ---
+    tabIconDefault: Palette.grey[500],
+    tabIconSelected: Palette.maroon[500],
   },
   dark: {
-    text: "#ECEDEE",
-    textSecondary: "#9BA1A6",
+    // --- Brand ---
+    primary: Palette.maroon[300],
+    primaryActive: Palette.maroon[500],
+    primaryLight: Palette.maroon[900],
+    tint: Palette.grey[0],
+
+    // --- Backgrounds ---
     background: "#151718",
-    surface: "#232628",
-    tint: "#fff",
-    primary: "#E8C4D0",
-    primaryLight: "#3e1a26",
-    border: "#3E4347",
-    error: "#F87171",
-    errorBackground: "#450a0a",
-    success: "#34D399",
-    successBackground: "#064e3b",
-    warning: "#FBBF24",
-    warningBackground: "#451a03",
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: "#fff",
+    surface: Palette.grey[800],
+    surfaceSecondary: "#2C3033",
+    inputBackground: "#1A1D1E",
+
+    // --- Text ---
+    text: "#ECEDEE",
+    textSecondary: Palette.grey[400],
+    textTertiary: Palette.grey[500],
+    placeholder: Palette.grey[500],
+
+    // --- Borders ---
+    border: Palette.grey[700],
+    borderFocus: Palette.maroon[300],
+    divider: "#2A2E31",
+
+    // --- Statuses ---
+    success: Palette.green.light,
+    successBackground: Palette.green.darkBg,
+
+    error: Palette.red.light,
+    errorBackground: Palette.red.darkBg,
+
+    warning: Palette.orange.main,
+    warningBackground: Palette.orange.darkBg,
+
+    pending: Palette.orange.main,
+    pendingBackground: Palette.orange.darkBg,
+
+    processing: Palette.blue.light,
+    processingBackground: Palette.blue.darkBg,
+
+    info: Palette.blue.light,
+    infoBackground: Palette.blue.darkBg,
+
+    // --- Interaction ---
+    disabled: "#374151",
+    disabledText: Palette.grey[500],
+    icon: Palette.grey[400],
+    overlay: "rgba(0, 0, 0, 0.7)",
+    shadow: "#000000",
+
+    // --- Navigation ---
+    tabIconDefault: Palette.grey[400],
+    tabIconSelected: Palette.grey[0],
   },
 };
 
@@ -80,7 +197,6 @@ export const NavTheme = {
 };
 
 export type AppColors = typeof Colors.light;
-
 export type AppFonts = typeof Fonts;
 
 export interface AppTheme {

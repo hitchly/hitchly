@@ -1,10 +1,7 @@
-// TODO: fix lint errors in this file and re-enable linting
-/* eslint-disable */
-import { Href, useRouter } from "expo-router";
+import type { Href } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   Modal,
   RefreshControl,
   ScrollView,
@@ -16,13 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { useTheme } from "@/context/theme-context";
 import { authClient } from "@/lib/auth-client";
 import { isTestAccount } from "@/lib/test-accounts";
 import { trpc } from "@/lib/trpc";
 
 export default function TripsScreen() {
   const router = useRouter();
-  const utils = trpc.useUtils();
+  const { colors } = useTheme();
   authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const userEmail = useMemo(() => userProfile?.email, [userProfile?.email]);
@@ -36,26 +34,11 @@ export default function TripsScreen() {
   const [showTestTripModal, setShowTestTripModal] = useState(false);
   const [passengerCount, setPassengerCount] = useState(1);
 
-  const createTorontoTestTrip = trpc.admin.createTorontoTestTrip.useMutation({
-    onSuccess: () => {
-      utils.trip.getTrips.invalidate().catch(() => {
-        /* Ignore errors from invalidation */
-      });
-      setShowTestTripModal(false);
-      Alert.alert("Success", "Test trip created successfully!");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  // Filter out cancelled trips - memoized to prevent recalculation on every render
   const activeTrips = useMemo(
-    () => trips?.filter((trip) => trip.status !== "cancelled") || [],
+    () => trips?.filter((trip) => trip.status !== "cancelled") ?? [],
     [trips]
   );
 
-  // Memoize formatters to prevent recreation on every render
   const formatDate = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleDateString("en-US", {
@@ -76,17 +59,17 @@ export default function TripsScreen() {
   const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "pending":
-        return "#FFA500";
+        return colors.warning;
       case "active":
-        return "#007AFF";
+        return colors.primaryActive;
       case "in_progress":
-        return "#FF9500"; // Orange to distinguish from completed (green)
+        return colors.pending;
       case "completed":
-        return "#34C759";
+        return colors.success;
       case "cancelled":
-        return "#FF3B30";
+        return colors.error;
       default:
-        return "#666";
+        return colors.primary;
     }
   }, []);
 
@@ -104,10 +87,6 @@ export default function TripsScreen() {
       </View>
     );
   }
-
-  const handleAddTestTrip = () => {
-    createTorontoTestTrip.mutate({ passengerCount });
-  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -173,17 +152,6 @@ export default function TripsScreen() {
               >
                 <Text style={styles.modalButtonCancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handleAddTestTrip}
-                disabled={createTorontoTestTrip.isPending}
-              >
-                {createTorontoTestTrip.isPending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.modalButtonConfirmText}>Create</Text>
-                )}
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -194,11 +162,11 @@ export default function TripsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={() => refetch()}
+            onRefresh={() => void refetch()}
           />
         }
       >
-        {!activeTrips || activeTrips.length === 0 ? (
+        {activeTrips.length <= 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No trips found</Text>
             <Text style={styles.emptySubtext}>

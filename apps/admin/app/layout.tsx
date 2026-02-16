@@ -6,8 +6,20 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Hitchly Admin",
-  description: "Admin dashboard for managing Hitchly users, rides, and more.",
+  title: {
+    template: "%s | Hitchly Admin",
+    default: "Hitchly Admin",
+  },
+  description:
+    "Internal operations and community audit for the Hitchly platform.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

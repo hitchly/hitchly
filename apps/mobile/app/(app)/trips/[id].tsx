@@ -100,24 +100,6 @@ export default function TripDetailScreen() {
     },
   });
 
-  const simulateDriverComplete = trpc.admin.simulateDriverComplete.useMutation({
-    onSuccess: () => {
-      utils.trip.getTripById.invalidate().catch(() => {
-        /* Silently fail background refresh */
-      });
-      utils.trip.getTripRequests.invalidate().catch(() => {
-        /* Silently fail background refresh */
-      });
-      utils.trip.getTrips.invalidate().catch(() => {
-        /* Silently fail background refresh */
-      });
-      Alert.alert("Simulation complete", "Driver flow simulated for this trip");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
   const startTrip = trpc.trip.startTrip.useMutation({
     onSuccess: () => {
       if (id) {
@@ -319,6 +301,11 @@ export default function TripDetailScreen() {
     }
   };
 
+  // TODO: implement real driver complete
+  const simulateDriverComplete = () => {
+    console.log("fix me!");
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
@@ -506,16 +493,24 @@ export default function TripDetailScreen() {
                   style={[styles.button, styles.startButton]}
                   onPress={() => {
                     if (id) {
-                      simulateDriverComplete.mutate({ tripId: id });
+                      simulateDriverComplete;
                     }
                   }}
-                  disabled={simulateDriverComplete.isPending}
+                  disabled={
+                    false
+                    // TODO: implement real driver status
+                  }
                 >
-                  {simulateDriverComplete.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.buttonText}>Test Driver Complete</Text>
-                  )}
+                  {
+                    // TODO: implement real driver status
+                    false ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.buttonText}>
+                        Test Driver Complete
+                      </Text>
+                    )
+                  }
                 </TouchableOpacity>
               </View>
             )}

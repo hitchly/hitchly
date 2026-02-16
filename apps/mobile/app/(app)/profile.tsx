@@ -1,9 +1,5 @@
-// TODO: fix eslint errors in this file and re-enable linting
-/* eslint-disable */
-
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { formatCoordinatePair } from "@hitchly/utils";
-import { useRouter } from "expo-router";
+import { formatCoordinatePair, formatCurrency } from "@hitchly/utils";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -25,13 +21,7 @@ import { useTheme } from "@/context/theme-context";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
-const formatCurrency = (cents?: number | null) => {
-  if (cents === null || cents === undefined) return "TBD";
-  return `$${(cents / 100).toFixed(2)}`;
-};
-
 export default function ProfileScreen() {
-  const router = useRouter();
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
   const { colors, fonts } = useTheme();
@@ -69,7 +59,6 @@ export default function ProfileScreen() {
   };
 
   const initials = session?.user.name.slice(0, 2).toUpperCase() ?? "??";
-  const isAdmin = (session?.user as any).role === "admin";
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile.appRole ?? ""
   );
@@ -95,15 +84,13 @@ export default function ProfileScreen() {
     : null;
 
   if (isLoading) return <LoadingSkeleton text="Loading Profile..." />;
-  const getBadgeStyle = () => {
-    if (isAdmin) {
-      return {
-        bg: colors.text,
-        text: colors.background,
-        icon: "build",
-        label: "Super Admin",
-      };
-    }
+
+  const getBadgeStyle = (): {
+    bg: string;
+    text: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+  } => {
     if (session?.user.emailVerified) {
       return {
         bg: colors.successBackground,
@@ -131,7 +118,7 @@ export default function ProfileScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={() => void refetch}
             tintColor={colors.primary}
           />
         }
@@ -165,46 +152,18 @@ export default function ProfileScreen() {
                   ? "No Rating(s)"
                   : ratingData.average}
 
-                {ratingData?.count ? ` (${ratingData.count})` : ""}
+                {ratingData?.count ? ` (${String(ratingData.count)})` : ""}
               </Text>
             </View>
 
             <View
               style={[styles.verificationPill, { backgroundColor: badge.bg }]}
             >
-              <Ionicons name={badge.icon as any} size={14} color={badge.text} />
+              <Ionicons name={badge.icon} size={14} color={badge.text} />
               <Text style={[styles.verificationText, { color: badge.text }]}>
                 {badge.label}
               </Text>
             </View>
-
-            {isAdmin && (
-              <TouchableOpacity
-                style={[
-                  styles.adminPill,
-                  { backgroundColor: colors.text, shadowColor: colors.text },
-                ]}
-                onPress={() => {
-                  router.push("/admin/dashboard");
-                }}
-              >
-                <Ionicons
-                  name="shield-checkmark"
-                  size={16}
-                  color={colors.background}
-                />
-                <Text
-                  style={[styles.adminPillText, { color: colors.background }]}
-                >
-                  Dashboard
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.background}
-                />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
@@ -260,12 +219,12 @@ export default function ProfileScreen() {
               setModalState({
                 type: "profile",
                 initialData: {
-                  bio: userRecord?.profile?.bio ?? "",
-                  faculty: userRecord?.profile?.faculty ?? "",
-                  year: userRecord?.profile?.year ?? 1,
-                  appRole: userRecord?.profile?.appRole ?? "rider",
+                  bio: userRecord?.profile.bio ?? "",
+                  faculty: userRecord?.profile.faculty ?? "",
+                  year: userRecord?.profile.year ?? 1,
+                  appRole: userRecord?.profile.appRole ?? "rider",
                   universityRole:
-                    userRecord?.profile?.universityRole ?? "student",
+                    userRecord?.profile.universityRole ?? "student",
                 },
               });
             }}
@@ -276,17 +235,17 @@ export default function ProfileScreen() {
               <View style={{ gap: 16 }}>
                 <InfoRow
                   label="Bio"
-                  value={userRecord.profile.bio || "No bio set"}
+                  value={userRecord.profile.bio ?? "No bio set"}
                   fullWidth
                 />
                 <View style={styles.row}>
                   <InfoRow
                     label="Faculty"
-                    value={userRecord.profile.faculty || "-"}
+                    value={userRecord.profile.faculty ?? "-"}
                   />
                   <InfoRow
                     label="Year"
-                    value={userRecord.profile.year?.toString() || "-"}
+                    value={userRecord.profile.year?.toString() ?? "-"}
                   />
                 </View>
                 <View style={styles.row}>
@@ -453,7 +412,7 @@ export default function ProfileScreen() {
               styles.signOutBtn,
               { borderColor: colors.error, backgroundColor: colors.surface },
             ]}
-            onPress={handleSignOut}
+            onPress={() => void handleSignOut}
             disabled={isSigningOut}
           >
             {isSigningOut ? (

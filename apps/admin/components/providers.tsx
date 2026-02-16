@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 
 import { ThemeProvider } from "@/contexts/theme-provider";
-import { trpc } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc/client";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
