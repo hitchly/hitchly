@@ -56,22 +56,25 @@ export default function TripsScreen() {
     });
   }, []);
 
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case "pending":
-        return colors.warning;
-      case "active":
-        return colors.primaryActive;
-      case "in_progress":
-        return colors.pending;
-      case "completed":
-        return colors.success;
-      case "cancelled":
-        return colors.error;
-      default:
-        return colors.primary;
-    }
-  }, []);
+  const getStatusColor = useCallback(
+    (status: string) => {
+      switch (status) {
+        case "pending":
+          return colors.warning;
+        case "active":
+          return colors.primaryActive;
+        case "in_progress":
+          return colors.pending;
+        case "completed":
+          return colors.success;
+        case "cancelled":
+          return colors.error;
+        default:
+          return colors.primary;
+      }
+    },
+    [colors]
+  );
 
   const formatStatus = useCallback((status: string) => {
     if (status === "in_progress") {
