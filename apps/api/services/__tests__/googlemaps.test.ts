@@ -36,7 +36,7 @@ import {
   geocodeAddress,
   getDetourAndRideDetails,
   getRouteDetails,
-} from "../services/googlemaps";
+} from "../googlemaps";
 
 // Get mock client instance
 const getMockClient = () => {

@@ -8,7 +8,7 @@ import {
   PLATFORM_BASE_FARE,
   PLATFORM_RATE_PER_KM,
   PLATFORM_RATE_PER_MINUTE,
-} from "../services/pricing_service";
+} from "../pricing";
 
 describe("Pricing Service", () => {
   describe("calculateEstimatedCost", () => {

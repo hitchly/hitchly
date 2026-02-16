@@ -2,19 +2,19 @@
 /* eslint-disable */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { RiderRequest } from "../services/matchmaking_service";
+import type { RiderRequest } from "../matchmaking";
 import {
   findMatchesForUser,
   MATCH_THRESHOLD,
   MAX_CANDIDATES,
-} from "../services/matchmaking_service";
+} from "../matchmaking";
 
 import {
   createMockProfile,
   createMockTrip,
   createMockUser,
   createMockVehicle,
-} from "./utils/fixtures";
+} from "../../lib/tests/fixtures";
 
 // Mock the database and googlemaps service
 vi.mock("@hitchly/db/client", () => ({

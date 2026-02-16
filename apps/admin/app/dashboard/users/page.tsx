@@ -4,7 +4,7 @@ import UsersView from "@/app/dashboard/users/view";
 import { api } from "@/lib/trpc/server";
 
 export const metadata: Metadata = {
-  title: "User Directory",
+  title: "Users",
   description: "Manage students, verify drivers, and audit account status.",
 };
 

@@ -17,7 +17,7 @@ import {
   listPaymentMethods,
   processTip,
   setDefaultPaymentMethod,
-} from "../../services/payment_service";
+} from "../../services/payment";
 import { protectedProcedure, router } from "../trpc";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;

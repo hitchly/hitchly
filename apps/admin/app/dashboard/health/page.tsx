@@ -4,7 +4,7 @@ import HealthView from "@/app/dashboard/health/view";
 import { api } from "@/lib/trpc/server";
 
 export const metadata: Metadata = {
-  title: "System Health",
+  title: "Health",
 };
 
 export default async function HealthPage() {

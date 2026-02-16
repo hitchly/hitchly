@@ -1,11 +1,13 @@
 import { TIME_WINDOW_MIN, trips } from "@hitchly/db/schema";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
-import { tripRouter } from "../trpc/routers/trip";
-
-import { createMockTrip, createMockTripRequest } from "./utils/fixtures";
-import { createMockContext } from "./utils/mockContext";
-import { createMockDb } from "./utils/mockDb";
+import {
+  createMockTrip,
+  createMockTripRequest,
+} from "../../../lib/tests/fixtures";
+import { createMockContext } from "../../../lib/tests/mockContext";
+import { createMockDb } from "../../../lib/tests/mockDb";
+import { tripRouter } from "../trip";
 
 // Hoist mocks to be available in factories
 const { mockGeocodeAddress, mockCalculateTripDistance } = vi.hoisted(() => {

@@ -16,7 +16,7 @@ import {
   calculateTripDistance,
   geocodeAddress,
 } from "../../services/googlemaps";
-import { sendTripNotification } from "../../services/notification_service";
+import { sendTripNotification } from "../../services/notification";
 import {
   calculateFare,
   cancelPaymentHold,
@@ -25,7 +25,7 @@ import {
   hasPaymentMethod,
   processTip,
   updatePaymentHold,
-} from "../../services/payment_service";
+} from "../../services/payment";
 import { protectedProcedure, router } from "../trpc";
 
 const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder (teammate will replace with real fare calc)

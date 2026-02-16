@@ -87,7 +87,7 @@ const HotspotItem = ({
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-2 font-medium">
         <MapPin className="h-4 w-4 text-primary" />
-        <span className="truncate max-w-[180px]">{name}</span>
+        <span className="truncate max-w-45">{name}</span>
       </div>
       <span className="font-mono text-muted-foreground">{percentage}</span>
     </div>

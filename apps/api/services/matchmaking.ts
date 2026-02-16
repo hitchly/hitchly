@@ -12,7 +12,7 @@ import {
 } from "@hitchly/db/schema";
 import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { getDetourAndRideDetails } from "./googlemaps";
-import { calculateCostScore, calculateEstimatedCost } from "./pricing_service";
+import { calculateCostScore, calculateEstimatedCost } from "./pricing";
 
 export type Location = { lat: number; lng: number };
 

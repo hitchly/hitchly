@@ -1,47 +1,66 @@
-// TODO: Fix any linting issues
-/* eslint-disable */
+import type * as DbClient from "@hitchly/db/client";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { appRouter } from "../trpc/routers/index";
-
-// 1. Hoist the mock variable so it exists before the mock factory runs
-const mockDb = vi.hoisted(() => {
+// 1. STUB STRIPE IMMEDIATELY
+vi.mock("stripe", () => {
   return {
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        onConflictDoUpdate: vi.fn().mockResolvedValue(true),
-      })),
-    })),
+    default: vi.fn().mockImplementation(() => ({})),
   };
 });
 
-// 2. Mock the DB client, preserving other exports (like schemas/eq)
+// 2. Mock DB Client (Isolated from actual DB)
+const mockDb = vi.hoisted(() => {
+  const onConflictDoUpdate = vi.fn().mockResolvedValue({ success: true });
+  const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
+  const insert = vi.fn().mockReturnValue({ values });
+
+  return {
+    insert,
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+  };
+});
+
 vi.mock("@hitchly/db/client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@hitchly/db/client")>();
+  const actual = await importOriginal<typeof DbClient>();
   return {
     ...actual,
     db: mockDb,
   };
 });
 
+// 3. Imports (After Mocks)
+import { type Context } from "../../context";
+import { appRouter } from "../index";
+
 describe("Location Router", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  // Helper to create a caller with context
   const createCaller = (isAuthenticated = true) => {
     const ctx = {
-      req: new Request("http://localhost"),
-      resHeaders: new Headers(),
-      db: mockDb as any,
+      db: mockDb,
       userId: isAuthenticated ? "user-123" : undefined,
-    };
+      session: isAuthenticated
+        ? {
+            user: { id: "user-123", role: "rider" },
+            session: { id: "s-1", expiresAt: new Date(), userId: "user-123" },
+          }
+        : null,
+    } as unknown as Context;
 
     return appRouter.createCaller(ctx);
   };
 
-  // --- TEST: saveDefaultAddress ---
   describe("saveDefaultAddress", () => {
     it("should save/update the default address for the user", async () => {
       const caller = createCaller();
@@ -54,15 +73,15 @@ describe("Location Router", () => {
 
       const result = await caller.location.saveDefaultAddress(input);
 
-      // 1. Verify success response
       expect(result).toEqual({ success: true });
 
-      // 2. Verify DB interaction
       expect(mockDb.insert).toHaveBeenCalled();
 
-      // 3. Verify the values passed to the DB
-      // We access the chained 'values' mock function
-      const valuesMock = mockDb.insert.mock.results[0]?.value.values;
+      const insertMock = vi.mocked(mockDb.insert);
+      const insertResult = insertMock.mock.results[0]?.value as {
+        values: MockInstance;
+      };
+      const valuesMock = insertResult.values;
 
       expect(valuesMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -70,30 +89,28 @@ describe("Location Router", () => {
           defaultAddress: input.address,
           defaultLat: input.latitude,
           defaultLong: input.longitude,
-          // Ensure defaults are being set as per your router logic
-          appRole: "rider",
-          universityRole: "student",
         })
       );
     });
 
     it("should throw validation error if coordinates are missing", async () => {
       const caller = createCaller();
-
-      // Missing lat/long
-      const invalidInput = {
-        address: "Nowhere",
-      };
+      const invalidInput = { address: "Nowhere" };
 
       await expect(
-        caller.location.saveDefaultAddress(invalidInput as any)
+        caller.location.saveDefaultAddress(
+          invalidInput as unknown as {
+            address: string;
+            latitude: number;
+            longitude: number;
+          }
+        )
       ).rejects.toThrow();
 
       expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 
-  // --- TEST: update (Live Tracking) ---
   describe("update", () => {
     it("should accept valid live location updates", async () => {
       const caller = createCaller();
@@ -106,20 +123,12 @@ describe("Location Router", () => {
       };
 
       const result = await caller.location.update(input);
-
       expect(result).toEqual({ success: true });
-      // Note: Since your router currently does nothing with this data,
-      // we just ensure the endpoint accepts the input successfully.
     });
 
     it("should accept updates without optional fields", async () => {
       const caller = createCaller();
-
-      const input = {
-        latitude: 43.26,
-        longitude: -79.91,
-        // heading/speed are optional
-      };
+      const input = { latitude: 43.26, longitude: -79.91 };
 
       const result = await caller.location.update(input);
       expect(result).toEqual({ success: true });

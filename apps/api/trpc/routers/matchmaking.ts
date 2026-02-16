@@ -26,8 +26,7 @@ export const matchmakingRouter = router({
   findMatches: protectedProcedure
     .input(rideSearchSchema)
     .query(async ({ ctx, input }) => {
-      const { findMatchesForUser } =
-        await import("../../services/matchmaking_service");
+      const { findMatchesForUser } = await import("../../services/matchmaking");
 
       const riderId = ctx.userId;
       const matches = await findMatchesForUser({

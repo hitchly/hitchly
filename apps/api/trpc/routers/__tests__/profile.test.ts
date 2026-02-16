@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { appRouter } from "../trpc/routers/index";
+import { appRouter } from "../index";
 
 const mockDb = vi.hoisted(() => {
   return {

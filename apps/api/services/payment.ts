@@ -10,7 +10,7 @@ import {
 } from "@hitchly/db/schema";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
-import { calculateEstimatedCost } from "./pricing_service";
+import { calculateEstimatedCost } from "./pricing";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
