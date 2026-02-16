@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint --max-warnings 0",
     "type-check": "tsc --noEmit",
     "build": "expo export --platform ios --platform android"
   },

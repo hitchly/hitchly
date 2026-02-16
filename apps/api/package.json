@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch server.ts",
-    "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "test": "vitest",
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
