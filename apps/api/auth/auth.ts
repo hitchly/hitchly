@@ -2,7 +2,8 @@ import { expo } from "@better-auth/expo";
 import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, admin } from "better-auth/plugins";
+import { admin, emailOTP } from "better-auth/plugins";
+
 import { emailClient } from "../lib/email";
 
 export const auth = betterAuth({
@@ -11,9 +12,7 @@ export const auth = betterAuth({
     admin(),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        emailClient.sendOtp(email, otp).catch((err) => {
-          console.error("Failed to send OTP email:", err);
-        });
+        await emailClient.sendOtp(email, otp);
       },
       sendVerificationOnSignUp: true,
     }),
@@ -24,7 +23,7 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
-  trustedOrigins: ["null", "exp://", "mobile://"],
+  trustedOrigins: ["null", "exp://", "mobile://", "http://localhost:3000"],
 
   advanced: {
     defaultCookieAttributes: {

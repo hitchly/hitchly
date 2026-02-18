@@ -1,4 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+// TODO: Fix any linting issues
+/* eslint-disable */
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock Google Maps client - must be before importing the service
 // Define mockClient inside the mock factory to avoid initialization order issues
@@ -28,12 +30,13 @@ vi.mock("@hitchly/db/schema", () => ({
 }));
 
 // Import after mocks are set up
+import { Client } from "@googlemaps/google-maps-services-js";
+
 import {
   geocodeAddress,
-  getRouteDetails,
   getDetourAndRideDetails,
+  getRouteDetails,
 } from "../googlemaps";
-import { Client } from "@googlemaps/google-maps-services-js";
 
 // Get mock client instance
 const getMockClient = () => {

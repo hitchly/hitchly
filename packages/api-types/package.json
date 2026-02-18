@@ -1,0 +1,13 @@
+{
+  "name": "@hitchly/api-types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@trpc/client": "^11.7.1",
+    "@trpc/server": "^11.7.1"
+  }
+}

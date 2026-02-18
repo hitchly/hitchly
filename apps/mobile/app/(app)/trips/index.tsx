@@ -1,8 +1,7 @@
+import type { Href } from "expo-router";
 import { useRouter } from "expo-router";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   Modal,
   RefreshControl,
   ScrollView,
@@ -12,14 +11,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { NumericStepper } from "../../../components/ui/numeric-stepper";
-import { trpc } from "../../../lib/trpc";
-import { isTestAccount } from "../../../lib/test-accounts";
-import { authClient } from "../../../lib/auth-client";
+
+import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { isTestAccount } from "@/lib/test-accounts";
+import { trpc } from "@/lib/trpc";
 
 export default function TripsScreen() {
   const router = useRouter();
-  const utils = trpc.useUtils();
+  const { colors } = useTheme();
   authClient.useSession();
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const userEmail = useMemo(() => userProfile?.email, [userProfile?.email]);
@@ -33,51 +34,11 @@ export default function TripsScreen() {
   const [showTestTripModal, setShowTestTripModal] = useState(false);
   const [passengerCount, setPassengerCount] = useState(1);
 
-  const createTorontoTestTrip = trpc.admin.createTorontoTestTrip.useMutation({
-    onSuccess: () => {
-      utils.trip.getTrips.invalidate();
-      setShowTestTripModal(false);
-      Alert.alert("Success", "Test trip created successfully!");
-    },
-    onError: (error) => {
-      Alert.alert("Error", error.message);
-    },
-  });
-
-  // Filter out cancelled trips - memoized to prevent recalculation on every render
   const activeTrips = useMemo(
-    () => trips?.filter((trip) => trip.status !== "cancelled") || [],
+    () => trips?.filter((trip) => trip.status !== "cancelled") ?? [],
     [trips]
   );
 
-  // #region agent log - Performance debug
-  useEffect(() => {
-    if (trips) {
-      fetch(
-        "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "trips/index.tsx:render",
-            message: "Trips screen render",
-            data: {
-              tripsCount: trips.length,
-              activeTripsCount: activeTrips.length,
-              timestamp: Date.now(),
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "perf-debug",
-            hypothesisId: "PERF1",
-          }),
-        }
-      ).catch(() => {});
-    }
-  }, [trips, activeTrips.length]);
-  // #endregion
-
-  // Memoize formatters to prevent recreation on every render
   const formatDate = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleDateString("en-US", {
@@ -95,22 +56,25 @@ export default function TripsScreen() {
     });
   }, []);
 
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case "pending":
-        return "#FFA500";
-      case "active":
-        return "#007AFF";
-      case "in_progress":
-        return "#FF9500"; // Orange to distinguish from completed (green)
-      case "completed":
-        return "#34C759";
-      case "cancelled":
-        return "#FF3B30";
-      default:
-        return "#666";
-    }
-  }, []);
+  const getStatusColor = useCallback(
+    (status: string) => {
+      switch (status) {
+        case "pending":
+          return colors.warning;
+        case "active":
+          return colors.primaryActive;
+        case "in_progress":
+          return colors.pending;
+        case "completed":
+          return colors.success;
+        case "cancelled":
+          return colors.error;
+        default:
+          return colors.primary;
+      }
+    },
+    [colors]
+  );
 
   const formatStatus = useCallback((status: string) => {
     if (status === "in_progress") {
@@ -127,25 +91,6 @@ export default function TripsScreen() {
     );
   }
 
-  const handleAddTestTrip = () => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "trips/index.tsx:handleAddTestTrip",
-        message: "Creating test trip",
-        data: { passengerCount },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "M",
-      }),
-    }).catch(() => {});
-    // #endregion
-    createTorontoTestTrip.mutate({ passengerCount });
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -154,14 +99,18 @@ export default function TripsScreen() {
           {isTestUser && (
             <TouchableOpacity
               style={styles.testButton}
-              onPress={() => setShowTestTripModal(true)}
+              onPress={() => {
+                setShowTestTripModal(true);
+              }}
             >
               <Text style={styles.testButtonText}>Add Test Trip</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={styles.createButton}
-            onPress={() => router.push("/trips/create" as any)}
+            onPress={() => {
+              router.push("/trips/create" as Href);
+            }}
           >
             <Text style={styles.createButtonText}>+ Create Trip</Text>
           </TouchableOpacity>
@@ -172,7 +121,9 @@ export default function TripsScreen() {
         visible={showTestTripModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowTestTripModal(false)}
+        onRequestClose={() => {
+          setShowTestTripModal(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -188,24 +139,6 @@ export default function TripsScreen() {
               <NumericStepper
                 value={passengerCount}
                 onValueChange={(value) => {
-                  // #region agent log
-                  fetch(
-                    "http://127.0.0.1:7245/ingest/4d4f28b1-5b37-45a9-bef5-bfd2cc5ef3c9",
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        location: "trips/index.tsx:passengerCountChange",
-                        message: "Passenger count changed",
-                        data: { oldValue: passengerCount, newValue: value },
-                        timestamp: Date.now(),
-                        sessionId: "debug-session",
-                        runId: "run1",
-                        hypothesisId: "M",
-                      }),
-                    }
-                  ).catch(() => {});
-                  // #endregion
                   setPassengerCount(value);
                 }}
                 min={1}
@@ -216,20 +149,11 @@ export default function TripsScreen() {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setShowTestTripModal(false)}
+                onPress={() => {
+                  setShowTestTripModal(false);
+                }}
               >
                 <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handleAddTestTrip}
-                disabled={createTorontoTestTrip.isPending}
-              >
-                {createTorontoTestTrip.isPending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.modalButtonConfirmText}>Create</Text>
-                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -241,11 +165,11 @@ export default function TripsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={() => refetch()}
+            onRefresh={() => void refetch()}
           />
         }
       >
-        {!activeTrips || activeTrips.length === 0 ? (
+        {activeTrips.length <= 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No trips found</Text>
             <Text style={styles.emptySubtext}>
@@ -257,7 +181,9 @@ export default function TripsScreen() {
             <TouchableOpacity
               key={trip.id}
               style={styles.tripCard}
-              onPress={() => router.push(`/trips/${trip.id}` as any)}
+              onPress={() => {
+                router.push(`/trips/${trip.id}` as Href);
+              }}
             >
               <View style={styles.tripHeader}>
                 <View style={styles.tripInfo}>

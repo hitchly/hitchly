@@ -1,9 +1,8 @@
+import { reviews, tripRequests, trips } from "@hitchly/db/schema";
+import { TRPCError } from "@trpc/server";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { trips, tripRequests, reviews } from "@hitchly/db/schema";
-
-import { eq, sql, inArray } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 
 const locationSchema = z.object({
@@ -27,10 +26,9 @@ export const matchmakingRouter = router({
   findMatches: protectedProcedure
     .input(rideSearchSchema)
     .query(async ({ ctx, input }) => {
-      const { findMatchesForUser } =
-        await import("../../services/matchmaking_service");
+      const { findMatchesForUser } = await import("../../services/matchmaking");
 
-      const riderId = ctx.userId!;
+      const riderId = ctx.userId;
       const matches = await findMatchesForUser({
         riderId,
         origin: input.origin,
@@ -59,7 +57,7 @@ export const matchmakingRouter = router({
 
       const ratingMap = new Map<string, number>();
       ratingResults.forEach((r) => {
-        ratingMap.set(r.targetUserId, Number(r.average));
+        ratingMap.set(r.targetUserId, r.average);
       });
 
       return matches.map((match) => {

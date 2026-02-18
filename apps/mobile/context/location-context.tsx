@@ -1,26 +1,30 @@
-import * as Location from "expo-location";
+import type { LocationSubscription } from "expo-location";
+import {
+  Accuracy,
+  getForegroundPermissionsAsync,
+  PermissionStatus,
+  watchPositionAsync,
+} from "expo-location";
+import type { ReactNode } from "react";
 import { createContext, useEffect, useMemo } from "react";
-import { trpc } from "../lib/trpc";
+
+import { trpc } from "@/lib/trpc";
 
 const LocationContext = createContext({});
 
-export const LocationProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const { mutate } = trpc.location.update.useMutation();
 
   useEffect(() => {
-    let subscriber: Location.LocationSubscription | null = null;
+    let subscriber: LocationSubscription | null = null;
 
-    const startWatching = async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
+    const startWatching = async (): Promise<void> => {
+      const { status } = await getForegroundPermissionsAsync();
 
-      if (status === "granted") {
-        subscriber = await Location.watchPositionAsync(
+      if (status === PermissionStatus.GRANTED) {
+        subscriber = await watchPositionAsync(
           {
-            accuracy: Location.Accuracy.High,
+            accuracy: Accuracy.High,
             timeInterval: 10000, // Update every 10 seconds
             distanceInterval: 50, // OR every 50 meters
           },
@@ -28,18 +32,22 @@ export const LocationProvider = ({
             mutate({
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
-              heading: loc.coords.heading,
-              speed: loc.coords.speed,
+              heading: loc.coords.heading ?? undefined,
+              speed: loc.coords.speed ?? undefined,
             });
           }
         );
       }
     };
 
-    startWatching();
+    startWatching().catch(() => {
+      // Silently fail if location tracking cannot start
+    });
 
     return () => {
-      if (subscriber) subscriber.remove();
+      if (subscriber) {
+        subscriber.remove();
+      }
     };
   }, [mutate]);
 

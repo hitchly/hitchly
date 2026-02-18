@@ -1,16 +1,6 @@
 {
+  "extends": "@hitchly/tsconfig/base",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./",
-    "types": ["node", "jest"],
-    "skipLibCheck": true,
-    "noEmitOnError": false,
-    "strict": true,
-    "module": "EsNext",
-    "moduleResolution": "Bundler"
-  },
-  "exclude": ["node_modules"],
-  "include": ["."]
+    "outDir": "./dist"
+  }
 }

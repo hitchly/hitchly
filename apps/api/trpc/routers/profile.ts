@@ -7,13 +7,14 @@ import { and, eq } from "@hitchly/db/client";
 import {
   preferences,
   profiles,
-  trips,
   tripRequests,
+  trips,
   users,
   vehicles,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
 import { protectedProcedure, router } from "../trpc";
 
 const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder
@@ -26,7 +27,7 @@ export const profileRouter = router({
    */
   getMe: protectedProcedure.query(async ({ ctx }) => {
     const userRecord = await ctx.db.query.users.findFirst({
-      where: eq(users.id, ctx.userId!),
+      where: eq(users.id, ctx.userId),
       with: {
         profile: true,
         preferences: true,
@@ -55,7 +56,7 @@ export const profileRouter = router({
       await ctx.db
         .insert(profiles)
         .values({
-          userId: ctx.userId!,
+          userId: ctx.userId,
           ...input,
         })
         .onConflictDoUpdate({
@@ -79,7 +80,7 @@ export const profileRouter = router({
       await ctx.db
         .insert(preferences)
         .values({
-          userId: ctx.userId!,
+          userId: ctx.userId,
           ...input,
         })
         .onConflictDoUpdate({
@@ -103,7 +104,7 @@ export const profileRouter = router({
       await ctx.db
         .insert(vehicles)
         .values({
-          userId: ctx.userId!,
+          userId: ctx.userId,
           ...input,
         })
         .onConflictDoUpdate({
@@ -122,7 +123,7 @@ export const profileRouter = router({
    * Returns driver earnings statistics (lifetime, week, month).
    */
   getDriverEarnings: protectedProcedure.query(async ({ ctx }) => {
-    const driverId = ctx.userId!;
+    const driverId = ctx.userId;
     const now = new Date();
 
     const weekStart = new Date(now);
@@ -137,10 +138,10 @@ export const profileRouter = router({
 
     // Note: we don't have a clean "trip completed at" field; use trip.updatedAt as proxy.
     const completedTripsThisWeek = completedTrips.filter(
-      (t) => (t.updatedAt ?? t.createdAt) >= weekStart
+      (t) => t.updatedAt >= weekStart
     );
     const completedTripsThisMonth = completedTrips.filter(
-      (t) => (t.updatedAt ?? t.createdAt) >= monthStart
+      (t) => t.updatedAt >= monthStart
     );
 
     // Placeholder earnings: $7.50 per completed passenger request on any of driver's trips.
@@ -159,7 +160,7 @@ export const profileRouter = router({
         return {
           tripId: t.id,
           count: rows.length,
-          updatedAt: t.updatedAt ?? t.createdAt,
+          updatedAt: t.updatedAt,
         };
       })
     );
@@ -214,7 +215,7 @@ export const profileRouter = router({
       await ctx.db
         .update(users)
         .set({ pushToken: input.pushToken })
-        .where(eq(users.id, ctx.userId!));
+        .where(eq(users.id, ctx.userId));
       return { success: true };
     }),
 
@@ -223,7 +224,7 @@ export const profileRouter = router({
    * Returns the user's ban status.
    * TODO: Add banned and banReason fields to users schema
    */
-  getBanStatus: protectedProcedure.query(async () => {
+  getBanStatus: protectedProcedure.query(() => {
     // TODO: Uncomment when banned/banReason fields are added to users schema
     // const user = await ctx.db.query.users.findFirst({
     //   where: eq(users.id, ctx.userId!),

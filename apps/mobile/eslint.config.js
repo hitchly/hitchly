@@ -1,10 +1,16 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
+import { config as hitchlyConfig } from "@hitchly/eslint-config";
+import expoConfig from "eslint-config-expo/flat.js";
 
-module.exports = defineConfig([
-  expoConfig,
+export default [
+  ...expoConfig.map((conf) => {
+    if (conf.plugins?.import) {
+      const { import: _, ...restPlugins } = conf.plugins;
+      return { ...conf, plugins: restPlugins };
+    }
+    return conf;
+  }),
   {
-    ignores: ['dist/*'],
+    ignores: ["dist/*", ".expo/*", "node_modules/*"],
   },
-]);
+  ...hitchlyConfig,
+];

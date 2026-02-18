@@ -1,8 +1,8 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import type { Context } from "./context";
-import { db } from "@hitchly/db/client";
-import { eq } from "@hitchly/db/client";
+import { db, eq } from "@hitchly/db/client";
 import { users } from "@hitchly/db/schema";
+import { initTRPC, TRPCError } from "@trpc/server";
+
+import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create();
 
@@ -10,8 +10,16 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.userId) throw new TRPCError({ code: "UNAUTHORIZED" });
-  return next({ ctx });
+  if (!ctx.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId,
+    },
+  });
 });
 
 const isAdmin = t.middleware(async ({ ctx, next }) => {

@@ -2,12 +2,14 @@ import { verifyOtpSchema, type VerifyOtpInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
-import { Button } from "../../components/ui/button";
-import { ControlledInput, SubmitButton } from "../../components/ui/form";
-import { OnboardingLayout } from "../../components/ui/screen-layout";
-import { authClient } from "../../lib/auth-client";
+
+import { Button } from "@/components/ui/button";
+import { ControlledInput, SubmitButton } from "@/components/ui/form";
+import { OnboardingLayout } from "@/components/ui/screen-layout";
+import { authClient } from "@/lib/auth-client";
 
 export default function Verify() {
   const router = useRouter();
@@ -23,7 +25,7 @@ export default function Verify() {
     defaultValues: { otp: "" },
   });
 
-  const onVerify = async (data: VerifyOtpInput) => {
+  const onVerify: SubmitHandler<VerifyOtpInput> = async (data) => {
     setLoading(true);
     try {
       const { error: verifyError } = await authClient.emailOtp.verifyEmail({
@@ -45,38 +47,52 @@ export default function Verify() {
 
         if (signInError) {
           Alert.alert("Verified", "Email verified! Please sign in manually.");
-          router.replace("/(auth)/sign-in" as any);
+          router.replace("/(auth)/sign-in");
         } else {
           router.replace("/");
         }
       } else {
         Alert.alert("Success", "Email verified! Please sign in.");
-        router.replace("/(auth)/sign-in" as any);
+        router.replace("/(auth)/sign-in");
       }
-    } catch (err) {
-      console.error("Unexpected Sign Up Error:", err);
+    } catch {
       Alert.alert("Error", "An unexpected error occurred during verification");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendCode = async () => {
-    try {
-      setLoading(true);
-      const { error } = await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: "email-verification",
-      });
+  const handleOnPress = () => {
+    const processSubmit = handleSubmit(onVerify);
+    processSubmit().catch(() => {
+      // Logic handled by validation or catch block
+    });
+  };
 
-      if (error) Alert.alert("Error", error.message);
-      else Alert.alert("Sent", `A new code has been sent to ${email}`);
-    } catch (err) {
-      console.error("Resend Code Error:", err);
-      Alert.alert("Error", "Could not resend code");
-    } finally {
-      setLoading(false);
-    }
+  const handleResendCode = () => {
+    const performResend = async () => {
+      try {
+        setLoading(true);
+        const { error } = await authClient.emailOtp.sendVerificationOtp({
+          email,
+          type: "email-verification",
+        });
+
+        if (error) {
+          Alert.alert("Error", error.message);
+        } else {
+          Alert.alert("Sent", `A new code has been sent to ${email}`);
+        }
+      } catch {
+        Alert.alert("Error", "Could not resend code");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    performResend().catch(() => {
+      // Handled by internal catch
+    });
   };
 
   return (
@@ -95,8 +111,9 @@ export default function Verify() {
 
       <SubmitButton
         title="Verify & Sign In"
-        onPress={handleSubmit(onVerify)}
+        onPress={handleOnPress}
         isPending={loading}
+        disabled={loading}
       />
 
       <Button

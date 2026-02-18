@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { formatCoordinatePair } from "@hitchly/utils";
-import { useRouter } from "expo-router";
+import { formatCoordinatePair, formatCurrency } from "@hitchly/utils";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -13,23 +12,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  EditModalState,
-  EditProfileModal,
-} from "../../components/profile/edit-profile-modal";
-import { InfoCard, InfoRow } from "../../components/ui/card";
-import { Chip, LoadingSkeleton } from "../../components/ui/display";
-import { useTheme } from "../../context/theme-context";
-import { authClient } from "../../lib/auth-client";
-import { trpc } from "../../lib/trpc";
 
-const formatCurrency = (cents?: number | null) => {
-  if (cents === null || cents === undefined) return "TBD";
-  return `$${(cents / 100).toFixed(2)}`;
-};
+import type { EditModalState } from "@/components/profile/edit-profile-modal";
+import { EditProfileModal } from "@/components/profile/edit-profile-modal";
+import { InfoCard, InfoRow } from "@/components/ui/card";
+import { Chip, LoadingSkeleton } from "@/components/ui/display";
+import { useTheme } from "@/context/theme-context";
+import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export default function ProfileScreen() {
-  const router = useRouter();
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
   const { colors, fonts } = useTheme();
@@ -42,17 +34,21 @@ export default function ProfileScreen() {
   } = trpc.profile.getMe.useQuery();
 
   const { data: ratingData } = trpc.reviews.getUserScore.useQuery(
-    { userId: session?.user?.id ?? "" },
-    { enabled: !!session?.user?.id }
+    { userId: session?.user.id ?? "" },
+    { enabled: !!session?.user.id }
   );
 
   const [modalState, setModalState] = useState<EditModalState>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleCloseModal = () => setModalState(null);
+  const handleCloseModal = () => {
+    setModalState(null);
+  };
 
   const onSuccess = () => {
-    utils.profile.getMe.invalidate();
+    utils.profile.getMe.invalidate().catch(() => {
+      /* Silently fail background refresh */
+    });
     handleCloseModal();
     Alert.alert("Success", "Updated successfully.");
   };
@@ -62,10 +58,9 @@ export default function ProfileScreen() {
     await authClient.signOut();
   };
 
-  const initials = session?.user?.name?.slice(0, 2).toUpperCase() || "??";
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const initials = session?.user.name.slice(0, 2).toUpperCase() ?? "??";
   const isDriver = ["driver", "both"].includes(
-    userRecord?.profile?.appRole || ""
+    userRecord?.profile.appRole ?? ""
   );
 
   const { data: earnings } = trpc.profile.getDriverEarnings.useQuery(
@@ -75,7 +70,7 @@ export default function ProfileScreen() {
     }
   );
 
-  const locationDisplay = userRecord?.profile?.defaultAddress
+  const locationDisplay = userRecord?.profile.defaultAddress
     ? {
         address: userRecord.profile.defaultAddress,
         coords:
@@ -89,16 +84,14 @@ export default function ProfileScreen() {
     : null;
 
   if (isLoading) return <LoadingSkeleton text="Loading Profile..." />;
-  const getBadgeStyle = () => {
-    if (isAdmin) {
-      return {
-        bg: colors.text,
-        text: colors.background,
-        icon: "build",
-        label: "Super Admin",
-      };
-    }
-    if (session?.user?.emailVerified) {
+
+  const getBadgeStyle = (): {
+    bg: string;
+    text: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+  } => {
+    if (session?.user.emailVerified) {
       return {
         bg: colors.successBackground,
         text: colors.success,
@@ -125,7 +118,7 @@ export default function ProfileScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={() => void refetch}
             tintColor={colors.primary}
           />
         }
@@ -146,10 +139,10 @@ export default function ProfileScreen() {
             </View>
 
             <Text style={[styles.heroName, { color: colors.text }]}>
-              {session?.user?.name}
+              {session?.user.name}
             </Text>
             <Text style={[styles.heroEmail, { color: colors.textSecondary }]}>
-              {session?.user?.email}
+              {session?.user.email}
             </Text>
 
             <View style={styles.ratingContainer}>
@@ -157,62 +150,36 @@ export default function ProfileScreen() {
               <Text style={[styles.ratingText, { color: colors.text }]}>
                 {ratingData?.average === "New" || !ratingData?.average
                   ? "No Rating(s)"
-                  : ratingData?.average}
+                  : ratingData.average}
 
-                {ratingData?.count ? ` (${ratingData.count})` : ""}
+                {ratingData?.count ? ` (${String(ratingData.count)})` : ""}
               </Text>
             </View>
 
             <View
               style={[styles.verificationPill, { backgroundColor: badge.bg }]}
             >
-              <Ionicons name={badge.icon as any} size={14} color={badge.text} />
+              <Ionicons name={badge.icon} size={14} color={badge.text} />
               <Text style={[styles.verificationText, { color: badge.text }]}>
                 {badge.label}
               </Text>
             </View>
-
-            {isAdmin && (
-              <TouchableOpacity
-                style={[
-                  styles.adminPill,
-                  { backgroundColor: colors.text, shadowColor: colors.text },
-                ]}
-                onPress={() => router.push("/admin/dashboard" as any)}
-              >
-                <Ionicons
-                  name="shield-checkmark"
-                  size={16}
-                  color={colors.background}
-                />
-                <Text
-                  style={[styles.adminPillText, { color: colors.background }]}
-                >
-                  Dashboard
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.background}
-                />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
         <View style={styles.cardsContainer}>
           <InfoCard
             title="Address"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "location",
                 initialData: {
-                  address: userRecord?.profile?.defaultAddress ?? "",
-                  latitude: userRecord?.profile?.defaultLat ?? 0,
-                  longitude: userRecord?.profile?.defaultLong ?? 0,
+                  address: userRecord?.profile.defaultAddress ?? "",
+                  latitude: userRecord?.profile.defaultLat ?? 0,
+                  longitude: userRecord?.profile.defaultLong ?? 0,
                 },
-              })
-            }
+              });
+            }}
             empty={!locationDisplay}
             emptyText="Set your primary pickup address."
             actionLabel="Edit Address"
@@ -248,19 +215,19 @@ export default function ProfileScreen() {
 
           <InfoCard
             title="About Me"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "profile",
                 initialData: {
-                  bio: userRecord?.profile?.bio ?? "",
-                  faculty: userRecord?.profile?.faculty ?? "",
-                  year: userRecord?.profile?.year ?? 1,
-                  appRole: userRecord?.profile?.appRole ?? "rider",
+                  bio: userRecord?.profile.bio ?? "",
+                  faculty: userRecord?.profile.faculty ?? "",
+                  year: userRecord?.profile.year ?? 1,
+                  appRole: userRecord?.profile.appRole ?? "rider",
                   universityRole:
-                    userRecord?.profile?.universityRole ?? "student",
+                    userRecord?.profile.universityRole ?? "student",
                 },
-              })
-            }
+              });
+            }}
             empty={!userRecord?.profile}
             emptyText="Complete your profile to start riding."
           >
@@ -268,17 +235,17 @@ export default function ProfileScreen() {
               <View style={{ gap: 16 }}>
                 <InfoRow
                   label="Bio"
-                  value={userRecord.profile.bio || "No bio set"}
+                  value={userRecord.profile.bio ?? "No bio set"}
                   fullWidth
                 />
                 <View style={styles.row}>
                   <InfoRow
                     label="Faculty"
-                    value={userRecord.profile.faculty || "-"}
+                    value={userRecord.profile.faculty ?? "-"}
                   />
                   <InfoRow
                     label="Year"
-                    value={userRecord.profile.year?.toString() || "-"}
+                    value={userRecord.profile.year?.toString() ?? "-"}
                   />
                 </View>
                 <View style={styles.row}>
@@ -299,17 +266,17 @@ export default function ProfileScreen() {
 
           <InfoCard
             title="Ride Preferences"
-            onEdit={() =>
+            onEdit={() => {
               setModalState({
                 type: "preferences",
                 initialData: {
-                  music: userRecord?.preferences?.music ?? true,
-                  chatty: userRecord?.preferences?.chatty ?? true,
-                  pets: userRecord?.preferences?.pets ?? false,
-                  smoking: userRecord?.preferences?.smoking ?? false,
+                  music: userRecord?.preferences.music ?? true,
+                  chatty: userRecord?.preferences.chatty ?? true,
+                  pets: userRecord?.preferences.pets ?? false,
+                  smoking: userRecord?.preferences.smoking ?? false,
                 },
-              })
-            }
+              });
+            }}
             empty={!userRecord?.preferences}
             emptyText="Set your ride comfort settings."
           >
@@ -379,18 +346,18 @@ export default function ProfileScreen() {
           {isDriver && (
             <InfoCard
               title="Vehicle Details"
-              onEdit={() =>
+              onEdit={() => {
                 setModalState({
                   type: "vehicle",
                   initialData: {
-                    make: userRecord?.vehicle?.make ?? "",
-                    model: userRecord?.vehicle?.model ?? "",
-                    color: userRecord?.vehicle?.color ?? "",
-                    plate: userRecord?.vehicle?.plate ?? "",
-                    seats: userRecord?.vehicle?.seats ?? 4,
+                    make: userRecord?.vehicle.make ?? "",
+                    model: userRecord?.vehicle.model ?? "",
+                    color: userRecord?.vehicle.color ?? "",
+                    plate: userRecord?.vehicle.plate ?? "",
+                    seats: userRecord?.vehicle.seats ?? 4,
                   },
-                })
-              }
+                });
+              }}
               empty={!userRecord?.vehicle}
               emptyText="Add your vehicle to start driving."
               actionLabel="Add Vehicle"
@@ -445,7 +412,7 @@ export default function ProfileScreen() {
               styles.signOutBtn,
               { borderColor: colors.error, backgroundColor: colors.surface },
             ]}
-            onPress={handleSignOut}
+            onPress={() => void handleSignOut}
             disabled={isSigningOut}
           >
             {isSigningOut ? (

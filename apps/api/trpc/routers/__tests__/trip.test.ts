@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TIME_WINDOW_MIN } from "@hitchly/db/schema";
-// import { trips } from "@hitchly/db/schema"; // Used in commented out test
-import { createMockDb } from "../../../tests/utils/mockDb";
-import { createMockContext } from "../../../tests/utils/mockContext";
+import { TIME_WINDOW_MIN, trips } from "@hitchly/db/schema";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+
 import {
   createMockTrip,
   createMockTripRequest,
-} from "../../../tests/utils/fixtures";
+} from "../../../lib/tests/fixtures";
+import { createMockContext } from "../../../lib/tests/mockContext";
+import { createMockDb } from "../../../lib/tests/mockDb";
+import { tripRouter } from "../trip";
 
 // Hoist mocks to be available in factories
 const { mockGeocodeAddress, mockCalculateTripDistance } = vi.hoisted(() => {
@@ -22,12 +23,12 @@ vi.mock("../../../services/googlemaps", () => ({
 }));
 
 // Mock notification service
-vi.mock("../../../services/notification_service", () => ({
+vi.mock("../../../services/notification", () => ({
   sendTripNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock payment service
-vi.mock("../../../services/payment_service", () => ({
+vi.mock("../../../services/payment", () => ({
   hasPaymentMethod: vi.fn().mockResolvedValue(true),
   createPaymentHold: vi
     .fn()
@@ -72,23 +73,32 @@ vi.mock("../../../services/payment_service", () => ({
     .mockResolvedValue({ status: "captured", amountCents: 1000 }),
 }));
 
-// Import router AFTER mocks are set up
-import { tripRouter } from "../trip";
+// Helper type for the mock DB to avoid explicit 'any'
+interface MockDb {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  delete: Mock;
+  query: {
+    users: { findFirst: Mock };
+  };
+}
 
 describe("Trip Router", () => {
-  let mockDb: any;
+  let mockDb: MockDb;
 
   beforeEach(() => {
-    mockDb = createMockDb();
+    // Cast the helper result to our MockDb interface
+    mockDb = createMockDb() as unknown as MockDb;
+
     // Clear call history but keep implementation
     mockGeocodeAddress.mockClear();
     mockCalculateTripDistance.mockClear();
-    // Setup default mocks - ensure they're always configured
-    mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
-    mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
+
     // Clear other mocks
     vi.clearAllMocks();
-    // Re-setup mocks after clearAllMocks (it clears implementations)
+
+    // Setup default mocks - ensure they're always configured
     mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
     mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
   });
@@ -101,51 +111,55 @@ describe("Trip Router", () => {
       maxSeats: 3,
     };
 
-    // TODO: Fix mock setup - geocodeAddress mock not being applied
-    // it("should create a trip successfully", async () => {
-    //   const userId = "user123";
-    //   const mockUser = {
-    //     id: userId,
-    //     emailVerified: true,
-    //     name: "Test User",
-    //     email: "test@mcmaster.ca",
-    //   };
+    it("should create a trip successfully", async () => {
+      const userId = "user123";
+      const mockUser = {
+        id: userId,
+        emailVerified: true,
+        name: "Test User",
+        email: "test@mcmaster.ca",
+      };
 
-    //   const mockTrip = {
-    //     id: "trip_123",
-    //     driverId: userId,
-    //     ...validInput,
-    //     status: "pending",
-    //     createdAt: new Date(),
-    //     updatedAt: new Date(),
-    //   };
+      const mockTrip = {
+        id: "trip_123",
+        driverId: userId,
+        ...validInput,
+        status: "pending",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-    //   // Setup geocode mocks - return different values for origin and destination
-    //   mockGeocodeAddress
-    //     .mockResolvedValueOnce({ lat: 43.2609, lng: -79.9192 }) // origin
-    //     .mockResolvedValueOnce({ lat: 43.2557, lng: -79.8711 }); // destination
+      // Setup geocode mocks - return different values for origin and destination
+      mockGeocodeAddress
+        .mockResolvedValueOnce({ lat: 43.2609, lng: -79.9192 }) // origin
+        .mockResolvedValueOnce({ lat: 43.2557, lng: -79.8711 }); // destination
 
-    //   // Setup user lookup
-    //   mockDb.select.mockReturnValueOnce({
-    //     from: vi.fn().mockReturnValueOnce({
-    //       where: vi.fn().mockResolvedValueOnce([mockUser]),
-    //     }),
-    //   });
+      // Setup user lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockUser]),
+        }),
+      });
 
-    //   // Setup trip insert
-    //   mockDb.insert.mockReturnValueOnce({
-    //     values: vi.fn().mockReturnValueOnce({
-    //       returning: vi.fn().mockResolvedValueOnce([mockTrip]),
-    //     }),
-    //   });
+      // Setup trip insert
+      mockDb.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnValueOnce({
+          returning: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
 
-    //   const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
-    //   const result = await caller.createTrip(validInput);
+      // We explicitly cast mockDb to any here because createMockContext expects the real DB type
 
-    //   expect(result).toEqual(mockTrip);
-    //   expect(mockDb.insert).toHaveBeenCalledWith(trips);
-    //   expect(mockGeocodeAddress).toHaveBeenCalledTimes(2);
-    // });
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
+      const result = await caller.createTrip(validInput);
+
+      expect(result).toEqual(mockTrip);
+      expect(mockDb.insert).toHaveBeenCalledWith(trips);
+      // It should be called twice (origin + dest)
+      expect(mockGeocodeAddress).toHaveBeenCalledTimes(2);
+    });
 
     it("should reject unverified users", async () => {
       const userId = "user123";
@@ -162,7 +176,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(caller.createTrip(validInput)).rejects.toThrow(
         "Email must be verified to create trips"
@@ -189,9 +205,12 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(caller.createTrip(invalidInput)).rejects.toThrow(
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `Departure time must be at least ${TIME_WINDOW_MIN} minutes in the future`
       );
     });
@@ -203,7 +222,9 @@ describe("Trip Router", () => {
         maxSeats: 10, // Exceeds MAX_SEATS
       };
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       // Zod validation catches this before our custom validation
       await expect(caller.createTrip(invalidInput)).rejects.toThrow();
@@ -211,7 +232,8 @@ describe("Trip Router", () => {
 
     it("should require authentication", async () => {
       const caller = tripRouter.createCaller(
-        createMockContext(undefined, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(undefined, mockDb as any)
       );
 
       await expect(caller.createTrip(validInput)).rejects.toThrow(
@@ -258,7 +280,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext("user123", mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext("user123", mockDb as any)
       );
       const result = await caller.getTrips();
 
@@ -291,7 +314,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext("user123", mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext("user123", mockDb as any)
       );
       const result = await caller.getTrips({ userId });
 
@@ -344,7 +368,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext("user123", mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext("user123", mockDb as any)
       );
       const result = await caller.getTripById({ tripId });
 
@@ -354,11 +379,12 @@ describe("Trip Router", () => {
         origin: mockTrip.origin,
         destination: mockTrip.destination,
         status: mockTrip.status,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         requests: expect.arrayContaining([
           expect.objectContaining({
-            id: mockRequests[0].id,
-            riderId: mockRequests[0].riderId,
-            status: mockRequests[0].status,
+            id: mockRequests[0]?.id,
+            riderId: mockRequests[0]?.riderId,
+            status: mockRequests[0]?.status,
           }),
         ]),
       });
@@ -372,7 +398,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext("user123", mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext("user123", mockDb as any)
       );
 
       await expect(
@@ -421,7 +448,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.updateTrip({ tripId, updates });
 
       expect(result).toEqual(updatedTrip);
@@ -436,7 +465,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(otherUserId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(otherUserId, mockDb as any)
       );
 
       await expect(
@@ -452,7 +482,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(
         caller.updateTrip({ tripId, updates: { origin: "New Origin" } })
@@ -509,11 +541,13 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.cancelTrip({ tripId });
 
       expect(result.success).toBe(true);
-      expect(result.trip.status).toBe("cancelled");
+      expect(result.trip?.status).toBe("cancelled");
     });
 
     it("should reject cancellation from non-owner", async () => {
@@ -525,7 +559,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(otherUserId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(otherUserId, mockDb as any)
       );
 
       await expect(caller.cancelTrip({ tripId })).rejects.toThrow(
@@ -541,7 +576,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(caller.cancelTrip({ tripId })).rejects.toThrow(
         "Cannot cancel a completed or already cancelled trip"
@@ -582,7 +619,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.startTrip({ tripId });
 
       expect(result.status).toBe("in_progress");
@@ -596,7 +635,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext("otherUser", mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext("otherUser", mockDb as any)
       );
 
       await expect(caller.startTrip({ tripId })).rejects.toThrow(
@@ -612,7 +652,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(caller.startTrip({ tripId })).rejects.toThrow(
         "Can only start trips that are in active status"
@@ -658,14 +700,16 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.updatePassengerStatus({
         tripId,
         requestId,
         action: "pickup",
       });
 
-      expect(result.status).toBe("on_trip");
+      expect(result?.status).toBe("on_trip");
     });
 
     it("should update passenger status to completed (dropoff)", async () => {
@@ -691,14 +735,16 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.updatePassengerStatus({
         tripId,
         requestId,
         action: "dropoff",
       });
 
-      expect(result.status).toBe("completed");
+      expect(result?.status).toBe("completed");
     });
 
     it("should reject pickup without rider confirmation", async () => {
@@ -718,7 +764,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(
         caller.updatePassengerStatus({ tripId, requestId, action: "pickup" })
@@ -733,7 +781,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(
         caller.updatePassengerStatus({ tripId, requestId, action: "pickup" })
@@ -787,10 +837,12 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
       const result = await caller.completeTrip({ tripId });
 
-      expect(result.trip.status).toBe("completed");
+      expect(result.trip?.status).toBe("completed");
       expect(result.summary).toHaveProperty("durationMinutes");
       expect(result.summary).toHaveProperty("totalEarningsCents");
       expect(result.summary).toHaveProperty("passengerCount");
@@ -813,7 +865,9 @@ describe("Trip Router", () => {
         }),
       });
 
-      const caller = tripRouter.createCaller(createMockContext(userId, mockDb));
+      const caller = tripRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
 
       await expect(caller.completeTrip({ tripId })).rejects.toThrow(
         "Cannot complete trip: not all passengers have been dropped off"
@@ -863,7 +917,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(riderId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(riderId, mockDb as any)
       );
       const result = await caller.createTripRequest({
         tripId,
@@ -871,8 +926,8 @@ describe("Trip Router", () => {
         pickupLng: -79.9192,
       });
 
-      expect(result.tripId).toBe(tripId);
-      expect(result.riderId).toBe(riderId);
+      expect(result?.tripId).toBe(tripId);
+      expect(result?.riderId).toBe(riderId);
     });
 
     it("should reject request from driver", async () => {
@@ -885,7 +940,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(driverId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(driverId, mockDb as any)
       );
 
       await expect(
@@ -908,7 +964,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(riderId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(riderId, mockDb as any)
       );
 
       await expect(
@@ -972,11 +1029,12 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(driverId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(driverId, mockDb as any)
       );
       const result = await caller.acceptTripRequest({ requestId });
 
-      expect(result.status).toBe("accepted");
+      expect(result?.status).toBe("accepted");
     });
 
     it("should activate trip when first request accepted", async () => {
@@ -1012,7 +1070,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(driverId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(driverId, mockDb as any)
       );
       await caller.acceptTripRequest({ requestId });
 
@@ -1047,7 +1106,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(riderId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(riderId, mockDb as any)
       );
       const result = await caller.getAvailableTrips({});
 
@@ -1087,7 +1147,8 @@ describe("Trip Router", () => {
       });
 
       const caller = tripRouter.createCaller(
-        createMockContext(driverId, mockDb)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createMockContext(driverId, mockDb as any)
       );
       const result = await caller.fixTripStatus({ tripId });
 

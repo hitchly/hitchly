@@ -1,7 +1,6 @@
-import { TRPCError } from "@trpc/server";
-import { db } from "@hitchly/db/client";
+import { db, eq } from "@hitchly/db/client";
 import { users } from "@hitchly/db/schema";
-import { eq } from "@hitchly/db/client";
+import { TRPCError } from "@trpc/server";
 
 /**
  * Test account email addresses allowed to use admin/test features
@@ -11,11 +10,14 @@ export const TEST_ACCOUNT_EMAILS = [
   "rider@mcmaster.ca",
 ] as const;
 
+// Create a type based on the array values
+type TestAccountEmail = (typeof TEST_ACCOUNT_EMAILS)[number];
+
 /**
  * Check if a user email is a test account
  */
-export function isTestAccountEmail(email: string): boolean {
-  return TEST_ACCOUNT_EMAILS.includes(email as any);
+export function isTestAccountEmail(email: string): email is TestAccountEmail {
+  return (TEST_ACCOUNT_EMAILS as readonly string[]).includes(email);
 }
 
 /**
@@ -29,6 +31,7 @@ export async function requireTestAccount(userId: string): Promise<void> {
     .where(eq(users.id, userId))
     .limit(1);
 
+  // user.email is checked against the type guard
   if (!user || !isTestAccountEmail(user.email)) {
     throw new TRPCError({
       code: "FORBIDDEN",

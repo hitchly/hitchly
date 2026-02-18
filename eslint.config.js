@@ -1,58 +1,14 @@
-import js from "@eslint/js";
-import prettier from "eslint-config-prettier";
-import tseslint from "typescript-eslint";
+import { config } from "@hitchly/eslint-config";
 
 export default [
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettier,
+  ...config,
   {
     ignores: [
-      "node_modules",
-      "dist",
-      "build",
-      "drizzle",
-      ".turbo",
-      "apps/**/dist",
-      "packages/**/dist",
+      "node_modules/**",
+      ".turbo/**",
+      "dist/**",
+      "apps/**",
+      "packages/**",
     ],
-    files: ["**/*.{ts,tsx,js,jsx}"],
-    languageOptions: {
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module",
-      },
-    },
-    rules: {
-      // --- General ---
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["warn"],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
-      "prefer-const": "warn",
-      eqeqeq: ["error", "always"],
-
-      // --- TypeScript tweaks ---
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/no-var-requires": "off",
-      "@typescript-eslint/no-misused-promises": "off",
-    },
-  },
-  {
-    // Override for Node.js scripts
-    files: ["**/scripts/**/*.{js,ts}"],
-    languageOptions: {
-      globals: {
-        process: "readonly",
-        console: "readonly",
-        Buffer: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-      },
-    },
-    rules: {
-      "no-console": "off",
-      "no-undef": "off",
-    },
   },
 ];

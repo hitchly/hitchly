@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import type { ReactNode } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -9,13 +10,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../context/theme-context";
+
+import { useTheme } from "@/context/theme-context";
 
 interface OnboardingLayoutProps {
   icon?: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const OnboardingLayout = ({

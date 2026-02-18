@@ -1,9 +1,10 @@
-import { router, protectedProcedure } from "../trpc";
-import { z } from "zod";
 import { db } from "@hitchly/db/client";
-import { and, eq, sql } from "drizzle-orm";
 import { reviews, trips } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
+import { and, eq, sql } from "drizzle-orm";
+import { z } from "zod";
+
+import { protectedProcedure, router } from "../trpc";
 
 export const reviewsRouter = router({
   submitRating: protectedProcedure
@@ -29,9 +30,16 @@ export const reviewsRouter = router({
         });
       }
 
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not authenticated",
+        });
+      }
+
       const existingReview = await db.query.reviews.findFirst({
         where: and(
-          eq(reviews.reviewerId, ctx.userId!),
+          eq(reviews.reviewerId, ctx.userId),
           eq(reviews.targetUserId, input.targetUserId),
           eq(reviews.tripId, input.tripId)
         ),
@@ -45,7 +53,7 @@ export const reviewsRouter = router({
       }
 
       await db.insert(reviews).values({
-        reviewerId: ctx.userId!,
+        reviewerId: ctx.userId,
         targetUserId: input.targetUserId,
         tripId: input.tripId,
         rating: input.rating,
@@ -65,13 +73,11 @@ export const reviewsRouter = router({
         .from(reviews)
         .where(eq(reviews.targetUserId, input.userId));
 
-      const average = result[0]?.average
-        ? Number(result[0].average).toFixed(1)
-        : "New";
+      const average = result[0]?.average ? result[0].average.toFixed(1) : "New";
 
       return {
         average,
-        count: Number(result[0]?.count || 0),
+        count: result[0]?.count ?? 0,
       };
     }),
 });
