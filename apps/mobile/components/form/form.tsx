@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { useTheme } from "@/context/theme-context";
 
 // --- 1. Controlled Text Input ---

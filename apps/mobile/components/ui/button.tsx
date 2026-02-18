@@ -1,4 +1,9 @@
-import type { StyleProp, TouchableOpacityProps, ViewStyle } from "react-native";
+import type {
+  StyleProp,
+  TextStyle,
+  TouchableOpacityProps,
+  ViewStyle,
+} from "react-native";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -10,11 +15,10 @@ import { useTheme } from "@/context/theme-context";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   isLoading?: boolean;
   style?: StyleProp<ViewStyle>;
-  disabled?: boolean;
-  onPress?: () => void;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export function Button({
@@ -22,21 +26,25 @@ export function Button({
   variant = "primary",
   isLoading = false,
   style,
+  textStyle,
   disabled,
   onPress,
   ...props
 }: ButtonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const variants = {
     primary: {
-      container: { backgroundColor: colors.primary, borderWidth: 0 },
-      text: { color: colors.text },
-      indicator: colors.text,
+      container: {
+        backgroundColor: colors.primary,
+        borderWidth: 0,
+      },
+      text: { color: isDark ? colors.background : "#FFFFFF" },
+      indicator: isDark ? colors.background : "#FFFFFF",
     },
     secondary: {
       container: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceSecondary,
         borderWidth: 1,
         borderColor: colors.border,
       },
@@ -48,27 +56,45 @@ export function Button({
       text: { color: colors.primary },
       indicator: colors.primary,
     },
+    danger: {
+      container: { backgroundColor: colors.error, borderWidth: 0 },
+      text: { color: "#FFFFFF" },
+      indicator: "#FFFFFF",
+    },
   };
 
   const currentVariant = variants[variant];
+  const isDisabled = disabled ?? isLoading;
 
   return (
     <TouchableOpacity
       style={[
         styles.base,
         currentVariant.container,
-        disabled && styles.disabled,
+        isDisabled && {
+          backgroundColor: colors.disabled,
+          borderColor: colors.disabled,
+        },
         style,
       ]}
-      disabled={disabled ?? isLoading}
-      activeOpacity={0.8}
+      disabled={isDisabled}
+      activeOpacity={0.7}
       onPress={onPress}
       {...props}
     >
       {isLoading ? (
         <ActivityIndicator color={currentVariant.indicator} />
       ) : (
-        <Text style={[styles.text, currentVariant.text]}>{title}</Text>
+        <Text
+          style={[
+            styles.text,
+            currentVariant.text,
+            isDisabled && { color: colors.disabledText },
+            textStyle,
+          ]}
+        >
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -76,20 +102,18 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
+    minHeight: 52,
     width: "100%",
-  },
-  disabled: {
-    opacity: 0.5,
   },
   text: {
     fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
+    letterSpacing: -0.2,
   },
 });

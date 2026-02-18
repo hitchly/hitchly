@@ -4,14 +4,14 @@
 import { ThemeProvider as NavigationThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ActiveTripBanner } from "@/components/trip/active-trip-banner";
 import { NavTheme } from "@/constants/theme";
 import { AppThemeProvider } from "@/context/theme-context";
+import { ActiveTripBanner } from "@/features/trip/active-trip-banner";
 import { authClient } from "@/lib/auth-client";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";

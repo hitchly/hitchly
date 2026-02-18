@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   TripCompletionSummary,
   type TripCompletionSummaryData,
-} from "@/components/trip/trip-completion-summary";
+} from "@/features/trip/trip-completion-summary";
 import { openStopNavigation } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
 
