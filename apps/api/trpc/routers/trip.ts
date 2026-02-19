@@ -216,6 +216,7 @@ export const tripRouter = router({
         .select()
         .from(trips)
         .where(eq(trips.id, input.tripId));
+
       if (!trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -223,11 +224,28 @@ export const tripRouter = router({
         });
       }
 
-      // Get trip requests with rider information
-      // Wrap in try-catch to handle cases where requests query fails (e.g., schema issues)
-      let requests: any[] = [];
+      type JoinedRequest = {
+        id: string;
+        tripId: string;
+        riderId: string;
+        pickupLat: number | null;
+        pickupLng: number | null;
+        dropoffLat: number | null;
+        dropoffLng: number | null;
+        status: string;
+        createdAt: string | Date;
+        updatedAt: string | Date;
+        riderPickupConfirmedAt: string | Date | null;
+        rider: {
+          id: string;
+          name: string | null;
+          email: string | null;
+        } | null;
+      };
+
+      let requests: JoinedRequest[] = [];
+
       try {
-        // Flatten the query to avoid nested object issues with Drizzle leftJoin
         const requestsData = await ctx.db
           .select({
             id: tripRequests.id,
@@ -249,7 +267,6 @@ export const tripRouter = router({
           .leftJoin(users, eq(tripRequests.riderId, users.id))
           .where(eq(tripRequests.tripId, input.tripId));
 
-        // Reconstruct nested rider object
         requests = requestsData.map((req) => ({
           id: req.id,
           tripId: req.tripId,
@@ -270,14 +287,11 @@ export const tripRouter = router({
               }
             : null,
         }));
-      } catch (error: any) {
-        // Log error but continue - return trip with empty requests array
+      } catch (error: unknown) {
         console.error("Failed to fetch trip requests:", error);
         requests = [];
       }
 
-      // Filter to accepted/on_trip/completed requests for active/in_progress trips
-      // For other statuses, return all requests
       const filteredRequests =
         trip.status === "active" || trip.status === "in_progress"
           ? requests.filter(
@@ -288,14 +302,12 @@ export const tripRouter = router({
             )
           : requests;
 
-      // Sort by proximity to trip origin if trip has origin coordinates
       let sortedRequests = filteredRequests;
       if (trip.originLat && trip.originLng) {
         sortedRequests = [...filteredRequests].sort((a, b) => {
           if (!a.pickupLat || !a.pickupLng) return 1;
           if (!b.pickupLat || !b.pickupLng) return -1;
 
-          // Simple Euclidean distance calculation
           const distA = Math.sqrt(
             Math.pow(a.pickupLat - trip.originLat!, 2) +
               Math.pow(a.pickupLng - trip.originLng!, 2)
@@ -313,13 +325,14 @@ export const tripRouter = router({
         name: string | null;
         email: string | null;
       } | null = null;
+
       try {
         const [driverRow] = await ctx.db
           .select({ id: users.id, name: users.name, email: users.email })
           .from(users)
           .where(eq(users.id, trip.driverId));
         driver = driverRow ?? null;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to fetch trip driver:", error);
         driver = null;
       }

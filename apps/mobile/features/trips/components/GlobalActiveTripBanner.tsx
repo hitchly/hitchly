@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppRole } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
-import { ActiveTripBanner } from "@/features/trips/active-trip-banner";
+import { ActiveTripBanner } from "@/features/trips/components/ActiveTripBanner";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
