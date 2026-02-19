@@ -25,7 +25,6 @@ export function LocationForm({ initialData, onSuccess }: LocationFormProps) {
 
   const { control, setValue, handleSubmit } = methods;
 
-  // Watch coordinates to toggle the "Verified" state
   const lat = useWatch({ control, name: "latitude" });
   const lng = useWatch({ control, name: "longitude" });
   const isVerified = lat !== 0 && lng !== 0;

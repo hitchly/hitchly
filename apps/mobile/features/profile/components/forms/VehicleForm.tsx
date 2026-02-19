@@ -91,7 +91,6 @@ export function VehicleForm({ initialData, onSuccess }: VehicleFormProps) {
             }}
             variant="primary"
             size="lg"
-            icon="checkmark-circle-outline"
           />
         </View>
       </View>

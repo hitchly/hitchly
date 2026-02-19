@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { Text } from "@/components/ui/Text"; // Using your custom Text component
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { useGPSLocation } from "@/hooks/useGpsLocation";
 import { trpc } from "@/lib/trpc";
