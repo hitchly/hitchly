@@ -5,10 +5,10 @@ import { useEffect, useMemo } from "react";
 import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
 import { NavTheme } from "@/constants/theme";
 import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
+import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
 import { GlobalActiveTripBanner } from "@/features/trips/components/GlobalActiveTripBanner";
 import { authClient } from "@/lib/auth-client";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";

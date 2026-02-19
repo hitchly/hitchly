@@ -1,7 +1,5 @@
-import { Text, View } from "react-native";
+import { RiderTripsScreen } from "@/features/trips/screens/RiderTripsScreen";
 
 export default function RiderTrips() {
-  <View>
-    <Text>Rider Trips</Text>
-  </View>;
+  return <RiderTripsScreen />;
 }

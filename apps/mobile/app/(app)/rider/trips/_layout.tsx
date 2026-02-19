@@ -7,6 +7,7 @@ export default function RiderTripsLayout() {
   return (
     <Stack
       screenOptions={{
+        headerShown: false,
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.primary,
         headerTitleStyle: { color: colors.text },

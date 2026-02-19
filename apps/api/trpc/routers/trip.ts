@@ -9,7 +9,7 @@ import {
   users,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, gte, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -157,7 +157,6 @@ export const tripRouter = router({
   getTrips: protectedProcedure
     .input(tripFiltersSchema.optional())
     .query(async ({ ctx, input }) => {
-      // Filter by userId if provided, otherwise filter by current user
       const userId = input?.userId ?? ctx.userId;
       if (!userId) {
         throw new TRPCError({
@@ -166,7 +165,6 @@ export const tripRouter = router({
         });
       }
 
-      // Build base conditions for status and date filters
       const baseConditions = [];
       if (input?.status) {
         baseConditions.push(eq(trips.status, input.status));
@@ -178,8 +176,6 @@ export const tripRouter = router({
         baseConditions.push(lte(trips.departureTime, input.endDate));
       }
 
-      // Query trips where user is driver OR has a trip request as rider
-      // Using SQL subquery for the rider condition
       const userCondition = or(
         eq(trips.driverId, userId),
         sql`${trips.id} IN (SELECT ${tripRequests.tripId} FROM ${tripRequests} WHERE ${tripRequests.riderId} = ${userId})`
@@ -190,20 +186,51 @@ export const tripRouter = router({
           ? and(userCondition, ...baseConditions)
           : userCondition;
 
-      const results = await ctx.db
+      let results = await ctx.db
         .select()
         .from(trips)
         .where(whereClause)
         .orderBy(desc(trips.createdAt));
-      // Apply time filtering if needed
+
       if (input?.startDate && input?.endDate) {
-        return filterTripsByTime(results, {
+        results = filterTripsByTime(results, {
           start: input.startDate,
           end: input.endDate,
         });
       }
 
-      return results;
+      // --- NEW: Batch fetch relations to strictly type the output ---
+      const tripIds = results.map((t) => t.id);
+      const driverIds = Array.from(new Set(results.map((t) => t.driverId)));
+
+      const getRequests = async () => {
+        if (tripIds.length === 0) return [];
+        return ctx.db
+          .select()
+          .from(tripRequests)
+          .where(inArray(tripRequests.tripId, tripIds));
+      };
+
+      const getDrivers = async () => {
+        if (driverIds.length === 0) return [];
+        return ctx.db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(inArray(users.id, driverIds));
+      };
+
+      // Fetch requests and drivers in parallel for maximum performance
+      const [allRequests, allDrivers] = await Promise.all([
+        getRequests(),
+        getDrivers(),
+      ]);
+
+      // Map the relations back onto the trips
+      return results.map((trip) => ({
+        ...trip,
+        driver: allDrivers.find((d) => d.id === trip.driverId) ?? null,
+        requests: allRequests.filter((req) => req.tripId === trip.id),
+      }));
     }),
 
   /**
@@ -224,83 +251,66 @@ export const tripRouter = router({
         });
       }
 
-      type JoinedRequest = {
-        id: string;
-        tripId: string;
-        riderId: string;
-        pickupLat: number | null;
-        pickupLng: number | null;
-        dropoffLat: number | null;
-        dropoffLng: number | null;
-        status: string;
-        createdAt: string | Date;
-        updatedAt: string | Date;
-        riderPickupConfirmedAt: string | Date | null;
-        rider: {
-          id: string;
-          name: string | null;
-          email: string | null;
-        } | null;
+      const getRequests = async () => {
+        try {
+          const requestsData = await ctx.db
+            .select({
+              id: tripRequests.id,
+              tripId: tripRequests.tripId,
+              riderId: tripRequests.riderId,
+              pickupLat: tripRequests.pickupLat,
+              pickupLng: tripRequests.pickupLng,
+              dropoffLat: tripRequests.dropoffLat,
+              dropoffLng: tripRequests.dropoffLng,
+              status: tripRequests.status,
+              createdAt: tripRequests.createdAt,
+              updatedAt: tripRequests.updatedAt,
+              riderPickupConfirmedAt: tripRequests.riderPickupConfirmedAt,
+              riderId_user: users.id,
+              riderName: users.name,
+              riderEmail: users.email,
+            })
+            .from(tripRequests)
+            .leftJoin(users, eq(tripRequests.riderId, users.id))
+            .where(eq(tripRequests.tripId, input.tripId));
+
+          return requestsData.map((req) => ({
+            id: req.id,
+            tripId: req.tripId,
+            riderId: req.riderId,
+            pickupLat: req.pickupLat,
+            pickupLng: req.pickupLng,
+            dropoffLat: req.dropoffLat,
+            dropoffLng: req.dropoffLng,
+            status: req.status,
+            createdAt: req.createdAt,
+            updatedAt: req.updatedAt,
+            riderPickupConfirmedAt: req.riderPickupConfirmedAt,
+            rider: req.riderId_user
+              ? {
+                  id: req.riderId_user,
+                  name: req.riderName,
+                  email: req.riderEmail,
+                }
+              : null,
+          }));
+        } catch (error: unknown) {
+          console.error("Failed to fetch trip requests:", error);
+          return [];
+        }
       };
 
-      let requests: JoinedRequest[] = [];
-
-      try {
-        const requestsData = await ctx.db
-          .select({
-            id: tripRequests.id,
-            tripId: tripRequests.tripId,
-            riderId: tripRequests.riderId,
-            pickupLat: tripRequests.pickupLat,
-            pickupLng: tripRequests.pickupLng,
-            dropoffLat: tripRequests.dropoffLat,
-            dropoffLng: tripRequests.dropoffLng,
-            status: tripRequests.status,
-            createdAt: tripRequests.createdAt,
-            updatedAt: tripRequests.updatedAt,
-            riderPickupConfirmedAt: tripRequests.riderPickupConfirmedAt,
-            riderId_user: users.id,
-            riderName: users.name,
-            riderEmail: users.email,
-          })
-          .from(tripRequests)
-          .leftJoin(users, eq(tripRequests.riderId, users.id))
-          .where(eq(tripRequests.tripId, input.tripId));
-
-        requests = requestsData.map((req) => ({
-          id: req.id,
-          tripId: req.tripId,
-          riderId: req.riderId,
-          pickupLat: req.pickupLat,
-          pickupLng: req.pickupLng,
-          dropoffLat: req.dropoffLat,
-          dropoffLng: req.dropoffLng,
-          status: req.status,
-          createdAt: req.createdAt,
-          updatedAt: req.updatedAt,
-          riderPickupConfirmedAt: req.riderPickupConfirmedAt,
-          rider: req.riderId_user
-            ? {
-                id: req.riderId_user,
-                name: req.riderName,
-                email: req.riderEmail,
-              }
-            : null,
-        }));
-      } catch (error: unknown) {
-        console.error("Failed to fetch trip requests:", error);
-        requests = [];
-      }
+      const rawRequests = await getRequests();
 
       const filteredRequests =
         trip.status === "active" || trip.status === "in_progress"
-          ? requests.filter(
+          ? rawRequests.filter(
               (req) =>
                 req.status === "accepted" ||
                 req.status === "on_trip" ||
                 req.status === "completed"
             )
-          : requests;
+          : rawRequests;
 
       let sortedRequests = filteredRequests;
       if (trip.originLat && trip.originLng) {
@@ -320,22 +330,20 @@ export const tripRouter = router({
         });
       }
 
-      let driver: {
-        id: string;
-        name: string | null;
-        email: string | null;
-      } | null = null;
+      const getDriver = async () => {
+        try {
+          const [driverRow] = await ctx.db
+            .select({ id: users.id, name: users.name, email: users.email })
+            .from(users)
+            .where(eq(users.id, trip.driverId));
+          return driverRow ?? null;
+        } catch (error: unknown) {
+          console.error("Failed to fetch trip driver:", error);
+          return null;
+        }
+      };
 
-      try {
-        const [driverRow] = await ctx.db
-          .select({ id: users.id, name: users.name, email: users.email })
-          .from(users)
-          .where(eq(users.id, trip.driverId));
-        driver = driverRow ?? null;
-      } catch (error: unknown) {
-        console.error("Failed to fetch trip driver:", error);
-        driver = null;
-      }
+      const driver = await getDriver();
 
       return {
         ...trip,
