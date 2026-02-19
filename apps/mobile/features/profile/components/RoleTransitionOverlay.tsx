@@ -1,8 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet } from "react-native";
 
+import { IconBox } from "@/components/ui/IconBox";
 import { Text } from "@/components/ui/Text";
 import { AppRole } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
@@ -14,34 +14,45 @@ export function RoleTransitionOverlay() {
 
   const [isVisible, setIsVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     if (isSwitching) {
       setIsVisible(true);
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 400,
+        duration: 300,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) {
           setIsVisible(false);
+          scaleAnim.setValue(0.95);
         }
       });
     }
-  }, [isSwitching, fadeAnim]);
+  }, [isSwitching, fadeAnim, scaleAnim]);
 
   if (!isVisible) return null;
 
   const nextRole = role === AppRole.RIDER ? "Rider" : "Driver";
-  const roleIcon = role === AppRole.RIDER ? "person-outline" : "car-outline";
+  const roleIcon =
+    role === AppRole.RIDER ? "person-outline" : "car-sport-outline";
 
   return (
     <Animated.View
@@ -51,24 +62,28 @@ export function RoleTransitionOverlay() {
         { backgroundColor: colors.background, opacity: fadeAnim },
       ]}
     >
-      <View style={styles.content}>
-        <View
-          style={[
-            styles.iconCircle,
-            { backgroundColor: `${colors.primary}15` },
-          ]}
-        >
-          <Ionicons name={roleIcon} size={32} color={colors.primary} />
-        </View>
+      <Animated.View
+        style={[styles.content, { transform: [{ scale: scaleAnim }] }]}
+      >
+        <IconBox
+          name={roleIcon}
+          variant="contrast"
+          size={32}
+          style={styles.iconBoxOverride}
+        />
 
-        <Text variant="h3" align="center">
+        <Text variant="h3" align="center" style={styles.title}>
           Switching to {nextRole} Mode
         </Text>
 
-        <Text variant="caption" color={colors.textSecondary}>
-          Optimizing your experience...
+        <Text
+          variant="mono"
+          color={colors.textSecondary}
+          style={styles.monoText}
+        >
+          OPTIMIZING EXPERIENCE...
         </Text>
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -84,12 +99,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 40,
   },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
+  iconBoxOverride: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  title: {
+    marginBottom: 8,
+  },
+  monoText: {
+    letterSpacing: 2,
+    fontSize: 10,
   },
 });

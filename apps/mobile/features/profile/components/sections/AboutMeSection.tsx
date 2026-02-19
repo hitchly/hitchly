@@ -34,6 +34,7 @@ export function AboutMeSection({ profile, onSuccess }: AboutMeSectionProps) {
         }}
         empty={!profile.bio && !profile.faculty}
         emptyText="Complete your profile to let others know who they're riding with."
+        actionLabel="Add Bio"
       >
         <View style={styles.container}>
           <InfoRow label="Bio" value={profile.bio ?? "No bio set"} fullWidth />

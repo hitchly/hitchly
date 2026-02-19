@@ -1,26 +1,26 @@
+import type { ComponentProps } from "react";
+import { useFormContext } from "react-hook-form";
+
 import { Button } from "@/components/ui/Button";
 
-interface SubmitButtonProps {
-  title: string;
-  onPress: () => void;
-  isLoading?: boolean;
-  disabled?: boolean;
-}
+type SubmitButtonProps = ComponentProps<typeof Button>;
 
 export function SubmitButton({
-  title,
   onPress,
-  isLoading = false,
-  disabled = false,
+  isLoading,
+  disabled,
+  ...props
 }: SubmitButtonProps) {
+  const {
+    formState: { isValid, isSubmitting },
+  } = useFormContext();
+
   return (
     <Button
-      title={title}
+      {...props}
       onPress={onPress}
-      isLoading={isLoading}
-      disabled={disabled}
-      variant="primary"
-      style={{ marginTop: 24 }}
+      isLoading={isLoading ?? isSubmitting}
+      disabled={(disabled ?? !isValid) || isSubmitting}
     />
   );
 }

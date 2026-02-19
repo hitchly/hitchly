@@ -1,17 +1,12 @@
 import { Stack } from "expo-router";
 
-import { useTheme } from "@/context/theme-context";
+import { useStackOptions } from "@/hooks/useStackOptions";
 
 export default function DriverRequestsLayout() {
-  const { colors } = useTheme();
+  const stackOptions = useStackOptions();
+
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
-        headerTitleStyle: { color: colors.text },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="index"
         options={{

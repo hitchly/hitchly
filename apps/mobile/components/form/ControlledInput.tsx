@@ -1,5 +1,4 @@
-import React from "react";
-import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
+import type { FieldValues, Path, PathValue } from "react-hook-form";
 import { Controller, useFormContext } from "react-hook-form";
 
 import type { InputProps } from "@/components/ui/Input";
@@ -20,28 +19,22 @@ export function ControlledInput<T extends FieldValues>({
 
   return (
     <Controller
-      control={control}
       name={name}
-      render={({ field, fieldState: { error } }) => {
-        const { onChange, onBlur, value } = field as ControllerRenderProps<
-          T,
-          Path<T>
-        >;
-
-        return (
-          <Input
-            {...props}
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={
-              typeof value === "string"
-                ? value
-                : ((value as string | undefined)?.toString() ?? "")
-            }
-            error={error?.message}
-          />
-        );
-      }}
+      control={control}
+      render={({
+        field: { onChange, onBlur, value },
+        fieldState: { error },
+      }) => (
+        <Input
+          {...props}
+          onBlur={onBlur}
+          onChangeText={(text: string) => {
+            onChange(text as PathValue<T, Path<T>>);
+          }}
+          value={value === undefined || value === null ? "" : String(value)}
+          error={error?.message}
+        />
+      )}
     />
   );
 }

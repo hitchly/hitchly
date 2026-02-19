@@ -1,7 +1,7 @@
 import type { TextProps as RNTextProps, TextStyle } from "react-native";
 import { Text as RNText, StyleSheet } from "react-native";
 
-import { Fonts } from "@/constants/theme";
+import { Fonts, FontSizes, FontWeights } from "@/constants/theme";
 import { useTheme } from "@/context/theme-context";
 
 export type TypographyVariant =
@@ -11,6 +11,7 @@ export type TypographyVariant =
   | "body"
   | "bodySemibold"
   | "caption"
+  | "captionSemibold"
   | "label"
   | "mono";
 
@@ -34,7 +35,10 @@ export function Text({
   const variantStyle = styles[variant];
 
   const textColor =
-    color ?? (variant === "caption" ? colors.textSecondary : colors.text);
+    color ??
+    (variant.startsWith("caption") || variant === "label"
+      ? colors.textSecondary
+      : colors.text);
 
   return (
     <RNText
@@ -51,46 +55,52 @@ export function Text({
 
 const styles = StyleSheet.create({
   h1: {
-    fontSize: 32,
-    fontWeight: "800",
+    fontSize: FontSizes.h1,
+    fontWeight: FontWeights.heavy,
     fontFamily: Fonts.bold,
     letterSpacing: -0.5,
   },
   h2: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: FontSizes.h2,
+    fontWeight: FontWeights.bold,
     fontFamily: Fonts.bold,
   },
   h3: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: FontSizes.h3,
+    fontWeight: FontWeights.semibold,
     fontFamily: Fonts.bold,
   },
   body: {
-    fontSize: 16,
-    fontWeight: "400",
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.regular,
     fontFamily: Fonts.regular,
     lineHeight: 22,
   },
   bodySemibold: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: FontSizes.body,
+    fontWeight: FontWeights.semibold,
     fontFamily: Fonts.bold,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: FontSizes.label,
+    fontWeight: FontWeights.medium,
     fontFamily: Fonts.regular,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.5, // Increased for Vercel "Utility" look
   },
   caption: {
-    fontSize: 12,
-    fontWeight: "400",
+    fontSize: FontSizes.caption,
+    fontWeight: FontWeights.regular,
     fontFamily: Fonts.regular,
   },
+  captionSemibold: {
+    fontSize: FontSizes.caption,
+    fontWeight: FontWeights.semibold,
+    fontFamily: Fonts.bold,
+  },
   mono: {
-    fontSize: 14,
+    fontSize: FontSizes.mono,
     fontFamily: Fonts.mono,
+    letterSpacing: 0.5,
   },
 });

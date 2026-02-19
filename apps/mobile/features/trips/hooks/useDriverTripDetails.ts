@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
-import { isTestAccount } from "@/lib/test-accounts";
 import { trpc } from "@/lib/trpc";
 
 export function useDriverTripDetails() {
@@ -10,9 +9,6 @@ export function useDriverTripDetails() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
-  const { data: userProfile } = trpc.profile.getMe.useQuery();
-
-  const isTestUser = isTestAccount(userProfile?.email);
 
   const {
     data: trip,
@@ -78,7 +74,6 @@ export function useDriverTripDetails() {
     trip,
     isLoading,
     isDriver,
-    isTestUser,
     cancelTrip: {
       isPending: cancelTrip.isPending,
     },

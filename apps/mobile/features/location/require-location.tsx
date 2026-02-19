@@ -2,25 +2,25 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
-import type { SubmitHandler } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm, type SubmitHandler } from "react-hook-form";
 import {
   ActivityIndicator,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ControlledLocationInput, SubmitButton } from "@/components/form/form";
+import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
+import { SubmitButton } from "@/components/form/SubmitButton";
+import { Text } from "@/components/ui/Text"; // Using your custom Text component
 import { useTheme } from "@/context/theme-context";
-import { useGPSLocation } from "@/hooks/use-gps-location";
+import { useGPSLocation } from "@/hooks/useGpsLocation";
 import { trpc } from "@/lib/trpc";
 
 export const RequireLocation = ({ children }: { children: ReactNode }) => {
@@ -31,26 +31,27 @@ export const RequireLocation = ({ children }: { children: ReactNode }) => {
 
   const saveAddressMutation = trpc.location.saveDefaultAddress.useMutation({
     onSuccess: () => {
-      utils.profile.getMe.invalidate().catch(() => {
-        /* Invalidation failed silently */
-      });
+      void utils.profile.getMe.invalidate();
     },
     onError: (err) => {
       Alert.alert("Error", err.message);
     },
   });
 
-  const { control, handleSubmit, setValue, watch } = useForm<SaveAddressInput>({
+  const methods = useForm<SaveAddressInput>({
     resolver: zodResolver(saveAddressSchema),
     defaultValues: {
       address: "",
       latitude: 0,
       longitude: 0,
     },
+    mode: "onChange",
   });
 
+  const { control, handleSubmit, setValue, watch } = methods;
+
   const { getLocation, isGeocoding } = useGPSLocation((loc) => {
-    setValue("address", loc.address);
+    setValue("address", loc.address, { shouldValidate: true });
     setValue("latitude", loc.latitude);
     setValue("longitude", loc.longitude);
   });
@@ -66,22 +67,12 @@ export const RequireLocation = ({ children }: { children: ReactNode }) => {
     saveAddressMutation.mutate(data);
   };
 
-  const handleOnPress = () => {
-    handleSubmit(onSubmit)().catch(() => {
-      /* Handled by validation */
-    });
-  };
-
-  const handleGetLocation = () => {
-    getLocation().catch(() => {
-      /* Handled internally by hook */
-    });
-  };
+  const handleOnPress = handleSubmit(onSubmit);
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.text} />
       </View>
     );
   }
@@ -100,59 +91,70 @@ export const RequireLocation = ({ children }: { children: ReactNode }) => {
           style={styles.content}
         >
           <View style={styles.header}>
-            <Ionicons name="location" size={48} color={colors.primary} />
-            <Text style={[styles.title, { color: colors.text }]}>
-              Set Your Location
+            <Ionicons name="location-outline" size={48} color={colors.text} />
+            <Text variant="h2" style={styles.title}>
+              SET YOUR LOCATION
             </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Enter your primary pickup/drop-off address to continue.
+            <Text variant="body" color={colors.textSecondary} align="center">
+              Enter your primary pickup/drop-off address to continue using
+              Hitchly.
             </Text>
           </View>
 
-          <View style={styles.form}>
-            <ControlledLocationInput
-              control={control}
-              name="address"
-              label="Address"
-              placeholder="1280 Main St W, Hamilton"
-              onTextChange={() => {
-                setValue("latitude", 0);
-                setValue("longitude", 0);
-              }}
-              onSelect={(details) => {
-                setValue("latitude", details.lat);
-                setValue("longitude", details.long);
-              }}
-            />
-
-            <TouchableOpacity
-              style={styles.gpsButton}
-              onPress={handleGetLocation}
-              disabled={isGeocoding}
-            >
-              <Ionicons
-                name="navigate-circle"
-                size={20}
-                color={colors.primary}
+          <FormProvider {...methods}>
+            <View style={styles.form}>
+              <ControlledLocationInput<SaveAddressInput>
+                control={control}
+                name="address"
+                label="ADDRESS"
+                placeholder="1280 Main St W, Hamilton"
+                onTextChange={() => {
+                  setValue("latitude", 0);
+                  setValue("longitude", 0);
+                }}
+                onSelect={(details: { lat: number; long: number }) => {
+                  setValue("latitude", details.lat);
+                  setValue("longitude", details.long);
+                }}
               />
-              <Text style={[styles.gpsText, { color: colors.primary }]}>
-                Use current location
-              </Text>
-            </TouchableOpacity>
 
-            <SubmitButton
-              disabled={!isAddressVerified || isGeocoding}
-              title={
-                isGeocoding
-                  ? "Verifying..."
-                  : isAddressVerified
-                    ? "Save Address"
-                    : "Select an Address"
-              }
-              onPress={handleOnPress}
-              isPending={saveAddressMutation.isPending}
-            />
-          </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.gpsButton,
+                  { opacity: pressed || isGeocoding ? 0.6 : 1 },
+                ]}
+                onPress={() => {
+                  void getLocation();
+                }}
+                disabled={isGeocoding}
+              >
+                <Ionicons
+                  name="navigate-outline"
+                  size={18}
+                  color={colors.text}
+                />
+                <Text variant="bodySemibold" style={styles.gpsText}>
+                  Use current location
+                </Text>
+              </Pressable>
+
+              <SubmitButton
+                disabled={!isAddressVerified || isGeocoding}
+                title={
+                  isGeocoding
+                    ? "VERIFYING..."
+                    : isAddressVerified
+                      ? "SAVE ADDRESS"
+                      : "SELECT AN ADDRESS"
+                }
+                onPress={() => {
+                  void handleOnPress();
+                }}
+                isLoading={saveAddressMutation.isPending}
+                style={styles.submit}
+              />
+            </View>
+          </FormProvider>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
@@ -162,15 +164,17 @@ export const RequireLocation = ({ children }: { children: ReactNode }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, padding: 24, justifyContent: "center" },
-  header: { alignItems: "center", marginBottom: 32 },
-  title: { fontSize: 24, fontWeight: "bold", marginTop: 16, marginBottom: 8 },
-  subtitle: { fontSize: 16, textAlign: "center", lineHeight: 22 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { alignItems: "center", marginBottom: 40, gap: 12 },
+  title: { marginTop: 8 },
   form: { width: "100%" },
   gpsButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 12,
-    padding: 8,
+    marginTop: 16,
+    paddingVertical: 8,
+    gap: 8,
   },
-  gpsText: { marginLeft: 8, fontWeight: "600" },
+  gpsText: { textTransform: "uppercase", fontSize: 12 },
+  submit: { marginTop: 32 },
 });

@@ -37,8 +37,11 @@ export function SegmentedControl<T extends string | number>({
       <View
         style={[
           styles.segmentContainer,
-          { backgroundColor: colors.surfaceSecondary },
-          hasError && { borderColor: colors.error, borderWidth: 1 },
+          {
+            backgroundColor: colors.surfaceSecondary,
+            borderColor: hasError ? colors.error : colors.border,
+            borderWidth: 1,
+          },
         ]}
       >
         {options.map((option: SegmentOption<T>) => {
@@ -56,12 +59,13 @@ export function SegmentedControl<T extends string | number>({
                   styles.segmentBtnActive,
                   { backgroundColor: colors.surface },
                 ],
-                pressed && !isActive && { opacity: 0.7 },
+                { transform: [{ scale: pressed && !isActive ? 0.97 : 1 }] },
+                pressed && !isActive && { opacity: 0.8 },
               ]}
             >
               <Text
                 variant="bodySemibold"
-                color={isActive ? colors.primary : colors.textSecondary}
+                color={isActive ? colors.text : colors.textSecondary}
               >
                 {option.label}
               </Text>
@@ -85,30 +89,30 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    marginBottom: 10,
+    marginBottom: 8,
     marginLeft: 4,
   },
   segmentContainer: {
     flexDirection: "row",
-    borderRadius: 14,
+    borderRadius: 8,
     padding: 4,
-    height: 54,
+    height: 48,
   },
   segmentBtn: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 6,
     justifyContent: "center",
     alignItems: "center",
   },
   segmentBtnActive: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   errorText: {
-    marginTop: 8,
+    marginTop: 6,
     marginLeft: 4,
   },
 });

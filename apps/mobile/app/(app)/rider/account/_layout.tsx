@@ -3,19 +3,15 @@ import { Stack, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
+import { useStackOptions } from "@/hooks/useStackOptions";
 
 export default function RiderAccountLayout() {
   const router = useRouter();
   const { colors } = useTheme();
+  const stackOptions = useStackOptions();
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
-        headerTitleStyle: { color: colors.text },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="index"
         options={{
@@ -23,18 +19,16 @@ export default function RiderAccountLayout() {
           headerRight: () => (
             <Pressable
               onPress={() => {
-                router.push("/rider/account/settings");
+                router.push("/(app)/rider/account/settings");
               }}
               style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
+                opacity: pressed ? 0.7 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
                 marginRight: 8,
+                padding: 4,
               })}
             >
-              <Ionicons
-                name="settings-outline"
-                size={24}
-                color={colors.primary}
-              />
+              <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           ),
         }}

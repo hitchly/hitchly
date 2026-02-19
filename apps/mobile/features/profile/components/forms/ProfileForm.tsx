@@ -7,6 +7,7 @@ import { ControlledChipGroup } from "@/components/form/ControlledChipGroup";
 import { ControlledInput } from "@/components/form/ControlledInput";
 import { ControlledNumberSelector } from "@/components/form/ControlledNumberSelector";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { FormSection } from "@/components/ui/FormSection";
 import { trpc } from "@/lib/trpc";
 
 interface ProfileFormProps {
@@ -22,53 +23,72 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
   const mutation = trpc.profile.updateProfile.useMutation({ onSuccess });
 
-  const handleOnPress = (): void => {
-    void methods.handleSubmit((data) => {
-      mutation.mutate(data);
-    })();
-  };
+  const handleSave = methods.handleSubmit((data) => {
+    mutation.mutate(data);
+  });
 
   return (
     <FormProvider {...methods}>
       <View style={styles.container}>
-        <ControlledInput
-          name="bio"
-          label="Bio"
-          placeholder="Tell us about yourself..."
-          multiline
-        />
-        <ControlledInput
-          name="faculty"
-          label="Faculty"
-          placeholder="Engineering"
-        />
-        <ControlledNumberSelector
-          name="year"
-          label="Year of Study"
-          min={1}
-          max={10}
-        />
-        <ControlledChipGroup
-          name="universityRole"
-          label="University Role"
-          options={[
-            { label: "Student", value: "student" },
-            { label: "Professor", value: "professor" },
-            { label: "Staff", value: "staff" },
-            { label: "Alumni", value: "alumni" },
-            { label: "Other", value: "other" },
-          ]}
-        />
-        <SubmitButton
-          title="Save Profile"
-          onPress={handleOnPress}
-          isLoading={mutation.isPending}
-        />
+        <FormSection
+          title="ABOUT YOU"
+          description="Introduce yourself to the McMaster community."
+        >
+          <ControlledInput
+            name="bio"
+            placeholder="Tell us about yourself..."
+            multiline
+            numberOfLines={4}
+          />
+        </FormSection>
+
+        <FormSection
+          title="ACADEMIC INFO"
+          description="Helps matches know who they are commuting with."
+        >
+          <ControlledInput
+            name="faculty"
+            label="FACULTY"
+            placeholder="e.g. Engineering, Health Sciences"
+          />
+          <ControlledNumberSelector
+            name="year"
+            label="YEAR OF STUDY"
+            min={1}
+            max={10}
+          />
+        </FormSection>
+
+        <FormSection title="UNIVERSITY ROLE">
+          <ControlledChipGroup
+            name="universityRole"
+            options={[
+              { label: "Student", value: "student" },
+              { label: "Professor", value: "professor" },
+              { label: "Staff", value: "staff" },
+              { label: "Alumni", value: "alumni" },
+              { label: "Other", value: "other" },
+            ]}
+          />
+        </FormSection>
+
+        <View style={styles.footer}>
+          <SubmitButton
+            title="SAVE PROFILE"
+            onPress={() => void handleSave()}
+            isLoading={mutation.isPending}
+          />
+        </View>
       </View>
     </FormProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 20 },
+  container: {
+    paddingVertical: 8,
+  },
+  footer: {
+    marginTop: 8,
+  },
 });

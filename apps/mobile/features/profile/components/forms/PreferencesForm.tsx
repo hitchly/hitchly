@@ -6,9 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { StyleSheet, View } from "react-native";
 
-import { ControlledSwitch } from "@/components/form/ControlledSwitch";
+import { ControlledSwitchRow } from "@/components/form/ControlledSwitchRow";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { useTheme } from "@/context/theme-context";
+import { FormSection } from "@/components/ui/FormSection";
+import { RowGroup } from "@/components/ui/RowGroup";
 import { trpc } from "@/lib/trpc";
 
 interface PreferencesFormProps {
@@ -20,43 +21,48 @@ export function PreferencesForm({
   initialData,
   onSuccess,
 }: PreferencesFormProps) {
-  const { colors } = useTheme();
-
   const methods = useForm<UpdatePreferencesInput>({
     defaultValues: initialData,
     resolver: zodResolver(updatePreferencesSchema),
   });
 
   const mutation = trpc.profile.updatePreferences.useMutation({
-    onSuccess: () => {
-      onSuccess();
-    },
+    onSuccess,
   });
 
-  const handleOnPress = (): void => {
-    void methods.handleSubmit((data) => {
-      mutation.mutate(data);
-    })();
-  };
+  const handleSave = methods.handleSubmit((data) => {
+    mutation.mutate(data);
+  });
 
   return (
     <FormProvider {...methods}>
       <View style={styles.container}>
-        <View
-          style={[
-            styles.switchGroup,
-            { backgroundColor: colors.surfaceSecondary },
-          ]}
+        <FormSection
+          title="RIDE PREFERENCES"
+          description="Customize your commuting experience. These will be visible to potential matches."
         >
-          <ControlledSwitch name="music" label="Music" />
-          <ControlledSwitch name="chatty" label="Chatty / Social" />
-          <ControlledSwitch name="pets" label="Pet Friendly" />
-          <ControlledSwitch name="smoking" label="Smoking Allowed" />
-        </View>
+          <RowGroup>
+            <ControlledSwitchRow
+              name="music"
+              label="Music"
+              icon="musical-notes-outline"
+            />
+            <ControlledSwitchRow
+              name="chatty"
+              label="Chatty / Social"
+              icon="chatbubbles-outline"
+            />
+            <ControlledSwitchRow
+              name="pets"
+              label="Pet Friendly"
+              icon="paw-outline"
+            />
+          </RowGroup>
+        </FormSection>
 
         <SubmitButton
-          title="Save Preferences"
-          onPress={handleOnPress}
+          title="SAVE PREFERENCES"
+          onPress={() => void handleSave()}
           isLoading={mutation.isPending}
         />
       </View>
@@ -66,12 +72,6 @@ export function PreferencesForm({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 20,
-  },
-  switchGroup: {
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    overflow: "hidden",
+    paddingVertical: 8,
   },
 });

@@ -1,10 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
+import { FormSection } from "@/components/ui/FormSection";
+import { IconBox } from "@/components/ui/IconBox";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
@@ -24,22 +27,38 @@ export function RiderTripDetailsScreen() {
     router,
   } = useRiderTripDetails();
 
-  if (isLoading) return <Skeleton text="Loading trip details..." />;
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Skeleton text="FETCHING TRIP..." />
+      </View>
+    );
+  }
 
   if (!trip) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Ionicons name="warning-outline" size={48} color={colors.error} />
-        <Text variant="h3" style={styles.errorText}>
-          Trip not found
-        </Text>
-        <Button
-          title="Go Back"
-          onPress={() => {
-            router.back();
-          }}
-        />
-      </View>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.centered}>
+          <IconBox
+            name="warning-outline"
+            variant="error"
+            size={24}
+            style={styles.errorIcon}
+          />
+          <Text variant="bodySemibold" style={styles.errorText}>
+            TRIP NOT FOUND
+          </Text>
+          <Button
+            title="GO BACK"
+            variant="secondary"
+            onPress={() => {
+              router.back();
+            }}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -50,201 +69,246 @@ export function RiderTripDetailsScreen() {
     userRequest?.status === "pending" || userRequest?.status === "accepted";
 
   return (
-    <ScrollView
+    <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
+      edges={["bottom"]}
     >
-      <View style={styles.statusSection}>
-        <Chip
-          label={
-            userRequest
-              ? `Request: ${userRequest.status.toUpperCase()}`
-              : trip.status.toUpperCase()
-          }
-          active={
-            trip.status === "active" || userRequest?.status === "accepted"
-          }
-        />
-      </View>
-
-      <Card style={styles.card}>
-        <Text variant="h3" style={styles.sectionTitle}>
-          Route
-        </Text>
-        <View style={styles.routeContainer}>
-          <View style={styles.routePoint}>
-            <View
-              style={[styles.routeDot, { backgroundColor: colors.primary }]}
-            />
-            <Text variant="bodySemibold">{formatLocation(trip.origin)}</Text>
-          </View>
-          <View
-            style={[styles.routeLine, { backgroundColor: colors.border }]}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Badge
+            label={
+              userRequest
+                ? `REQUEST: ${userRequest.status.toUpperCase()}`
+                : trip.status.toUpperCase()
+            }
+            variant={
+              userRequest?.status === "accepted" ? "success" : "secondary"
+            }
           />
-          <View style={styles.routePoint}>
-            <View
-              style={[styles.routeDot, { backgroundColor: colors.success }]}
-            />
-            <Text variant="bodySemibold">
-              {formatLocation(trip.destination)}
-            </Text>
-          </View>
         </View>
-      </Card>
 
-      {riderEtaDetails && (
-        <Card style={styles.card}>
-          <Text variant="h3" style={styles.sectionTitle}>
-            Live Update
-          </Text>
-          <Text variant="bodySemibold" style={styles.highlightText}>
-            {riderEtaDetails.title}
-          </Text>
-          <Text variant="body" color={colors.textSecondary}>
-            {riderEtaDetails.message}
-          </Text>
-          {riderEtaDetails.sub && (
-            <Text
-              variant="caption"
-              color={colors.textTertiary}
-              style={styles.subText}
+        <FormSection title="ROUTE">
+          <Card style={styles.cardPadding}>
+            <View style={styles.routeRow}>
+              <View style={styles.timeline}>
+                <View style={[styles.dot, { backgroundColor: colors.text }]} />
+                <View
+                  style={[styles.line, { backgroundColor: colors.border }]}
+                />
+                <View
+                  style={[
+                    styles.dot,
+                    styles.dotOutline,
+                    { borderColor: colors.textSecondary },
+                  ]}
+                />
+              </View>
+              <View style={styles.locationContainer}>
+                <View style={styles.locationItem}>
+                  <Text variant="label" color={colors.textSecondary}>
+                    PICKUP
+                  </Text>
+                  <Text variant="bodySemibold">
+                    {formatLocation(trip.origin)}
+                  </Text>
+                </View>
+                <View style={styles.locationItem}>
+                  <Text variant="label" color={colors.textSecondary}>
+                    DROP-OFF
+                  </Text>
+                  <Text variant="bodySemibold">
+                    {formatLocation(trip.destination)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Card>
+        </FormSection>
+
+        {riderEtaDetails && (
+          <FormSection title="LIVE UPDATE">
+            <Card
+              style={[
+                styles.cardPadding,
+                { borderColor: colors.primary, borderWidth: 1.5 },
+              ]}
             >
-              {riderEtaDetails.sub}
-            </Text>
-          )}
-        </Card>
-      )}
+              <View style={styles.etaHeader}>
+                <IconBox
+                  name="time-outline"
+                  variant="contrast"
+                  size={16}
+                  style={styles.etaIcon}
+                />
+                <Text variant="bodySemibold">
+                  {riderEtaDetails.title.toUpperCase()}
+                </Text>
+              </View>
+              <Text
+                variant="body"
+                color={colors.textSecondary}
+                style={styles.etaMessage}
+              >
+                {riderEtaDetails.message}
+              </Text>
+              {riderEtaDetails.sub && (
+                <Text
+                  variant="mono"
+                  color={colors.textTertiary}
+                  style={styles.subText}
+                >
+                  {riderEtaDetails.sub}
+                </Text>
+              )}
+            </Card>
+          </FormSection>
+        )}
 
-      <Card style={styles.card}>
-        <Text variant="h3" style={styles.sectionTitle}>
-          Trip Details
-        </Text>
-        <View style={styles.detailRow}>
-          <Text variant="body" color={colors.textSecondary}>
-            Departure Date:
-          </Text>
-          <Text variant="bodySemibold">
-            {departureDate
-              ? departureDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })
-              : "TBD"}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text variant="body" color={colors.textSecondary}>
-            Departure Time:
-          </Text>
-          <Text variant="bodySemibold">
-            {departureDate
-              ? departureDate.toLocaleTimeString("en-US", {
+        <FormSection title="TRIP DETAILS">
+          <Card style={styles.noPaddingCard}>
+            <View style={styles.detailItem}>
+              <Text variant="label" color={colors.textSecondary}>
+                DEPARTURE
+              </Text>
+              <Text variant="bodySemibold">
+                {departureDate
+                  ?.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    weekday: "short",
+                  })
+                  .toUpperCase()}{" "}
+                •{" "}
+                {departureDate?.toLocaleTimeString("en-US", {
                   hour: "2-digit",
                   minute: "2-digit",
-                })
-              : "TBD"}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text variant="body" color={colors.textSecondary}>
-            Driver:
-          </Text>
-          {/* TODO: Bind actual driver name when backend query supports it */}
-          <Text variant="bodySemibold">Hitchly Driver</Text>
-        </View>
-      </Card>
-
-      <View style={styles.actionsContainer}>
-        {(userRequest?.status === "accepted" ||
-          userRequest?.status === "on_trip") && (
-          <Button
-            title="Open Live Trip Screen"
-            onPress={() => {
-              // Cast as Href to satisfy Expo Router strict typing
-              router.push(
-                `/(app)/rider/trips/${trip.id}/ride?referrer=/(app)/rider/trips/${trip.id}` as Href
-              );
-            }}
-          />
-        )}
-
-        {riderEtaDetails &&
-          (trip.status === "active" || trip.status === "in_progress") && (
-            <View style={styles.safetyRow}>
-              <Button
-                title="Emergency"
-                variant="danger"
-                style={styles.halfBtn}
-                onPress={() => {
-                  router.push(
-                    `/(app)/(modals)/safety?mode=emergency&tripId=${trip.id}` as Href
-                  );
-                }}
-              />
-              <Button
-                title="Report"
-                variant="secondary"
-                style={styles.halfBtn}
-                onPress={() => {
-                  router.push(
-                    `/(app)/(modals)/safety?mode=report&tripId=${trip.id}` as Href
-                  );
-                }}
-              />
+                })}
+              </Text>
             </View>
+            <View
+              style={[styles.separator, { backgroundColor: colors.border }]}
+            />
+            <View style={styles.detailItem}>
+              <Text variant="label" color={colors.textSecondary}>
+                DRIVER
+              </Text>
+              <View style={styles.driverRow}>
+                <Ionicons
+                  name="person-circle-outline"
+                  size={20}
+                  color={colors.text}
+                />
+                <Text variant="bodySemibold">HITCHLY DRIVER</Text>
+              </View>
+            </View>
+          </Card>
+        </FormSection>
+
+        <View style={styles.actionsContainer}>
+          {(userRequest?.status === "accepted" ||
+            userRequest?.status === "on_trip") && (
+            <Button
+              title="OPEN LIVE TRIP"
+              icon="map-outline"
+              onPress={() => {
+                router.push(`/(app)/rider/trips/${trip.id}/ride` as Href);
+              }}
+            />
           )}
 
-        {trip.status === "completed" && (
-          <Button
-            title="Leave Review & Tip"
-            onPress={() => {
-              router.push(`/(app)/(modals)/review?tripId=${trip.id}` as Href);
-            }}
-          />
-        )}
+          {riderEtaDetails &&
+            (trip.status === "active" || trip.status === "in_progress") && (
+              <View style={styles.safetyRow}>
+                <Button
+                  title="EMERGENCY"
+                  variant="danger"
+                  size="md"
+                  style={styles.halfBtn}
+                  onPress={() => {
+                    router.push(
+                      `/(app)/(modals)/safety?mode=emergency&tripId=${trip.id}` as Href
+                    );
+                  }}
+                />
+                <Button
+                  title="REPORT"
+                  variant="secondary"
+                  size="md"
+                  style={styles.halfBtn}
+                  onPress={() => {
+                    router.push(
+                      `/(app)/(modals)/safety?mode=report&tripId=${trip.id}` as Href
+                    );
+                  }}
+                />
+              </View>
+            )}
 
-        {isPendingOrAccepted && (
-          <Button
-            title="Cancel Request"
-            variant="danger"
-            isLoading={cancelTripRequest.isPending}
-            onPress={handleCancelRequest}
-            style={styles.cancelBtn}
-          />
-        )}
-      </View>
-    </ScrollView>
+          {trip.status === "completed" && (
+            <Button
+              title="LEAVE REVIEW & TIP"
+              icon="star-outline"
+              onPress={() => {
+                router.push(`/(app)/(modals)/review?tripId=${trip.id}` as Href);
+              }}
+            />
+          )}
+
+          {isPendingOrAccepted && (
+            <Button
+              title="CANCEL REQUEST"
+              variant="ghost"
+              isLoading={cancelTripRequest.isPending}
+              onPress={handleCancelRequest}
+              textStyle={{ color: colors.error }}
+            />
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, gap: 16, paddingBottom: 40 },
+  flex: { flex: 1 },
+  content: { padding: 20, gap: 24, paddingBottom: 40 },
+  header: { alignItems: "flex-start", marginBottom: -8 },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+    gap: 12,
   },
-  errorText: { marginTop: 16, marginBottom: 24 },
-  statusSection: { alignItems: "center", marginVertical: 8 },
-  // Card styles kept for internal gap/padding, but border/background removed since Card handles it natively
-  card: { padding: 16, gap: 16 },
-  sectionTitle: { marginBottom: 8 },
-  routeContainer: { paddingLeft: 8 },
-  routePoint: { flexDirection: "row", alignItems: "center" },
-  routeDot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  routeLine: { width: 2, height: 24, marginLeft: 5, marginVertical: 4 },
-  detailRow: {
+  errorIcon: { width: 48, height: 48, borderRadius: 12 },
+  errorText: { marginBottom: 12 },
+  cardPadding: { padding: 20 },
+  noPaddingCard: { padding: 0 },
+  routeRow: { flexDirection: "row", gap: 20 },
+  timeline: { alignItems: "center", width: 12, paddingVertical: 4 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  dotOutline: { backgroundColor: "transparent", borderWidth: 2 },
+  line: { width: 1, flex: 1, marginVertical: 4 },
+  locationContainer: { flex: 1, gap: 24 },
+  locationItem: { gap: 4 },
+  etaHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
   },
-  highlightText: { marginBottom: 4 },
+  etaIcon: { width: 24, height: 24, borderRadius: 6 },
+  etaMessage: { lineHeight: 20 },
   subText: { marginTop: 8 },
-  actionsContainer: { gap: 12, marginTop: 8 },
+  detailItem: { padding: 16, gap: 4 },
+  driverRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  separator: { height: 1, width: "100%" },
+  actionsContainer: { gap: 12, marginTop: 12 },
   safetyRow: { flexDirection: "row", gap: 12 },
   halfBtn: { flex: 1 },
-  cancelBtn: { marginTop: 12 },
 });

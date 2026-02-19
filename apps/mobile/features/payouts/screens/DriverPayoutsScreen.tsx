@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { EarningsSummary } from "@/features/payouts/components/EarningsSummary";
 import { PayoutStatus } from "@/features/payouts/components/PayoutStatus";
@@ -20,7 +21,11 @@ export function DriverPayoutsScreen() {
   } = usePayoutStatus();
 
   if (isLoading) {
-    return <Skeleton text="Loading Payouts..." />;
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Skeleton text="SYNCING FINANCIAL DATA..." />
+      </View>
+    );
   }
 
   return (
@@ -35,8 +40,8 @@ export function DriverPayoutsScreen() {
           <Button
             title={
               connectStatus?.hasAccount
-                ? "Complete Payout Setup"
-                : "Set Up Payouts"
+                ? "COMPLETE PAYOUT SETUP"
+                : "INITIALIZE STRIPE CONNECT"
             }
             onPress={handleSetupPayouts}
             isLoading={isProcessing}
@@ -47,11 +52,24 @@ export function DriverPayoutsScreen() {
 
         {connectStatus?.payoutsEnabled && payoutHistory && (
           <View style={styles.dataSection}>
+            <View style={styles.sectionHeader}>
+              <Text variant="label" color={colors.textSecondary}>
+                PERFORMANCE SUMMARY
+              </Text>
+            </View>
+
             <EarningsSummary
               totalCents={payoutHistory.summary.totalEarningsCents}
               pendingCents={payoutHistory.summary.pendingCents}
               count={payoutHistory.summary.transactionCount}
             />
+
+            <View style={styles.sectionHeader}>
+              <Text variant="label" color={colors.textSecondary}>
+                TRANSACTION LEDGER
+              </Text>
+            </View>
+
             <TransactionHistory payments={payoutHistory.payments} />
           </View>
         )}
@@ -61,9 +79,26 @@ export function DriverPayoutsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
-  headerSection: { marginBottom: 24, gap: 4 },
-  actionButton: { marginTop: 8 },
-  dataSection: { marginTop: 12, gap: 24 },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 24, // Vercel screens usually have generous horizontal padding
+    paddingBottom: 60,
+  },
+  header: {
+    marginBottom: 24,
+    gap: 4,
+  },
+  actionButton: {
+    marginTop: 16,
+    // Button internal styling (8px radius) handled by component
+  },
+  dataSection: {
+    marginTop: 32,
+    gap: 16,
+  },
+  sectionHeader: {
+    marginBottom: -4, // Tighter gap for the labels
+  },
 });

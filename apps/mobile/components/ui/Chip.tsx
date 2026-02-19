@@ -18,10 +18,8 @@ export function Chip({ label, icon, active = false }: ChipProps) {
       style={[
         styles.chip,
         {
-          backgroundColor: active
-            ? `${colors.primary}15`
-            : colors.surfaceSecondary,
-          borderColor: active ? colors.primary : colors.border,
+          backgroundColor: active ? colors.text : colors.surfaceSecondary,
+          borderColor: active ? colors.text : colors.border,
         },
       ]}
     >
@@ -29,16 +27,13 @@ export function Chip({ label, icon, active = false }: ChipProps) {
         <Ionicons
           name={icon}
           size={14}
-          color={active ? colors.primary : colors.textSecondary}
+          color={active ? colors.background : colors.textSecondary}
           style={styles.icon}
         />
       )}
       <Text
-        variant="caption"
-        style={[
-          styles.label,
-          { color: active ? colors.primary : colors.textSecondary },
-        ]}
+        variant="captionSemibold"
+        color={active ? colors.background : colors.textSecondary}
       >
         {label}
       </Text>
@@ -52,14 +47,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 6,
     borderWidth: 1,
     alignSelf: "flex-start",
   },
   icon: {
     marginRight: 6,
-  },
-  label: {
-    fontWeight: "600",
   },
 });

@@ -1,13 +1,14 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { useTheme } from "@/context/theme-context";
-import { useGPSLocation } from "@/hooks/use-gps-location";
+import { Button } from "@/components/ui/Button";
+import { FormSection } from "@/components/ui/FormSection";
+import { Text } from "@/components/ui/Text";
+import { useGPSLocation } from "@/hooks/useGpsLocation";
 import { trpc } from "@/lib/trpc";
 
 interface LocationFormProps {
@@ -16,89 +17,96 @@ interface LocationFormProps {
 }
 
 export function LocationForm({ initialData, onSuccess }: LocationFormProps) {
-  const { colors } = useTheme();
-
   const methods = useForm<SaveAddressInput>({
     resolver: zodResolver(saveAddressSchema),
     defaultValues: initialData,
+    mode: "onChange",
   });
 
-  const lat = useWatch({ control: methods.control, name: "latitude" });
-  const lng = useWatch({ control: methods.control, name: "longitude" });
+  const { control, setValue, handleSubmit } = methods;
+
+  // Watch coordinates to toggle the "Verified" state
+  const lat = useWatch({ control, name: "latitude" });
+  const lng = useWatch({ control, name: "longitude" });
   const isVerified = lat !== 0 && lng !== 0;
 
   const mutation = trpc.location.saveDefaultAddress.useMutation({
-    onSuccess: () => {
-      onSuccess();
-    },
+    onSuccess,
     onError: (err) => {
       Alert.alert("Error", err.message);
     },
   });
 
   const { getLocation, isGeocoding } = useGPSLocation((loc) => {
-    methods.setValue("address", loc.address);
-    methods.setValue("latitude", loc.latitude);
-    methods.setValue("longitude", loc.longitude);
+    setValue("address", loc.address, { shouldValidate: true });
+    setValue("latitude", loc.latitude);
+    setValue("longitude", loc.longitude);
   });
 
-  const handleOnPress = (): void => {
+  const handleSave = handleSubmit((data) => {
     if (!isVerified) {
-      Alert.alert(
-        "Invalid Address",
-        "Please select a valid address from the list."
-      );
+      Alert.alert("Invalid Address", "Please select an address from the list.");
       return;
     }
-
-    void methods.handleSubmit((data) => {
-      mutation.mutate(data);
-    })();
-  };
-
-  const handleGetLocation = (): void => {
-    void getLocation();
-  };
+    mutation.mutate(data);
+  });
 
   return (
     <FormProvider {...methods}>
       <View style={styles.container}>
-        <ControlledLocationInput
-          name="address"
-          label="Home Address"
-          placeholder="1280 Main St W, Hamilton"
-          onLocationSelected={(latitude, longitude) => {
-            methods.setValue("latitude", latitude);
-            methods.setValue("longitude", longitude);
-          }}
-        />
-
-        <TouchableOpacity
-          style={styles.gpsRow}
-          onPress={handleGetLocation}
-          disabled={isGeocoding}
+        <FormSection
+          title="HOME ADDRESS"
+          description="Enter your primary pickup or drop-off location."
         >
-          <Ionicons
-            name="navigate-circle"
-            size={20}
-            color={isGeocoding ? colors.disabledText : colors.primary}
+          <ControlledLocationInput<SaveAddressInput>
+            control={control}
+            name="address"
+            placeholder="1280 Main St W, Hamilton"
+            onTextChange={() => {
+              setValue("latitude", 0);
+              setValue("longitude", 0);
+            }}
+            onSelect={(details) => {
+              setValue("latitude", details.lat);
+              setValue("longitude", details.long);
+            }}
           />
-          <Text
-            style={[
-              styles.gpsText,
-              { color: isGeocoding ? colors.disabledText : colors.primary },
-            ]}
-          >
-            {isGeocoding ? "Locating..." : "Use Current Location"}
-          </Text>
-        </TouchableOpacity>
 
-        <SubmitButton
-          title={isVerified ? "Save Address" : "Select an Address"}
-          onPress={handleOnPress}
-          isLoading={mutation.isPending}
-          disabled={!isVerified}
-        />
+          <Button
+            title={isGeocoding ? "LOCATING..." : "USE CURRENT LOCATION"}
+            variant="ghost"
+            size="sm"
+            icon="navigate-outline"
+            onPress={() => {
+              void getLocation();
+            }}
+            isLoading={isGeocoding}
+            style={styles.gpsButton}
+            textStyle={styles.gpsButtonText}
+          />
+        </FormSection>
+
+        <View style={styles.footer}>
+          <SubmitButton
+            title={isVerified ? "SAVE ADDRESS" : "SELECT VALID ADDRESS"}
+            onPress={() => {
+              void handleSave();
+            }}
+            isLoading={mutation.isPending}
+            disabled={!isVerified}
+          />
+          {!isVerified && (
+            <Text
+              variant="caption"
+              align="center"
+              color="textTertiary"
+              style={styles.hint}
+            >
+              Search for your address and select it from the dropdown to verify
+              the coordinates.
+            </Text>
+          )}
+        </View>
       </View>
     </FormProvider>
   );
@@ -106,17 +114,24 @@ export function LocationForm({ initialData, onSuccess }: LocationFormProps) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 20,
+    paddingVertical: 8,
   },
-  gpsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 4,
-    marginLeft: 4,
+  gpsButton: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 0,
+    paddingVertical: 8,
+    marginTop: -4,
   },
-  gpsText: {
-    fontWeight: "600",
-    fontSize: 14,
+  gpsButtonText: {
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  footer: {
+    marginTop: 8,
+    gap: 12,
+  },
+  hint: {
+    paddingHorizontal: 40,
+    marginTop: 4,
   },
 });

@@ -6,12 +6,12 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 interface ModalSheetProps {
@@ -27,7 +27,7 @@ export function ModalSheet({
   title,
   children,
 }: ModalSheetProps) {
-  const { colors, fonts } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -53,18 +53,7 @@ export function ModalSheet({
           ]}
         >
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            {title ? (
-              <Text
-                style={[
-                  styles.title,
-                  { color: colors.text, fontFamily: fonts.bold },
-                ]}
-              >
-                {title}
-              </Text>
-            ) : (
-              <View />
-            )}
+            {title ? <Text variant="h3">{title}</Text> : <View />}
 
             <TouchableOpacity
               onPress={onClose}
@@ -92,14 +81,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     minHeight: "30%",
     maxHeight: "90%",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 10,
   },
   header: {
@@ -109,9 +98,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  title: {
-    fontSize: 18,
   },
   closeButton: {
     padding: 4,

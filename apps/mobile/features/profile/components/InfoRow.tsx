@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 interface InfoRowProps {
@@ -24,15 +25,13 @@ export function InfoRow({
         fullWidth ? styles.fullWidth : styles.halfWidth,
       ]}
     >
-      <Text style={[styles.label, { color: colors.textSecondary }]}>
+      <Text variant="label" color={colors.textSecondary} style={styles.label}>
         {label}
       </Text>
       <Text
-        style={[
-          styles.value,
-          { color: colors.text },
-          capitalize && styles.capitalize,
-        ]}
+        variant="bodySemibold"
+        color={colors.text}
+        style={[capitalize && styles.capitalize]}
         numberOfLines={2}
       >
         {value}
@@ -46,12 +45,7 @@ const styles = StyleSheet.create({
   fullWidth: { width: "100%" },
   halfWidth: { width: "48%" },
   label: {
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
     marginBottom: 4,
   },
-  value: { fontSize: 15, fontWeight: "500" },
   capitalize: { textTransform: "capitalize" },
 });

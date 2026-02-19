@@ -1,9 +1,10 @@
-import { Ionicons } from "@expo/vector-icons";
 import type { UpdateVehicleInput } from "@hitchly/db";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
+import { IconBox } from "@/components/ui/IconBox";
 import { ModalSheet } from "@/components/ui/ModalSheet";
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { VehicleForm } from "@/features/profile/components/forms/VehicleForm";
 import { InfoCard } from "@/features/profile/components/InfoCard";
@@ -14,7 +15,7 @@ interface VehicleSectionProps {
 }
 
 export function VehicleSection({ vehicle, onSuccess }: VehicleSectionProps) {
-  const { colors, fonts } = useTheme();
+  const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSuccess = (): void => {
@@ -35,34 +36,34 @@ export function VehicleSection({ vehicle, onSuccess }: VehicleSectionProps) {
       >
         {vehicle !== null ? (
           <View style={styles.vehicleRow}>
-            <View
-              style={[
-                styles.vehicleIcon,
-                { backgroundColor: colors.primaryLight },
-              ]}
-            >
-              <Ionicons name="car-sport" size={24} color={colors.primary} />
-            </View>
+            {/* Standardized IconBox with larger custom styling */}
+            <IconBox
+              name="car-sport-outline"
+              variant="subtle"
+              size={24}
+              style={styles.iconBoxOverride}
+            />
+
             <View style={styles.textContainer}>
-              <Text style={[styles.vehicleName, { color: colors.text }]}>
+              <Text variant="bodySemibold">
                 {vehicle.color} {vehicle.make} {vehicle.model}
               </Text>
               <Text
-                style={[
-                  styles.vehiclePlate,
-                  { color: colors.textSecondary, fontFamily: fonts.mono },
-                ]}
+                variant="mono"
+                color={colors.textSecondary}
+                style={styles.vehiclePlate}
               >
                 {vehicle.plate}
               </Text>
             </View>
+
             <View
               style={[
                 styles.seatBadge,
                 { backgroundColor: colors.surfaceSecondary },
               ]}
             >
-              <Text style={[styles.seatText, { color: colors.textSecondary }]}>
+              <Text variant="captionSemibold" color={colors.textSecondary}>
                 {vehicle.seats.toString()} Seats
               </Text>
             </View>
@@ -97,32 +98,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  vehicleIcon: {
+  iconBoxOverride: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
     marginRight: 12,
   },
   textContainer: {
     flex: 1,
-  },
-  vehicleName: {
-    fontSize: 16,
-    fontWeight: "700",
+    gap: 2,
   },
   vehiclePlate: {
     fontSize: 13,
-    marginTop: 2,
   },
   seatBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
-  },
-  seatText: {
-    fontSize: 12,
-    fontWeight: "600",
+    borderRadius: 6,
   },
 });

@@ -1,67 +1,74 @@
-import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import type { ReactElement } from "react";
+import React, { useState } from "react";
 import type {
   NativeSyntheticEvent,
   TargetedEvent,
   TextInputProps,
 } from "react-native";
-import { Animated, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 export interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   helperText?: string;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
+  icon?: IconName | ReactElement;
+  iconPosition?: "left" | "right";
 }
 
 export function Input({
   label,
   error,
   helperText,
-  leftIcon,
-  rightIcon,
+  icon,
+  iconPosition = "left",
   style,
   onFocus,
   onBlur,
+  value,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
-  const focusAnim = useRef(new Animated.Value(0)).current;
-
   const handleFocus = (e: NativeSyntheticEvent<TargetedEvent>): void => {
     setIsFocused(true);
-    Animated.timing(focusAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-
     if (onFocus) onFocus(e);
   };
 
   const handleBlur = (e: NativeSyntheticEvent<TargetedEvent>): void => {
     setIsFocused(false);
-    Animated.timing(focusAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-
     if (onBlur) onBlur(e);
   };
 
-  const hasError = (error ?? "") !== "";
+  const renderIcon = () => {
+    if (!icon) return null;
+    if (typeof icon === "string") {
+      return (
+        <Ionicons
+          name={icon}
+          size={18}
+          color={isFocused ? colors.text : colors.textTertiary}
+        />
+      );
+    }
+    return icon;
+  };
 
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [hasError ? colors.error : colors.border, colors.primary],
-  });
+  const hasError = !!error;
+  const borderColor = hasError
+    ? colors.error
+    : isFocused
+      ? colors.text
+      : colors.border;
+
+  const paddingLeft = icon && iconPosition === "left" ? 44 : 12;
+  const paddingRight = icon && iconPosition === "right" ? 44 : 12;
 
   return (
     <View style={styles.container}>
@@ -71,39 +78,46 @@ export function Input({
         </Text>
       )}
 
-      <Animated.View
-        style={[
-          styles.inputWrapper,
-          {
-            backgroundColor: colors.background,
-            borderColor: borderColor,
-            borderWidth: isFocused ? 1.5 : 1,
-          },
-          hasError && {
-            backgroundColor: colors.errorBackground,
-            borderColor: colors.error,
-            borderWidth: 1.5,
-          },
-        ]}
-      >
-        {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
-
+      <View style={styles.wrapper}>
         <TextInput
           style={[
             styles.input,
-            { color: colors.text },
-            leftIcon ? styles.paddingLeftSmall : null,
-            rightIcon ? styles.paddingRightSmall : null,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: borderColor,
+              borderWidth: isFocused || hasError ? 1.5 : 1,
+              paddingLeft,
+              paddingRight,
+            },
+            hasError && { backgroundColor: colors.errorBackground },
             style,
           ]}
           placeholderTextColor={colors.textTertiary}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          selectionColor={colors.text}
+          autoCorrect={false}
+          autoCapitalize="none"
+          value={value}
+          // THE FIX: When not focused, force the cursor to the start (0,0)
+          // This forces the text engine to scroll back to the left.
+          selection={!isFocused ? { start: 0, end: 0 } : undefined}
           {...props}
         />
 
-        {rightIcon && <View style={styles.iconRight}>{rightIcon}</View>}
-      </Animated.View>
+        {icon && (
+          <View
+            style={[
+              styles.iconContainer,
+              iconPosition === "left" ? { left: 14 } : { right: 14 },
+            ]}
+            pointerEvents="none"
+          >
+            {renderIcon()}
+          </View>
+        )}
+      </View>
 
       {(error ?? helperText) && (
         <Text
@@ -119,41 +133,21 @@ export function Input({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-    width: "100%",
-  },
-  label: {
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 12,
-    minHeight: 52,
-    paddingHorizontal: 12,
-  },
+  container: { width: "100%" },
+  label: { marginBottom: 8, marginLeft: 2, letterSpacing: 1 },
+  wrapper: { justifyContent: "center", width: "100%" },
   input: {
-    flex: 1,
     fontSize: 16,
     paddingVertical: 12,
+    borderRadius: 8,
+    minHeight: 48,
+    textAlign: "left",
   },
-  paddingLeftSmall: {
-    paddingLeft: 8,
+  iconContainer: {
+    position: "absolute",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  paddingRightSmall: {
-    paddingRight: 8,
-  },
-  iconLeft: {
-    marginRight: 4,
-  },
-  iconRight: {
-    marginLeft: 4,
-  },
-  helper: {
-    marginTop: 6,
-    marginLeft: 4,
-    fontWeight: "500",
-  },
+  helper: { marginTop: 6, marginLeft: 4 },
 });

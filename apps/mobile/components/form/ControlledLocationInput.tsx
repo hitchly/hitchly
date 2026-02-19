@@ -1,27 +1,30 @@
 import { formatLocationData } from "@hitchly/utils";
 import * as Location from "expo-location";
 import { useRef, useState } from "react";
-import type { FieldValues, Path } from "react-hook-form";
-import { Controller, useFormContext } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Alert } from "react-native";
 
 import type { LocationResult } from "@/components/ui/LocationInput";
 import { LocationInput } from "@/components/ui/LocationInput";
 
 interface ControlledLocationInputProps<T extends FieldValues> {
+  control: Control<T>;
   name: Path<T>;
   label?: string;
   placeholder?: string;
-  onLocationSelected?: (lat: number, lng: number) => void;
+  onTextChange?: () => void;
+  onSelect?: (details: { lat: number; long: number }) => void;
 }
 
 export function ControlledLocationInput<T extends FieldValues>({
+  control,
   name,
   label,
   placeholder,
-  onLocationSelected,
+  onTextChange,
+  onSelect,
 }: ControlledLocationInputProps<T>) {
-  const { control } = useFormContext<T>();
   const [results, setResults] = useState<readonly LocationResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,12 +56,10 @@ export function ControlledLocationInput<T extends FieldValues>({
           if (!reverse) return null;
 
           const fmt = formatLocationData(reverse);
-
-          // Fix: Proper null check for fmt and string conversion for template literal
           if (!fmt) return null;
 
           return {
-            id: `${match.latitude.toString()}-${index.toString()}`,
+            id: `${String(match.latitude)}-${String(index)}`,
             title: fmt.title,
             subtitle: fmt.subtitle,
             fullAddress: fmt.full,
@@ -72,7 +73,7 @@ export function ControlledLocationInput<T extends FieldValues>({
         formatted.filter((item): item is LocationResult => item !== null)
       );
     } catch (error) {
-      Alert.alert(String(error));
+      Alert.alert("Location Error", String(error));
     } finally {
       setIsSearching(false);
     }
@@ -92,19 +93,20 @@ export function ControlledLocationInput<T extends FieldValues>({
           results={results}
           onChangeText={(text) => {
             onChange(text);
+            onTextChange?.();
+
             if (searchTimeoutRef.current) {
               clearTimeout(searchTimeoutRef.current);
             }
 
             searchTimeoutRef.current = setTimeout(() => {
-              // Fix: Wrapped in a self-invoking function or voided to handle promise correctly
               void fetchLocations(text);
             }, 600);
           }}
           onSelect={(item) => {
             onChange(item.fullAddress);
             setResults([]);
-            onLocationSelected?.(item.latitude, item.longitude);
+            onSelect?.({ lat: item.latitude, long: item.longitude });
           }}
         />
       )}

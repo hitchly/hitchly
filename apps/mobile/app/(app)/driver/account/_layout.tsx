@@ -3,19 +3,15 @@ import { Stack, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
+import { useStackOptions } from "@/hooks/useStackOptions";
 
 export default function DriverAccountLayout() {
   const router = useRouter();
   const { colors } = useTheme();
+  const stackOptions = useStackOptions();
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
-        headerTitleStyle: { color: colors.text },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="index"
         options={{
@@ -30,11 +26,7 @@ export default function DriverAccountLayout() {
                 marginRight: 8,
               })}
             >
-              <Ionicons
-                name="settings-outline"
-                size={24}
-                color={colors.primary}
-              />
+              <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           ),
         }}

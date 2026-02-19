@@ -1,8 +1,17 @@
 import { Stack } from "expo-router";
 
+import { useStackOptions } from "@/hooks/useStackOptions";
+
 export default function ModalsLayout() {
+  const stackOptions = useStackOptions();
   return (
-    <Stack screenOptions={{ presentation: "modal" }}>
+    <Stack
+      screenOptions={{
+        ...stackOptions,
+        presentation: "modal",
+        headerLeft: () => null,
+      }}
+    >
       <Stack.Screen
         name="safety"
         options={{

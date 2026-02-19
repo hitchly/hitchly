@@ -1,19 +1,16 @@
 import type { FieldValues, Path } from "react-hook-form";
 import { Controller, useFormContext } from "react-hook-form";
 
-import type { SwitchRowProps } from "@/components/ui/Switch";
-import { SwitchRow } from "@/components/ui/Switch";
+import { Switch } from "@/components/ui/Switch";
 
-interface ControlledSwitchProps<T extends FieldValues> extends Omit<
-  SwitchRowProps,
-  "value" | "onChange"
-> {
+interface ControlledSwitchProps<T extends FieldValues> {
   name: Path<T>;
+  disabled?: boolean;
 }
 
 export function ControlledSwitch<T extends FieldValues>({
   name,
-  ...props
+  disabled = false,
 }: ControlledSwitchProps<T>) {
   const { control } = useFormContext<T>();
 
@@ -22,7 +19,7 @@ export function ControlledSwitch<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field: { onChange, value } }) => (
-        <SwitchRow {...props} value={!!value} onChange={onChange} />
+        <Switch value={!!value} onChange={onChange} disabled={disabled} />
       )}
     />
   );

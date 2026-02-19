@@ -20,7 +20,7 @@ export function NumberSelector({
   value,
   onChange,
 }: NumberSelectorProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   const options: number[] = Array.from(
     { length: max - min + 1 },
@@ -52,27 +52,20 @@ export function NumberSelector({
                 onChange(num);
               }}
               style={({ pressed }) => [
-                styles.numberCircle,
+                styles.numberBox,
                 {
-                  backgroundColor: isActive
-                    ? colors.primary
-                    : colors.surfaceSecondary,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  borderWidth: isActive || hasError ? 1.5 : 1,
+                  backgroundColor: isActive ? colors.text : colors.surface,
+                  borderColor: isActive ? colors.text : colors.border,
                 },
                 hasError && { borderColor: colors.error },
-                pressed && !isActive && { backgroundColor: colors.border },
+                { transform: [{ scale: pressed ? 0.94 : 1 }] },
+                pressed &&
+                  !isActive && { backgroundColor: colors.surfaceSecondary },
               ]}
             >
               <Text
                 variant="h3"
-                style={{
-                  color: isActive
-                    ? isDark
-                      ? colors.background
-                      : "#FFFFFF"
-                    : colors.textSecondary,
-                }}
+                color={isActive ? colors.background : colors.textSecondary}
               >
                 {num}
               </Text>
@@ -104,10 +97,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingBottom: 4,
   },
-  numberCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  numberBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
   },

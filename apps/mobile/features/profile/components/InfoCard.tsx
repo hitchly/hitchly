@@ -1,13 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import type { ReactNode } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 interface InfoCardProps {
   title: string;
   onEdit?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   empty?: boolean;
   emptyText?: string;
   actionLabel?: string;
@@ -26,31 +28,44 @@ export function InfoCard({
   return (
     <Card style={styles.cardSpacing}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        <Text variant="h3">{title}</Text>
 
         {onEdit && (
-          <TouchableOpacity
+          <Pressable
             onPress={onEdit}
-            activeOpacity={0.7}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            style={[styles.editBtn, { backgroundColor: colors.primaryLight }]}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.editBtn,
+              {
+                backgroundColor: colors.surfaceSecondary,
+                opacity: pressed ? 0.7 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
           >
-            <Ionicons name="pencil" size={14} color={colors.primary} />
-          </TouchableOpacity>
+            <Ionicons name="pencil" size={14} color={colors.text} />
+          </Pressable>
         )}
       </View>
 
       {empty ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          <Text
+            variant="body"
+            color={colors.textSecondary}
+            style={styles.emptyText}
+          >
             {emptyText ?? "No information provided."}
           </Text>
           {onEdit && (
-            <TouchableOpacity onPress={onEdit}>
-              <Text style={[styles.actionText, { color: colors.primary }]}>
+            <Pressable
+              onPress={onEdit}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text variant="bodySemibold" color={colors.primary}>
                 {actionLabel}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
       ) : (
@@ -61,29 +76,25 @@ export function InfoCard({
 }
 
 const styles = StyleSheet.create({
-  cardSpacing: { marginBottom: 12 },
+  cardSpacing: { marginBottom: 16 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
   },
-  title: { fontSize: 16, fontWeight: "700" },
   editBtn: {
-    padding: 6,
+    padding: 8,
     borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyContainer: {
     alignItems: "center",
     paddingVertical: 12,
   },
   emptyText: {
-    fontSize: 14,
     marginBottom: 8,
     textAlign: "center",
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

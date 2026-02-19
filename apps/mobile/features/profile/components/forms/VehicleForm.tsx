@@ -6,6 +6,7 @@ import { StyleSheet, View } from "react-native";
 import { ControlledInput } from "@/components/form/ControlledInput";
 import { ControlledNumberSelector } from "@/components/form/ControlledNumberSelector";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { FormSection } from "@/components/ui/FormSection";
 import { trpc } from "@/lib/trpc";
 
 interface VehicleFormProps {
@@ -20,57 +21,79 @@ export function VehicleForm({ initialData, onSuccess }: VehicleFormProps) {
   });
 
   const mutation = trpc.profile.updateVehicle.useMutation({
-    onSuccess: () => {
-      onSuccess();
-    },
+    onSuccess,
   });
 
-  const handleOnPress = (): void => {
-    void methods.handleSubmit((data) => {
-      mutation.mutate(data);
-    })();
-  };
+  const handleSave = methods.handleSubmit((data) => {
+    mutation.mutate(data);
+  });
 
   return (
     <FormProvider {...methods}>
       <View style={styles.container}>
-        {/* Make & Model Row */}
-        <View style={styles.row}>
-          <View style={styles.flexItem}>
-            <ControlledInput name="make" label="Make" placeholder="Toyota" />
+        <FormSection
+          title="VEHICLE IDENTIFICATION"
+          description="Riders use this information to identify your vehicle during pickup."
+        >
+          <View style={styles.row}>
+            <View style={styles.flexItem}>
+              <ControlledInput
+                name="make"
+                label="MAKE"
+                placeholder="e.g. Toyota"
+              />
+            </View>
+            <View style={styles.flexItem}>
+              <ControlledInput
+                name="model"
+                label="MODEL"
+                placeholder="e.g. Corolla"
+              />
+            </View>
           </View>
-          <View style={styles.flexItem}>
-            <ControlledInput name="model" label="Model" placeholder="Corolla" />
+
+          <View style={styles.row}>
+            <View style={styles.flexItem}>
+              <ControlledInput
+                name="color"
+                label="COLOR"
+                placeholder="e.g. Silver"
+              />
+            </View>
+            <View style={styles.flexItem}>
+              <ControlledInput
+                name="plate"
+                label="LICENSE PLATE"
+                placeholder="CABC 123"
+                autoCapitalize="characters"
+              />
+            </View>
           </View>
+        </FormSection>
+
+        <FormSection
+          title="CAPACITY"
+          description="Maximum number of passengers you can accommodate."
+        >
+          <ControlledNumberSelector
+            name="seats"
+            label="AVAILABLE SEATS"
+            min={1}
+            max={8}
+          />
+        </FormSection>
+
+        <View style={styles.footer}>
+          <SubmitButton
+            title="SAVE VEHICLE DETAILS"
+            onPress={() => {
+              void handleSave();
+            }}
+            variant="primary"
+            size="lg"
+            icon="checkmark-circle-outline"
+          />
         </View>
-
-        {/* Color & Plate Row */}
-        <View style={styles.row}>
-          <View style={styles.flexItem}>
-            <ControlledInput name="color" label="Color" placeholder="Grey" />
-          </View>
-          <View style={styles.flexItem}>
-            <ControlledInput
-              name="plate"
-              label="License Plate"
-              placeholder="ABCD 123"
-              autoCapitalize="characters"
-            />
-          </View>
-        </View>
-
-        <ControlledNumberSelector
-          name="seats"
-          label="Total Passenger Seats"
-          min={1}
-          max={8}
-        />
-
-        <SubmitButton
-          title="Save Vehicle"
-          onPress={handleOnPress}
-          isLoading={mutation.isPending}
-        />
       </View>
     </FormProvider>
   );
@@ -78,7 +101,7 @@ export function VehicleForm({ initialData, onSuccess }: VehicleFormProps) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    paddingVertical: 8,
   },
   row: {
     flexDirection: "row",
@@ -86,5 +109,8 @@ const styles = StyleSheet.create({
   },
   flexItem: {
     flex: 1,
+  },
+  footer: {
+    marginTop: 8,
   },
 });

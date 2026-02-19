@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type {
   NativeSyntheticEvent,
   StyleProp,
@@ -8,7 +8,6 @@ import type {
 } from "react-native";
 import {
   ActivityIndicator,
-  Animated,
   Keyboard,
   Pressable,
   StyleSheet,
@@ -54,16 +53,10 @@ export function LocationInput({
   const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const focusAnim = useRef(new Animated.Value(0)).current;
 
   const handleFocus = (_e: NativeSyntheticEvent<TargetedEvent>): void => {
     setIsFocused(true);
     if (results.length > 0) setShowDropdown(true);
-    Animated.timing(focusAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
   };
 
   const handleBlur = (_e: NativeSyntheticEvent<TargetedEvent>): void => {
@@ -71,18 +64,9 @@ export function LocationInput({
     setTimeout(() => {
       setShowDropdown(false);
     }, 200);
-    Animated.timing(focusAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
   };
 
   const hasError = (error ?? "") !== "";
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [hasError ? colors.error : colors.border, colors.primary],
-  });
 
   return (
     <View
@@ -94,19 +78,19 @@ export function LocationInput({
         </Text>
       )}
 
-      <Animated.View
+      <View
         style={[
           styles.inputWrapper,
           {
-            backgroundColor: colors.background,
-            borderColor: borderColor,
-            borderWidth: isFocused ? 1.5 : 1,
+            backgroundColor: colors.surface,
+            borderColor: hasError
+              ? colors.error
+              : isFocused
+                ? colors.text
+                : colors.border,
+            borderWidth: hasError || isFocused ? 1.5 : 1,
           },
-          hasError && {
-            backgroundColor: colors.errorBackground,
-            borderColor: colors.error,
-            borderWidth: 1.5,
-          },
+          hasError && { backgroundColor: colors.errorBackground },
         ]}
       >
         <TextInput
@@ -126,11 +110,11 @@ export function LocationInput({
         {isSearching && (
           <ActivityIndicator
             size="small"
-            color={colors.primary}
+            color={colors.text}
             style={styles.loader}
           />
         )}
-      </Animated.View>
+      </View>
 
       {showDropdown && results.length > 0 && (
         <View
@@ -139,12 +123,15 @@ export function LocationInput({
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          {results.map((item) => (
+          {results.map((item, index) => (
             <Pressable
               key={item.id}
               style={({ pressed }) => [
                 styles.dropdownItem,
-                { borderBottomColor: colors.border },
+                index !== results.length - 1 && {
+                  borderBottomColor: colors.divider,
+                  borderBottomWidth: 1,
+                },
                 pressed && { backgroundColor: colors.surfaceSecondary },
               ]}
               onPress={() => {
@@ -156,10 +143,14 @@ export function LocationInput({
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: `${colors.primary}15` },
+                  { backgroundColor: colors.surfaceSecondary },
                 ]}
               >
-                <Ionicons name="location" size={18} color={colors.primary} />
+                <Ionicons
+                  name="location-outline"
+                  size={18}
+                  color={colors.text}
+                />
               </View>
               <View style={styles.textContainer}>
                 <Text variant="bodySemibold" color={colors.text}>
@@ -196,8 +187,8 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
-    minHeight: 52,
+    borderRadius: 8,
+    minHeight: 48,
     paddingHorizontal: 12,
   },
   input: {
@@ -210,14 +201,14 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     position: "absolute",
-    top: 85,
+    top: 80,
     left: 0,
     right: 0,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 5,
     overflow: "hidden",
   },
@@ -225,12 +216,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 12,
-    borderBottomWidth: 1,
   },
   iconBox: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,

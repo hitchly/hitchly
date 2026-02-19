@@ -1,21 +1,16 @@
 import { Stack } from "expo-router";
 
-import { useTheme } from "@/context/theme-context";
+import { useStackOptions } from "@/hooks/useStackOptions";
 
 export default function DriverTripsLayout() {
-  const { colors } = useTheme();
+  const stackOptions = useStackOptions();
+
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
-        headerTitleStyle: { color: colors.text },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="index"
         options={{
+          headerShown: false,
           title: "Trip History",
           headerLargeTitle: true,
         }}
@@ -23,12 +18,14 @@ export default function DriverTripsLayout() {
       <Stack.Screen
         name="[id]"
         options={{
+          headerShown: false,
           title: "Trip Details",
         }}
       />
       <Stack.Screen
         name="create"
         options={{
+          headerShown: false,
           title: "Create Trip",
           presentation: "modal",
         }}

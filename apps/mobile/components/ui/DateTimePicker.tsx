@@ -66,10 +66,12 @@ export function DateTimePicker({
   };
 
   const handleIosChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (event.type === "set" && selectedDate) {
+    if (selectedDate) {
       onChange(selectedDate);
     }
   };
+
+  const hasError = (error ?? "") !== "";
 
   return (
     <View style={styles.container}>
@@ -84,43 +86,55 @@ export function DateTimePicker({
           if (Platform.OS === "android") {
             showAndroidPicker();
           } else {
-            setShowIos(true);
+            setShowIos(!showIos);
           }
         }}
         style={({ pressed }) => [
           styles.inputWrapper,
           {
-            borderColor: error ? colors.error : colors.border,
-            backgroundColor: colors.background,
-            borderWidth: Platform.OS === "ios" && showIos ? 1.5 : 1,
-            opacity: pressed ? 0.7 : 1,
+            backgroundColor: colors.surface,
+            borderColor: hasError
+              ? colors.error
+              : showIos
+                ? colors.text
+                : colors.border,
+            borderWidth: hasError || showIos ? 1.5 : 1,
           },
+          pressed && { opacity: 0.8 },
         ]}
       >
         <Ionicons
           name="calendar-outline"
-          size={20}
-          color={colors.primary}
+          size={18}
+          color={colors.textSecondary}
           style={styles.icon}
         />
-        <Text variant="body" color={colors.text}>
+        <Text variant="bodySemibold" color={colors.text}>
           {formattedValue}
         </Text>
       </Pressable>
 
       {Platform.OS === "ios" && showIos && (
-        <RNDateTimePicker
-          value={value}
-          mode={mode}
-          is24Hour={true}
-          display="spinner"
-          minimumDate={minimumDate}
-          onChange={handleIosChange}
-          themeVariant={isDark ? "dark" : "light"}
-        />
+        <View
+          style={[
+            styles.iosPickerContainer,
+            { borderTopColor: colors.divider },
+          ]}
+        >
+          <RNDateTimePicker
+            value={value}
+            mode={mode}
+            is24Hour={true}
+            display="spinner"
+            minimumDate={minimumDate}
+            onChange={handleIosChange}
+            themeVariant={isDark ? "dark" : "light"}
+            textColor={colors.text}
+          />
+        </View>
       )}
 
-      {error && (
+      {hasError && (
         <Text variant="caption" color={colors.error} style={styles.helper}>
           {error}
         </Text>
@@ -130,15 +144,31 @@ export function DateTimePicker({
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 16, width: "100%" },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, marginLeft: 4 },
+  container: {
+    marginBottom: 16,
+    width: "100%",
+  },
+  label: {
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
-    minHeight: 52,
+    borderRadius: 8,
+    minHeight: 48,
     paddingHorizontal: 12,
   },
-  icon: { marginRight: 12 },
-  helper: { fontSize: 12, marginTop: 6, marginLeft: 4, fontWeight: "500" },
+  icon: {
+    marginRight: 12,
+  },
+  iosPickerContainer: {
+    marginTop: 8,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  helper: {
+    marginTop: 6,
+    marginLeft: 4,
+  },
 });

@@ -47,19 +47,18 @@ export function ChipGroup<T extends string | number>({
               style={({ pressed }) => [
                 styles.selectChip,
                 {
-                  backgroundColor: isActive
-                    ? `${colors.primary}15`
-                    : colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
+                  backgroundColor: isActive ? colors.text : colors.surface,
+                  borderColor: isActive ? colors.text : colors.border,
                 },
                 hasError && { borderColor: colors.error },
+                { transform: [{ scale: pressed ? 0.96 : 1 }] },
                 pressed &&
                   !isActive && { backgroundColor: colors.surfaceSecondary },
               ]}
             >
               <Text
                 variant="bodySemibold"
-                color={isActive ? colors.primary : colors.textSecondary}
+                color={isActive ? colors.background : colors.textSecondary}
               >
                 {option.label}
               </Text>
@@ -92,11 +91,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   selectChip: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    minHeight: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 40,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -9,10 +9,10 @@ interface SkeletonProps {
 }
 
 export function Skeleton({
-  text = "Loading...",
+  text = "LOADING...",
   fullScreen = true,
 }: SkeletonProps) {
-  const { colors, fonts } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View
@@ -22,21 +22,11 @@ export function Skeleton({
         { backgroundColor: colors.background },
       ]}
     >
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="small" color={colors.text} />
 
       {text && (
-        <Text
-          variant="caption"
-          style={[
-            styles.text,
-            {
-              color: colors.textSecondary,
-              fontFamily: fonts.mono,
-              textTransform: "uppercase",
-            },
-          ]}
-        >
-          {text}
+        <Text variant="mono" color={colors.textSecondary} style={styles.text}>
+          {text.toUpperCase()}
         </Text>
       )}
     </View>
@@ -47,14 +37,14 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 24,
+    gap: 12,
   },
   fullScreen: {
     flex: 1,
   },
   text: {
-    marginTop: 16,
-    letterSpacing: 1.5,
-    fontWeight: "600",
+    letterSpacing: 2,
+    fontSize: 10,
   },
 });

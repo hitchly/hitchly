@@ -32,22 +32,27 @@ export function PreferencesSection({
         }}
         empty={preferences === null}
         emptyText="Set your ride comfort settings (music, social, etc)."
+        actionLabel="Set Preferences"
       >
         {preferences !== null ? (
           <View style={styles.chipContainer}>
             <Chip
-              icon="musical-notes"
+              icon="musical-notes-outline"
               label="Music"
               active={preferences.music ?? false}
             />
             <Chip
-              icon="chatbubbles"
+              icon="chatbubbles-outline"
               label="Social"
               active={preferences.chatty ?? false}
             />
-            <Chip icon="paw" label="Pets" active={preferences.pets ?? false} />
             <Chip
-              icon="flame"
+              icon="paw-outline"
+              label="Pets"
+              active={preferences.pets ?? false}
+            />
+            <Chip
+              icon="flame-outline"
               label="Smoking"
               active={preferences.smoking ?? false}
             />

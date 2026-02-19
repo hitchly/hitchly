@@ -47,47 +47,43 @@ export function NumericStepper({
           styles.stepperWrapper,
           {
             borderColor: error ? colors.error : colors.border,
-            backgroundColor: colors.background,
+            backgroundColor: colors.surface,
           },
         ]}
       >
         <Pressable
-          onPress={() => {
-            decrement();
-          }}
+          onPress={decrement}
           disabled={value <= min}
           style={({ pressed }) => [
             styles.button,
-            pressed && { backgroundColor: colors.surface },
+            pressed && { backgroundColor: colors.surfaceSecondary },
             value <= min && { opacity: 0.5 },
           ]}
         >
           <Ionicons
             name="remove"
-            size={24}
-            color={value <= min ? colors.textTertiary : colors.primary}
+            size={20}
+            color={value <= min ? colors.textTertiary : colors.text}
           />
         </Pressable>
 
-        <View style={styles.valueContainer}>
+        <View style={[styles.valueContainer, { borderColor: colors.border }]}>
           <Text variant="bodySemibold">{value}</Text>
         </View>
 
         <Pressable
-          onPress={() => {
-            increment();
-          }}
+          onPress={increment}
           disabled={value >= max}
           style={({ pressed }) => [
             styles.button,
-            pressed && { backgroundColor: colors.surface },
+            pressed && { backgroundColor: colors.surfaceSecondary },
             value >= max && { opacity: 0.5 },
           ]}
         >
           <Ionicons
             name="add"
-            size={24}
-            color={value >= max ? colors.textTertiary : colors.primary}
+            size={20}
+            color={value >= max ? colors.textTertiary : colors.text}
           />
         </Pressable>
       </View>
@@ -106,13 +102,13 @@ const styles = StyleSheet.create({
   stepperWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    height: 52,
+    height: 48,
     overflow: "hidden",
   },
   button: {
-    width: 52,
+    width: 48,
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -123,7 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: "rgba(0,0,0,0.05)",
+    height: "100%",
   },
   errorText: { marginTop: 6, marginLeft: 4 },
 });

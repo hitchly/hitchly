@@ -19,10 +19,7 @@ export function useRiderTrips() {
   const activeRiderTrips = useMemo(() => {
     return (
       trips?.filter(
-        (trip) =>
-          trip.status !== "cancelled" &&
-          trip.driverId !== currentUserId &&
-          trip.requests.some((req) => req.riderId === currentUserId)
+        (trip) => trip.status !== "cancelled" && trip.driverId !== currentUserId
       ) ?? []
     );
   }, [trips, currentUserId]);

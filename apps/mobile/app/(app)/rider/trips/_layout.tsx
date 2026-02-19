@@ -1,28 +1,23 @@
 import { Stack } from "expo-router";
 
-import { useTheme } from "@/context/theme-context";
+import { useStackOptions } from "@/hooks/useStackOptions";
 
 export default function RiderTripsLayout() {
-  const { colors } = useTheme();
+  const stackOptions = useStackOptions();
+
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
-        headerTitleStyle: { color: colors.text },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Screen
         name="index"
         options={{
           title: "Trips",
+          headerShown: false,
         }}
       />
       <Stack.Screen
         name="[id]"
         options={{
-          title: "Trip Details",
+          headerShown: false,
         }}
       />
     </Stack>

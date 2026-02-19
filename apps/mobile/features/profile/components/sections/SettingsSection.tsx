@@ -12,7 +12,7 @@ import { InfoCard } from "@/features/profile/components/InfoCard";
 
 export function SettingsSection() {
   const { role, toggleRole } = useUserRole();
-  const { handleSignOut, isSigningOut } = useSignOut(); // Hook usage
+  const { handleSignOut, isSigningOut } = useSignOut();
 
   const ROLE_OPTIONS: readonly SegmentOption<AppRoleType>[] = [
     { label: "Rider", value: AppRole.RIDER },
@@ -34,7 +34,7 @@ export function SettingsSection() {
 
   const handleRoleToggle = (newValue: AppRoleType): void => {
     if (newValue === role) return;
-    void toggleRole(); // Transition is handled by RoleProvider
+    void toggleRole();
   };
 
   return (
@@ -65,5 +65,8 @@ export function SettingsSection() {
 const styles = StyleSheet.create({
   container: { gap: 16 },
   formContainer: { paddingTop: 8 },
-  signOut: { marginTop: 8 },
+  signOut: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
 });
