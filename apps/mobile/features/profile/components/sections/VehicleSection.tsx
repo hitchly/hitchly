@@ -3,10 +3,10 @@ import type { UpdateVehicleInput } from "@hitchly/db";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { InfoCard } from "@/components/ui/card/InfoCard";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { useTheme } from "@/context/theme-context";
 import { VehicleForm } from "@/features/profile/components/forms/VehicleForm";
+import { InfoCard } from "@/features/profile/components/InfoCard";
 
 interface VehicleSectionProps {
   vehicle: UpdateVehicleInput | null;

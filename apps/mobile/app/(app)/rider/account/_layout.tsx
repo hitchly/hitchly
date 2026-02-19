@@ -40,6 +40,7 @@ export default function RiderAccountLayout() {
         }}
       />
       <Stack.Screen name="settings" options={{ title: "Settings" }} />
+      <Stack.Screen name="payments" options={{ title: "Payments" }} />
     </Stack>
   );
 }

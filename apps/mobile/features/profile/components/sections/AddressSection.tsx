@@ -3,10 +3,10 @@ import { formatCoordinatePair } from "@hitchly/utils";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { InfoCard } from "@/components/ui/card/InfoCard";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { useTheme } from "@/context/theme-context";
 import { LocationForm } from "@/features/profile/components/forms/LocationForm";
+import { InfoCard } from "@/features/profile/components/InfoCard";
 
 interface AddressSectionProps {
   profile: {

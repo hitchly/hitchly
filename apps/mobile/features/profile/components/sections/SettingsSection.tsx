@@ -1,48 +1,40 @@
 import { Alert, StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
-import { InfoCard } from "@/components/ui/card/InfoCard";
 import {
   SegmentedControl,
   type SegmentOption,
 } from "@/components/ui/SegmentedControl";
 import { AppRole, type AppRoleType } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
+import { useSignOut } from "@/features/auth/hooks/useSignOut";
+import { InfoCard } from "@/features/profile/components/InfoCard";
 
-interface SettingsSectionProps {
-  onSignOut: () => void;
-  isSigningOut: boolean;
-}
-
-const ROLE_OPTIONS: readonly SegmentOption<AppRoleType>[] = [
-  { label: "Rider", value: AppRole.RIDER },
-  { label: "Driver", value: AppRole.DRIVER },
-] as const;
-
-export function SettingsSection({
-  onSignOut,
-  isSigningOut,
-}: SettingsSectionProps) {
+export function SettingsSection() {
   const { role, toggleRole } = useUserRole();
+  const { handleSignOut, isSigningOut } = useSignOut(); // Hook usage
+
+  const ROLE_OPTIONS: readonly SegmentOption<AppRoleType>[] = [
+    { label: "Rider", value: AppRole.RIDER },
+    { label: "Driver", value: AppRole.DRIVER },
+  ] as const;
+
+  const onSignOutPress = (): void => {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: () => {
+          void handleSignOut();
+        },
+      },
+    ]);
+  };
 
   const handleRoleToggle = (newValue: AppRoleType): void => {
     if (newValue === role) return;
-
-    const targetLabel = newValue === AppRole.RIDER ? "Rider" : "Driver";
-
-    Alert.alert(
-      "Switch Roles",
-      `Are you sure you want to switch to ${targetLabel} mode? This will refresh your current view.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Switch",
-          onPress: () => {
-            void toggleRole();
-          },
-        },
-      ]
-    );
+    void toggleRole(); // Transition is handled by RoleProvider
   };
 
   return (
@@ -61,7 +53,7 @@ export function SettingsSection({
       <Button
         title="Sign Out"
         variant="danger"
-        onPress={onSignOut}
+        onPress={onSignOutPress}
         disabled={isSigningOut}
         isLoading={isSigningOut}
         style={styles.signOut}
@@ -72,8 +64,6 @@ export function SettingsSection({
 
 const styles = StyleSheet.create({
   container: { gap: 16 },
-  formContainer: {
-    paddingTop: 8,
-  },
+  formContainer: { paddingTop: 8 },
   signOut: { marginTop: 8 },
 });

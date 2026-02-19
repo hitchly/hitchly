@@ -72,7 +72,7 @@ export function NumberSelector({
                 style={[
                   styles.numberText,
                   {
-                    color: isActive ? "#FFFFFF" : colors.textSecondary,
+                    color: isActive ? colors.background : colors.textSecondary,
                   },
                 ]}
               >

@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 import { useTheme } from "@/context/theme-context";
 
-export default function RiderTripsLayout() {
+export default function DriverPayoutsLayout() {
   const { colors } = useTheme();
   return (
     <Stack
@@ -15,13 +15,7 @@ export default function RiderTripsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "My Trips",
-        }}
-      />
-      <Stack.Screen
-        name="[id]"
-        options={{
-          title: "Trip Details",
+          title: "Payouts",
         }}
       />
     </Stack>

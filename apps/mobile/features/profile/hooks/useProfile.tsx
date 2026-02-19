@@ -1,13 +1,9 @@
-import { useState } from "react";
-import { Alert } from "react-native";
-
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
 export function useProfile() {
   const { data: session } = authClient.useSession();
   const utils = trpc.useUtils();
-  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const {
     data: userRecord,
@@ -32,17 +28,6 @@ export function useProfile() {
     }
   );
 
-  const handleSignOut = async (): Promise<void> => {
-    setIsSigningOut(true);
-    try {
-      await authClient.signOut();
-    } catch {
-      Alert.alert("Error", "Failed to sign out.");
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
-
   const handleRefresh = (): void => {
     void refetch();
   };
@@ -58,9 +43,7 @@ export function useProfile() {
     earnings,
     isLoading,
     isRefetching,
-    isSigningOut,
     isDriver,
-    handleSignOut,
     handleRefresh,
     onSuccess,
   };

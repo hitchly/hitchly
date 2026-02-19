@@ -1,10 +1,11 @@
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useTheme } from "@/context/theme-context";
+import { AboutMeSection } from "@/features/profile/components/sections/AboutMeSection";
+import { AddressSection } from "@/features/profile/components/sections/AddressSection";
 import { PreferencesSection } from "@/features/profile/components/sections/PreferencesSection";
-import { ProfileHero } from "@/features/profile/components/sections/ProfileHero";
+import { ProfileHeader } from "@/features/profile/components/sections/ProfileHeader";
 import { VehicleSection } from "@/features/profile/components/sections/VehicleSection";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 
@@ -17,10 +18,7 @@ export function DriverProfileScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={{ backgroundColor: colors.background, flex: 1 }}
-      edges={["top"]}
-    >
+    <View style={{ backgroundColor: colors.background, flex: 1 }}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -31,7 +29,7 @@ export function DriverProfileScreen() {
           />
         }
       >
-        <ProfileHero
+        <ProfileHeader
           name={p.session?.user.name ?? "Hitchly Driver"}
           email={p.session?.user.email ?? ""}
           rating={p.ratingData?.average ?? "No Ratings"}
@@ -40,8 +38,13 @@ export function DriverProfileScreen() {
         />
 
         <View style={styles.cardsContainer}>
-          <VehicleSection
-            vehicle={p.userRecord.vehicle}
+          <AddressSection
+            profile={p.userRecord.profile}
+            onSuccess={p.onSuccess}
+          />
+
+          <AboutMeSection
+            profile={p.userRecord.profile}
             onSuccess={p.onSuccess}
           />
 
@@ -49,9 +52,14 @@ export function DriverProfileScreen() {
             preferences={p.userRecord.preferences}
             onSuccess={p.onSuccess}
           />
+
+          <VehicleSection
+            vehicle={p.userRecord.vehicle}
+            onSuccess={p.onSuccess}
+          />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

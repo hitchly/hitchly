@@ -1,15 +1,18 @@
 import { signInSchema, type SignInInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Href } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export const useSignIn = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const utils = trpc.useUtils();
   const [loading, setLoading] = useState(false);
 
   const methods = useForm<SignInInput>({
@@ -50,7 +53,8 @@ export const useSignIn = () => {
             }
           },
           onSuccess: () => {
-            router.replace("/(app)/" as Href);
+            queryClient.clear();
+            void utils.invalidate();
           },
         }
       );

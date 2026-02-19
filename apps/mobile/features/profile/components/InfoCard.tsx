@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { Card } from "./Card";
-
+import { Card } from "@/components/ui/Card";
 import { useTheme } from "@/context/theme-context";
 
 interface InfoCardProps {

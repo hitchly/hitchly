@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type {
   StyleProp,
   TextStyle,
@@ -9,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
@@ -19,6 +21,7 @@ interface ButtonProps extends TouchableOpacityProps {
   isLoading?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  leftIcon?: ReactNode;
 }
 
 export function Button({
@@ -29,6 +32,7 @@ export function Button({
   textStyle,
   disabled,
   onPress,
+  leftIcon,
   ...props
 }: ButtonProps) {
   const { colors, isDark } = useTheme();
@@ -82,6 +86,7 @@ export function Button({
       onPress={onPress}
       {...props}
     >
+      {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}
       {isLoading ? (
         <ActivityIndicator color={currentVariant.indicator} />
       ) : (

@@ -2,10 +2,10 @@ import type { UpdateProfileInput } from "@hitchly/db";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { InfoCard } from "@/components/ui/card/InfoCard";
-import { InfoRow } from "@/components/ui/card/InfoRow";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { ProfileForm } from "@/features/profile/components/forms/ProfileForm";
+import { InfoCard } from "@/features/profile/components/InfoCard";
+import { InfoRow } from "@/features/profile/components/InfoRow";
 
 interface AboutMeSectionProps {
   profile: {

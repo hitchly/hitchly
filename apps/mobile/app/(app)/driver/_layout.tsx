@@ -24,10 +24,9 @@ export default function DriverTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="earnings"
+        name="payouts"
         options={{
-          title: "Earnings",
-          headerShown: true,
+          title: "Payouts",
           tabBarIcon: ({ color }) => (
             <Ionicons name="cash" size={24} color={color} />
           ),
