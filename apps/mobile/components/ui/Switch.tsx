@@ -1,5 +1,6 @@
-import { StyleSheet, Switch, Text, View } from "react-native";
+import { StyleSheet, Switch, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface SwitchRowProps {
@@ -18,8 +19,13 @@ export function SwitchRow({
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { borderColor: colors.border }]}>
-      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+    <View style={[styles.container, { borderBottomColor: colors.border }]}>
+      <Text
+        variant="bodySemibold"
+        color={disabled ? colors.textTertiary : colors.text}
+      >
+        {label}
+      </Text>
       <Switch
         trackColor={{
           false: colors.border,
@@ -44,10 +50,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     width: "100%",
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "500",
-    letterSpacing: -0.3,
   },
 });

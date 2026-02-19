@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 interface ChipProps {
@@ -18,7 +19,7 @@ export function Chip({ label, icon, active = false }: ChipProps) {
         styles.chip,
         {
           backgroundColor: active
-            ? colors.primaryLight
+            ? `${colors.primary}15`
             : colors.surfaceSecondary,
           borderColor: active ? colors.primary : colors.border,
         },
@@ -33,6 +34,7 @@ export function Chip({ label, icon, active = false }: ChipProps) {
         />
       )}
       <Text
+        variant="caption"
         style={[
           styles.label,
           { color: active ? colors.primary : colors.textSecondary },
@@ -52,9 +54,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    marginRight: 4,
-    marginBottom: 4,
+    alignSelf: "flex-start",
   },
-  icon: { marginRight: 6 },
-  label: { fontSize: 13, fontWeight: "600" },
+  icon: {
+    marginRight: 6,
+  },
+  label: {
+    fontWeight: "600",
+  },
 });

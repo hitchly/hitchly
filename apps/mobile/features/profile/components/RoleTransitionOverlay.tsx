@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { AppRole } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
 import { useTheme } from "@/context/theme-context";
@@ -20,13 +22,13 @@ export function RoleTransitionOverlay() {
 
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 250,
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 400,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) {
@@ -38,6 +40,9 @@ export function RoleTransitionOverlay() {
 
   if (!isVisible) return null;
 
+  const nextRole = role === AppRole.RIDER ? "Rider" : "Driver";
+  const roleIcon = role === AppRole.RIDER ? "person-outline" : "car-outline";
+
   return (
     <Animated.View
       pointerEvents="none"
@@ -47,8 +52,21 @@ export function RoleTransitionOverlay() {
       ]}
     >
       <View style={styles.content}>
-        <Text style={[styles.text, { color: colors.text }]}>
-          Switching to {role === AppRole.RIDER ? "Rider" : "Driver"} Mode...
+        <View
+          style={[
+            styles.iconCircle,
+            { backgroundColor: `${colors.primary}15` },
+          ]}
+        >
+          <Ionicons name={roleIcon} size={32} color={colors.primary} />
+        </View>
+
+        <Text variant="h3" align="center">
+          Switching to {nextRole} Mode
+        </Text>
+
+        <Text variant="caption" color={colors.textSecondary}>
+          Optimizing your experience...
         </Text>
       </View>
     </Animated.View>
@@ -64,10 +82,14 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: "center",
-    gap: 12,
+    paddingHorizontal: 40,
   },
-  text: {
-    fontSize: 18,
-    fontWeight: "600",
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
 });

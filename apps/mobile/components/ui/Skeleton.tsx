@@ -1,5 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 interface SkeletonProps {
@@ -22,16 +23,22 @@ export function Skeleton({
       ]}
     >
       <ActivityIndicator size="large" color={colors.primary} />
-      {text ? (
+
+      {text && (
         <Text
+          variant="caption"
           style={[
             styles.text,
-            { color: colors.textSecondary, fontFamily: fonts.mono },
+            {
+              color: colors.textSecondary,
+              fontFamily: fonts.mono,
+              textTransform: "uppercase",
+            },
           ]}
         >
-          {text.toUpperCase()}
+          {text}
         </Text>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -47,8 +54,7 @@ const styles = StyleSheet.create({
   },
   text: {
     marginTop: 16,
-    fontSize: 12,
+    letterSpacing: 1.5,
     fontWeight: "600",
-    letterSpacing: 1,
   },
 });

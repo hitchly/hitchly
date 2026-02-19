@@ -1,11 +1,6 @@
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface NumberSelectorProps {
@@ -25,7 +20,7 @@ export function NumberSelector({
   value,
   onChange,
 }: NumberSelectorProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const options: number[] = Array.from(
     { length: max - min + 1 },
@@ -36,11 +31,11 @@ export function NumberSelector({
 
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
+      {label && (
+        <Text variant="label" color={colors.textSecondary} style={styles.label}>
           {label}
         </Text>
-      ) : null}
+      )}
 
       <ScrollView
         horizontal
@@ -51,41 +46,46 @@ export function NumberSelector({
           const isActive = value === num;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={num}
-              activeOpacity={0.7}
               onPress={() => {
                 onChange(num);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.numberCircle,
                 {
                   backgroundColor: isActive
                     ? colors.primary
-                    : colors.background,
+                    : colors.surfaceSecondary,
                   borderColor: isActive ? colors.primary : colors.border,
+                  borderWidth: isActive || hasError ? 1.5 : 1,
                 },
-                hasError ? { borderColor: colors.error } : null,
+                hasError && { borderColor: colors.error },
+                pressed && !isActive && { backgroundColor: colors.border },
               ]}
             >
               <Text
-                style={[
-                  styles.numberText,
-                  {
-                    color: isActive ? colors.background : colors.textSecondary,
-                  },
-                ]}
+                variant="h3"
+                style={{
+                  color: isActive
+                    ? isDark
+                      ? colors.background
+                      : "#FFFFFF"
+                    : colors.textSecondary,
+                }}
               >
                 {num}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </ScrollView>
 
-      {hasError ? (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      ) : null}
+      {hasError && (
+        <Text variant="caption" color={colors.error} style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
@@ -96,31 +96,23 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
     marginBottom: 12,
     marginLeft: 4,
   },
   scrollContent: {
     gap: 12,
     paddingHorizontal: 4,
+    paddingBottom: 4,
   },
   numberCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1.5,
-  },
-  numberText: {
-    fontSize: 18,
-    fontWeight: "700",
   },
   errorText: {
-    fontSize: 12,
     marginTop: 8,
     marginLeft: 4,
-    fontWeight: "500",
   },
 });

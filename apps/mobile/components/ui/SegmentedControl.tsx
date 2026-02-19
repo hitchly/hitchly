@@ -1,5 +1,6 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface SegmentOption<T> {
@@ -27,58 +28,53 @@ export function SegmentedControl<T extends string | number>({
 
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
+      {label && (
+        <Text variant="label" color={colors.textSecondary} style={styles.label}>
           {label}
         </Text>
-      ) : null}
+      )}
 
       <View
         style={[
           styles.segmentContainer,
           { backgroundColor: colors.surfaceSecondary },
-          hasError ? { borderColor: colors.error, borderWidth: 1 } : null,
+          hasError && { borderColor: colors.error, borderWidth: 1 },
         ]}
       >
         {options.map((option: SegmentOption<T>) => {
           const isActive = value === option.value;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={option.value.toString()}
-              activeOpacity={0.8}
               onPress={() => {
                 onChange(option.value);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.segmentBtn,
-                isActive
-                  ? [
-                      styles.segmentBtnActive,
-                      { backgroundColor: colors.surface },
-                    ]
-                  : null,
+                isActive && [
+                  styles.segmentBtnActive,
+                  { backgroundColor: colors.surface },
+                ],
+                pressed && !isActive && { opacity: 0.7 },
               ]}
             >
               <Text
-                style={[
-                  styles.segmentText,
-                  {
-                    color: isActive ? colors.primary : colors.textSecondary,
-                  },
-                  isActive ? styles.segmentTextActive : null,
-                ]}
+                variant="bodySemibold"
+                color={isActive ? colors.primary : colors.textSecondary}
               >
                 {option.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
 
-      {hasError ? (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      ) : null}
+      {hasError && (
+        <Text variant="caption" color={colors.error} style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
@@ -89,8 +85,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
     marginBottom: 10,
     marginLeft: 4,
   },
@@ -113,17 +107,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  segmentText: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  segmentTextActive: {
-    fontWeight: "700",
-  },
   errorText: {
-    fontSize: 12,
     marginTop: 8,
     marginLeft: 4,
-    fontWeight: "500",
   },
 });

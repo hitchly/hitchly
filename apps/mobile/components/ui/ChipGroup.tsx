@@ -1,5 +1,6 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface ChipOption<T> {
@@ -27,53 +28,51 @@ export function ChipGroup<T extends string | number>({
 
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
+      {label && (
+        <Text variant="label" color={colors.textSecondary} style={styles.label}>
           {label}
         </Text>
-      ) : null}
+      )}
 
       <View style={styles.chipGrid}>
         {options.map((option: ChipOption<T>) => {
           const isActive = value === option.value;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={option.value.toString()}
-              activeOpacity={0.7}
               onPress={() => {
                 onChange(option.value);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.selectChip,
                 {
                   backgroundColor: isActive
-                    ? colors.primaryLight
+                    ? `${colors.primary}15`
                     : colors.surface,
                   borderColor: isActive ? colors.primary : colors.border,
                 },
-                hasError ? { borderColor: colors.error } : null,
+                hasError && { borderColor: colors.error },
+                pressed &&
+                  !isActive && { backgroundColor: colors.surfaceSecondary },
               ]}
             >
               <Text
-                style={[
-                  styles.selectChipText,
-                  {
-                    color: isActive ? colors.primary : colors.textSecondary,
-                  },
-                  isActive ? styles.selectChipTextActive : null,
-                ]}
+                variant="bodySemibold"
+                color={isActive ? colors.primary : colors.textSecondary}
               >
                 {option.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
 
-      {hasError ? (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      ) : null}
+      {hasError && (
+        <Text variant="caption" color={colors.error} style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
@@ -84,8 +83,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
     marginBottom: 10,
     marginLeft: 4,
   },
@@ -103,17 +100,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  selectChipText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  selectChipTextActive: {
-    fontWeight: "700",
-  },
   errorText: {
-    fontSize: 12,
     marginTop: 8,
     marginLeft: 4,
-    fontWeight: "500",
   },
 });

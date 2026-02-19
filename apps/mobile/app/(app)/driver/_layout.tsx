@@ -33,7 +33,7 @@ export default function DriverTabsLayout() {
       <Tabs.Screen
         name="trips"
         options={{
-          title: "My Trips",
+          title: "Trips",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "calendar" : "calendar-outline"}
@@ -56,9 +56,6 @@ export default function DriverTabsLayout() {
           ),
         }}
       />
-
-      {/* Hidden Sub-routes */}
-      <Tabs.Screen name="payouts" options={{ href: null }} />
     </Tabs>
   );
 }

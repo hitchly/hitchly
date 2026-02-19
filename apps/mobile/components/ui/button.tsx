@@ -1,21 +1,16 @@
 import type { ReactNode } from "react";
 import type {
+  PressableProps,
   StyleProp,
   TextStyle,
-  TouchableOpacityProps,
   ViewStyle,
 } from "react-native";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
-interface ButtonProps extends TouchableOpacityProps {
+interface ButtonProps extends PressableProps {
   title: string;
   variant?: "primary" | "secondary" | "ghost" | "danger";
   isLoading?: boolean;
@@ -43,8 +38,9 @@ export function Button({
         backgroundColor: colors.primary,
         borderWidth: 0,
       },
-      text: { color: isDark ? colors.background : "#FFFFFF" },
+      text: isDark ? colors.background : "#FFFFFF",
       indicator: isDark ? colors.background : "#FFFFFF",
+      pressed: { opacity: 0.85 },
     },
     secondary: {
       container: {
@@ -52,18 +48,21 @@ export function Button({
         borderWidth: 1,
         borderColor: colors.border,
       },
-      text: { color: colors.text },
+      text: colors.text,
       indicator: colors.text,
+      pressed: { backgroundColor: colors.border },
     },
     ghost: {
       container: { backgroundColor: "transparent", borderWidth: 0 },
-      text: { color: colors.primary },
+      text: colors.primary,
       indicator: colors.primary,
+      pressed: { backgroundColor: `${colors.primary}10` },
     },
     danger: {
       container: { backgroundColor: colors.error, borderWidth: 0 },
-      text: { color: "#FFFFFF" },
+      text: "#FFFFFF",
       indicator: "#FFFFFF",
+      pressed: { opacity: 0.85 },
     },
   };
 
@@ -71,37 +70,39 @@ export function Button({
   const isDisabled = disabled ?? isLoading;
 
   return (
-    <TouchableOpacity
-      style={[
+    <Pressable
+      onPress={onPress}
+      disabled={isDisabled}
+      style={({ pressed }) => [
         styles.base,
         currentVariant.container,
         isDisabled && {
           backgroundColor: colors.disabled,
           borderColor: colors.disabled,
         },
+        pressed && !isDisabled && currentVariant.pressed,
         style,
       ]}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-      onPress={onPress}
       {...props}
     >
-      {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}
       {isLoading ? (
         <ActivityIndicator color={currentVariant.indicator} />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            currentVariant.text,
-            isDisabled && { color: colors.disabledText },
-            textStyle,
-          ]}
-        >
-          {title}
-        </Text>
+        <>
+          {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+          <Text
+            variant="bodySemibold"
+            style={[
+              { color: currentVariant.text },
+              isDisabled && { color: colors.disabledText },
+              textStyle,
+            ]}
+          >
+            {title}
+          </Text>
+        </>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -116,9 +117,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
     width: "100%",
   },
-  text: {
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: -0.2,
+  iconContainer: {
+    marginRight: 8,
   },
 });

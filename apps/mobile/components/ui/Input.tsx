@@ -5,8 +5,9 @@ import type {
   TargetedEvent,
   TextInputProps,
 } from "react-native";
-import { Animated, StyleSheet, Text, TextInput, View } from "react-native";
+import { Animated, StyleSheet, TextInput, View } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface InputProps extends TextInputProps {
@@ -41,9 +42,7 @@ export function Input({
       useNativeDriver: false,
     }).start();
 
-    if (onFocus) {
-      onFocus(e);
-    }
+    if (onFocus) onFocus(e);
   };
 
   const handleBlur = (e: NativeSyntheticEvent<TargetedEvent>): void => {
@@ -54,9 +53,7 @@ export function Input({
       useNativeDriver: false,
     }).start();
 
-    if (onBlur) {
-      onBlur(e);
-    }
+    if (onBlur) onBlur(e);
   };
 
   const hasError = (error ?? "") !== "";
@@ -68,11 +65,11 @@ export function Input({
 
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
+      {label && (
+        <Text variant="label" color={colors.textSecondary} style={styles.label}>
           {label}
         </Text>
-      ) : null}
+      )}
 
       <Animated.View
         style={[
@@ -82,16 +79,14 @@ export function Input({
             borderColor: borderColor,
             borderWidth: isFocused ? 1.5 : 1,
           },
-          hasError
-            ? {
-                backgroundColor: colors.errorBackground,
-                borderColor: colors.error,
-                borderWidth: 1.5,
-              }
-            : null,
+          hasError && {
+            backgroundColor: colors.errorBackground,
+            borderColor: colors.error,
+            borderWidth: 1.5,
+          },
         ]}
       >
-        {leftIcon ? <View style={styles.iconLeft}>{leftIcon}</View> : null}
+        {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
 
         <TextInput
           style={[
@@ -107,19 +102,18 @@ export function Input({
           {...props}
         />
 
-        {rightIcon ? <View style={styles.iconRight}>{rightIcon}</View> : null}
+        {rightIcon && <View style={styles.iconRight}>{rightIcon}</View>}
       </Animated.View>
 
-      {(error ?? helperText) ? (
+      {(error ?? helperText) && (
         <Text
-          style={[
-            styles.helper,
-            { color: hasError ? colors.error : colors.textTertiary },
-          ]}
+          variant="caption"
+          color={hasError ? colors.error : colors.textTertiary}
+          style={styles.helper}
         >
           {error ?? helperText}
         </Text>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -130,8 +124,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
     marginBottom: 8,
     marginLeft: 4,
   },
@@ -160,7 +152,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   helper: {
-    fontSize: 12,
     marginTop: 6,
     marginLeft: 4,
     fontWeight: "500",

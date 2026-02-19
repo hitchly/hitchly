@@ -15,7 +15,7 @@ export default function RiderTripsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "My Trips",
+          title: "Trips",
         }}
       />
       <Stack.Screen

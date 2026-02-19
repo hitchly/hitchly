@@ -10,13 +10,13 @@ import {
   ActivityIndicator,
   Animated,
   Keyboard,
+  Pressable,
   StyleSheet,
-  Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 
+import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 
 export interface LocationResult {
@@ -88,11 +88,11 @@ export function LocationInput({
     <View
       style={[styles.container, { zIndex: showDropdown ? 1000 : 1 }, style]}
     >
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
+      {label && (
+        <Text variant="label" color={colors.textSecondary} style={styles.label}>
           {label}
         </Text>
-      ) : null}
+      )}
 
       <Animated.View
         style={[
@@ -102,12 +102,11 @@ export function LocationInput({
             borderColor: borderColor,
             borderWidth: isFocused ? 1.5 : 1,
           },
-          hasError
-            ? {
-                backgroundColor: colors.errorBackground,
-                borderColor: colors.error,
-              }
-            : null,
+          hasError && {
+            backgroundColor: colors.errorBackground,
+            borderColor: colors.error,
+            borderWidth: 1.5,
+          },
         ]}
       >
         <TextInput
@@ -115,24 +114,25 @@ export function LocationInput({
           value={value}
           onChangeText={(text) => {
             onChangeText(text);
-            if (!showDropdown) setShowDropdown(true);
+            if (!showDropdown && text.length > 0) setShowDropdown(true);
           }}
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
+          autoCorrect={false}
         />
-        {isSearching ? (
+        {isSearching && (
           <ActivityIndicator
             size="small"
             color={colors.primary}
             style={styles.loader}
           />
-        ) : null}
+        )}
       </Animated.View>
 
-      {showDropdown && results.length > 0 ? (
+      {showDropdown && results.length > 0 && (
         <View
           style={[
             styles.dropdown,
@@ -140,11 +140,12 @@ export function LocationInput({
           ]}
         >
           {results.map((item) => (
-            <TouchableOpacity
+            <Pressable
               key={item.id}
-              style={[
+              style={({ pressed }) => [
                 styles.dropdownItem,
                 { borderBottomColor: colors.border },
+                pressed && { backgroundColor: colors.surfaceSecondary },
               ]}
               onPress={() => {
                 onSelect(item);
@@ -155,39 +156,43 @@ export function LocationInput({
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: colors.primaryLight },
+                  { backgroundColor: `${colors.primary}15` },
                 ]}
               >
                 <Ionicons name="location" size={18} color={colors.primary} />
               </View>
               <View style={styles.textContainer}>
-                <Text style={[styles.dropdownTitle, { color: colors.text }]}>
+                <Text variant="bodySemibold" color={colors.text}>
                   {item.title}
                 </Text>
-                <Text
-                  style={[
-                    styles.dropdownSubtitle,
-                    { color: colors.textSecondary },
-                  ]}
-                >
+                <Text variant="caption" color={colors.textSecondary}>
                   {item.subtitle}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
-      ) : null}
+      )}
 
-      {hasError ? (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      ) : null}
+      {hasError && (
+        <Text variant="caption" color={colors.error} style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 16, width: "100%", position: "relative" },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 8, marginLeft: 4 },
+  container: {
+    marginBottom: 16,
+    width: "100%",
+    position: "relative",
+  },
+  label: {
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -195,11 +200,17 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: 12,
   },
-  input: { flex: 1, fontSize: 16, paddingVertical: 12 },
-  loader: { marginLeft: 8 },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 12,
+  },
+  loader: {
+    marginLeft: 8,
+  },
   dropdown: {
     position: "absolute",
-    top: 85, // Adjusted for label + input height
+    top: 85,
     left: 0,
     right: 0,
     borderRadius: 12,
@@ -208,6 +219,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
+    overflow: "hidden",
   },
   dropdownItem: {
     flexDirection: "row",
@@ -223,8 +235,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  textContainer: { flex: 1 },
-  dropdownTitle: { fontSize: 15, fontWeight: "700" },
-  dropdownSubtitle: { fontSize: 13, marginTop: 2 },
-  errorText: { fontSize: 12, marginTop: 8, marginLeft: 4, fontWeight: "500" },
+  textContainer: {
+    flex: 1,
+  },
+  errorText: {
+    marginTop: 8,
+    marginLeft: 4,
+  },
 });

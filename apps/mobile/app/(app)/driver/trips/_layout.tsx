@@ -7,6 +7,7 @@ export default function DriverTripsLayout() {
   return (
     <Stack
       screenOptions={{
+        headerShown: false,
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.primary,
         headerTitleStyle: { color: colors.text },
@@ -29,8 +30,7 @@ export default function DriverTripsLayout() {
         name="create"
         options={{
           title: "Create Trip",
-          presentation: "modal", // Slides up from the bottom
-          headerLeft: () => null, // Often you'll add a custom "Cancel" button here
+          presentation: "modal",
         }}
       />
     </Stack>

@@ -1,174 +1,119 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FormProvider } from "react-hook-form";
+import { ScrollView, StyleSheet, View } from "react-native";
 
+import { ControlledDateTimePicker } from "@/components/form/ControlledDateTimePicker";
+import { ControlledInput } from "@/components/form/ControlledInput";
+import { ControlledNumericStepper } from "@/components/form/ControlledNumericStepper";
 import { Button } from "@/components/ui/Button";
-import { DateTimePickerComponent } from "@/components/ui/datetime-picker";
-import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { ModalSheet } from "@/components/ui/ModalSheet";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
-import { DirectionToggle } from "@/features/trips/components/DirectionToggle";
-import { TripFormGroup } from "@/features/trips/components/TripFormGroup";
-import { useCreateTrip } from "@/features/trips/hooks/useCreateTrip";
+import {
+  useCreateTrip,
+  type CreateTripFormData,
+} from "@/features/trips/hooks/useCreateTrip";
 
 export function CreateTripScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
+  const router = useRouter();
   const {
-    form,
-    errors,
+    methods,
     isToCampus,
+    setIsToCampus,
     defaultAddress,
     isPending,
-    toggleDirection,
-    updateForm,
-    handleSubmit,
+    onSubmit,
   } = useCreateTrip();
 
+  const handleOnPress = () => {
+    void onSubmit();
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => {
-            router.back();
-          }}
-          hitSlop={20}
-          style={styles.backButton}
+    <ModalSheet
+      title="Post a Ride"
+      visible={true}
+      onClose={() => {
+        router.back();
+      }}
+    >
+      <FormProvider {...methods}>
+        <ScrollView
+          contentContainerStyle={styles.formContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="close" size={28} color={colors.text} />
-        </TouchableOpacity>
-        <Text variant="h2">Create Trip</Text>
-        <View style={styles.backButton} />
-      </View>
+          <SegmentedControl<"to" | "from">
+            label="Direction"
+            value={isToCampus ? "to" : "from"}
+            onChange={(val: "to" | "from") => {
+              setIsToCampus(val === "to");
+            }}
+            options={[
+              { label: "To McMaster", value: "to" },
+              { label: "From McMaster", value: "from" },
+            ]}
+          />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.formContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <DirectionToggle isToCampus={isToCampus} onToggle={toggleDirection} />
-
-        {!defaultAddress && (
-          <View
-            style={[styles.hintBox, { backgroundColor: `${colors.warning}15` }]}
-          >
-            <Text
-              variant="caption"
-              color={colors.warning}
-              style={{ fontWeight: "600" }}
+          {!defaultAddress && (
+            <View
+              style={[
+                styles.hintBox,
+                { backgroundColor: `${colors.warning}15` },
+              ]}
             >
-              💡 Set your home address in your Profile to auto-fill these
-              fields.
-            </Text>
-          </View>
-        )}
+              <Text
+                variant="caption"
+                color={colors.warning}
+                style={{ fontWeight: "600" }}
+              >
+                💡 Set your home address in Profile to enable auto-fill.
+              </Text>
+            </View>
+          )}
 
-        <TripFormGroup label="Origin" error={errors.origin}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.surface,
-                borderColor: errors.origin ? colors.error : colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={form.origin}
-            onChangeText={(text) => {
-              updateForm("origin", text);
-            }}
-            placeholder="Enter origin address"
-            placeholderTextColor={colors.textTertiary}
+          <ControlledInput<CreateTripFormData>
+            name="origin"
+            label="Origin"
+            placeholder="Enter pickup location"
           />
-        </TripFormGroup>
 
-        <TripFormGroup label="Destination" error={errors.destination}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.surface,
-                borderColor: errors.destination ? colors.error : colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={form.destination}
-            onChangeText={(text) => {
-              updateForm("destination", text);
-            }}
-            placeholder="Enter destination address"
-            placeholderTextColor={colors.textTertiary}
+          <ControlledInput<CreateTripFormData>
+            name="destination"
+            label="Destination"
+            placeholder="Enter drop-off location"
           />
-        </TripFormGroup>
 
-        <TripFormGroup
-          label="Departure Date & Time"
-          error={errors.departureDateTime}
-        >
-          <DateTimePickerComponent
-            value={form.departureDateTime}
-            onChange={(date) => {
-              updateForm("departureDateTime", date);
-            }}
-            minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
-            error={errors.departureDateTime}
+          <ControlledDateTimePicker<CreateTripFormData>
+            name="departureTime"
+            label="Departure Date & Time"
+            minimumDate={new Date()}
           />
-        </TripFormGroup>
 
-        <TripFormGroup label="Available Seats" error={errors.availableSeats}>
-          <NumericStepper
-            value={form.availableSeats}
-            onValueChange={(val) => {
-              updateForm("availableSeats", val);
-            }}
+          <ControlledNumericStepper<CreateTripFormData>
+            name="maxSeats"
+            label="Available Seats"
+            // TODO: min and max seats should be based on drivers vehicle
             min={1}
             max={5}
-            error={errors.availableSeats}
           />
-        </TripFormGroup>
 
-        <Button
-          title="Create Trip"
-          onPress={handleSubmit}
-          isLoading={isPending}
-          style={styles.submitButton}
-        />
-      </ScrollView>
-    </View>
+          <Button
+            title="Create Trip"
+            onPress={handleOnPress}
+            isLoading={isPending}
+            style={styles.submitButton}
+          />
+        </ScrollView>
+      </FormProvider>
+    </ModalSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scrollView: { flex: 1 },
-  formContent: { padding: 20, paddingBottom: 40 },
+  formContent: { paddingBottom: 40 },
   hintBox: { padding: 12, borderRadius: 8, marginBottom: 20 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-  },
   submitButton: { marginTop: 8 },
 });
