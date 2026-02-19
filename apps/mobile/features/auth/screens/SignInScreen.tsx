@@ -2,7 +2,7 @@ import { FormProvider } from "react-hook-form";
 
 import { ControlledInput } from "@/components/form/ControlledInput";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { OnboardingLayout } from "@/components/ui/ScreenLayout";
+import { OnboardingLayout } from "@/components/layout/ScreenLayout";
 import { useSignIn } from "@/features/auth/hooks/useSignIn";
 
 export function SignInScreen() {

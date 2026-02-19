@@ -2,8 +2,8 @@ import type { UpdatePreferencesInput } from "@hitchly/db";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { InfoCard } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/display";
+import { InfoCard } from "@/components/ui/card/InfoCard";
+import { Chip } from "@/components/ui/Chip";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { PreferencesForm } from "@/features/profile/components/forms/PreferencesForm";
 

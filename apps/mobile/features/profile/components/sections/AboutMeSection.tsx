@@ -2,7 +2,8 @@ import type { UpdateProfileInput } from "@hitchly/db";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { InfoCard, InfoRow } from "@/components/ui/Card";
+import { InfoCard } from "@/components/ui/card/InfoCard";
+import { InfoRow } from "@/components/ui/card/InfoRow";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { ProfileForm } from "@/features/profile/components/forms/ProfileForm";
 
@@ -12,7 +13,6 @@ interface AboutMeSectionProps {
     faculty: string | null;
     year: number | null;
     universityRole: UpdateProfileInput["universityRole"];
-    appRole: UpdateProfileInput["appRole"];
   };
   onSuccess: () => void;
 }
@@ -49,11 +49,6 @@ export function AboutMeSection({ profile, onSuccess }: AboutMeSectionProps) {
               value={profile.universityRole ?? "student"}
               capitalize
             />
-            <InfoRow
-              label="App Role"
-              value={profile.appRole ?? "rider"}
-              capitalize
-            />
           </View>
         </View>
       </InfoCard>
@@ -71,7 +66,6 @@ export function AboutMeSection({ profile, onSuccess }: AboutMeSectionProps) {
             faculty: profile.faculty ?? "",
             year: profile.year ?? 1,
             universityRole: profile.universityRole ?? "student",
-            appRole: profile.appRole ?? "rider",
           }}
           onSuccess={handleSuccess}
         />

@@ -1,7 +1,8 @@
 import { formatCurrency } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
-import { InfoCard, InfoRow } from "@/components/ui/Card";
+import { InfoCard } from "@/components/ui/card/InfoCard";
+import { InfoRow } from "@/components/ui/card/InfoRow";
 import type { RouterOutputs } from "@/lib/trpc";
 
 type DriverEarnings = RouterOutputs["profile"]["getDriverEarnings"];

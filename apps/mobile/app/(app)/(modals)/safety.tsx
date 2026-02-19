@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card/Card";
 import { SafetyContacts } from "@/constants/safety";
 import { useTheme } from "@/context/theme-context";
 import { authClient } from "@/lib/auth-client";

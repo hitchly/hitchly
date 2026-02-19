@@ -6,7 +6,6 @@ import { StyleSheet, View } from "react-native";
 import { ControlledChipGroup } from "@/components/form/ControlledChipGroup";
 import { ControlledInput } from "@/components/form/ControlledInput";
 import { ControlledNumberSelector } from "@/components/form/ControlledNumberSelector";
-import { ControlledSegmentedControl } from "@/components/form/ControlledSegmentedControl";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { trpc } from "@/lib/trpc";
 
@@ -48,14 +47,6 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
           label="Year of Study"
           min={1}
           max={10}
-        />
-        <ControlledSegmentedControl
-          name="appRole"
-          label="I am a..."
-          options={[
-            { label: "Rider", value: "rider" },
-            { label: "Driver", value: "driver" },
-          ]}
         />
         <ControlledChipGroup
           name="universityRole"

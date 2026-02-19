@@ -2,8 +2,8 @@ import { FormProvider } from "react-hook-form";
 
 import { ControlledInput } from "@/components/form/ControlledInput";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { OnboardingLayout } from "@/components/layout/ScreenLayout";
 import { Button } from "@/components/ui/Button";
-import { OnboardingLayout } from "@/components/ui/ScreenLayout";
 import { useVerify } from "@/features/auth/hooks/useVerify";
 
 export function VerifyScreen() {

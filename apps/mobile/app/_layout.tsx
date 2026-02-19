@@ -9,7 +9,9 @@ import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { RoleTransitionOverlay } from "@/components/ui/RoleTransitionOverlay";
 import { NavTheme } from "@/constants/theme";
+import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
 import { ActiveTripBanner } from "@/features/trip/active-trip-banner";
 import { authClient } from "@/lib/auth-client";
@@ -96,7 +98,7 @@ function AppContent() {
     if (!session && !inAuthGroup) {
       router.replace("/(auth)");
     } else if (session && inAuthGroup) {
-      router.replace("/(app)");
+      router.replace("/(app)/index");
     }
   }, [session, isPending, segments, router]);
 
@@ -124,6 +126,7 @@ function AppContent() {
       <NavigationThemeProvider value={currentNavTheme}>
         <AppThemeProvider>
           <View style={{ flex: 1 }}>
+            <RoleTransitionOverlay />
             {showDriverBanner && (
               <ActiveTripBanner
                 tripId={activeTrip.id}
@@ -150,14 +153,17 @@ function AppContent() {
     </GestureHandlerRootView>
   );
 }
-
 export default function RootLayout() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <StripeProviderWrapper>
-          <AppContent />
-        </StripeProviderWrapper>
+        {/* <AuthProvider> */}
+        <RoleProvider>
+          <StripeProviderWrapper>
+            <AppContent />
+          </StripeProviderWrapper>
+        </RoleProvider>
+        {/* </AuthProvider> */}
       </QueryClientProvider>
     </trpc.Provider>
   );
