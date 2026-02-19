@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppRole } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
-import { ActiveTripBanner } from "@/features/trip/active-trip-banner";
+import { ActiveTripBanner } from "@/features/trips/active-trip-banner";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
@@ -13,7 +13,6 @@ export function GlobalActiveTripBanner() {
   const segments = useSegments();
   const insets = useSafeAreaInsets();
 
-  // 1. Data Fetching
   const { data: trips } = trpc.trip.getTrips.useQuery(
     {},
     { enabled: !!session }
@@ -29,7 +28,6 @@ export function GlobalActiveTripBanner() {
     (req) => req.status === "accepted" || req.status === "on_trip"
   );
 
-  // 2. Routing Logic
   const firstSegment = segments[0] as string | undefined;
   const inAuthGroup = firstSegment === "(auth)";
   const isOnDriveScreen = segments.some((s) => s === "driver");
@@ -37,7 +35,6 @@ export function GlobalActiveTripBanner() {
 
   if (!session || inAuthGroup) return null;
 
-  // 3. Render Driver Banner
   if (role === AppRole.DRIVER && activeTrip && !isOnDriveScreen) {
     return (
       <ActiveTripBanner
@@ -48,7 +45,6 @@ export function GlobalActiveTripBanner() {
     );
   }
 
-  // 4. Render Rider Banner
   if (role === AppRole.RIDER && activeRiderRequest && !isOnRideScreen) {
     return (
       <ActiveTripBanner

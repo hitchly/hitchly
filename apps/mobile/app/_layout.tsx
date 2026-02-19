@@ -9,7 +9,7 @@ import { RoleTransitionOverlay } from "@/components/ui/RoleTransitionOverlay";
 import { NavTheme } from "@/constants/theme";
 import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
-import { GlobalActiveTripBanner } from "@/features/trip/components/GlobalActiveTripBanner";
+import { GlobalActiveTripBanner } from "@/features/trips/components/GlobalActiveTripBanner";
 import { authClient } from "@/lib/auth-client";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";

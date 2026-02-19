@@ -20,27 +20,39 @@ export default function RiderTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Discover",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="search" size={24} color={color} />
+          title: "Explore",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "compass" : "compass-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="trips"
         options={{
-          title: "My Trips",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="map" size={24} color={color} />
+          title: "Trips",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "map" : "map-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: "Account",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />

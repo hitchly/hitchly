@@ -40,6 +40,7 @@ export default function DriverAccountLayout() {
         }}
       />
       <Stack.Screen name="settings" options={{ title: "Settings" }} />
+      <Stack.Screen name="payouts" options={{ title: "Payouts" }} />
     </Stack>
   );
 }

@@ -1,9 +1,5 @@
-import { Text, View } from "react-native";
+import { CreateTripScreen } from "@/features/trips/screens/CreateTripScreen";
 
 export default function DriverTripsCreate() {
-  return (
-    <View>
-      <Text>Driver Trips Create</Text>
-    </View>
-  );
+  return <CreateTripScreen />;
 }

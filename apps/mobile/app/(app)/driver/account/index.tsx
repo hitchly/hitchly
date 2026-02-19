@@ -1,5 +1,5 @@
 import { DriverProfileScreen } from "@/features/profile/screens/DriverProfileScreen";
 
-export default function RiderProfile() {
+export default function DriverProfile() {
   return <DriverProfileScreen />;
 }

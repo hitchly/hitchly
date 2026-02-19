@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 import { useTheme } from "@/context/theme-context";
 
-export default function DriverPayoutsLayout() {
+export default function DriverRequestsLayout() {
   const { colors } = useTheme();
   return (
     <Stack
@@ -15,7 +15,7 @@ export default function DriverPayoutsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Payouts",
+          title: "Requests",
         }}
       />
     </Stack>

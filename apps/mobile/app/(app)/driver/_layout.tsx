@@ -7,28 +7,39 @@ export default function DriverTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Drive",
-          headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="car" size={24} color={color} />
+          title: "Home",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "navigate-circle" : "navigate-circle-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: "Requests",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "notifications" : "notifications-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="trips"
         options={{
-          title: "History",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="list" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="payouts"
-        options={{
-          title: "Payouts",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="cash" size={24} color={color} />
+          title: "My Trips",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "calendar" : "calendar-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -36,11 +47,18 @@ export default function DriverTabsLayout() {
         name="account"
         options={{
           title: "Account",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
+
+      {/* Hidden Sub-routes */}
+      <Tabs.Screen name="payouts" options={{ href: null }} />
     </Tabs>
   );
 }
