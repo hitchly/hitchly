@@ -1,76 +1,135 @@
-// TODO: fix linting issues and re-enable
-/* eslint-disable*/
+import { Ionicons } from "@expo/vector-icons";
+import { type Href, useRouter, useSegments } from "expo-router";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { usePathname, useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text } from "@/components/ui/Text";
+import { useTheme } from "@/context/theme-context";
 
 interface ActiveTripBannerProps {
   tripId: string;
-  currentStop?: string;
-  topInset?: number;
-  targetRoute?: "drive" | "ride";
+  roleLabel: string;
 }
 
 export const ActiveTripBanner = ({
   tripId,
-  currentStop,
-  topInset = 0,
-  targetRoute = "drive",
+  roleLabel,
 }: ActiveTripBannerProps) => {
   const router = useRouter();
-  const pathname = usePathname();
+  const segments = useSegments(); // Use segments instead of pathname
+  const { colors, isDark } = useTheme();
+  const { bottom } = useSafeAreaInsets();
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.08,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  const isModalActive = segments.join("/").includes("(modals)");
+
+  if (isModalActive) return null;
 
   const handlePress = () => {
-    const currentPath = pathname || "/matchmaking";
-    const referrer = currentPath.includes("/trips/")
-      ? "/matchmaking"
-      : currentPath;
-
-    router.push({
-      pathname: `/trips/${tripId}/${targetRoute}` as any,
-      params: { referrer },
-    });
+    const action = roleLabel === "DRIVING" ? "drive" : "ride";
+    router.push(`/(app)/(modals)/${action}?tripId=${tripId}` as Href);
   };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.banner,
-        { paddingTop: styles.banner.paddingTop + topInset },
-      ]}
-      onPress={handlePress}
-    >
-      <View style={styles.bannerContent}>
-        <Text style={styles.bannerText}>Trip In Progress</Text>
-        {currentStop && <Text style={styles.bannerSubtext}>{currentStop}</Text>}
-      </View>
-    </TouchableOpacity>
+    <View style={[styles.wrapper, { bottom: bottom + 90 }]}>
+      <Pressable
+        onPress={handlePress}
+        style={({ pressed }) => [
+          styles.pill,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            shadowColor: colors.shadow,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+            shadowOpacity: isDark ? 0.4 : 0.08,
+            shadowRadius: isDark ? 10 : 12,
+            elevation: isDark ? 8 : 4,
+          },
+        ]}
+      >
+        <View style={styles.content}>
+          <View style={styles.left}>
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+              <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+            </Animated.View>
+
+            <View>
+              <Text variant="captionSemibold" style={{ color: colors.text }}>
+                {roleLabel} IN PROGRESS
+              </Text>
+              <Text variant="caption" style={{ color: colors.textSecondary }}>
+                Tap to expand live portal
+              </Text>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.surfaceSecondary },
+            ]}
+          >
+            <Ionicons name="expand" size={12} color={colors.textSecondary} />
+          </View>
+        </View>
+      </Pressable>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  banner: {
-    backgroundColor: "#007AFF",
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#0051D5",
+  wrapper: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    zIndex: 99999,
   },
-  bannerContent: {
+  pill: {
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  content: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  bannerText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
+  left: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  bannerSubtext: {
-    color: "#fff",
-    fontSize: 12,
-    opacity: 0.9,
-    marginLeft: 8,
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  iconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

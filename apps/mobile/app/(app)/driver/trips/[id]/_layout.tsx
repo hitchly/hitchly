@@ -13,21 +13,11 @@ export default function DriverTripsDetailsLayout() {
           title: "Trip Details",
         }}
       />
-
       <Stack.Screen
         name="requests"
         options={{
           title: "Manage Requests",
           presentation: "modal",
-        }}
-      />
-
-      <Stack.Screen
-        name="drive"
-        options={{
-          headerShown: false,
-          // Prevents swipe-to-go-back during an active drive to avoid accidental cancellations
-          gestureEnabled: false,
         }}
       />
     </Stack>

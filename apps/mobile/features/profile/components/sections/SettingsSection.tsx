@@ -7,12 +7,14 @@ import {
 } from "@/components/ui/SegmentedControl";
 import { AppRole, type AppRoleType } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
+import { useTheme } from "@/context/theme-context";
 import { useSignOut } from "@/features/auth/hooks/useSignOut";
 import { InfoCard } from "@/features/profile/components/InfoCard";
 
 export function SettingsSection() {
   const { role, toggleRole } = useUserRole();
   const { handleSignOut, isSigningOut } = useSignOut();
+  const { colors } = useTheme();
 
   const ROLE_OPTIONS: readonly SegmentOption<AppRoleType>[] = [
     { label: "Rider", value: AppRole.RIDER },
@@ -51,12 +53,14 @@ export function SettingsSection() {
       </InfoCard>
 
       <Button
-        title="Sign Out"
-        variant="danger"
+        title="SIGN OUT"
+        variant="ghost"
+        icon="log-out-outline"
         onPress={onSignOutPress}
         disabled={isSigningOut}
         isLoading={isSigningOut}
         style={styles.signOut}
+        textStyle={{ color: colors.textSecondary }}
       />
     </View>
   );

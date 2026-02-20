@@ -13,15 +13,6 @@ export default function RiderTripsDetailsLayout() {
           title: "Trip Details",
         }}
       />
-
-      <Stack.Screen
-        name="ride"
-        options={{
-          headerShown: false,
-          // Prevents swipe-to-go-back during an active ride to avoid accidental cancellations
-          gestureEnabled: false,
-        }}
-      />
     </Stack>
   );
 }

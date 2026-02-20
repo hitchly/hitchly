@@ -9,7 +9,6 @@ import { NavTheme } from "@/constants/theme";
 import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
 import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
-import { GlobalActiveTripBanner } from "@/features/trips/components/GlobalActiveTripBanner";
 import { authClient } from "@/lib/auth-client";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";
@@ -56,8 +55,6 @@ function AppContent() {
           <View style={{ flex: 1 }}>
             {/* Context-aware UI components */}
             <RoleTransitionOverlay />
-            <GlobalActiveTripBanner />
-
             {/* Main Navigation Stack */}
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(auth)" />

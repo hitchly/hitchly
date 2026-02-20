@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { Href } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -13,10 +13,11 @@ import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { useRiderTripDetails } from "@/features/trips/hooks/useRiderTripDetails";
 
-const formatLocation = (loc: string) => loc.split(",")[0] ?? loc;
+const formatLocation = (loc: string) => loc.split(",")[0] ?? "Unknown";
 
 export function RiderTripDetailsScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const {
     trip,
     isLoading,
@@ -24,16 +25,9 @@ export function RiderTripDetailsScreen() {
     riderEtaDetails,
     cancelTripRequest,
     handleCancelRequest,
-    router,
   } = useRiderTripDetails();
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Skeleton text="FETCHING TRIP..." />
-      </View>
-    );
-  }
+  if (isLoading) return <Skeleton text="FETCHING TRIP..." />;
 
   if (!trip) {
     return (
@@ -41,18 +35,12 @@ export function RiderTripDetailsScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
       >
         <View style={styles.centered}>
-          <IconBox
-            name="warning-outline"
-            variant="error"
-            size={24}
-            style={styles.errorIcon}
-          />
-          <Text variant="bodySemibold" style={styles.errorText}>
-            TRIP NOT FOUND
-          </Text>
+          <IconBox name="warning" variant="subtle" size={32} />
+          <Text variant="h3">TRIP NOT FOUND</Text>
           <Button
             title="GO BACK"
-            variant="secondary"
+            variant="ghost"
+            icon="arrow-back"
             onPress={() => {
               router.back();
             }}
@@ -74,11 +62,11 @@ export function RiderTripDetailsScreen() {
       edges={["bottom"]}
     >
       <ScrollView
-        style={styles.flex}
-        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
       >
-        <View style={styles.header}>
+        {/* Header with Back & Status */}
+        <View style={styles.headerRow}>
           <Badge
             label={
               userRequest
@@ -103,7 +91,7 @@ export function RiderTripDetailsScreen() {
                   style={[
                     styles.dot,
                     styles.dotOutline,
-                    { borderColor: colors.textSecondary },
+                    { borderColor: colors.border },
                   ]}
                 />
               </View>
@@ -134,41 +122,30 @@ export function RiderTripDetailsScreen() {
             <Card
               style={[
                 styles.cardPadding,
-                { borderColor: colors.primary, borderWidth: 1.5 },
+                {
+                  borderColor: colors.border,
+                  borderLeftWidth: 4,
+                  borderLeftColor: colors.primary,
+                },
               ]}
             >
               <View style={styles.etaHeader}>
-                <IconBox
-                  name="time-outline"
-                  variant="contrast"
-                  size={16}
-                  style={styles.etaIcon}
-                />
-                <Text variant="bodySemibold">
+                <Ionicons name="flash" size={14} color={colors.primary} />
+                <Text
+                  variant="captionSemibold"
+                  style={{ color: colors.primary }}
+                >
                   {riderEtaDetails.title.toUpperCase()}
                 </Text>
               </View>
-              <Text
-                variant="body"
-                color={colors.textSecondary}
-                style={styles.etaMessage}
-              >
+              <Text variant="bodySemibold" style={styles.etaMessage}>
                 {riderEtaDetails.message}
               </Text>
-              {riderEtaDetails.sub && (
-                <Text
-                  variant="mono"
-                  color={colors.textTertiary}
-                  style={styles.subText}
-                >
-                  {riderEtaDetails.sub}
-                </Text>
-              )}
             </Card>
           </FormSection>
         )}
 
-        <FormSection title="TRIP DETAILS">
+        <FormSection title="TRIP INFO">
           <Card style={styles.noPaddingCard}>
             <View style={styles.detailItem}>
               <Text variant="label" color={colors.textSecondary}>
@@ -198,9 +175,9 @@ export function RiderTripDetailsScreen() {
               </Text>
               <View style={styles.driverRow}>
                 <Ionicons
-                  name="person-circle-outline"
-                  size={20}
-                  color={colors.text}
+                  name="person-circle"
+                  size={18}
+                  color={colors.textSecondary}
                 />
                 <Text variant="bodySemibold">HITCHLY DRIVER</Text>
               </View>
@@ -208,12 +185,14 @@ export function RiderTripDetailsScreen() {
           </Card>
         </FormSection>
 
+        {/* Improved Minimalist Actions */}
         <View style={styles.actionsContainer}>
           {(userRequest?.status === "accepted" ||
             userRequest?.status === "on_trip") && (
             <Button
-              title="OPEN LIVE TRIP"
-              icon="map-outline"
+              title="ENTER LIVE PORTAL"
+              icon="expand"
+              size="lg"
               onPress={() => {
                 router.push(`/(app)/rider/trips/${trip.id}/ride` as Href);
               }}
@@ -224,25 +203,23 @@ export function RiderTripDetailsScreen() {
             (trip.status === "active" || trip.status === "in_progress") && (
               <View style={styles.safetyRow}>
                 <Button
-                  title="EMERGENCY"
-                  variant="danger"
-                  size="md"
-                  style={styles.halfBtn}
+                  title="SAFETY"
+                  variant="secondary"
+                  icon="shield-checkmark"
+                  style={styles.flex1}
                   onPress={() => {
                     router.push(
-                      `/(app)/(modals)/safety?mode=emergency&tripId=${trip.id}` as Href
+                      `/(app)/(modals)/safety?tripId=${trip.id}` as Href
                     );
                   }}
                 />
                 <Button
-                  title="REPORT"
+                  title="MAPS"
                   variant="secondary"
-                  size="md"
-                  style={styles.halfBtn}
+                  icon="navigate"
+                  style={styles.flex1}
                   onPress={() => {
-                    router.push(
-                      `/(app)/(modals)/safety?mode=report&tripId=${trip.id}` as Href
-                    );
+                    /* Maps logic */
                   }}
                 />
               </View>
@@ -250,8 +227,9 @@ export function RiderTripDetailsScreen() {
 
           {trip.status === "completed" && (
             <Button
-              title="LEAVE REVIEW & TIP"
-              icon="star-outline"
+              title="LEAVE REVIEW"
+              variant="secondary"
+              icon="star"
               onPress={() => {
                 router.push(`/(app)/(modals)/review?tripId=${trip.id}` as Href);
               }}
@@ -264,7 +242,8 @@ export function RiderTripDetailsScreen() {
               variant="ghost"
               isLoading={cancelTripRequest.isPending}
               onPress={handleCancelRequest}
-              textStyle={{ color: colors.error }}
+              style={styles.cancelBtn}
+              textStyle={{ color: colors.textSecondary, fontSize: 13 }}
             />
           )}
         </View>
@@ -275,40 +254,46 @@ export function RiderTripDetailsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  flex: { flex: 1 },
   content: { padding: 20, gap: 24, paddingBottom: 40 },
-  header: { alignItems: "flex-start", marginBottom: -8 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  backCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    gap: 12,
+    gap: 16,
   },
-  errorIcon: { width: 48, height: 48, borderRadius: 12 },
-  errorText: { marginBottom: 12 },
   cardPadding: { padding: 20 },
   noPaddingCard: { padding: 0 },
   routeRow: { flexDirection: "row", gap: 20 },
   timeline: { alignItems: "center", width: 12, paddingVertical: 4 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotOutline: { backgroundColor: "transparent", borderWidth: 2 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotOutline: { backgroundColor: "transparent", borderWidth: 1.5 },
   line: { width: 1, flex: 1, marginVertical: 4 },
   locationContainer: { flex: 1, gap: 24 },
   locationItem: { gap: 4 },
   etaHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    gap: 6,
+    marginBottom: 4,
   },
-  etaIcon: { width: 24, height: 24, borderRadius: 6 },
-  etaMessage: { lineHeight: 20 },
-  subText: { marginTop: 8 },
+  etaMessage: { fontSize: 16 },
   detailItem: { padding: 16, gap: 4 },
   driverRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   separator: { height: 1, width: "100%" },
-  actionsContainer: { gap: 12, marginTop: 12 },
+  actionsContainer: { gap: 12, marginTop: 8 },
   safetyRow: { flexDirection: "row", gap: 12 },
-  halfBtn: { flex: 1 },
+  flex1: { flex: 1 },
+  cancelBtn: { marginTop: 8, opacity: 0.8 },
 });

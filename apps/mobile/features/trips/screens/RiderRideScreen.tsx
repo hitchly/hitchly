@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,7 @@ import { useTheme } from "@/context/theme-context";
 import { useRideTrip } from "@/features/trips/hooks/useRideTrip";
 
 export function RiderRideScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -29,42 +29,57 @@ export function RiderRideScreen() {
     statusInfo,
     isConfirming,
     actions,
-  } = useRideTrip(id);
+  } = useRideTrip(tripId);
 
-  // Auto-redirect to review if trip completes while viewing
   useEffect(() => {
-    if (isCompleted && id) {
-      // Delay slightly so user sees the "Completed" state before nav
+    if (isCompleted && tripId) {
       const timeout = setTimeout(() => {
-        router.push(`/(app)/rider/trips/${id}/review` as Href);
+        router.replace(`/(app)/(modals)/review?tripId=${tripId}` as Href);
       }, 1500);
       return () => {
         clearTimeout(timeout);
       };
     }
-  }, [id, isCompleted, router]);
+  }, [tripId, isCompleted, router]);
 
-  if (isLoading) return <Skeleton text="Loading Trip Details..." />;
+  const handleClose = () => {
+    router.back();
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["top", "bottom"]}
+      >
+        <View style={styles.content}>
+          <Skeleton text="Loading Trip..." />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (tripMissing) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
-        edges={["top", "left", "right"]}
+        edges={["top", "bottom"]}
       >
-        <View style={styles.header}>
-          <Button
-            size="icon"
-            variant="ghost"
-            icon="arrow-back"
-            onPress={() => {
-              router.back();
-            }}
-          />
-          <Text variant="h2" style={styles.title}>
-            TRIP STATUS
-          </Text>
-          <View style={styles.placeholder} />
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <View style={styles.headerLeft}>
+            <View style={[styles.pulseDot, { backgroundColor: colors.text }]} />
+            <Text variant="h3">Trip Error</Text>
+          </View>
+          <Pressable
+            onPress={handleClose}
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && { opacity: 0.5 },
+            ]}
+            hitSlop={10}
+          >
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
+          </Pressable>
         </View>
         <View style={styles.centerContent}>
           <IconBox
@@ -87,9 +102,7 @@ export function RiderRideScreen() {
           <Button
             title="GO BACK"
             variant="secondary"
-            onPress={() => {
-              router.back();
-            }}
+            onPress={handleClose}
             style={styles.actionBtn}
           />
         </View>
@@ -100,21 +113,23 @@ export function RiderRideScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top", "left", "right"]}
+      edges={["top", "bottom"]}
     >
-      <View style={styles.header}>
-        <Button
-          size="icon"
-          variant="ghost"
-          icon="arrow-back"
-          onPress={() => {
-            router.back();
-          }}
-        />
-        <Text variant="h2" style={styles.title}>
-          TRIP STATUS
-        </Text>
-        <View style={styles.placeholder} />
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={styles.headerLeft}>
+          <View style={[styles.pulseDot, { backgroundColor: colors.text }]} />
+          <Text variant="h3">Trip Status</Text>
+        </View>
+        <Pressable
+          onPress={handleClose}
+          style={({ pressed }) => [
+            styles.closeButton,
+            pressed && { opacity: 0.5 },
+          ]}
+          hitSlop={10}
+        >
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </Pressable>
       </View>
 
       <View style={styles.content}>
@@ -212,7 +227,6 @@ export function RiderRideScreen() {
           </View>
         )}
 
-        {/* Safety Tools Section */}
         {!isCompleted && (
           <View style={styles.safetySection}>
             <FormSection title="SAFETY TOOLS">
@@ -223,7 +237,7 @@ export function RiderRideScreen() {
                   icon="shield-outline"
                   onPress={() => {
                     router.push(
-                      `/(app)/safety?mode=emergency&tripId=${id}` as Href
+                      `/(app)/(modals)/safety?mode=emergency&tripId=${tripId}` as Href
                     );
                   }}
                   style={styles.safetyBtn}
@@ -234,7 +248,7 @@ export function RiderRideScreen() {
                   icon="alert-circle-outline"
                   onPress={() => {
                     router.push(
-                      `/(app)/safety?mode=report&tripId=${id}` as Href
+                      `/(app)/(modals)/safety?mode=report&tripId=${tripId}` as Href
                     );
                   }}
                   style={styles.safetyBtn}
@@ -244,7 +258,6 @@ export function RiderRideScreen() {
           </View>
         )}
 
-        {/* Developer Sandbox Section */}
         {!isCompleted && isTestUser && (
           <View style={styles.devSection}>
             <FormSection title="DEVELOPER SANDBOX">
@@ -288,14 +301,15 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  title: { letterSpacing: 0.5 },
-  placeholder: { width: 44, height: 44 },
-
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  pulseDot: { width: 8, height: 8, borderRadius: 4 },
+  closeButton: { padding: 4 },
   content: { flex: 1, padding: 16 },
   centerContent: {
     flex: 1,
@@ -307,7 +321,6 @@ const styles = StyleSheet.create({
   emptyTitle: { marginBottom: 8, textAlign: "center" },
   emptySubtext: { lineHeight: 22, paddingHorizontal: 20 },
   actionBtn: { marginTop: 24, minWidth: 160 },
-
   statusCard: { padding: 24, marginBottom: 24 },
   cardHeader: {
     flexDirection: "row",
@@ -318,7 +331,6 @@ const styles = StyleSheet.create({
   statusMessage: { fontSize: 28, marginBottom: 8, lineHeight: 32 },
   location: { marginBottom: 32, fontSize: 16 },
   mainAction: { marginBottom: 12 },
-
   confirmedBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -329,11 +341,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 8,
   },
-
   safetySection: { marginTop: 8 },
   safetyRow: { flexDirection: "row", gap: 12 },
   safetyBtn: { flex: 1 },
-
   devSection: { marginTop: 16 },
   devCard: { padding: 16, gap: 12 },
 });
