@@ -165,8 +165,28 @@ export const Colors = {
 
 export const Fonts = {
   regular: Platform.select({ ios: "System", android: "sans-serif" }),
+  semibold: Platform.select({ ios: "System", android: "sans-serif-medium" }),
   bold: Platform.select({ ios: "System", android: "sans-serif-medium" }),
   mono: Platform.select({ ios: "Courier", android: "monospace" }),
+};
+
+export const FontWeights = {
+  regular: "400" as const,
+  medium: "500" as const,
+  semibold: "600" as const,
+  bold: "700" as const,
+  heavy: "800" as const,
+};
+
+export const FontSizes = {
+  h1: 32,
+  h2: 24,
+  h3: 18,
+  h4: 17,
+  body: 16,
+  label: 14,
+  caption: 12,
+  mono: 10,
 };
 
 export const NavTheme = {
@@ -198,9 +218,13 @@ export const NavTheme = {
 
 export type AppColors = typeof Colors.light;
 export type AppFonts = typeof Fonts;
+export type AppFontWeights = typeof FontWeights;
+export type AppFontSizes = typeof FontSizes;
 
 export interface AppTheme {
   colors: AppColors;
   fonts: AppFonts;
+  fontWeights: AppFontWeights;
+  fontSizes: AppFontSizes;
   isDark: boolean;
 }

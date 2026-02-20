@@ -1,6 +1,7 @@
 import type { AppRouter } from "@hitchly/api-types";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+import type { inferRouterOutputs } from "@trpc/server";
 
 import { authClient } from "./auth-client";
 
@@ -33,3 +34,5 @@ export const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+export type RouterOutputs = inferRouterOutputs<AppRouter>;

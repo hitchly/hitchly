@@ -9,6 +9,19 @@ export interface GeocodedAddress {
 }
 
 /**
+ * Formats a date or date string into a readable short format (e.g., "Oct 24, 02:30 PM").
+ */
+export const formatDate = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+/**
  * Formats a raw address object into a clean title/subtitle format.
  * Useful for search dropdowns or address displays.
  */

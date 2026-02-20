@@ -14,8 +14,8 @@
     "test": "turbo run test",
     "prepare": "husky",
     "type-check": "turbo run type-check",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "android": "pnpm --filter @hitchly/mobile android",
+    "ios": "pnpm --filter @hitchly/mobile ios"
   },
   "devDependencies": {
     "@hitchly/eslint-config": "workspace:*",

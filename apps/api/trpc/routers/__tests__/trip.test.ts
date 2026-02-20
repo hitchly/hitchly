@@ -148,8 +148,6 @@ describe("Trip Router", () => {
         }),
       });
 
-      // We explicitly cast mockDb to any here because createMockContext expects the real DB type
-
       const caller = tripRouter.createCaller(
         createMockContext(userId, mockDb as unknown)
       );
@@ -157,7 +155,6 @@ describe("Trip Router", () => {
 
       expect(result).toEqual(mockTrip);
       expect(mockDb.insert).toHaveBeenCalledWith(trips);
-      // It should be called twice (origin + dest)
       expect(mockGeocodeAddress).toHaveBeenCalledTimes(2);
     });
 
@@ -271,11 +268,29 @@ describe("Trip Router", () => {
         },
       ];
 
+      // 1. Mock Base Trips Lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockReturnValueOnce({
             orderBy: vi.fn().mockResolvedValueOnce(mockTrips),
           }),
+        }),
+      });
+
+      // 2. Mock getRequests() lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      // 3. Mock getDrivers() lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([
+            { id: "user1", name: "Driver 1", email: "user1@test.com" },
+            { id: "user2", name: "Driver 2", email: "user2@test.com" },
+          ]),
         }),
       });
 
@@ -285,7 +300,11 @@ describe("Trip Router", () => {
       );
       const result = await caller.getTrips();
 
-      expect(result).toEqual(mockTrips);
+      // Because our function maps .driver and .requests onto the return result
+      expect(result).toMatchObject(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        mockTrips.map((t) => expect.objectContaining({ id: t.id }))
+      );
     });
 
     it("should filter trips by userId", async () => {
@@ -305,11 +324,30 @@ describe("Trip Router", () => {
         },
       ];
 
+      // 1. Mock Base Trips Lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockReturnValueOnce({
             orderBy: vi.fn().mockResolvedValueOnce(mockTrips),
           }),
+        }),
+      });
+
+      // 2. Mock getRequests() lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      // 3. Mock getDrivers() lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              { id: userId, name: "Test Driver", email: "driver@test.com" },
+            ]),
         }),
       });
 
@@ -319,7 +357,8 @@ describe("Trip Router", () => {
       );
       const result = await caller.getTrips({ userId });
 
-      expect(result).toEqual(mockTrips);
+      expect(result[0]?.id).toBe("trip1");
+      expect(result[0]?.driver?.id).toBe(userId);
     });
   });
 
@@ -350,20 +389,31 @@ describe("Trip Router", () => {
         },
       ];
 
-      // Mock trip lookup
+      // 1. Mock trip lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
-      // Mock requests lookup
+      // 2. Mock requests lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce(mockRequests),
           leftJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValueOnce(mockRequests),
           }),
+        }),
+      });
+
+      // 3. Mock driver lookup (ADDED FIX)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              { id: "user1", name: "Test Driver", email: "driver@test.com" },
+            ]),
         }),
       });
 

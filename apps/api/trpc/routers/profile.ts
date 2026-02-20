@@ -242,4 +242,32 @@ export const profileRouter = router({
       reason: null,
     };
   }),
+
+  /**
+   * updateAppRole()
+   * Specific mutation to update the user's active application role.
+   * This is separated from updateProfile to handle navigation side-effects.
+   */
+  updateAppRole: protectedProcedure
+    .input(z.object({ appRole: z.enum(["rider", "driver"]) }))
+    .mutation(async ({ ctx, input }) => {
+      // Future TODO: Add validation check here.
+      // e.g. "if (userHasActiveTrip) throw new TRPCError({ code: 'BAD_REQUEST', ... })"
+
+      await ctx.db
+        .insert(profiles)
+        .values({
+          userId: ctx.userId,
+          appRole: input.appRole,
+        })
+        .onConflictDoUpdate({
+          target: profiles.userId,
+          set: {
+            appRole: input.appRole,
+            updatedAt: new Date(),
+          },
+        });
+
+      return { success: true };
+    }),
 });
