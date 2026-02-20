@@ -1,9 +1,5 @@
-import { Text, View } from "react-native";
+import { DriverTripRequestsScreen } from "@/features/trips/screens/DriverTripRequestsScreen";
 
-export default function Requests() {
-  return (
-    <View>
-      <Text>Requests Home</Text>
-    </View>
-  );
+export default function DriverTripRequests() {
+  return <DriverTripRequestsScreen />;
 }

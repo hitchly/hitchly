@@ -1,6 +1,7 @@
 import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Fonts, FontSizes } from "@/constants/theme";
 import { useTheme } from "@/context/theme-context";
@@ -23,6 +24,11 @@ export function useStackOptions(): NativeStackNavigationOptions {
 
 export function useTabsOptions(): BottomTabNavigationOptions {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Define the base dimensions for the tab bar content itself
+  const BASE_HEIGHT = 60;
+  const BASE_PADDING_BOTTOM = 8;
 
   return {
     headerShown: false,
@@ -34,8 +40,8 @@ export function useTabsOptions(): BottomTabNavigationOptions {
       borderTopWidth: StyleSheet.hairlineWidth,
       elevation: 0,
       shadowOpacity: 0,
-      height: Platform.OS === "ios" ? 88 : 68,
-      paddingBottom: Platform.OS === "ios" ? 28 : 12,
+      height: BASE_HEIGHT + insets.bottom,
+      paddingBottom: BASE_PADDING_BOTTOM + insets.bottom,
       paddingTop: 8,
     },
     tabBarLabelStyle: {

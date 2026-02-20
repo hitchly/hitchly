@@ -10,7 +10,14 @@ export default function DriverRequestsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Requests",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="swipe"
+        options={{
+          presentation: "modal",
+          headerShown: false,
         }}
       />
     </Stack>
