@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native";
+
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
@@ -25,12 +26,11 @@ export function RiderTripCard({
   const rawDate = trip.departureTime;
   const departureDate = rawDate ? new Date(rawDate) : null;
 
-  // Find the current user's specific request for this trip
-  const userRequest = trip.requests?.find(
+  const userRequest = trip.requests.find(
     (req) => req.riderId === currentUserId
   );
-  const requestStatus = String(userRequest?.status ?? "unknown").toUpperCase();
-  const tripStatus = String(trip.status ?? "unknown").toUpperCase();
+  const requestStatus = (userRequest?.status ?? "unknown").toUpperCase();
+  const tripStatus = trip.status.toUpperCase();
 
   const displayStatus = userRequest ? `REQ: ${requestStatus}` : tripStatus;
   const isActive =

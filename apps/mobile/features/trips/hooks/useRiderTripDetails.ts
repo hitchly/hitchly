@@ -10,7 +10,7 @@ export function useRiderTripDetails() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
-  const currentUserId = session?.user?.id;
+  const currentUserId = session?.user.id;
 
   const {
     data: trip,
@@ -59,7 +59,7 @@ export function useRiderTripDetails() {
     }
 
     if (userRequest.status === "on_trip") {
-      const onTripRequests = trip.requests?.filter(
+      const onTripRequests = trip.requests.filter(
         (r) => r.status === "on_trip"
       );
       const idx = onTripRequests.findIndex((r) => r.id === userRequest.id);
