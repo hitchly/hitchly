@@ -1,9 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
+import { useTabsOptions } from "@/hooks/useNavigationOptions";
+
 export default function DriverTabsLayout() {
+  const tabsOptions = useTabsOptions();
+
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs screenOptions={tabsOptions}>
       <Tabs.Screen
         name="index"
         options={{

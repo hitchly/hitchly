@@ -3,7 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
-import { useStackOptions } from "@/hooks/useStackOptions";
+import { useStackOptions } from "@/hooks/useNavigationOptions";
 
 export default function DriverAccountLayout() {
   const router = useRouter();

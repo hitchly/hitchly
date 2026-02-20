@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-import { useStackOptions } from "@/hooks/useStackOptions";
+import { useStackOptions } from "@/hooks/useNavigationOptions";
 
 export default function DriverTripsLayout() {
   const stackOptions = useStackOptions();

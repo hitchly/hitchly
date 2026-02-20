@@ -1,22 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-import { useTheme } from "@/context/theme-context";
+import { useTabsOptions } from "@/hooks/useNavigationOptions";
 
 export default function RiderTabsLayout() {
-  const { colors } = useTheme();
+  const tabsOptions = useTabsOptions();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-        },
-      }}
-    >
+    <Tabs screenOptions={tabsOptions}>
       <Tabs.Screen
         name="index"
         options={{

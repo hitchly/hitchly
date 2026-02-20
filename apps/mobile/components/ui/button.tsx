@@ -14,10 +14,10 @@ import { useTheme } from "@/context/theme-context";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 interface ButtonProps extends PressableProps {
-  title: string;
+  title?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
@@ -75,6 +75,18 @@ export function Button({
       },
       icon: 20,
       gap: 10,
+    },
+    icon: {
+      container: {
+        width: 44,
+        height: 44,
+        minHeight: 44,
+        paddingHorizontal: 0,
+        paddingVertical: 0,
+        borderRadius: 8,
+      },
+      icon: 20,
+      gap: 0,
     },
   };
 
@@ -136,16 +148,21 @@ export function Button({
       ) : (
         <View style={[styles.content, { gap: currentSize.gap }]}>
           {icon && iconPosition === "left" && renderIcon()}
-          <Text
-            variant={size === "sm" ? "captionSemibold" : "bodySemibold"}
-            style={[
-              { color: currentVariant.text },
-              isDisabled && { color: colors.disabledText },
-              textStyle,
-            ]}
-          >
-            {title}
-          </Text>
+
+          {/* NEW: Only render Text if a title is provided */}
+          {title ? (
+            <Text
+              variant={size === "sm" ? "captionSemibold" : "bodySemibold"}
+              style={[
+                { color: currentVariant.text },
+                isDisabled && { color: colors.disabledText },
+                textStyle,
+              ]}
+            >
+              {title}
+            </Text>
+          ) : null}
+
           {icon && iconPosition === "right" && renderIcon()}
         </View>
       )}
