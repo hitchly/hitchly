@@ -3,11 +3,19 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
 
+type IconBoxVariant =
+  | "default"
+  | "subtle"
+  | "contrast"
+  | "error"
+  | "success"
+  | "info";
+
 interface IconBoxProps {
   name: keyof typeof Ionicons.glyphMap;
   size?: number;
   color?: string;
-  variant?: "default" | "subtle" | "contrast" | "error";
+  variant?: IconBoxVariant;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -20,7 +28,10 @@ export function IconBox({
 }: IconBoxProps) {
   const { colors } = useTheme();
 
-  const getVariantStyles = () => {
+  const getVariantStyles = (): {
+    backgroundColor: string;
+    iconColor: string;
+  } => {
     switch (variant) {
       case "subtle":
         return {
@@ -34,8 +45,18 @@ export function IconBox({
         };
       case "error":
         return {
-          backgroundColor: colors.errorBackground,
+          backgroundColor: `${colors.error}20`,
           iconColor: colors.error,
+        };
+      case "success":
+        return {
+          backgroundColor: `${colors.success}20`,
+          iconColor: colors.success,
+        };
+      case "info":
+        return {
+          backgroundColor: `${colors.primary}20`,
+          iconColor: colors.primary,
         };
       default:
         return {
