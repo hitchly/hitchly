@@ -18,14 +18,14 @@ export const authClient = createAuthClient({
 
   fetchOptions: {
     headers: {
-      Origin: "mobile://",
+      Origin: "hitchly://",
     },
   },
 
   plugins: [
     expoClient({
-      scheme: "mobile",
-      storagePrefix: "mobile",
+      scheme: "hitchly",
+      storagePrefix: "hitchly",
       storage: SecureStore,
     }),
     emailOTPClient(),

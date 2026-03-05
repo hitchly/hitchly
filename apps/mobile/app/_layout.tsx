@@ -1,6 +1,7 @@
 import { ThemeProvider as NavigationThemeProvider } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo } from "react";
 import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -12,6 +13,13 @@ import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransit
 import { authClient } from "@/lib/auth-client";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";
+
+void SplashScreen.preventAutoHideAsync();
+
+SplashScreen.setOptions({
+  duration: 400,
+  fade: true,
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,12 +48,11 @@ function AppContent() {
 
     if (!session && !inAuthGroup) {
       router.replace("/(auth)");
-      return;
-    }
-
-    if (session && inAuthGroup) {
+    } else if (session && inAuthGroup) {
       router.replace("/(app)");
     }
+
+    SplashScreen.hide();
   }, [session, isPending, segments, router]);
 
   return (
@@ -53,9 +60,7 @@ function AppContent() {
       <NavigationThemeProvider value={currentNavTheme}>
         <AppThemeProvider>
           <View style={{ flex: 1 }}>
-            {/* Context-aware UI components */}
             <RoleTransitionOverlay />
-            {/* Main Navigation Stack */}
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(app)" />

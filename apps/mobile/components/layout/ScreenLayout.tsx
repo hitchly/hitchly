@@ -57,5 +57,5 @@ const styles = StyleSheet.create({
   header: { alignItems: "center", marginBottom: 32 },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 8 },
   subtitle: { fontSize: 16, textAlign: "center", lineHeight: 22 },
-  form: { width: "100%" },
+  form: { width: "100%", gap: 20 },
 });

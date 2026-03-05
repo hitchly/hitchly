@@ -23,7 +23,7 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
-  trustedOrigins: ["null", "exp://", "mobile://", "http://localhost:3000"],
+  trustedOrigins: ["null", "exp://", "hitchly://", "http://localhost:3000"],
 
   advanced: {
     defaultCookieAttributes: {
