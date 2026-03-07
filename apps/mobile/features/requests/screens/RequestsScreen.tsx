@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { Href } from "expo-router";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -30,7 +31,7 @@ export function RequestsScreen() {
   if (isLoading) return <Skeleton text="Loading requests..." />;
 
   const handleCreateTrip = () => {
-    router.push("/(app)/driver/trips/create" as any);
+    router.push("/(app)/driver/trips/create" as Href);
   };
 
   return (

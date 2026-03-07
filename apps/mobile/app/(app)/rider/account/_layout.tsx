@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { Href } from "expo-router";
 import { Stack, useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
@@ -19,7 +20,7 @@ export default function RiderAccountLayout() {
           headerRight: () => (
             <Pressable
               onPress={() => {
-                router.push("/(app)/rider/account/settings" as any);
+                router.push("/(app)/rider/account/settings" as Href);
               }}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,

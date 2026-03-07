@@ -1,3 +1,4 @@
+import type { Href } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert } from "react-native";
 
@@ -28,7 +29,7 @@ export function useDriverTripDetails() {
         {
           text: "OK",
           onPress: () => {
-            router.replace("/(app)/driver/trips" as any);
+            router.replace("/(app)/driver/trips" as Href);
           },
         },
       ]);
@@ -40,7 +41,7 @@ export function useDriverTripDetails() {
 
   const startTrip = trpc.trip.startTrip.useMutation({
     onSuccess: () => {
-      if (id) router.push(`/(app)/driver/trips/${id}/drive` as any);
+      if (id) router.push(`/(app)/driver/trips/${id}/drive` as Href);
     },
     onError: (error) => {
       Alert.alert("Error", error.message);

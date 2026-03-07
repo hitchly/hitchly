@@ -1,3 +1,4 @@
+import type { Href } from "expo-router";
 import { Redirect } from "expo-router";
 
 import { ROLE_ROUTES } from "@/constants/roles";
@@ -8,5 +9,5 @@ export default function AppIndex() {
 
   if (isLoading) return null;
 
-  return <Redirect href={ROLE_ROUTES[role] as any} />;
+  return <Redirect href={ROLE_ROUTES[role] as Href} />;
 }

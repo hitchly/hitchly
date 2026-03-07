@@ -41,7 +41,7 @@ export function RiderTripsScreen() {
           <View style={styles.headerActions}>
             <Pressable
               onPress={() => {
-                router.push("/(app)/rider" as any);
+                router.push("/(app)/rider" as Href);
               }}
               style={({ pressed }) => [
                 styles.vercelButtonBase,

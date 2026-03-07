@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import type { Href } from "expo-router";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -19,7 +20,7 @@ export function PayoutsSection() {
           pressed && { backgroundColor: colors.surfaceSecondary },
         ]}
         onPress={() => {
-          router.push("/(app)/driver/account/payouts" as any);
+          router.push("/(app)/driver/account/payouts" as Href);
         }}
       >
         <View style={styles.menuLeft}>
