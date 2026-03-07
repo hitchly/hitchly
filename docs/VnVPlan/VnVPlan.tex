@@ -468,6 +468,54 @@ Input: Empty or missing address components.\\
 Output: Returns \texttt{null}.\\
 Test Case Derivation: Validates graceful handling of incomplete location data in user profiles.\\
 How test will be performed: Vitest in \texttt{packages/utils/index.test.ts}.\\
+
+\item \textbf{test-ut-profile-5}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with completed trips and accepted trip requests for the driver.\\
+Input: Authenticated driver queries their earnings.\\
+Output: Correct lifetime, weekly, and monthly earnings totals returned based on completed passenger counts; zero returned when no completed trips exist.\\
+Test Case Derivation: Validates the driver earnings aggregation logic across multiple time windows.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-6}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with no completed trips for the driver.\\
+Input: Authenticated driver queries their earnings.\\
+Output: All earnings fields return zero; \texttt{avgPerTripCents} is zero.\\
+Test Case Derivation: Validates the zero-state edge case for new drivers with no trip history.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-7}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Valid Expo push notification token string.\\
+Output: Push token updated in the \texttt{users} table for the authenticated user.\\
+Test Case Derivation: Validates the push token persistence flow for enabling notifications.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-8}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user.\\
+Input: Query for ban status.\\
+Output: Returns \texttt{\{isBanned: false, reason: null\}} (placeholder implementation).\\
+Test Case Derivation: Validates the stub ban status endpoint returns the expected default.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-9}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Role switch to ``rider''.\\
+Output: Profile upserted with \texttt{appRole} set to ``rider''; returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the role switching mutation for the rider role.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-10}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Role switch to ``driver''.\\
+Output: Profile upserted with \texttt{appRole} set to ``driver''; returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the role switching mutation for the driver role.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
 \end{enumerate}
 
 % ========================================
@@ -645,6 +693,110 @@ Input: Rider submits a tip within valid bounds (\$0.50--\$500); attempt with out
 Output: Valid tip processed and recorded; out-of-bounds amount rejected with validation error.\\
 Test Case Derivation: Validates tip submission input constraints and Stripe processing flow.\\
 How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-22}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a completed trip owned by the authenticated driver, and a rider who participated.\\
+Input: Driver submits a rating (1--5) for a rider on the completed trip.\\
+Output: Returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the driver-rates-rider flow for completed trips.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-23}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a completed trip owned by a different driver.\\
+Input: Non-owner driver attempts to rate a rider.\\
+Output: FORBIDDEN error thrown.\\
+Test Case Derivation: Ensures only the trip's driver can rate riders.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-24}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a non-completed (active) trip.\\
+Input: Driver attempts to rate a rider.\\
+Output: BAD\_REQUEST error indicating trip must be completed.\\
+Test Case Derivation: Validates the trip completion guard on rider reviews.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-25}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a completed trip but rider was not a participant.\\
+Input: Driver attempts to rate a rider who was not on the trip.\\
+Output: NOT\_FOUND error indicating rider request not found.\\
+Test Case Derivation: Ensures drivers can only rate riders who actually participated in the trip.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-26}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with pending/active trips and date range.\\
+Input: Query for available trips with \texttt{startDate} filter.\\
+Output: Only trips departing on or after \texttt{startDate} are returned.\\
+Test Case Derivation: Validates the date range filtering on available trip queries.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-27}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with pending/active trips and date range.\\
+Input: Query for available trips with \texttt{endDate} filter.\\
+Output: Only trips departing on or before \texttt{endDate} are returned.\\
+Test Case Derivation: Validates the upper bound date filtering on available trip queries.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-28}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a pending trip that has accepted riders.\\
+Input: Driver calls \texttt{fixTripStatus} for the stuck trip.\\
+Output: Trip status transitions from ``pending'' to ``active''; \texttt{fixedCount} is 1.\\
+Test Case Derivation: Validates the administrative fix for trips stuck in pending status.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-29}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with no stuck trips.\\
+Input: Driver calls \texttt{fixTripStatus}.\\
+Output: Returns \texttt{\{fixedCount: 0\}} with empty \texttt{fixedTrips} array.\\
+Test Case Derivation: Validates the no-op case when no trips need fixing.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-30}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with an accepted trip request owned by the authenticated rider.\\
+Input: Rider calls \texttt{confirmRiderPickup} for their request.\\
+Output: \texttt{riderPickupConfirmedAt} timestamp set; updated request returned.\\
+Test Case Derivation: Validates the rider pickup confirmation success path.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-31}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with an accepted trip request owned by a different rider.\\
+Input: Wrong rider attempts to confirm pickup.\\
+Output: FORBIDDEN error thrown.\\
+Test Case Derivation: Ensures only the request owner can confirm their own pickup.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-32}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a pending (not accepted) trip request.\\
+Input: Rider attempts to confirm pickup on a non-accepted request.\\
+Output: BAD\_REQUEST error indicating request must be accepted first.\\
+Test Case Derivation: Validates the status guard on pickup confirmation.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-33}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with an active trip and accepted riders with push tokens.\\
+Input: Driver starts the trip via \texttt{startTrip}.\\
+Output: Trip status transitions to ``in\_progress''; \texttt{sendTripNotification} called for accepted riders.\\
+Test Case Derivation: Validates that starting a trip triggers push notifications to all accepted riders.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-34}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with an accepted trip request and associated trip with booked seats; mocked payment service.\\
+Input: Rider cancels their accepted request via \texttt{cancelTripRequest}.\\
+Output: Request cancelled; \texttt{bookedSeats} decremented; \texttt{cancelPaymentHold} called.\\
+Test Case Derivation: Validates that cancelling an accepted request correctly releases the seat and payment hold.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
 \end{enumerate}
 
 % ========================================
@@ -670,6 +822,54 @@ Input: Match request from a verified rider.\\
 Output: Empty list response.\\
 Test Case Derivation: Ensures false positive matches are not generated when constraints are unmet.\\
 How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/matchmaking\_service.test.ts}.\\
+
+\item \textbf{test-ut-match-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with real drivers who have existing reviews.\\
+Input: Rider queries for matches via \texttt{findMatches} router procedure.\\
+Output: Matches returned with real driver ratings looked up from the reviews table.\\
+Test Case Derivation: Validates that the matchmaking router enriches match results with actual driver ratings.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
+
+\item \textbf{test-ut-match-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked matchmaking service returning dummy driver matches.\\
+Input: Rider queries for matches with \texttt{includeDummyMatches} enabled.\\
+Output: Dummy matches returned unmodified (no rating lookup for \texttt{dummy-*} driver IDs).\\
+Test Case Derivation: Ensures dummy matches bypass the review rating enrichment step.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
+
+\item \textbf{test-ut-match-5}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked matchmaking service returning no matches.\\
+Input: Rider queries for matches.\\
+Output: Empty array returned.\\
+Test Case Derivation: Validates the empty result path in the matchmaking router.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
+
+\item \textbf{test-ut-match-6}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a pending trip request owned by the authenticated rider.\\
+Input: Rider cancels their own request via \texttt{cancelRequest}.\\
+Output: Request status updated to ``cancelled''; returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the basic cancellation flow for pending requests.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
+
+\item \textbf{test-ut-match-7}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with an accepted trip request and a trip with booked seats.\\
+Input: Rider cancels their accepted request.\\
+Output: Request cancelled; \texttt{bookedSeats} decremented by 1 on the associated trip.\\
+Test Case Derivation: Validates that accepted request cancellation correctly frees the booked seat.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
+
+\item \textbf{test-ut-match-8}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with a trip request owned by a different rider.\\
+Input: Rider attempts to cancel another rider's request.\\
+Output: FORBIDDEN error thrown.\\
+Test Case Derivation: Ensures riders can only cancel their own requests.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/matchmaking.test.ts}.\\
 \end{enumerate}
 
 % ========================================
@@ -786,6 +986,118 @@ Input: Rider submits a tip with valid amount.\\
 Output: Tip processed via Stripe and recorded in the \texttt{tips} table.\\
 Test Case Derivation: Validates the tip processing flow and database persistence.\\
 How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-7}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database and Stripe SDK.\\
+Input: Authenticated user calls \texttt{createSetupIntent}.\\
+Output: Stripe customer created/retrieved; setup intent client secret returned.\\
+Test Case Derivation: Validates the setup intent creation flow at the router level.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-8}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database returning no user.\\
+Input: Non-existent user calls \texttt{createSetupIntent}.\\
+Output: NOT\_FOUND error thrown.\\
+Test Case Derivation: Validates error handling when user lookup fails.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-9}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with existing customer and payment methods.\\
+Input: Authenticated user queries \texttt{getPaymentMethods}.\\
+Output: List of methods with \texttt{brand}, \texttt{last4}, \texttt{isDefault} correctly mapped; default method sorted first.\\
+Test Case Derivation: Validates payment method retrieval and default flag logic.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-10}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK returning no customer ID.\\
+Input: User with no Stripe customer queries \texttt{getPaymentMethods}.\\
+Output: Empty methods array returned; \texttt{hasPaymentMethod} is \texttt{false}.\\
+Test Case Derivation: Validates the empty state for new users.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-11}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with valid payment method.\\
+Input: User calls \texttt{deletePaymentMethod} with a valid ID.\\
+Output: Payment method detached; returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the payment method deletion flow.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-12}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with no matching method.\\
+Input: User calls \texttt{deletePaymentMethod} with a non-existent ID.\\
+Output: NOT\_FOUND error thrown.\\
+Test Case Derivation: Validates error handling for invalid payment method deletion.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-13}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked payment service.\\
+Input: User calls \texttt{setDefaultPaymentMethod} and \texttt{hasPaymentMethod}.\\
+Output: Default set successfully; \texttt{hasPaymentMethod} returns correct boolean.\\
+Test Case Derivation: Validates simple pass-through router procedures.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-14}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database and Stripe SDK.\\
+Input: Driver calls \texttt{createConnectOnboarding} with valid URLs.\\
+Output: Connect account created; onboarding URL returned.\\
+Test Case Derivation: Validates the Stripe Connect onboarding initiation flow.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-15}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked payment service.\\
+Input: Driver queries \texttt{getConnectStatus}.\\
+Output: Correct Connect account status returned.\\
+Test Case Derivation: Validates the Connect status retrieval pass-through.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-16}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with completed trip and valid rider request.\\
+Input: Rider calls \texttt{submitTip} with a valid amount.\\
+Output: Tip processed successfully; returns \texttt{\{success: true\}}.\\
+Test Case Derivation: Validates the tip submission flow at the router level.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-17}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with non-completed trip.\\
+Input: Rider calls \texttt{submitTip} for an active trip.\\
+Output: BAD\_REQUEST error indicating tips are only for completed trips.\\
+Test Case Derivation: Validates the trip completion guard on tip submission.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-18}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with driver's completed trips, payments, and riders.\\
+Input: Driver queries \texttt{getDriverPayoutHistory}.\\
+Output: Payment list with rider names, amounts, and summary containing \texttt{totalEarningsCents}, \texttt{totalPlatformFeeCents}, and \texttt{pendingCents}.\\
+Test Case Derivation: Validates the driver payout history query and earnings summary calculation.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-19}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with rider's trip payments and tips.\\
+Input: Rider queries \texttt{getRiderPaymentHistory}.\\
+Output: Payment list with driver names, tip history, and summary containing \texttt{totalSpentCents}, \texttt{totalTipsCents}, and \texttt{rideCount}.\\
+Test Case Derivation: Validates the rider payment history query and spending summary calculation.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
+
+\item \textbf{test-ut-payment-20}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked payment service.\\
+Input: Query \texttt{getPaymentStatus} with a valid trip request ID.\\
+Output: Correct payment status returned from the service layer.\\
+Test Case Derivation: Validates the payment status retrieval pass-through.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/payment-router.test.ts}.\\
 \end{enumerate}
 
 % ========================================
@@ -856,13 +1168,17 @@ test-ut-auth-1, 2 & Auth \& Verification & validators.test.ts \\ \hline
 test-ut-auth-3 & Auth \& Verification & client.test.ts \\ \hline
 test-ut-profile-1, 2 & User Profile & profile.test.ts \\ \hline
 test-ut-profile-3, 4 & User Profile & utils/index.test.ts \\ \hline
+test-ut-profile-5--10 & User Profile & profile.test.ts \\ \hline
 test-ut-trip-1--11 & Route \& Trip & trip/location/googlemaps.test.ts \\ \hline
 test-ut-trip-12--21 & Route \& Trip & trip.test.ts \\ \hline
+test-ut-trip-22--34 & Route \& Trip & trip.test.ts \\ \hline
 test-ut-match-1, 2 & Matching & matchmaking\_service.test.ts \\ \hline
+test-ut-match-3--8 & Matching & matchmaking.test.ts \\ \hline
 test-ut-notif-1 & Notification & notification.test.ts \\ \hline
 test-ut-review-1, 2 & Rating \& Feedback & reviews.test.ts \\ \hline
 test-ut-complaint-1 & Safety \& Reporting & complaints.test.ts \\ \hline
 test-ut-payment-1--6 & Payment \& Cost Est. & payment.test.ts \\ \hline
+test-ut-payment-7--20 & Payment \& Cost Est. & payment-router.test.ts \\ \hline
 test-ut-pricing-1, 2 & Pricing & pricing\_service.test.ts \\ \hline
 test-ut-schema-1, 2 & Database & schema.test.ts \\ \hline
 \end{tabular}

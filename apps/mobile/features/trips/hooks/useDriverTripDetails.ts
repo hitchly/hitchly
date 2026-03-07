@@ -28,7 +28,7 @@ export function useDriverTripDetails() {
         {
           text: "OK",
           onPress: () => {
-            router.push("/(app)/driver/trips");
+            router.replace("/(app)/driver/trips" as any);
           },
         },
       ]);
@@ -40,7 +40,7 @@ export function useDriverTripDetails() {
 
   const startTrip = trpc.trip.startTrip.useMutation({
     onSuccess: () => {
-      if (id) router.push(`/(app)/driver/trips/${id}/drive`);
+      if (id) router.push(`/(app)/driver/trips/${id}/drive` as any);
     },
     onError: (error) => {
       Alert.alert("Error", error.message);

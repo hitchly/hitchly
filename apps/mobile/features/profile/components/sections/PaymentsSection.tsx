@@ -19,7 +19,7 @@ export function PaymentsSection() {
           pressed && { backgroundColor: colors.surfaceSecondary },
         ]}
         onPress={() => {
-          router.push("/(app)/rider/account/payments");
+          router.push("/(app)/rider/account/payments" as any);
         }}
       >
         <View style={styles.menuLeft}>

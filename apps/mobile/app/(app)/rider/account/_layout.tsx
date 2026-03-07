@@ -19,7 +19,7 @@ export default function RiderAccountLayout() {
           headerRight: () => (
             <Pressable
               onPress={() => {
-                router.push("/(app)/rider/account/settings");
+                router.push("/(app)/rider/account/settings" as any);
               }}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.7 : 1,

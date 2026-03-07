@@ -214,7 +214,7 @@ export function DriverTripRequestsScreen() {
             title="SWIPE TO REVIEW"
             icon="layers-outline"
             onPress={() => {
-              router.push("/(app)/driver/requests/swipe");
+              router.push("/(app)/driver/requests/swipe" as any);
             }}
             style={styles.fab}
           />

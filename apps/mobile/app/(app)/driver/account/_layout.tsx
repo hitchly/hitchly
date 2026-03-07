@@ -19,7 +19,7 @@ export default function DriverAccountLayout() {
           headerRight: () => (
             <Pressable
               onPress={() => {
-                router.push("/driver/account/settings");
+                router.push("/driver/account/settings" as any);
               }}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.5 : 1,

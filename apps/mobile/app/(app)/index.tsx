@@ -8,5 +8,5 @@ export default function AppIndex() {
 
   if (isLoading) return null;
 
-  return <Redirect href={ROLE_ROUTES[role]} />;
+  return <Redirect href={ROLE_ROUTES[role] as any} />;
 }

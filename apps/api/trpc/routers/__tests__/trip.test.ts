@@ -111,7 +111,7 @@ describe("Trip Router", () => {
       maxSeats: 3,
     };
 
-    it("should create a trip successfully", async () => {
+    it("should create a trip successfully (test-ut-trip-1)", async () => {
       const userId = "user123";
       const mockUser = {
         id: userId,
@@ -158,7 +158,7 @@ describe("Trip Router", () => {
       expect(mockGeocodeAddress).toHaveBeenCalledTimes(2);
     });
 
-    it("should reject unverified users", async () => {
+    it("should reject unverified users (test-ut-trip-1)", async () => {
       const userId = "user123";
       const mockUser = {
         id: userId,
@@ -182,7 +182,7 @@ describe("Trip Router", () => {
       );
     });
 
-    it("should reject trips with departure time too soon", async () => {
+    it("should reject trips with departure time too soon (test-ut-trip-1)", async () => {
       const userId = "user123";
       const mockUser = {
         id: userId,
@@ -212,7 +212,7 @@ describe("Trip Router", () => {
       );
     });
 
-    it("should reject trips with invalid seat count", async () => {
+    it("should reject trips with invalid seat count (test-ut-trip-1)", async () => {
       const userId = "user123";
       const invalidInput = {
         ...validInput,
@@ -227,7 +227,7 @@ describe("Trip Router", () => {
       await expect(caller.createTrip(invalidInput)).rejects.toThrow();
     });
 
-    it("should require authentication", async () => {
+    it("should require authentication (test-ut-trip-1)", async () => {
       const caller = tripRouter.createCaller(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         createMockContext(undefined, mockDb as any)
@@ -240,7 +240,7 @@ describe("Trip Router", () => {
   });
 
   describe("getTrips", () => {
-    it("should return all trips when no filters provided", async () => {
+    it("should return all trips when no filters provided (test-ut-trip-2)", async () => {
       const mockTrips = [
         {
           id: "trip1",
@@ -307,7 +307,7 @@ describe("Trip Router", () => {
       );
     });
 
-    it("should filter trips by userId", async () => {
+    it("should filter trips by userId (test-ut-trip-2)", async () => {
       const userId = "user1";
       const mockTrips = [
         {
@@ -363,7 +363,7 @@ describe("Trip Router", () => {
   });
 
   describe("getTripById", () => {
-    it("should return trip with requests", async () => {
+    it("should return trip with requests (test-ut-trip-2)", async () => {
       const tripId = "trip123";
       const mockTrip = {
         id: tripId,
@@ -440,7 +440,7 @@ describe("Trip Router", () => {
       });
     });
 
-    it("should throw error if trip not found", async () => {
+    it("should throw error if trip not found (test-ut-trip-2)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([]),
@@ -473,7 +473,7 @@ describe("Trip Router", () => {
       updatedAt: new Date(),
     };
 
-    it("should update trip successfully", async () => {
+    it("should update trip successfully (test-ut-trip-3)", async () => {
       const updates = {
         origin: "New Origin",
         maxSeats: 4,
@@ -506,7 +506,7 @@ describe("Trip Router", () => {
       expect(result).toEqual(updatedTrip);
     });
 
-    it("should reject update from non-owner", async () => {
+    it("should reject update from non-owner (test-ut-trip-3)", async () => {
       const otherUserId = "otherUser";
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -524,7 +524,7 @@ describe("Trip Router", () => {
       ).rejects.toThrow("Unauthorized: You can only update your own trips");
     });
 
-    it("should reject update of non-pending trips", async () => {
+    it("should reject update of non-pending trips (test-ut-trip-3)", async () => {
       const completedTrip = { ...mockTrip, status: "completed" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -557,7 +557,7 @@ describe("Trip Router", () => {
       updatedAt: new Date(),
     };
 
-    it("should cancel trip successfully", async () => {
+    it("should cancel trip successfully (test-ut-trip-4)", async () => {
       // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -600,7 +600,7 @@ describe("Trip Router", () => {
       expect(result.trip?.status).toBe("cancelled");
     });
 
-    it("should reject cancellation from non-owner", async () => {
+    it("should reject cancellation from non-owner (test-ut-trip-4)", async () => {
       const otherUserId = "otherUser";
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -618,7 +618,7 @@ describe("Trip Router", () => {
       );
     });
 
-    it("should reject cancellation of completed trips", async () => {
+    it("should reject cancellation of completed trips (test-ut-trip-4)", async () => {
       const completedTrip = { ...mockTrip, status: "completed" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -645,7 +645,7 @@ describe("Trip Router", () => {
       status: "active",
     });
 
-    it("should start trip successfully", async () => {
+    it("should start trip successfully (test-ut-trip-5)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
@@ -677,7 +677,7 @@ describe("Trip Router", () => {
       expect(result.status).toBe("in_progress");
     });
 
-    it("should reject start from non-owner", async () => {
+    it("should reject start from non-owner (test-ut-trip-5)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
@@ -694,7 +694,7 @@ describe("Trip Router", () => {
       );
     });
 
-    it("should reject start of non-active trips", async () => {
+    it("should reject start of non-active trips (test-ut-trip-5)", async () => {
       const pendingTrip = { ...mockTrip, status: "pending" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -728,7 +728,7 @@ describe("Trip Router", () => {
       riderPickupConfirmedAt: new Date(),
     });
 
-    it("should update passenger status to on_trip (pickup)", async () => {
+    it("should update passenger status to on_trip (pickup) (test-ut-trip-6)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
@@ -762,7 +762,7 @@ describe("Trip Router", () => {
       expect(result?.status).toBe("on_trip");
     });
 
-    it("should update passenger status to completed (dropoff)", async () => {
+    it("should update passenger status to completed (dropoff) (test-ut-trip-6)", async () => {
       const onTripRequest = { ...mockRequest, status: "on_trip" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -797,7 +797,7 @@ describe("Trip Router", () => {
       expect(result?.status).toBe("completed");
     });
 
-    it("should reject pickup without rider confirmation", async () => {
+    it("should reject pickup without rider confirmation (test-ut-trip-6)", async () => {
       const unconfirmedRequest = {
         ...mockRequest,
         riderPickupConfirmedAt: null,
@@ -823,7 +823,7 @@ describe("Trip Router", () => {
       ).rejects.toThrow("Rider has not confirmed pickup yet");
     });
 
-    it("should reject update when trip is not in_progress", async () => {
+    it("should reject update when trip is not in_progress (test-ut-trip-6)", async () => {
       const activeTrip = { ...mockTrip, status: "active" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -853,7 +853,7 @@ describe("Trip Router", () => {
       updatedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
     });
 
-    it("should complete trip successfully", async () => {
+    it("should complete trip successfully (test-ut-trip-7)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
@@ -898,7 +898,7 @@ describe("Trip Router", () => {
       expect(result.summary).toHaveProperty("passengerCount");
     });
 
-    it("should reject completion with incomplete passengers", async () => {
+    it("should reject completion with incomplete passengers (test-ut-trip-7)", async () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
@@ -1204,6 +1204,1204 @@ describe("Trip Router", () => {
 
       expect(result.success).toBe(true);
       expect(result.fixedCount).toBe(1);
+    });
+  });
+
+  // ============================================
+  // PENDING TESTS: Trip Request Edge Cases
+  // ============================================
+
+  describe("rejectTripRequest", () => {
+    it("should reject a pending trip request (test-ut-trip-12)", async () => {
+      const driverId = "driver-123";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId: "rider-1",
+        status: "pending",
+      });
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId,
+        status: "active",
+      });
+
+      // Mock select: get request with trip via leftJoin
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValueOnce({
+              limit: vi
+                .fn()
+                .mockResolvedValueOnce([
+                  { request: mockRequest, trip: mockTrip },
+                ]),
+            }),
+          }),
+        }),
+      });
+
+      // Mock update: set status to rejected
+      const rejectedRequest = { ...mockRequest, status: "rejected" };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([rejectedRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+      const result = await caller.rejectTripRequest({ requestId: "req-1" });
+
+      expect(result?.status).toBe("rejected");
+    });
+
+    it("should reject non-owner drivers (test-ut-trip-12)", async () => {
+      const nonOwnerDriverId = "other-driver";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId: "rider-1",
+        status: "pending",
+      });
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId: "driver-123",
+        status: "active",
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValueOnce({
+              limit: vi
+                .fn()
+                .mockResolvedValueOnce([
+                  { request: mockRequest, trip: mockTrip },
+                ]),
+            }),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(nonOwnerDriverId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.rejectTripRequest({ requestId: "req-1" })
+      ).rejects.toThrow(
+        /FORBIDDEN|You can only reject requests for your own trips/
+      );
+    });
+  });
+
+  describe("cancelTripRequest", () => {
+    it("should cancel an accepted request and release payment hold (test-ut-trip-13)", async () => {
+      const riderId = "rider-123";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId,
+        status: "accepted",
+      });
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId: "driver-1",
+        bookedSeats: 1,
+        status: "active",
+      });
+
+      // Mock select: get request with trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValueOnce({
+              limit: vi
+                .fn()
+                .mockResolvedValueOnce([
+                  { request: mockRequest, trip: mockTrip },
+                ]),
+            }),
+          }),
+        }),
+      });
+
+      // Mock update: cancel request
+      const cancelledRequest = { ...mockRequest, status: "cancelled" };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([cancelledRequest]),
+          }),
+        }),
+      });
+
+      // Mock update: decrement bookedSeats
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const { cancelPaymentHold: mockCancelPaymentHold } =
+        await import("../../../services/payment");
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+      const result = await caller.cancelTripRequest({ requestId: "req-1" });
+
+      expect(result?.status).toBe("cancelled");
+      expect(mockCancelPaymentHold).toHaveBeenCalledWith("req-1");
+    });
+  });
+
+  describe("confirmRiderPickup", () => {
+    it("should set riderPickupConfirmedAt for accepted requests (test-ut-trip-14)", async () => {
+      const riderId = "rider-123";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        riderId,
+        status: "accepted",
+      });
+
+      // Mock select: get request
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockRequest]),
+          }),
+        }),
+      });
+
+      // Mock update: set riderPickupConfirmedAt
+      const updatedRequest = {
+        ...mockRequest,
+        riderPickupConfirmedAt: new Date(),
+      };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([updatedRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+      const result = await caller.confirmRiderPickup({ requestId: "req-1" });
+
+      expect(result?.riderPickupConfirmedAt).toBeTruthy();
+    });
+
+    it("should reject wrong rider (test-ut-trip-14)", async () => {
+      const wrongRiderId = "wrong-rider";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        riderId: "rider-123",
+        status: "accepted",
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(wrongRiderId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.confirmRiderPickup({ requestId: "req-1" })
+      ).rejects.toThrow(
+        /FORBIDDEN|You can only confirm pickup for your own requests/
+      );
+    });
+  });
+
+  describe("createTripRequest - no payment method", () => {
+    it("should reject riders without a payment method (test-ut-trip-15)", async () => {
+      const riderId = "rider-no-pm";
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId: "driver-1",
+        status: "active",
+        bookedSeats: 0,
+        maxSeats: 3,
+      });
+
+      // Mock select: get trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockTrip]),
+          }),
+        }),
+      });
+
+      // Mock select: check existing request (none found)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([]),
+          }),
+        }),
+      });
+
+      // Override hasPaymentMethod to return false
+      const { hasPaymentMethod: mockHasPaymentMethod } =
+        await import("../../../services/payment");
+      (mockHasPaymentMethod as Mock).mockResolvedValueOnce(false);
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.createTripRequest({
+          tripId: "trip-1",
+          pickupLat: 43.26,
+          pickupLng: -79.92,
+        })
+      ).rejects.toThrow(/payment method/i);
+    });
+  });
+
+  describe("acceptTripRequest - payment hold failure", () => {
+    it("should not accept request when payment hold fails (test-ut-trip-16)", async () => {
+      const driverId = "driver-123";
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId: "rider-1",
+        status: "pending",
+        estimatedDistanceKm: 10,
+        estimatedDurationSec: 1200,
+        estimatedDetourSec: 0,
+      });
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId,
+        status: "active",
+        bookedSeats: 0,
+        maxSeats: 3,
+      });
+
+      // Mock select: get request with trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValueOnce({
+              limit: vi
+                .fn()
+                .mockResolvedValueOnce([
+                  { request: mockRequest, trip: mockTrip },
+                ]),
+            }),
+          }),
+        }),
+      });
+
+      // Override createPaymentHold to fail
+      const { createPaymentHold: mockCreatePaymentHold } =
+        await import("../../../services/payment");
+      (mockCreatePaymentHold as Mock).mockResolvedValueOnce({
+        success: false,
+        paymentIntentId: "",
+        error: "Insufficient funds",
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.acceptTripRequest({ requestId: "req-1" })
+      ).rejects.toThrow(/Payment failed|Insufficient funds/);
+    });
+  });
+
+  describe("acceptTripRequest - retroactive discount", () => {
+    it("should update existing riders' payment holds when 2nd rider joins (test-ut-trip-17)", async () => {
+      const driverId = "driver-123";
+      const mockRequest = createMockTripRequest({
+        id: "req-2",
+        tripId: "trip-1",
+        riderId: "rider-2",
+        status: "pending",
+        estimatedDistanceKm: 10,
+        estimatedDurationSec: 1200,
+        estimatedDetourSec: 0,
+      });
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId,
+        status: "active",
+        bookedSeats: 1,
+        maxSeats: 3,
+      });
+
+      // Mock select: get request with trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            leftJoin: vi.fn().mockReturnValueOnce({
+              limit: vi
+                .fn()
+                .mockResolvedValueOnce([
+                  { request: mockRequest, trip: mockTrip },
+                ]),
+            }),
+          }),
+        }),
+      });
+
+      // Reset createPaymentHold to succeed
+      const {
+        createPaymentHold: mockCreatePaymentHold,
+        updatePaymentHold: mockUpdatePaymentHold,
+      } = await import("../../../services/payment");
+      (mockCreatePaymentHold as Mock).mockResolvedValueOnce({
+        success: true,
+        paymentIntentId: "pi_new",
+      });
+
+      // Mock update: accept request
+      const acceptedRequest = { ...mockRequest, status: "accepted" };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([acceptedRequest]),
+          }),
+        }),
+      });
+
+      // Mock update: increment bookedSeats
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      // Mock select: get existing accepted requests for retroactive discount
+      const existingRequest1 = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId: "rider-1",
+        status: "accepted",
+        estimatedDistanceKm: 12,
+        estimatedDurationSec: 1500,
+        estimatedDetourSec: 0,
+      });
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([existingRequest1]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+      await caller.acceptTripRequest({ requestId: "req-2" });
+
+      // Verify updatePaymentHold was called for the existing rider
+      expect(mockUpdatePaymentHold).toHaveBeenCalledWith(
+        "req-1",
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number)
+      );
+    });
+  });
+
+  describe("cancelTrip - payment holds released", () => {
+    it("should release payment holds for all accepted riders (test-ut-trip-18)", async () => {
+      const driverId = "driver-123";
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId,
+        status: "active",
+        bookedSeats: 2,
+      });
+
+      // Mock select: get trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      // Mock update: cancel trip
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([{ ...mockTrip, status: "cancelled" }]),
+          }),
+        }),
+      });
+
+      // Mock update: cancel pending requests
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      // Mock select: get accepted riders for notification
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          innerJoin: vi.fn().mockReturnValueOnce({
+            where: vi.fn().mockResolvedValueOnce([
+              { userId: "rider-1", pushToken: "token1" },
+              { userId: "rider-2", pushToken: "token2" },
+            ]),
+          }),
+        }),
+      });
+
+      // Mock select: get accepted request IDs for payment release
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ id: "req-1" }, { id: "req-2" }]),
+        }),
+      });
+
+      // Mock update: cancel accepted requests
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const { cancelPaymentHold: mockCancelPaymentHold } =
+        await import("../../../services/payment");
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+      const result = await caller.cancelTrip({ tripId: "trip-1" });
+
+      expect(result.success).toBe(true);
+      // cancelPaymentHold is called in a .catch() chain, so we need to wait
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockCancelPaymentHold).toHaveBeenCalledWith("req-1");
+      expect(mockCancelPaymentHold).toHaveBeenCalledWith("req-2");
+    });
+  });
+
+  describe("completeTrip - earnings summary", () => {
+    it("should return correct earnings summary (test-ut-trip-19)", async () => {
+      const driverId = "driver-123";
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId,
+        status: "in_progress",
+        updatedAt: new Date(Date.now() - 30 * 60 * 1000), // started 30 min ago
+      });
+
+      // Mock select: get trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+        }),
+      });
+
+      // Mock select: accepted requests (should be empty for completed trip)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      // Mock select: on_trip requests (should be empty)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      // Mock update: complete trip
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([{ ...mockTrip, status: "completed" }]),
+          }),
+        }),
+      });
+
+      // Mock select: get completed requests
+      const completedReq1 = createMockTripRequest({
+        id: "req-1",
+        riderId: "rider-1",
+        status: "completed",
+        pickupLat: 43.26,
+        pickupLng: -79.92,
+      });
+      const completedReq2 = createMockTripRequest({
+        id: "req-2",
+        riderId: "rider-2",
+        status: "completed",
+        pickupLat: 43.27,
+        pickupLng: -79.91,
+      });
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([completedReq1, completedReq2]),
+        }),
+      });
+
+      // Mock select: get rider 1 name
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([{ name: "Rider One" }]),
+          }),
+        }),
+      });
+
+      // Mock select: get rider 2 name
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([{ name: "Rider Two" }]),
+          }),
+        }),
+      });
+
+      // Mock select: get riders with push tokens for notification
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+      const result = await caller.completeTrip({ tripId: "trip-1" });
+
+      expect(result.summary.passengerCount).toBe(2);
+      expect(result.summary.totalEarningsCents).toBe(1500); // 2 * 750 placeholder
+      expect(result.summary.perPassenger).toHaveLength(2);
+      expect(result?.summary?.perPassenger?.[0]?.riderName).toBe("Rider One");
+    });
+  });
+
+  describe("submitTripTip - bounds validation", () => {
+    it("should process a valid tip (test-ut-trip-21)", async () => {
+      const riderId = "rider-123";
+      const mockTrip = createMockTrip({
+        id: "trip-1",
+        driverId: "driver-1",
+        status: "completed",
+      });
+      const mockRequest = createMockTripRequest({
+        id: "req-1",
+        tripId: "trip-1",
+        riderId,
+        status: "completed",
+      });
+
+      // Mock select: get trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockTrip]),
+          }),
+        }),
+      });
+
+      // Mock select: get rider request
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([mockRequest]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+      const result = await caller.submitTripTip({
+        tripId: "trip-1",
+        tipCents: 500,
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject tip below minimum (test-ut-trip-21)", async () => {
+      const riderId = "rider-123";
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      // tipCents: 10 is below the min of 50 in the Zod schema
+      await expect(
+        caller.submitTripTip({ tripId: "trip-1", tipCents: 10 })
+      ).rejects.toThrow();
+    });
+
+    it("should reject tip above maximum (test-ut-trip-21)", async () => {
+      const riderId = "rider-123";
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      // tipCents: 60000 is above the max of 50000 in the Zod schema
+      await expect(
+        caller.submitTripTip({ tripId: "trip-1", tipCents: 60000 })
+      ).rejects.toThrow();
+    });
+  });
+
+  // ============================================
+  // submitRiderReview
+  // ============================================
+  describe("submitRiderReview", () => {
+    it("should successfully rate a rider on a completed trip (test-ut-trip-22)", async () => {
+      const driverId = "driver-123";
+
+      // Mock trip lookup → completed trip owned by this driver
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              createMockTrip({ id: "trip-1", driverId, status: "completed" }),
+            ]),
+        }),
+      });
+
+      // Mock trip request lookup → rider was on trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            createMockTripRequest({
+              tripId: "trip-1",
+              riderId: "rider-456",
+              status: "completed",
+            }),
+          ]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      const result = await caller.submitRiderReview({
+        tripId: "trip-1",
+        riderId: "rider-456",
+        rating: 4,
+        comment: "Great rider!",
+      });
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should reject non-owner driver from rating (test-ut-trip-23)", async () => {
+      const driverId = "driver-other";
+
+      // Different driver owns the trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            createMockTrip({
+              id: "trip-1",
+              driverId: "driver-real",
+              status: "completed",
+            }),
+          ]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.submitRiderReview({
+          tripId: "trip-1",
+          riderId: "rider-456",
+          rating: 4,
+        })
+      ).rejects.toThrowError("Only the driver can rate riders for this trip");
+    });
+
+    it("should reject rating for non-completed trip (test-ut-trip-24)", async () => {
+      const driverId = "driver-123";
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              createMockTrip({ id: "trip-1", driverId, status: "active" }),
+            ]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.submitRiderReview({
+          tripId: "trip-1",
+          riderId: "rider-456",
+          rating: 4,
+        })
+      ).rejects.toThrowError("Trip must be completed before rating riders");
+    });
+
+    it("should reject rating for rider not on trip (test-ut-trip-25)", async () => {
+      const driverId = "driver-123";
+
+      // Trip exists and is completed
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              createMockTrip({ id: "trip-1", driverId, status: "completed" }),
+            ]),
+        }),
+      });
+
+      // No matching request for this rider
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.submitRiderReview({
+          tripId: "trip-1",
+          riderId: "rider-nonexistent",
+          rating: 4,
+        })
+      ).rejects.toThrowError("Rider request not found for this trip");
+    });
+  });
+
+  // ============================================
+  // getAvailableTrips — date filters
+  // ============================================
+  describe("getAvailableTrips", () => {
+    it("should filter trips by startDate (test-ut-trip-26)", async () => {
+      const riderId = "rider-123";
+      const future = new Date(Date.now() + 86400000); // tomorrow
+
+      // Mock select().from().where().orderBy() → trips
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValueOnce([
+              createMockTrip({
+                id: "trip-1",
+                driverId: "driver-1",
+                status: "pending",
+                departureTime: future,
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      // Mock existing requests (rider has none)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      const result = await caller.getAvailableTrips({ startDate: new Date() });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.id).toBe("trip-1");
+    });
+
+    it("should filter trips by endDate (test-ut-trip-27)", async () => {
+      const riderId = "rider-123";
+      const future = new Date(Date.now() + 86400000);
+      const endDate = new Date(Date.now() + 172800000); // day after tomorrow
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValueOnce([
+              createMockTrip({
+                id: "trip-2",
+                driverId: "driver-2",
+                status: "active",
+                departureTime: future,
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      const result = await caller.getAvailableTrips({ endDate });
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  // ============================================
+  // fixTripStatus
+  // ============================================
+  describe("fixTripStatus", () => {
+    it("should fix a stuck pending trip with accepted riders (test-ut-trip-28)", async () => {
+      const driverId = "driver-123";
+
+      // Mock trips query → pending trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            {
+              trip: createMockTrip({
+                id: "trip-stuck",
+                driverId,
+                status: "pending",
+              }),
+            },
+          ]),
+        }),
+      });
+
+      // Mock count of accepted requests → 2 accepted
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 2 }]),
+        }),
+      });
+
+      // Mock update → fix trip status
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      const result = await caller.fixTripStatus({ tripId: "trip-stuck" });
+
+      expect(result.success).toBe(true);
+      expect(result.fixedCount).toBe(1);
+      expect(result.fixedTrips[0]).toEqual(
+        expect.objectContaining({
+          tripId: "trip-stuck",
+          oldStatus: "pending",
+          newStatus: "active",
+        })
+      );
+    });
+
+    it("should return fixedCount 0 when no trips need fixing (test-ut-trip-29)", async () => {
+      const driverId = "driver-123";
+
+      // Mock trips query → no stuck trips found
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      const result = await caller.fixTripStatus({});
+
+      expect(result.success).toBe(true);
+      expect(result.fixedCount).toBe(0);
+      expect(result.fixedTrips).toEqual([]);
+    });
+  });
+
+  // ============================================
+  // confirmRiderPickup
+  // ============================================
+  describe("confirmRiderPickup", () => {
+    it("should confirm pickup for accepted request owned by rider (test-ut-trip-30)", async () => {
+      const riderId = "rider-123";
+      const confirmedAt = new Date();
+
+      // Mock select().from().where().limit() → accepted request owned by this rider
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValueOnce([
+              createMockTripRequest({
+                id: "req-1",
+                riderId,
+                status: "accepted",
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      // Mock update().set().where().returning() → returns updated request
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([
+              createMockTripRequest({
+                id: "req-1",
+                riderId,
+                status: "accepted",
+                riderPickupConfirmedAt: confirmedAt,
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      const result = await caller.confirmRiderPickup({ requestId: "req-1" });
+
+      expect(result).toBeDefined();
+      expect(result?.riderPickupConfirmedAt).toBe(confirmedAt);
+      expect(mockDb.update).toHaveBeenCalled();
+    });
+
+    it("should reject confirmation from wrong rider (test-ut-trip-31)", async () => {
+      const riderId = "rider-wrong";
+
+      // Request belongs to a different rider
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValueOnce([
+              createMockTripRequest({
+                id: "req-1",
+                riderId: "rider-other",
+                status: "accepted",
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.confirmRiderPickup({ requestId: "req-1" })
+      ).rejects.toThrowError(
+        "You can only confirm pickup for your own requests"
+      );
+    });
+
+    it("should reject confirmation for non-accepted request (test-ut-trip-32)", async () => {
+      const riderId = "rider-123";
+
+      // Request is pending, not accepted
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValueOnce([
+              createMockTripRequest({
+                id: "req-1",
+                riderId,
+                status: "pending",
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      await expect(
+        caller.confirmRiderPickup({ requestId: "req-1" })
+      ).rejects.toThrowError(
+        "Request must be accepted before confirming pickup"
+      );
+    });
+  });
+
+  // ============================================
+  // startTrip — notification branch
+  // ============================================
+  describe("startTrip — notifications", () => {
+    it("should send notifications to accepted riders when starting (test-ut-trip-33)", async () => {
+      const driverId = "driver-123";
+
+      // Mock select → active trip owned by driver
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            createMockTrip({
+              id: "trip-1",
+              driverId,
+              status: "active",
+            }),
+          ]),
+        }),
+      });
+
+      // Mock update().set().where().returning() → trip started
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([
+              createMockTrip({
+                id: "trip-1",
+                driverId,
+                status: "in_progress",
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      // Mock select accepted riders with push tokens (innerJoin chain)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce([
+              {
+                userId: "rider-1",
+                pushToken: "ExponentPushToken[token-1]",
+              },
+              {
+                userId: "rider-2",
+                pushToken: "ExponentPushToken[token-2]",
+              },
+            ]),
+          }),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(driverId, mockDb as unknown)
+      );
+
+      const result = await caller.startTrip({ tripId: "trip-1" });
+
+      expect(result.status).toBe("in_progress");
+      // sendTripNotification is mocked at module level
+      const { sendTripNotification } =
+        await import("../../../services/notification");
+      expect(sendTripNotification).toHaveBeenCalled();
+    });
+  });
+
+  // ============================================
+  // cancelTripRequest — accepted with payment hold
+  // ============================================
+  describe("cancelTripRequest — accepted path", () => {
+    it("should decrement seats and release payment hold for accepted cancellation (test-ut-trip-34)", async () => {
+      const riderId = "rider-123";
+
+      // Mock select joined query → accepted request with trip
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValueOnce([
+                {
+                  request: createMockTripRequest({
+                    id: "req-1",
+                    riderId,
+                    tripId: "trip-1",
+                    status: "accepted",
+                  }),
+                  trip: createMockTrip({
+                    id: "trip-1",
+                    bookedSeats: 2,
+                    driverId: "driver-1",
+                  }),
+                },
+              ]),
+            }),
+          }),
+        }),
+      });
+
+      // Mock update request → cancelled
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([
+              createMockTripRequest({
+                id: "req-1",
+                riderId,
+                status: "cancelled",
+              }),
+            ]),
+          }),
+        }),
+      });
+
+      // Mock update trip → decrement bookedSeats
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = tripRouter.createCaller(
+        createMockContext(riderId, mockDb as unknown)
+      );
+
+      const result = await caller.cancelTripRequest({ requestId: "req-1" });
+
+      expect(result?.status).toBe("cancelled");
+      // Two update calls: one for request, one for trip seats
+      expect(mockDb.update).toHaveBeenCalledTimes(2);
+
+      // cancelPaymentHold should have been called
+      const { cancelPaymentHold } = await import("../../../services/payment");
+      expect(cancelPaymentHold).toHaveBeenCalledWith("req-1");
     });
   });
 });

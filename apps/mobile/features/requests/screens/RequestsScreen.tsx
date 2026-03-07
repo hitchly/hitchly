@@ -30,7 +30,7 @@ export function RequestsScreen() {
   if (isLoading) return <Skeleton text="Loading requests..." />;
 
   const handleCreateTrip = () => {
-    router.push("/(app)/driver/trips/create");
+    router.push("/(app)/driver/trips/create" as any);
   };
 
   return (
