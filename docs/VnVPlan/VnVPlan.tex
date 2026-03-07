@@ -1,4 +1,4 @@
-\documentclass[12pt, titlepage]{article}
+﻿\documentclass[12pt, titlepage]{article}
 
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -387,129 +387,487 @@ NFR-2 & Usability (Low-Friction Flows) & 3.2.2-1, 3.2.2-2 \\ \hline
 
 \section{Unit Test Description}
 
-\wss{This section should not be filled in until after the MIS (detailed design
-  document) has been completed.}
-
-\wss{Reference your MIS (detailed design document) and explain your overall
-philosophy for test case selection.}  
-
-\wss{To save space and time, it may be an option to provide less detail in this section.  
-For the unit tests you can potentially layout your testing strategy here.  That is, you 
-can explain how tests will be selected for each module.  For instance, your test building 
-approach could be test cases for each access program, including one test for normal behaviour 
-and as many tests as needed for edge cases.  Rather than create the details of the input 
-and output here, you could point to the unit testing code.  For this to work, you code 
-needs to be well-documented, with meaningful names for all of the tests.}
+Unit testing focuses on deterministic modules identified in the MIS, particularly the backend business logic, data validation utilities, service layers, and shared packages. Tests are implemented with Vitest (Jest-compatible) in the respective \texttt{tests} and \texttt{\_\_tests\_\_} directories for both the backend TRPC routers and shared packages. Dependencies such as the database, Stripe SDK, and Google Maps API are mocked to isolate unit behavior. Tests are organized below by the MIS module they exercise.
 
 \subsection{Unit Testing Scope}
 
-\wss{What modules are outside of the scope.  If there are modules that are
-  developed by someone else, then you would say here if you aren't planning on
-  verifying them.  There may also be modules that are part of your software, but
-  have a lower priority for verification than others.  If this is the case,
-  explain your rationale for the ranking of module importance.}
+\textbf{In scope:} All deterministic backend logic in M1 through M12 (excluding M5: Scheduling, which is deferred, and M10: Admin \& Moderation, which is covered by system-level tests).\\
+\textbf{Out of scope:} End-to-end UI flows, full Expo mobile rendering, and live Stripe webhook processing (covered by integration and system tests in Section~3).
 
 \subsection{Tests for Functional Requirements}
 
-\wss{Most of the verification will be through automated unit testing.  If
-  appropriate specific modules can be verified by a non-testing based
-  technique.  That can also be documented in this section.}
+% ========================================
+% Authentication & Verification Module
+% ========================================
+\subsubsection{Authentication \& Verification Module}
 
-\subsubsection{Module 1}
-
-\wss{Include a blurb here to explain why the subsections below cover the module.
-  References to the MIS would be good.  You will want tests from a black box
-  perspective and from a white box perspective.  Explain to the reader how the
-  tests were selected.}
+Test files: \texttt{packages/db/tests/validators.test.ts}, \texttt{packages/emails/client.test.ts}
 
 \begin{enumerate}
+\item \textbf{test-ut-auth-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: System ready for new user registration.\\
+Input: Valid McMaster email address (\texttt{user@mcmaster.ca}) and password.\\
+Output: Registration validation passes (\texttt{success: true}).\\
+Test Case Derivation: Ensures the system accepts valid university domains as per FR-1.\\
+How test will be performed: Vitest in \texttt{packages/db/tests/validators.test.ts}.\\
 
-\item{test-id1\\}
+\item \textbf{test-ut-auth-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: System ready for new user registration.\\
+Input: Invalid email domain (\texttt{user@gmail.com}).\\
+Output: Registration rejected with a validation error constraint.\\
+Test Case Derivation: Verifies the system rejects non-McMaster emails to maintain exclusivity.\\
+How test will be performed: Vitest in \texttt{packages/db/tests/validators.test.ts}.\\
 
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
-\item{...\\}
-    
+\item \textbf{test-ut-auth-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked nodemailer transport.\\
+Input: OTP code and recipient email address.\\
+Output: Email sent with correct recipient, OTP embedded in HTML body, and proper HTML document structure.\\
+Test Case Derivation: Validates that OTP verification emails are correctly formatted and dispatched.\\
+How test will be performed: Vitest in \texttt{packages/emails/client.test.ts}.\\
 \end{enumerate}
 
-\subsubsection{Module 2}
+% ========================================
+% User Profile Module
+% ========================================
+\subsubsection{User Profile Module}
 
-...
+Test files: \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}, \texttt{packages/utils/index.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-profile-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database context with existing user.\\
+Input: Profile metadata updates (bio, faculty, year, role).\\
+Output: Upserts profile data successfully to the database.\\
+Test Case Derivation: Confirms users can correctly initialize and update their core profile data.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database context.\\
+Input: Vehicle metadata (make, model, color, plate, seats).\\
+Output: Upserts vehicle data successfully, correctly rejecting invalid license plates.\\
+Test Case Derivation: Ensures drivers can correctly add and validate their vehicle details.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/profile.test.ts}.\\
+
+\item \textbf{test-ut-profile-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Utility function loaded.\\
+Input: Standard address components (street, number, city, region, country code).\\
+Output: Correctly formatted title, subtitle, and full address strings.\\
+Test Case Derivation: Ensures the address formatting utility produces consistent display strings for user profiles.\\
+How test will be performed: Vitest in \texttt{packages/utils/index.test.ts}.\\
+
+\item \textbf{test-ut-profile-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Utility function loaded.\\
+Input: Empty or missing address components.\\
+Output: Returns \texttt{null}.\\
+Test Case Derivation: Validates graceful handling of incomplete location data in user profiles.\\
+How test will be performed: Vitest in \texttt{packages/utils/index.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Route & Trip Module
+% ========================================
+\subsubsection{Route \& Trip Module}
+
+Test files: \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}, \texttt{apps/api/trpc/routers/\_\_tests\_\_/location.test.ts}, \texttt{apps/api/services/\_\_tests\_\_/googlemaps.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-trip-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database context with verified user.\\
+Input: Valid trip creation parameters (origin, destination, departure time, max seats).\\
+Output: Trip created successfully; unverified users, invalid seat counts, and departure times too soon are rejected.\\
+Test Case Derivation: Verifies trip creation validation and authorization (FR-5).\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with multiple trips and requests.\\
+Input: Query for trips with optional userId filter.\\
+Output: Correctly returns trips with associated driver info and requests; filtering by userId works.\\
+Test Case Derivation: Validates trip listing and retrieval logic.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with existing trip.\\
+Input: Update request from trip owner vs.\ non-owner vs.\ completed trip.\\
+Output: Successful update for owner of pending trip; rejection for non-owner or non-pending status.\\
+Test Case Derivation: Ensures proper authorization and state guards on trip mutations.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Active trip with accepted riders.\\
+Input: Cancel request from driver.\\
+Output: Trip status set to ``cancelled''; all pending requests rejected; accepted riders notified.\\
+Test Case Derivation: Validates the cancellation flow including notification side effects.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-5}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Trip in ``active'' status.\\
+Input: Start trip request from driver.\\
+Output: Trip transitions to ``in\_progress''; non-owners and non-active trips are rejected.\\
+Test Case Derivation: Verifies the trip lifecycle state machine transitions.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-6}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Trip in ``in\_progress'' with accepted passenger.\\
+Input: Driver picks up and drops off a passenger.\\
+Output: Passenger status transitions through ``on\_trip'' to ``completed''; pickup without rider confirmation is rejected.\\
+Test Case Derivation: Validates passenger status transitions and the rider confirmation guard.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-7}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Trip in ``in\_progress'' with all passengers dropped off.\\
+Input: Complete trip request from driver.\\
+Output: Trip marked ``completed'' with earnings summary; incomplete passengers block completion.\\
+Test Case Derivation: Verifies trip completion logic and earnings calculation.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-8}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Valid address with latitude and longitude coordinates.\\
+Output: Default address saved/updated via upsert.\\
+Test Case Derivation: Verifies that users can persist their default pickup/dropoff address.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/location.test.ts}.\\
+
+\item \textbf{test-ut-trip-9}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Address string without latitude/longitude coordinates.\\
+Output: Validation error thrown; no database write occurs.\\
+Test Case Derivation: Ensures coordinate validation prevents incomplete location data from being saved.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/location.test.ts}.\\
+
+\item \textbf{test-ut-trip-10}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Google Maps client.\\
+Input: Valid address string (``McMaster University'').\\
+Output: Correct latitude/longitude coordinates returned.\\
+Test Case Derivation: Validates geocoding integration returns expected coordinate pairs for trip origin/destination.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/googlemaps.test.ts}.\\
+
+\item \textbf{test-ut-trip-11}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Google Maps client.\\
+Input: Origin/destination coordinates with optional waypoints.\\
+Output: Correct total duration, distance, and waypoint ordering returned; empty routes throw error.\\
+Test Case Derivation: Verifies route calculation logic including multi-leg and optimized waypoint scenarios.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/googlemaps.test.ts}.\\
+
+\item \textbf{test-ut-trip-12}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with pending trip request.\\
+Input: Driver rejects a pending trip request.\\
+Output: Request status updated to ``rejected''; non-owner drivers are rejected.\\
+Test Case Derivation: Validates the reject request flow and authorization checks.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-13}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with accepted trip request and payment hold.\\
+Input: Rider cancels their own accepted request.\\
+Output: Request cancelled; \texttt{bookedSeats} decremented; payment hold released.\\
+Test Case Derivation: Ensures cancellation correctly reverses seat allocation and payment authorization.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-14}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with accepted request on an in-progress trip.\\
+Input: Rider confirms they are at the pickup location.\\
+Output: \texttt{riderPickupConfirmedAt} timestamp set; wrong rider or invalid status is rejected.\\
+Test Case Derivation: Validates the rider pickup confirmation flow.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-15}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with rider who has no Stripe payment method on file.\\
+Input: Rider attempts to create a trip request.\\
+Output: Request rejected with a meaningful error directing the user to add a payment method.\\
+Test Case Derivation: Ensures riders cannot book rides without a payment method, protecting driver earnings.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-16}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK configured to return a payment hold failure.\\
+Input: Driver accepts a trip request.\\
+Output: Request NOT accepted; error propagated; trip status remains unchanged.\\
+Test Case Derivation: Validates that a failed payment authorization prevents the acceptance from completing.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-17}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Trip with one already-accepted rider; mocked Stripe SDK.\\
+Input: Driver accepts a second rider.\\
+Output: Payment hold for first rider updated to reflect the multi-passenger discount tier.\\
+Test Case Derivation: Validates the retroactive discount logic applied when additional passengers join.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-18}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Active trip with accepted riders and active payment holds; mocked Stripe SDK.\\
+Input: Driver cancels the trip.\\
+Output: Trip cancelled; all accepted riders' payment holds released via \texttt{cancelPaymentHold}.\\
+Test Case Derivation: Ensures riders are not charged when a driver cancels an active trip.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-19}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Completed trip with multiple passengers.\\
+Input: Driver completes the trip.\\
+Output: Earnings summary contains correct \texttt{totalEarningsCents}, \texttt{passengerCount}, and per-passenger breakdown.\\
+Test Case Derivation: Verifies the financial summary calculation on trip completion.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-20}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with requests for multiple trips and riders.\\
+Input: Driver queries requests for their specific trip; rider queries their own requests.\\
+Output: Driver sees only their trip's requests; rider sees only their own requests; cancelled entries filtered out.\\
+Test Case Derivation: Validates the filtered request retrieval logic for both driver and rider perspectives.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+
+\item \textbf{test-ut-trip-21}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Completed trip with valid rider and driver Connect account; mocked Stripe SDK.\\
+Input: Rider submits a tip within valid bounds (\$0.50--\$500); attempt with out-of-bounds amount.\\
+Output: Valid tip processed and recorded; out-of-bounds amount rejected with validation error.\\
+Test Case Derivation: Validates tip submission input constraints and Stripe processing flow.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/trip.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Matching Module
+% ========================================
+\subsubsection{Matching Module}
+
+Test file: \texttt{apps/api/services/\_\_tests\_\_/matchmaking\_service.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-match-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mock database with overlapping driver and rider schedules and routes.\\
+Input: Match request from a verified rider.\\
+Output: List of compatible drivers returned, properly filtering active pending requests.\\
+Test Case Derivation: Confirms the core matching algorithm pairs users based on constraints (FR-3).\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/matchmaking\_service.test.ts}.\\
+
+\item \textbf{test-ut-match-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mock database containing only drivers with disjoint schedules/routes.\\
+Input: Match request from a verified rider.\\
+Output: Empty list response.\\
+Test Case Derivation: Ensures false positive matches are not generated when constraints are unmet.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/matchmaking\_service.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Notification Module
+% ========================================
+\subsubsection{Notification Module}
+
+Test file: \texttt{apps/api/services/\_\_tests\_\_/notification.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-notif-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Expo push notification SDK.\\
+Input: List of recipients (some with valid tokens, some without).\\
+Output: Only valid Expo push tokens receive notifications; invalid tokens are silently filtered.\\
+Test Case Derivation: Ensures notification delivery is resilient to invalid push tokens.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/notification.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Rating & Feedback Module
+% ========================================
+\subsubsection{Rating \& Feedback Module}
+
+Test file: \texttt{apps/api/trpc/routers/\_\_tests\_\_/reviews.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-review-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with completed trip.\\
+Input: Valid rating (1--5) for another user on a completed trip.\\
+Output: Review persisted to database; self-rating and duplicate ratings are rejected.\\
+Test Case Derivation: Validates the post-trip rating flow and business rule constraints.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/reviews.test.ts}.\\
+
+\item \textbf{test-ut-review-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked database with existing reviews for a user.\\
+Input: Query for user's average score.\\
+Output: Correct average and review count returned; new user returns ``New''.\\
+Test Case Derivation: Verifies aggregate score calculation logic.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/reviews.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Safety & Reporting Module
+% ========================================
+\subsubsection{Safety \& Reporting Module}
+
+Test file: \texttt{apps/api/trpc/routers/\_\_tests\_\_/complaints.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-complaint-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Authenticated user with mocked database.\\
+Input: Complaint content and target user ID.\\
+Output: Complaint persisted to the \texttt{complaints} table.\\
+Test Case Derivation: Validates the user reporting flow.\\
+How test will be performed: Vitest in \texttt{apps/api/trpc/routers/\_\_tests\_\_/complaints.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Payment & Cost Estimation Module
+% ========================================
+\subsubsection{Payment \& Cost Estimation Module}
+
+Test file: \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-payment-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK and database.\\
+Input: Valid Stripe customer creation parameters.\\
+Output: Stripe customer created and persisted to \texttt{stripeCustomers} table; existing customer returned on duplicate call.\\
+Test Case Derivation: Validates the idempotent customer creation flow.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK.\\
+Input: Trip distance, duration, passenger count, and detour values.\\
+Output: Correct \texttt{totalCents}, \texttt{platformFeeCents} (15\%), and \texttt{driverAmountCents} split.\\
+Test Case Derivation: Validates fare calculation arithmetic and platform fee deduction.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with valid customer and Connect account.\\
+Input: Payment hold creation for a trip request.\\
+Output: Stripe PaymentIntent created with correct amount, application fee, and transfer destination.\\
+Test Case Derivation: Validates the Stripe Connect payment authorization flow.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with existing PaymentIntent.\\
+Input: Capture payment for a completed trip request.\\
+Output: PaymentIntent captured and database status updated to ``captured''.\\
+Test Case Derivation: Validates the payment capture flow triggered on passenger dropoff.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-5}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with existing PaymentIntent.\\
+Input: Cancel payment hold for a cancelled trip request.\\
+Output: PaymentIntent cancelled and database status updated to ``cancelled''.\\
+Test Case Derivation: Ensures payment holds are properly released on trip or request cancellation.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+
+\item \textbf{test-ut-payment-6}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Mocked Stripe SDK with completed trip.\\
+Input: Rider submits a tip with valid amount.\\
+Output: Tip processed via Stripe and recorded in the \texttt{tips} table.\\
+Test Case Derivation: Validates the tip processing flow and database persistence.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/payment.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Pricing Module
+% ========================================
+\subsubsection{Pricing Module}
+
+Test file: \texttt{apps/api/services/\_\_tests\_\_/pricing\_service.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-pricing-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: System parameters ready.\\
+Input: Valid trip distance, active rate constants, and detour offsets.\\
+Output: Correctly computed shared cost value, with detour surcharge capped at 25\%.\\
+Test Case Derivation: Validates the arithmetic consistency of the cost-sharing logic (FR-4).\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/pricing\_service.test.ts}.\\
+
+\item \textbf{test-ut-pricing-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: System parameters ready.\\
+Input: Trip capacity variables involving 1, 2, or 3+ passengers.\\
+Output: Correct exponential discounts are applied to base rates.\\
+Test Case Derivation: Confirms proper passenger capacity discounts for recurring rides.\\
+How test will be performed: Vitest in \texttt{apps/api/services/\_\_tests\_\_/pricing\_service.test.ts}.\\
+\end{enumerate}
+
+% ========================================
+% Database Module
+% ========================================
+\subsubsection{Database Module}
+
+Test file: \texttt{packages/db/tests/schema.test.ts}
+
+\begin{enumerate}
+\item \textbf{test-ut-schema-1}\\
+Type: Structural, Dynamic, Automatic\\
+Initial State: Test database connection pool.\\
+Input: Insert a new user with minimal fields (id, name, email).\\
+Output: User created with correct defaults (\texttt{emailVerified: false}, auto-generated \texttt{createdAt}).\\
+Test Case Derivation: Verifies that schema defaults are correctly applied by the database.\\
+How test will be performed: Vitest in \texttt{packages/db/tests/schema.test.ts}.\\
+
+\item \textbf{test-ut-schema-2}\\
+Type: Structural, Dynamic, Automatic\\
+Initial State: Test database with no matching user.\\
+Input: Insert a profile with a non-existent \texttt{userId}.\\
+Output: Foreign key constraint violation error thrown.\\
+Test Case Derivation: Ensures referential integrity is enforced at the database level.\\
+How test will be performed: Vitest in \texttt{packages/db/tests/schema.test.ts}.\\
+\end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
-
-\wss{If there is a module that needs to be independently assessed for
-  performance, those test cases can go here.  In some projects, planning for
-  nonfunctional tests of units will not be that relevant.}
-
-\wss{These tests may involve collecting performance data from previously
-  mentioned functional tests.}
-
-\subsubsection{Module ?}
-		
-\begin{enumerate}
-
-\item{test-id1\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
-
-\end{enumerate}
-
-\subsubsection{Module ?}
-
-...
+Unit tests are not the primary method for verifying NFRs (see Section~3).
 
 \subsection{Traceability Between Test Cases and Modules}
 
-\wss{Provide evidence that all of the modules have been considered.}
-				
+Table~\ref{tab:unit-trace} maps each unit test to its corresponding MIS module and implementation status.
+
+\begin{table}[H]
+\centering
+\caption{Unit Test Traceability Matrix}
+\label{tab:unit-trace}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Test ID} & \textbf{MIS Module} & \textbf{Test File} \\ \hline
+test-ut-auth-1, 2 & Auth \& Verification & validators.test.ts \\ \hline
+test-ut-auth-3 & Auth \& Verification & client.test.ts \\ \hline
+test-ut-profile-1, 2 & User Profile & profile.test.ts \\ \hline
+test-ut-profile-3, 4 & User Profile & utils/index.test.ts \\ \hline
+test-ut-trip-1--11 & Route \& Trip & trip/location/googlemaps.test.ts \\ \hline
+test-ut-trip-12--21 & Route \& Trip & trip.test.ts \\ \hline
+test-ut-match-1, 2 & Matching & matchmaking\_service.test.ts \\ \hline
+test-ut-notif-1 & Notification & notification.test.ts \\ \hline
+test-ut-review-1, 2 & Rating \& Feedback & reviews.test.ts \\ \hline
+test-ut-complaint-1 & Safety \& Reporting & complaints.test.ts \\ \hline
+test-ut-payment-1--6 & Payment \& Cost Est. & payment.test.ts \\ \hline
+test-ut-pricing-1, 2 & Pricing & pricing\_service.test.ts \\ \hline
+test-ut-schema-1, 2 & Database & schema.test.ts \\ \hline
+\end{tabular}
+\end{table}
+
 \bibliographystyle{plainnat}
 
 \bibliography{../../refs/References}
