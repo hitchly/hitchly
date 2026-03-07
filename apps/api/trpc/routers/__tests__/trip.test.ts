@@ -1797,7 +1797,7 @@ describe("Trip Router", () => {
       expect(result.summary.passengerCount).toBe(2);
       expect(result.summary.totalEarningsCents).toBe(1500); // 2 * 750 placeholder
       expect(result.summary.perPassenger).toHaveLength(2);
-      expect(result?.summary?.perPassenger?.[0]?.riderName).toBe("Rider One");
+      expect(result.summary.perPassenger[0]?.riderName).toBe("Rider One");
     });
   });
 

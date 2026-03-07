@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Hoist all mocks to be available before module loading

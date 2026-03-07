@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/non-nullable-type-assertion-style */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Instead of trying to load the actual notification.ts (which depends on expo-server-sdk
@@ -33,11 +34,11 @@ async function sendTripNotification(
   const messages = recipients
     .filter((r) => r.pushToken && isExpoPushToken(r.pushToken))
     .map((r) => ({
-      to: r.pushToken!,
+      to: r.pushToken as string,
       sound: "default" as const,
       title,
       body,
-      data: data || {},
+      data: data ?? {},
     }));
 
   if (messages.length === 0) {
@@ -77,8 +78,9 @@ describe("Notification Service", () => {
 
       // Should have been called with only the 2 valid tokens
       expect(mockSendPushNotificationsAsync).toHaveBeenCalledTimes(1);
-      const sentMessages = mockChunkPushNotifications.mock
-        .calls[0]![0] as Array<{ to: string }>;
+      const sentMessages = mockChunkPushNotifications.mock.calls[0]?.[0] as {
+        to: string;
+      }[];
       expect(sentMessages).toHaveLength(2);
       expect(sentMessages[0]?.to).toBe("ExponentPushToken[valid-token-1]");
       expect(sentMessages[1]?.to).toBe("ExponentPushToken[valid-token-2]");
