@@ -4,6 +4,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "../index";
 
+import { createMockContext } from "../../../lib/tests/mockContext";
+import { createMockDb } from "../../../lib/tests/mockDb";
+import { profileRouter } from "../profile";
+
 const mockDb = vi.hoisted(() => {
   return {
     query: {
@@ -130,6 +134,186 @@ describe("Profile Router", () => {
 
       await caller.profile.updatePreferences(input);
       expect(mockDb.insert).toHaveBeenCalled();
+    });
+  });
+});
+
+// ============================================
+// Tests using profileRouter directly with createMockDb
+// ============================================
+describe("Profile Router — Direct", () => {
+  let directMockDb: ReturnType<typeof createMockDb>;
+
+  beforeEach(() => {
+    directMockDb = createMockDb();
+    vi.clearAllMocks();
+  });
+
+  // ============================================
+  // getDriverEarnings
+  // ============================================
+  describe("getDriverEarnings", () => {
+    it("should return earnings with completed trips (test-ut-profile-5)", async () => {
+      const userId = "driver-100";
+      const now = new Date();
+
+      // Mock select().from().where() → returns completed trips
+      directMockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            {
+              id: "trip-1",
+              driverId: userId,
+              status: "completed",
+              updatedAt: now,
+            },
+            {
+              id: "trip-2",
+              driverId: userId,
+              status: "completed",
+              updatedAt: now,
+            },
+          ]),
+        }),
+      });
+
+      // For each trip, mock the passenger count query
+      // Trip 1: 2 completed passengers
+      directMockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            { id: "req-1", status: "completed" },
+            { id: "req-2", status: "completed" },
+          ]),
+        }),
+      });
+      // Trip 2: 1 completed passenger
+      directMockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ id: "req-3", status: "completed" }]),
+        }),
+      });
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.getDriverEarnings();
+
+      // 3 passengers × $7.50 = $22.50 = 2250 cents
+      expect(result.totals.lifetimeCents).toBe(2250);
+      expect(result.stats.completedTripCount).toBe(2);
+      expect(result.stats.avgPerTripCents).toBe(1125); // 2250 / 2
+    });
+
+    it("should return zeros when no completed trips (test-ut-profile-6)", async () => {
+      const userId = "driver-100";
+
+      directMockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.getDriverEarnings();
+
+      expect(result.totals.lifetimeCents).toBe(0);
+      expect(result.totals.weekCents).toBe(0);
+      expect(result.totals.monthCents).toBe(0);
+      expect(result.stats.completedTripCount).toBe(0);
+      expect(result.stats.avgPerTripCents).toBe(0);
+    });
+  });
+
+  // ============================================
+  // updatePushToken
+  // ============================================
+  describe("updatePushToken", () => {
+    it("should update push token successfully (test-ut-profile-7)", async () => {
+      const userId = "user-100";
+
+      directMockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.updatePushToken({
+        pushToken: "ExponentPushToken[new-token-value]",
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(directMockDb.update).toHaveBeenCalled();
+    });
+  });
+
+  // ============================================
+  // getBanStatus
+  // ============================================
+  describe("getBanStatus", () => {
+    it("should return not-banned status (test-ut-profile-8)", async () => {
+      const userId = "user-100";
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.getBanStatus();
+
+      expect(result).toEqual({ isBanned: false, reason: null });
+    });
+  });
+
+  // ============================================
+  // updateAppRole
+  // ============================================
+  describe("updateAppRole", () => {
+    it("should switch role to rider (test-ut-profile-9)", async () => {
+      const userId = "user-100";
+
+      directMockDb.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnValue({
+          onConflictDoUpdate: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.updateAppRole({ appRole: "rider" });
+
+      expect(result).toEqual({ success: true });
+      expect(directMockDb.insert).toHaveBeenCalled();
+    });
+
+    it("should switch role to driver (test-ut-profile-10)", async () => {
+      const userId = "user-100";
+
+      directMockDb.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnValue({
+          onConflictDoUpdate: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      const caller = profileRouter.createCaller(
+        createMockContext(userId, directMockDb as any)
+      );
+
+      const result = await caller.updateAppRole({ appRole: "driver" });
+
+      expect(result).toEqual({ success: true });
+      expect(directMockDb.insert).toHaveBeenCalled();
     });
   });
 });
