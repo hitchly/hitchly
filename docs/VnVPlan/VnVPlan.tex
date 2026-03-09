@@ -334,6 +334,7 @@ Covers: FR-2 (Profile and Scheduling Input).
 \item \textbf{Test Case 1 - Driver Verification}\\
 Control: Automatic\\
 Initial State: Driver profile with valid license.\\
+Input: Driver profile with valid license.\\
 Expected Output: Driver verified and added to system.\\
 Test Case Derivation: Based on verification criteria specified in Section 1.4 (G.4).\\
 How test will be performed: Submit driver profile and verify system response.\\[5pt]
@@ -356,6 +357,7 @@ Covers: FR-4 (Cost estimate) from Section 1.4 (G.4).
 \item \textbf{Test Case 1 - Cost Calculation}\\
 Control: Automatic\\
 Initial State: Valid ride details (distance, duration, time of day).\\
+Input: User submits a ride request.\\
 Expected Output: Accurate cost estimate based on the provided details.\\
 Test Case Derivation: The final cost is estimated using the logic described in Section 1.4 (G.4).\\
 How test will be performed: Verify calculated cost once the ride is selected and accepted.\\[5pt]
@@ -379,17 +381,27 @@ Covers: FR-5 (Review and Ratings) from Section 1.4 (G.4).
 \item \textbf{Test Case 1 - Reviews and Rating}\\
 Control: Automatic\\
 Initial State: User has completed a ride.\\
+Input: User submits a review and rating.\\
 Expected Output: Review and rating submitted successfully.\\
 Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
 How test will be performed: Submit a review and rate the user and observe the state.\\
 
 \item \textbf{Test Case 2 - Reporting}\\
 Control: Automatic\\
-Initial State: User has completed a ride\\
+Initial State: User has completed/accepted a ride\\
 Input: Report submitted successfully.\\
-Expected Output: Cost estimate updated in system.\\
+Expected Output: "Report Submitted" message.\\
 Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
-How test will be performed: Submit a review and rate the user and wait for the submission confirmation alert\\
+How test will be performed: Submit a report for a user and wait for the submission confirmation alert\\
+
+\item \textbf{Test Case 3 - Report in Admin Dashboard}\\
+Control: Automatic\\
+Initial State: User has completed/accepted a ride\\
+Input: Report submitted successfully.\\
+Expected Output: Display report details in admin dashboard\\
+Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
+How test will be performed: Submit a report for a user and observe the admin dashboard\\
+
 \end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
