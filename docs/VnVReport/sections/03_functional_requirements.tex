@@ -1,104 +1,109 @@
 \section{Functional Requirements Evaluation}
-\subsection{User Verification}
-\begin{enumerate}
-    \item test-FR1-1:\label{test-FR1-1}
-    Initial State: No existing account in the system. \\
-    Input: Valid McMaster email, password, and driver license upload (for drivers).\\
-    Expected Output: Verification email sent; account activated after confirmation.\\
-    Actual Output:Verification email sent; account activated after confirmation.\\
-    Result:Pass
+\subsection{Area of Testing 1 – User Verification}
+\paragraph{Test Case 1 – Valid Sign-Up} \label{test-FR1-1}
+\begin{description}
+    \item[Initial State:] No existing account in the system. 
+    \item[Input:] Valid McMaster email, password, and driver license upload (for drivers).
+    \item[Expected Output:] Verification email sent; account activated after confirmation.
+    \item[Actual Output:] Verification email sent; account activated after confirmation.
+    \item[Result:] Pass
+\end{description}
 
-    \item test-FR1-2:\label{test-FR1-2}
-    Initial State: No existing account in the system. \\
-    Input: Non-McMaster email or invalid license format.\\
-    Expected Output: Account creation rejected with an error message displayed to the user.\\
-    Actual Output:Account creation rejected with an error message displayed to the user.\\
-    Result:Pass
-\end{enumerate}
-
-
-\subsection{User Profile}
-\begin{enumerate}
-    \item test-FR2-1:\label{test-FR2-1}
-    Initial State: Driver profile with valid license.\\
-    Input: Driver profile with valid license.\\
-    Expected Output: Driver verified and added to system.\\
-    Actual Output: Driver verified and added to system. \\
-    Result:Pass
-
-    \item test-FR2-2:\label{test-FR2-2}
-    Initial State: Existing user with valid profile.\\
-    Input: Updated profile information (e.g., contact details, driver/rider preference).\\
-    Expected Output: Profile updated in system.\\
-    Actual Output: Profile updated in system.\\
-    Result: Pass
-\end{enumerate}
+\paragraph{Test Case 2 – Invalid Verification} \label{test-FR1-2}
+\begin{description}
+    \item[Initial State:] No existing account in the system. 
+    \item[Input:] Invalid email format, weak password, or missing driver license (for drivers).
+    \item[Expected Output:] Appropriate error messages displayed; account not created.
+    \item[Actual Output:] Appropriate error messages displayed; account not created.
+    \item[Result:] Pass
+\end{description}
 
 
-\subsection{Ride Matching}
-\begin{enumerate}
-    \item test-FR3-1:\label{test-FR3-1}
-    Initial State: Verified users with valid profiles and schedules exist in the system. \\
-    Input: A rider and driver with overlapping routes and times. \\
-    Expected Output: Match proposal generated with a computed cost share presented to both users. \\
-    Actual Output: Match proposal generated with a computed cost share presented to both users. \\
-    Result:Pass
-
-    \item test-FR3-2:\label{test-FR3-2}
-    Initial State: Verified users with valid profiles and schedules exist in the system.
-    Input: A rider and driver with non-overlapping schedules. \\
-    Expected Output: ``No match found'' message returned to the user.\\
-    Actual Output:``No match found'' message returned to the user.\\
-    Result: Pass
-
-    \item test-FR3-3:\label{test-FR3-3}
-    Initial State: Rider and driver sent a rideshare request.
-    Input: A rider and driver with overlapping schedules and opposite preferences reject the ride. \\
-    Expected Output: “User rejected” message.\\
-    Actual Output: “User rejected” message.\\
-    Result: Pass
-\end{enumerate}
+\subsection{Area of Testing 2 – User Profile}
+\paragraph{Test Case 1 – Driver Profile Verification} \label{test-FR2-1}
+\begin{description}
+    \item[Initial State:] Driver profile with valid license.
+    \item[Input:] Driver profile with valid license.
+    \item[Expected Output:] Driver verified and added to system.
+    \item[Actual Output:] Driver verified and added to system. 
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 2 – Invalid Profile Update} \label{test-FR2-2}
+\begin{description}
+    \item[Initial State:] Existing user with valid profile.
+    \item[Input:] Updated profile information (e.g., contact details, driver/rider preference).
+    \item[Expected Output:] Profile updated in system.
+    \item[Actual Output:] Profile updated in system.
+    \item[Result:] Pass
+\end{description}
 
 
-\subsection{Cost Estimation}
-\begin{enumerate}
-    \item test-FR4-1:\label{test-FR4-1}
-    Initial State: Valid ride details (distance, duration, time of day).\\
-    Input: User submits a ride request.\\
-    Expected Output: Accurate cost estimate based on the provided details.\\
-    Actual Output: Accurate cost estimate based on the provided details. \\
-    Result:Pass
+\subsection{Area of Testing 3 – Ride Matching}
+\paragraph{Test Case 1 – Successful Ride Match} \label{test-FR3-1}
+\begin{description}
+    \item[Initial State:] Verified users with valid profiles and schedules exist in the system. 
+    \item[Input:] A rider and driver with overlapping routes and times.
+    \item[Expected Output:] Match proposal generated with a computed cost share presented to both users.
+    \item[Actual Output:] Match proposal generated with a computed cost share presented to both users.
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 2 – No Match Found} \label{test-FR3-2}
+\begin{description}
+    \item[Initial State:] Verified users with valid profiles and schedules exist in the system.
+    \item[Input:] A rider and driver with non-overlapping schedules.
+    \item[Expected Output:] ``No match found'' message returned to the user.
+    \item[Actual Output:]``No match found'' message returned to the user.
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 3 – User Rejection} \label{test-FR3-3}
+\begin{description}
+    \item[Initial State:] Rider and driver sent a rideshare request.
+    \item[Input:] A rider and driver with overlapping schedules and opposite preferences reject the ride.
+    \item[Expected Output:] “User rejected” message.
+    \item[Actual Output:] “User rejected” message.
+    \item[Result:] Pass
+\end{description}
 
-    \item test-FR4-2:\label{test-FR4-2}
-    Initial State: Existing user with valid profile.\\
-    Input: New rider is added for the same ride.\\
-    Expected Output: Cost estimate updated in system.\\
-    Actual Output: Cost estimate updated in system.\\
-    Result: Pass
+\subsection{Area of Testing 4 – Cost Estimation}
+\paragraph{Test Case 1 – Cost Estimate Calculation} \label{test-FR4-1}
+\begin{description}
+    \item[Initial State:] Valid ride details (distance, duration, time of day).
+    \item[Input:] User submits a ride request.
+    \item[Expected Output:] Accurate cost estimate based on the provided details.
+    \item[Actual Output:] Accurate cost estimate based on the provided details. 
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 2 – Cost Estimate Update} \label{test-FR4-2}
+\begin{description}
+    \item[Initial State:] Existing user with valid profile.
+    \item[Input:] New rider is added for the same ride.
+    \item[Expected Output:] Cost estimate updated in system.
+    \item[Actual Output:] Cost estimate updated in system.
+    \item[Result:] Pass
+\end{description}
 
-\end{enumerate} 
-
-\subsection{Review and Reporting}
-\begin{enumerate}
-    \item test-FR5-1:\label{test-FR5-1}
-    Initial State: User has completed a ride.\\
-    Input: User submits a review and rating.\\
-    Expected Output: Review and rating submitted successfully.\\
-    Actual Output: Review and rating submitted successfully. \\
-    Result:Pass
-
-    \item test-FR5-2:\label{test-FR5-2}
-    Initial State: User has completed/accepted a ride\\
-    Input: Report submitted successfully.\\
-    Expected Output: "Report Submitted" message.\\
-    Actual Output: "Report Submitted" message.\\
-    Result: Pass
-
-    \item test-FR5-3:\label{test-FR5-3}
-    Initial State: User has completed/accepted a ride\\
-    Input: Report submitted successfully.\\
-    Expected Output: Display report details in admin dashboard\\
-    Actual Output: Display report details in admin dashboard\\
-    Result: Pass
-\end{enumerate}
-
+\subsection{Area of Testing 5 – Review and Reporting}
+\paragraph{Test Case 1 – Submit Review} \label{test-FR5-1}
+\begin{description}
+    \item[Initial State:] User has completed a ride. 
+    \item[Input:] User submits a review and rating.
+    \item[Expected Output:] Review and rating submitted successfully.
+    \item[Actual Output:] Review and rating submitted successfully. 
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 2 – Submit Report} \label{test-FR5-2}
+\begin{description}
+    \item[Initial State:] User has completed/accepted a ride.
+    \item[Input:] Report submitted successfully.
+    \item[Expected Output:] "Report Submitted" message.
+    \item[Actual Output:] "Report Submitted" message.
+    \item[Result:] Pass
+\end{description}
+\paragraph{Test Case 3 – Report in Admin Dashboard} \label{test-FR5-3}
+\begin{description}
+    \item[Initial State:] User has completed/accepted a ride.
+    \item[Input:] Report submitted successfully.
+    \item[Expected Output:] Display report details in admin dashboard.
+    \item[Actual Output:] Display report details in admin dashboard.
+    \item[Result:] Pass
+\end{description}
