@@ -1,1 +1,400 @@
 \section{Unit Testing}
+
+The following tables summarize the results of the unit tests for each module of the Hitchly API.
+
+\subsection{Authentication \& Verification Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Authentication \& Verification Module}
+\endlastfoot
+
+test-ut-auth-1 & Valid McMaster email address (\texttt{user@mcmaster.ca}) and password. & Registration validation passes (\texttt{success: true}). & Passed \\
+\hline
+test-ut-auth-2 & Invalid email domain (\texttt{user@gmail.com}). & Registration rejected with a validation error constraint. & Passed \\
+\hline
+test-ut-auth-3 & OTP code and recipient email address. & Email sent with correct recipient, OTP embedded in HTML body, and proper HTML document structure. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{User Profile Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: User Profile Module}
+\endlastfoot
+
+test-ut-profile-1 & Profile metadata updates (bio, faculty, year, role). & Upserts profile data successfully to the database. & Passed \\
+\hline
+test-ut-profile-2 & Vehicle metadata (make, model, color, plate, seats). & Upserts vehicle data successfully, correctly rejecting invalid license plates. & Passed \\
+\hline
+test-ut-profile-3 & Standard address components (street, number, city, region, country code). & Correctly formatted title, subtitle, and full address strings. & Passed \\
+\hline
+test-ut-profile-4 & Empty or missing address components. & Returns \texttt{null}. & Passed \\
+\hline
+test-ut-profile-5 & Authenticated driver queries their earnings. & Correct lifetime, weekly, and monthly earnings totals returned based on completed passenger counts; zero returned when no completed trips exist. & Passed \\
+\hline
+test-ut-profile-6 & Authenticated driver queries their earnings. & All earnings fields return zero; \texttt{avgPerTripCents} is zero. & Passed \\
+\hline
+test-ut-profile-7 & Valid Expo push notification token string. & Push token updated in the \texttt{users} table for the authenticated user. & Passed \\
+\hline
+test-ut-profile-8 & Query for ban status. & Returns \texttt{\{isBanned: false, reason: null\}} (placeholder implementation). & Passed \\
+\hline
+test-ut-profile-9 & Role switch to ``rider''. & Profile upserted with \texttt{appRole} set to ``rider''; returns \texttt{\{success: true\}}. & Passed \\
+\hline
+test-ut-profile-10 & Role switch to ``driver''. & Profile upserted with \texttt{appRole} set to ``driver''; returns \texttt{\{success: true\}}. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Route \& Trip Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Route \& Trip Module}
+\endlastfoot
+
+test-ut-trip-1 & Valid trip creation parameters (origin, destination, departure time, max seats). & Trip created successfully; unverified users, invalid seat counts, and departure times too soon are rejected. & Passed \\
+\hline
+test-ut-trip-2 & Query for trips with optional userId filter. & Correctly returns trips with associated driver info and requests; filtering by userId works. & Passed \\
+\hline
+test-ut-trip-3 & Update request from trip owner vs.\ non-owner vs.\ completed trip. & Successful update for owner of pending trip; rejection for non-owner or non-pending status. & Passed \\
+\hline
+test-ut-trip-4 & Cancel request from driver. & Trip status set to ``cancelled''; all pending requests rejected; accepted riders notified. & Passed \\
+\hline
+test-ut-trip-5 & Start trip request from driver. & Trip transitions to ``in\_progress''; non-owners and non-active trips are rejected. & Passed \\
+\hline
+test-ut-trip-6 & Driver picks up and drops off a passenger. & Passenger status transitions through ``on\_trip'' to ``completed''; pickup without rider confirmation is rejected. & Passed \\
+\hline
+test-ut-trip-7 & Complete trip request from driver. & Trip marked ``completed'' with earnings summary; incomplete passengers block completion. & Passed \\
+\hline
+test-ut-trip-8 & Valid address with latitude and longitude coordinates. & Default address saved/updated via upsert. & Passed \\
+\hline
+test-ut-trip-9 & Address string without latitude/longitude coordinates. & Validation error thrown; no database write occurs. & Passed \\
+\hline
+test-ut-trip-10 & Valid address string (``McMaster University''). & Correct latitude/longitude coordinates returned. & Passed \\
+\hline
+test-ut-trip-11 & Origin/destination coordinates with optional waypoints. & Correct total duration, distance, and waypoint ordering returned; empty routes throw error. & Passed \\
+\hline
+test-ut-trip-12 & Driver rejects a pending trip request. & Request status updated to ``rejected''; non-owner drivers are rejected. & Passed \\
+\hline
+test-ut-trip-13 & Rider cancels their own accepted request. & Request cancelled; \texttt{bookedSeats} decremented; payment hold released. & Passed \\
+\hline
+test-ut-trip-14 & Rider confirms they are at the pickup location. & \texttt{riderPickupConfirmedAt} timestamp set; wrong rider or invalid status is rejected. & Passed \\
+\hline
+test-ut-trip-15 & Rider attempts to create a trip request. & Request rejected with a meaningful error directing the user to add a payment method. & Passed \\
+\hline
+test-ut-trip-16 & Driver accepts a trip request. & Request NOT accepted; error propagated; trip status remains unchanged. & Passed \\
+\hline
+test-ut-trip-17 & Driver accepts a second rider. & Payment hold for first rider updated to reflect the multi-passenger discount tier. & Passed \\
+\hline
+test-ut-trip-18 & Driver cancels the trip. & Trip cancelled; all accepted riders' payment holds released via \texttt{cancelPaymentHold}. & Passed \\
+\hline
+test-ut-trip-19 & Driver completes the trip. & Earnings summary contains correct \texttt{totalEarningsCents}, \texttt{passengerCount}, and per-passenger breakdown. & Passed \\
+\hline
+test-ut-trip-20 & Driver queries requests for their specific trip; rider queries their own requests. & Driver sees only their trip's requests; rider sees only their own requests; cancelled entries filtered out. & Passed \\
+\hline
+test-ut-trip-21 & Rider submits a tip within valid bounds (\$0.50--\$500); attempt with out-of-bounds amount. & Valid tip processed and recorded; out-of-bounds amount rejected with validation error. & Passed \\
+\hline
+test-ut-trip-22 & Driver submits a rating (1--5) for a rider on the completed trip. & Returns \texttt{\{success: true\}}. & Passed \\
+\hline
+test-ut-trip-23 & Non-owner driver attempts to rate a rider. & FORBIDDEN error thrown. & Passed \\
+\hline
+test-ut-trip-24 & Driver attempts to rate a rider. & BAD\_REQUEST error indicating trip must be completed. & Passed \\
+\hline
+test-ut-trip-25 & Driver attempts to rate a rider who was not on the trip. & NOT\_FOUND error indicating rider request not found. & Passed \\
+\hline
+test-ut-trip-26 & Query for available trips with \texttt{startDate} filter. & Only trips departing on or after \texttt{startDate} are returned. & Passed \\
+\hline
+test-ut-trip-27 & Query for available trips with \texttt{endDate} filter. & Only trips departing on or before \texttt{endDate} are returned. & Passed \\
+\hline
+test-ut-trip-28 & Driver calls \texttt{fixTripStatus} for the stuck trip. & Trip status transitions from ``pending'' to ``active''; \texttt{fixedCount} is 1. & Passed \\
+\hline
+test-ut-trip-29 & Driver calls \texttt{fixTripStatus}. & Returns \texttt{\{fixedCount: 0\}} with empty \texttt{fixedTrips} array. & Passed \\
+\hline
+test-ut-trip-30 & Rider calls \texttt{confirmRiderPickup} for their request. & \texttt{riderPickupConfirmedAt} timestamp set; updated request returned. & Passed \\
+\hline
+test-ut-trip-31 & Wrong rider attempts to confirm pickup. & FORBIDDEN error thrown. & Passed \\
+\hline
+test-ut-trip-32 & Rider attempts to confirm pickup on a non-accepted request. & BAD\_REQUEST error indicating request must be accepted first. & Passed \\
+\hline
+test-ut-trip-33 & Driver starts the trip via \texttt{startTrip}. & Trip status transitions to ``in\_progress''; \texttt{sendTripNotification} called for accepted riders. & Passed \\
+\hline
+test-ut-trip-34 & Rider cancels their accepted request via \texttt{cancelTripRequest}. & Request cancelled; \texttt{bookedSeats} decremented; \texttt{cancelPaymentHold} called. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Matching Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Matching Module}
+\endlastfoot
+
+test-ut-match-1 & Match request from a verified rider. & List of compatible drivers returned, properly filtering active pending requests. & Passed \\
+\hline
+test-ut-match-2 & Match request from a verified rider. & Empty list response. & Passed \\
+\hline
+test-ut-match-3 & Rider queries for matches via \texttt{findMatches} router procedure. & Matches returned with real driver ratings looked up from the reviews table. & Passed \\
+\hline
+test-ut-match-4 & Rider queries for matches with \texttt{includeDummyMatches} enabled. & Dummy matches returned unmodified (no rating lookup for \texttt{dummy-*} driver IDs). & Passed \\
+\hline
+test-ut-match-5 & Rider queries for matches. & Empty array returned. & Passed \\
+\hline
+test-ut-match-6 & Rider cancels their own request via \texttt{cancelRequest}. & Request status updated to ``cancelled''; returns \texttt{\{success: true\}}. & Passed \\
+\hline
+test-ut-match-7 & Rider cancels their accepted request. & Request cancelled; \texttt{bookedSeats} decremented by 1 on the associated trip. & Passed \\
+\hline
+test-ut-match-8 & Rider attempts to cancel another rider's request. & FORBIDDEN error thrown. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Notification Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Notification Module}
+\endlastfoot
+
+test-ut-notif-1 & List of recipients (some with valid tokens, some without). & Only valid Expo push tokens receive notifications; invalid tokens are silently filtered. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Rating \& Feedback Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Rating \& Feedback Module}
+\endlastfoot
+
+test-ut-review-1 & Valid rating (1--5) for another user on a completed trip. & Review persisted to database; self-rating and duplicate ratings are rejected. & Passed \\
+\hline
+test-ut-review-2 & Query for user's average score. & Correct average and review count returned; new user returns ``New''. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Safety \& Reporting Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Safety \& Reporting Module}
+\endlastfoot
+
+test-ut-complaint-1 & Complaint content and target user ID. & Complaint persisted to the \texttt{complaints} table. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Payment \& Cost Estimation Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Payment \& Cost Estimation Module}
+\endlastfoot
+
+test-ut-payment-1 & Valid Stripe customer creation parameters. & Stripe customer created and persisted to \texttt{stripeCustomers} table; existing customer returned on duplicate call. & Passed \\
+\hline
+test-ut-payment-2 & Trip distance, duration, passenger count, and detour values. & Correct \texttt{totalCents}, \texttt{platformFeeCents} (15\%), and \texttt{driverAmountCents} split. & Passed \\
+\hline
+test-ut-payment-3 & Payment hold creation for a trip request. & Stripe PaymentIntent created with correct amount, application fee, and transfer destination. & Passed \\
+\hline
+test-ut-payment-4 & Capture payment for a completed trip request. & PaymentIntent captured and database status updated to ``captured''. & Passed \\
+\hline
+test-ut-payment-5 & Cancel payment hold for a cancelled trip request. & PaymentIntent cancelled and database status updated to ``cancelled''. & Passed \\
+\hline
+test-ut-payment-6 & Rider submits a tip with valid amount. & Tip processed via Stripe and recorded in the \texttt{tips} table. & Passed \\
+\hline
+test-ut-payment-7 & Authenticated user calls \texttt{createSetupIntent}. & Stripe customer created/retrieved; setup intent client secret returned. & Passed \\
+\hline
+test-ut-payment-8 & Non-existent user calls \texttt{createSetupIntent}. & NOT\_FOUND error thrown. & Passed \\
+\hline
+test-ut-payment-9 & Authenticated user queries \texttt{getPaymentMethods}. & List of methods with \texttt{brand}, \texttt{last4}, \texttt{isDefault} correctly mapped; default method sorted first. & Passed \\
+\hline
+test-ut-payment-10 & User with no Stripe customer queries \texttt{getPaymentMethods}. & Empty methods array returned; \texttt{hasPaymentMethod} is \texttt{false}. & Passed \\
+\hline
+test-ut-payment-11 & User calls \texttt{deletePaymentMethod} with a valid ID. & Payment method detached; returns \texttt{\{success: true\}}. & Passed \\
+\hline
+test-ut-payment-12 & User calls \texttt{deletePaymentMethod} with a non-existent ID. & NOT\_FOUND error thrown. & Passed \\
+\hline
+test-ut-payment-13 & User calls \texttt{setDefaultPaymentMethod} and \texttt{hasPaymentMethod}. & Default set successfully; \texttt{hasPaymentMethod} returns correct boolean. & Passed \\
+\hline
+test-ut-payment-14 & Driver calls \texttt{createConnectOnboarding} with valid URLs. & Connect account created; onboarding URL returned. & Passed \\
+\hline
+test-ut-payment-15 & Driver queries \texttt{getConnectStatus}. & Correct Connect account status returned. & Passed \\
+\hline
+test-ut-payment-16 & Rider calls \texttt{submitTip} with a valid amount. & Tip processed successfully; returns \texttt{\{success: true\}}. & Passed \\
+\hline
+test-ut-payment-17 & Rider calls \texttt{submitTip} for an active trip. & BAD\_REQUEST error indicating tips are only for completed trips. & Passed \\
+\hline
+test-ut-payment-18 & Driver queries \texttt{getDriverPayoutHistory}. & Payment list with rider names, amounts, and summary containing \texttt{totalEarningsCents}, \texttt{totalPlatformFeeCents}, and \texttt{pendingCents}. & Passed \\
+\hline
+test-ut-payment-19 & Rider queries \texttt{getRiderPaymentHistory}. & Payment list with driver names, tip history, and summary containing \texttt{totalSpentCents}, \texttt{totalTipsCents}, and \texttt{rideCount}. & Passed \\
+\hline
+test-ut-payment-20 & Query \texttt{getPaymentStatus} with a valid trip request ID. & Correct payment status returned from the service layer. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Pricing Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Pricing Module}
+\endlastfoot
+
+test-ut-pricing-1 & Valid trip distance, active rate constants, and detour offsets. & Correctly computed shared cost value, with detour surcharge capped at 25\%. & Passed \\
+\hline
+test-ut-pricing-2 & Trip capacity variables involving 1, 2, or 3+ passengers. & Correct exponential discounts are applied to base rates. & Passed \\
+\hline
+\end{longtable}
+
+\subsection{Database Module Results}
+
+\small
+\begin{longtable}{|p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.35\textwidth}|>{\raggedright\arraybackslash}p{0.3\textwidth}|p{0.1\textwidth}|}
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Test ID} & \textbf{Action} & \textbf{Expected Outcome} & \textbf{Result} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\caption{Unit Test Results: Database Module}
+\endlastfoot
+
+test-ut-schema-1 & Insert a new user with minimal fields (id, name, email). & User created with correct defaults (\texttt{emailVerified: false}, auto-generated \texttt{createdAt}). & Passed \\
+\hline
+test-ut-schema-2 & Insert a profile with a non-existent \texttt{userId}. & Foreign key constraint violation error thrown. & Passed \\
+\hline
+\end{longtable}
+
