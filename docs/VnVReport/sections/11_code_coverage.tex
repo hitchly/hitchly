@@ -1,0 +1,66 @@
+\section{Code Coverage Metrics}
+
+The following table summarizes the code coverage metrics for the backend service and router modules after the implementation of the test cases outlined in this report. The tests have high coverage in critical modules such as matching, trip management, profiles, and payments.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Module} & \textbf{Statements (\%)} & \textbf{Branches (\%)} & \textbf{Functions (\%)} & \textbf{Lines (\%)} \\
+\hline
+\multicolumn{5}{|c|}{\textbf{Services Layer}} \\
+\hline
+googlemaps & 60.69 & 57.14 & 71.42 & 60.69 \\
+\hline
+matchmaking & 80.83 & 50.00 & 90.90 & 80.83 \\
+\hline
+notification & 36.20 & 100.00 & 0.00 & 36.20 \\
+\hline
+payment & 49.15 & 33.33 & 47.05 & 49.15 \\
+\hline
+pricing & 100.00 & 66.66 & 100.00 & 100.00 \\
+\hline
+\multicolumn{5}{|c|}{\textbf{tRPC Routers Layer}} \\
+\hline
+complaints & 87.50 & 50.00 & 100.00 & 87.50 \\
+\hline
+health & 85.71 & 100.00 & 100.00 & 85.71 \\
+\hline
+location & 100.00 & 100.00 & 100.00 & 100.00 \\
+\hline
+matchmaking & 94.11 & 80.00 & 100.00 & 94.11 \\
+\hline
+payment & 94.35 & 74.35 & 100.00 & 94.35 \\
+\hline
+profile & 100.00 & 100.00 & 100.00 & 100.00 \\
+\hline
+reviews & 93.97 & 72.72 & 100.00 & 93.97 \\
+\hline
+trip & 80.76 & 65.40 & 83.33 & 80.76 \\
+\hline
+\multicolumn{5}{|c|}{\textbf{tRPC Admin Routers Layer}} \\
+\hline
+finances & 100.00 & 100.00 & 100.00 & 100.00 \\
+\hline
+infrastructure & 100.00 & 100.00 & 100.00 & 100.00 \\
+\hline
+operations & 100.00 & 85.00 & 100.00 & 100.00 \\
+\hline
+safety & 100.00 & 81.81 & 100.00 & 100.00 \\
+\hline
+users & 100.00 & 82.35 & 100.00 & 100.00 \\
+\hline
+\end{tabular}
+\caption{Code Coverage Metrics by Module}
+\end{table}
+
+\subsection*{Analysis of Services Layer Coverage}
+While the tRPC router modules have high code coverage (averaging $>$85\%), the underlying services layer shows lower metrics for specific third-party integrations. This is an intentional outcome of our testing strategy, which prioritizes the validation of our API endpoints and internal logic over the execution of complex external dependencies.
+
+\begin{itemize}
+    \item \textbf{Payment Service (49.15\%):} The payment service encompasses extensive logic for Stripe Connect, including driver onboarding, complex split transfers, and account requirement resolutions. Testing these features requires immense amounts of mock JSON data that mimics Stripe's internal API state. Our current test suite focuses on the rider-facing payment features (customer creation, card management) rather than the complex driver payouts.
+    \item \textbf{Google Maps Service (60.69\%):} To prevent hitting Google's rate limits and incurring live API billing charges during automated test runs, the map distance calculation functions contain intentional early-returns when the \texttt{NODE\_ENV} is set to \texttt{test}. This guarantees safe testing but leaves the actual request building, caching, and distance mathematics uncovered. Furthermore, the service contains large error-handling blocks for Google-specific incidents (e.g., ``Legacy API Not Activated'') that are difficult to trigger artificially.
+    \item \textbf{Notification Service (36.20\%):} The notification module relies on the \texttt{expo-server-sdk}. During router unit testing, the mock boundary is placed at the service entry point (verifying that a notification would be sent). So the internal logic that chunks recipients into batches of 100 and awaits delivery receipts from Apple/Google push servers is never executed by the test runner.
+\end{itemize}
+
+Overall, the coverage results show that the critical modules (M1, M2, M3, M4, M7, M8, and M9), as defined in Section~2, have extensive automated test coverage through their routers and services. Lower coverage in some services (for example, payment, Google Maps, and notification internals) is an intentional trade-off, since those components wrap third-party SDKs and external APIs; for those areas, we focus on validating the integration points and behaviour observable through the routers rather than exhaustively simulating all external error conditions.

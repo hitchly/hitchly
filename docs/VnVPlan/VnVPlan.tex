@@ -36,6 +36,7 @@ October 25th & Hamzah Rawasia & Completed Plan sections 2.2, 2.3, 2.4, 2.6\\
 October 26th & Sarim Zia & Added Plan sections 2.1, 2.5, 2.7\\
 October 26th & Burhan Kharodawala & Added Sections 1 and 5\\
 October 27th & All & Added Reflections \\
+March 8th & Burhan Kharodawala & Incorporated Feedback For Requirements\\
 
 \bottomrule
 \end{tabularx}
@@ -314,6 +315,93 @@ Input: Rider and driver with non-overlapping schedules.\\
 Expected Output: “No match found” message.\\
 Test Case Derivation: From matching constraints outlined in Section 1.4 (G.4).\\
 How test will be performed: Submit non-overlapping profiles and observe system response.\\
+
+\item \textbf{Test Case 3 – User Rejection}\\
+Control: Automatic\\
+Input: Rider and driver sent a rideshare request.\\
+Expected Output: “User rejected” message.\\
+Test Case Derivation: From matching constraints outlined in Section 1.4 (G.4).\\
+How test will be performed: Submit a rideshare request with a user rejection and observe system response.\\
+
+\end{enumerate}
+
+\subsubsection{Area of Testing 3 - Profile Input}
+
+Purpose: Confirm that the user is able to input and update their profile information correctly.  
+Covers: FR-2 (Profile and Scheduling Input).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 - Driver Verification}\\
+Control: Automatic\\
+Initial State: Driver profile with valid license.\\
+Input: Driver profile with valid license.\\
+Expected Output: Driver verified and added to system.\\
+Test Case Derivation: Based on verification criteria specified in Section 1.4 (G.4).\\
+How test will be performed: Submit driver profile and verify system response.\\[5pt]
+
+\item \textbf{Test Case 2 - Profile Update}\\
+Control: Automatic\\
+Initial State: Existing user with valid profile.\\
+Input: Updated profile information (e.g., contact details, driver/rider preference).\\
+Expected Output: Profile updated in system.\\
+Test Case Derivation: Based on update mechanisms specified in Section 1.4 (G.4).\\
+How test will be performed: Modify profile fields and verify changes are saved.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 4 - Cost Estimation}
+
+Purpose: Confirm that the user is able to get a cost estimation of a given ride.  
+Covers: FR-4 (Cost estimate) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 - Cost Calculation}\\
+Control: Automatic\\
+Initial State: Valid ride details (distance, duration, time of day).\\
+Input: User submits a ride request.\\
+Expected Output: Accurate cost estimate based on the provided details.\\
+Test Case Derivation: The final cost is estimated using the logic described in Section 1.4 (G.4).\\
+How test will be performed: Verify calculated cost once the ride is selected and accepted.\\[5pt]
+
+\item \textbf{Test Case 2 - Dynamic Cost Calculations}\\
+Control: Automatic\\
+Initial State: Existing user with valid profile.\\
+Input: New rider is added for the same ride.\\
+Expected Output: Cost estimate updated in system.\\
+Test Case Derivation: Based on cost estimation logic specified in Section 1.4 (G.4).\\
+How test will be performed: Add a new rider to an existing ride and verify the updated cost estimate.\\
+
+\end{enumerate}
+
+\subsubsection{Area of Testing 5 - Rating \& Reporting}
+
+Purpose: Confirm that a user is able to rate, review and report another user for a given ride.  
+Covers: FR-5 (Review and Ratings) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 - Reviews and Rating}\\
+Control: Automatic\\
+Initial State: User has completed a ride.\\
+Input: User submits a review and rating.\\
+Expected Output: Review and rating submitted successfully.\\
+Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
+How test will be performed: Submit a review and rate the user and observe the state.\\
+
+\item \textbf{Test Case 2 - Reporting}\\
+Control: Automatic\\
+Initial State: User has completed/accepted a ride\\
+Input: Report submitted successfully.\\
+Expected Output: "Report Submitted" message.\\
+Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
+How test will be performed: Submit a report for a user and wait for the submission confirmation alert\\
+
+\item \textbf{Test Case 3 - Report in Admin Dashboard}\\
+Control: Automatic\\
+Initial State: User has completed/accepted a ride\\
+Input: Report submitted successfully.\\
+Expected Output: Display report details in admin dashboard\\
+Test Case Derivation: Based on the review and rating criteria in Section 1.4 (G.4).\\
+How test will be performed: Submit a report for a user and observe the admin dashboard\\
+
 \end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}

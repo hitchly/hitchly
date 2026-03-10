@@ -1,0 +1,38 @@
+\section{Trace to Modules}
+
+The following table maps unit test IDs from the VnV Plan Section~5 to the modules defined in the Module Guide (design document, Section~5). Only modules with unit tests in the plan are shown; M5 (Scheduling) and M10 (Admin \& Moderation) are omitted as they have no dedicated unit tests and are covered by system-level testing. An ``X'' indicates that the test(s) in that row exercise the corresponding module.
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Test ID} & \textbf{M1} & \textbf{M2} & \textbf{M3} & \textbf{M4} & \textbf{M6} & \textbf{M7} & \textbf{M8} & \textbf{M9} & \textbf{M11} & \textbf{M12} \\
+\hline
+test-ut-auth-1 to test-ut-auth-3 & X & & & & & & & & & \\
+\hline
+test-ut-profile-1 to test-ut-profile-10 & & X & & & & & & & & \\
+\hline
+test-ut-trip-1 to test-ut-trip-34 & & & X & & & & & & & \\
+\hline
+test-ut-match-1 to test-ut-match-8 & & & & X & & & & & & \\
+\hline
+test-ut-notif-1 & & & & & X & & & & & \\
+\hline
+test-ut-review-1, test-ut-review-2 & & & & & & X & & & & \\
+\hline
+test-ut-complaint-1 & & & & & & & X & & & \\
+\hline
+test-ut-payment-1 to test-ut-payment-20 & & & & & & & & X & & \\
+\hline
+test-ut-pricing-1, test-ut-pricing-2 & & & & & & & & & X & \\
+\hline
+test-ut-schema-1, test-ut-schema-2 & & & & & & & & & & X \\
+\hline
+\end{tabular}%
+}
+\caption{Unit test to module traceability. Columns correspond to the module identifiers defined in Section~2.}
+\label{tab:trace-modules}
+\end{table}
+
+The full list of individual test case IDs and their descriptions is given in the VnV Plan Section~5.

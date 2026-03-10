@@ -1,0 +1,13 @@
+\section{Changes Due to Testing}
+
+The transition from the Revision 0 demo to the final product was driven by a combination of expert stakeholder feedback and internal structural verification. The following key changes were implemented to improve the system's robustness and user experience:
+
+\begin{itemize}
+    \item \textbf{McMaster Location Granularity:} During the Rev 0 demo, feedback from the teaching assistant highlighted that a generic "McMaster University" drop-off point was insufficient for a campus-wide rideshare application. In response, we updated the Route \& Trip module to allow riders to specify specific campus landmarks as distinct drop-off nodes, ensuring the system meets the actual commuting needs of students and faculty.
+    
+    \item \textbf{Architectural Refactoring for Extensibility:} Internal code reviews following Rev 0 identified significant technical debt that hindered the integration of new features. We performed a major refactor to improve concern separation and code quality, making the system much more extensible. This structural change ensured that modules remained separated by concern, allowing for easier maintenance and smoother integration of the notification system.
+
+    \item \textbf{UI/UX Best Practices Overhaul:} While the initial VnV Plan focused on quantitative usability metrics, the team shifted toward a developer-led improvement phase based on established UI/UX best practices. Key improvements included establishing styling consistency across the entire Expo application and reducing the number of tabs and navigation options to streamline the general application flow and reduce user friction.
+
+    \item \textbf{Authentication Scope Adjustment:} Following instructor feedback suggesting that strict official email verification might be over-engineered for the current scope, we simplified the verification process. This allowed the team to focus on the core ride-matching logic while still maintaining a domain-check for @mcmaster.ca emails to ensure the platform remains exclusive to the university community.
+\end{itemize}
