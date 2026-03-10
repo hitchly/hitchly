@@ -1,6 +1,6 @@
 \section{Functional Requirements Evaluation}
-\subsection{Area of Testing 1 – User Verification}
-\paragraph{Test Case 1 – Valid Sign-Up} \label{test-FR1-1}
+\subsection{Area of Testing 1 - User Verification}
+\paragraph{Test Case 1 - Valid Sign-Up} \label{test-FR1-1}
 \begin{description}
     \item[Initial State:] No existing account in the system. 
     \item[Input:] Valid McMaster email, password, and driver license upload (for drivers).
@@ -9,7 +9,7 @@
     \item[Result:] Pass
 \end{description}
 
-\paragraph{Test Case 2 – Invalid Verification} \label{test-FR1-2}
+\paragraph{Test Case 2 - Invalid Verification} \label{test-FR1-2}
 \begin{description}
     \item[Initial State:] No existing account in the system. 
     \item[Input:] Invalid email format, weak password, or missing driver license (for drivers).
@@ -19,8 +19,8 @@
 \end{description}
 
 
-\subsection{Area of Testing 2 – User Profile}
-\paragraph{Test Case 1 – Driver Profile Verification} \label{test-FR2-1}
+\subsection{Area of Testing 2 - User Profile}
+\paragraph{Test Case 1 - Driver Profile Verification} \label{test-FR2-1}
 \begin{description}
     \item[Initial State:] Driver profile with valid license.
     \item[Input:] Driver profile with valid license.
@@ -28,7 +28,7 @@
     \item[Actual Output:] Driver verified and added to system. 
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 2 – Invalid Profile Update} \label{test-FR2-2}
+\paragraph{Test Case 2 - Invalid Profile Update} \label{test-FR2-2}
 \begin{description}
     \item[Initial State:] Existing user with valid profile.
     \item[Input:] Updated profile information (e.g., contact details, driver/rider preference).
@@ -38,8 +38,8 @@
 \end{description}
 
 
-\subsection{Area of Testing 3 – Ride Matching}
-\paragraph{Test Case 1 – Successful Ride Match} \label{test-FR3-1}
+\subsection{Area of Testing 3 - Ride Matching}
+\paragraph{Test Case 1 - Successful Ride Match} \label{test-FR3-1}
 \begin{description}
     \item[Initial State:] Verified users with valid profiles and schedules exist in the system. 
     \item[Input:] A rider and driver with overlapping routes and times.
@@ -47,7 +47,7 @@
     \item[Actual Output:] Match proposal generated with a computed cost share presented to both users.
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 2 – No Match Found} \label{test-FR3-2}
+\paragraph{Test Case 2 - No Match Found} \label{test-FR3-2}
 \begin{description}
     \item[Initial State:] Verified users with valid profiles and schedules exist in the system.
     \item[Input:] A rider and driver with non-overlapping schedules.
@@ -55,17 +55,17 @@
     \item[Actual Output:]``No match found'' message returned to the user.
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 3 – User Rejection} \label{test-FR3-3}
+\paragraph{Test Case 3 - User Rejection} \label{test-FR3-3}
 \begin{description}
     \item[Initial State:] Rider and driver sent a rideshare request.
     \item[Input:] A rider and driver with overlapping schedules and opposite preferences reject the ride.
-    \item[Expected Output:] “User rejected” message.
-    \item[Actual Output:] “User rejected” message.
+    \item[Expected Output:] "User rejected" message.
+    \item[Actual Output:] "User rejected" message.
     \item[Result:] Pass
 \end{description}
 
-\subsection{Area of Testing 4 – Cost Estimation}
-\paragraph{Test Case 1 – Cost Estimate Calculation} \label{test-FR4-1}
+\subsection{Area of Testing 4 - Cost Estimation}
+\paragraph{Test Case 1 - Cost Estimate Calculation} \label{test-FR4-1}
 \begin{description}
     \item[Initial State:] Valid ride details (distance, duration, time of day).
     \item[Input:] User submits a ride request.
@@ -73,7 +73,7 @@
     \item[Actual Output:] Accurate cost estimate based on the provided details. 
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 2 – Cost Estimate Update} \label{test-FR4-2}
+\paragraph{Test Case 2 - Cost Estimate Update} \label{test-FR4-2}
 \begin{description}
     \item[Initial State:] Existing user with valid profile.
     \item[Input:] New rider is added for the same ride.
@@ -82,8 +82,8 @@
     \item[Result:] Pass
 \end{description}
 
-\subsection{Area of Testing 5 – Review and Reporting}
-\paragraph{Test Case 1 – Submit Review} \label{test-FR5-1}
+\subsection{Area of Testing 5 - Review and Reporting}
+\paragraph{Test Case 1 - Submit Review} \label{test-FR5-1}
 \begin{description}
     \item[Initial State:] User has completed a ride. 
     \item[Input:] User submits a review and rating.
@@ -91,7 +91,7 @@
     \item[Actual Output:] Review and rating submitted successfully. 
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 2 – Submit Report} \label{test-FR5-2}
+\paragraph{Test Case 2 - Submit Report} \label{test-FR5-2}
 \begin{description}
     \item[Initial State:] User has completed/accepted a ride.
     \item[Input:] Report submitted successfully.
@@ -99,7 +99,7 @@
     \item[Actual Output:] "Report Submitted" message.
     \item[Result:] Pass
 \end{description}
-\paragraph{Test Case 3 – Report in Admin Dashboard} \label{test-FR5-3}
+\paragraph{Test Case 3 - Report in Admin Dashboard} \label{test-FR5-3}
 \begin{description}
     \item[Initial State:] User has completed/accepted a ride.
     \item[Input:] Report submitted successfully.
