@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
+import { saveBackgroundAuthToken } from "@/context/location-context";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
@@ -52,7 +53,11 @@ export const useSignIn = () => {
               Alert.alert("Login Failed", ctx.error.message);
             }
           },
-          onSuccess: () => {
+          onSuccess: async (ctx) => {
+            // Save auth token for background tasks
+            if (ctx.data?.session?.token) {
+              await saveBackgroundAuthToken(ctx.data.session.token);
+            }
             queryClient.clear();
             void utils.invalidate();
           },

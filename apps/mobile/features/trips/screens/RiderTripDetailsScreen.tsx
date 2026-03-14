@@ -194,7 +194,7 @@ export function RiderTripDetailsScreen() {
               icon="expand"
               size="lg"
               onPress={() => {
-                router.push(`/(app)/rider/trips/${trip.id}/ride` as Href);
+                router.push(`/(app)/(modals)/ride?tripId=${trip.id}` as Href);
               }}
             />
           )}

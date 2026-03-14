@@ -226,7 +226,7 @@ export function DriverTripDetailsScreen() {
               icon="navigate"
               size="lg"
               onPress={() => {
-                router.push(`/(app)/driver/trips/${trip.id}/drive` as Href);
+                router.push(`/(app)/(modals)/drive?tripId=${trip.id}` as Href);
               }}
             />
           )}

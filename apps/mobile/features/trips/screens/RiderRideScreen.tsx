@@ -27,6 +27,7 @@ export function RiderRideScreen() {
     isCompleted,
     pickupConfirmed,
     statusInfo,
+    liveDriverInfo,
     isConfirming,
     actions,
   } = useRideTrip(tripId);
@@ -34,7 +35,7 @@ export function RiderRideScreen() {
   useEffect(() => {
     if (isCompleted && tripId) {
       const timeout = setTimeout(() => {
-        router.replace(`/(app)/(modals)/review?tripId=${tripId}` as Href);
+        router.replace(`/(app)/(modals)/review/${tripId}` as Href);
       }, 1500);
       return () => {
         clearTimeout(timeout);
@@ -165,6 +166,116 @@ export function RiderRideScreen() {
             >
               {statusInfo.location}
             </Text>
+
+            {liveDriverInfo && (isAccepted || isOnTrip) && (
+              <View
+                style={[
+                  styles.liveDriverCard,
+                  {
+                    backgroundColor: colors.surfaceSecondary,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.liveDriverHeader}>
+                  <Ionicons
+                    name="location-outline"
+                    size={16}
+                    color={colors.textSecondary}
+                  />
+                  <Text variant="captionSemibold" color={colors.textSecondary}>
+                    DRIVER LIVE LOCATION
+                  </Text>
+                </View>
+
+                {!liveDriverInfo.hasDriverLocation ? (
+                  <Text variant="body" color={colors.textSecondary}>
+                    Waiting for driver location...
+                  </Text>
+                ) : (
+                  <>
+                    <Text variant="bodySemibold">
+                      {liveDriverInfo.target === "dropoff"
+                        ? liveDriverInfo.hasArrivedAtTarget
+                          ? "You have arrived at your destination."
+                          : liveDriverInfo.targetDistanceLabel
+                            ? `Destination is ${liveDriverInfo.targetDistanceLabel} away.`
+                            : "Heading to your destination."
+                        : liveDriverInfo.hasArrivedAtPickup
+                          ? "Driver has arrived at your pickup point."
+                          : liveDriverInfo.pickupDistanceLabel
+                            ? `Driver is ${liveDriverInfo.pickupDistanceLabel} from pickup.`
+                            : "Driver is en route to pickup."}
+                    </Text>
+
+                    {!liveDriverInfo.hasArrivedAtTarget &&
+                      (liveDriverInfo.targetEtaLabel ||
+                        liveDriverInfo.targetDistanceKm != null ||
+                        liveDriverInfo.pickupEtaLabel ||
+                        liveDriverInfo.pickupDistanceKm != null) && (
+                        <Text variant="caption" color={colors.textSecondary}>
+                          ETA:{" "}
+                          {liveDriverInfo.targetEtaLabel ??
+                            liveDriverInfo.pickupEtaLabel ??
+                            (liveDriverInfo.targetDistanceKm != null
+                              ? liveDriverInfo.targetDistanceKm < 0.2
+                                ? "less than 1 min"
+                                : liveDriverInfo.targetDistanceKm < 0.8
+                                  ? "1-2 min"
+                                  : liveDriverInfo.targetDistanceKm < 2
+                                    ? "3-5 min"
+                                    : liveDriverInfo.targetDistanceKm < 5
+                                      ? "6-10 min"
+                                      : "10+ min"
+                              : liveDriverInfo.pickupDistanceKm != null
+                                ? liveDriverInfo.pickupDistanceKm < 0.2
+                                  ? "less than 1 min"
+                                  : liveDriverInfo.pickupDistanceKm < 0.8
+                                    ? "1-2 min"
+                                    : liveDriverInfo.pickupDistanceKm < 2
+                                      ? "3-5 min"
+                                      : liveDriverInfo.pickupDistanceKm < 5
+                                        ? "6-10 min"
+                                        : "10+ min"
+                                : "Calculating...")}
+                        </Text>
+                      )}
+
+                    <Text variant="caption" color={colors.textTertiary}>
+                      {liveDriverInfo.locationFreshnessLabel}
+                    </Text>
+
+                    {(liveDriverInfo.targetEtaLabel ||
+                      liveDriverInfo.targetDistanceKm != null ||
+                      liveDriverInfo.pickupEtaLabel ||
+                      liveDriverInfo.pickupDistanceKm != null) && (
+                      <Text variant="caption" color={colors.textTertiary}>
+                        ETA source:{" "}
+                        {liveDriverInfo.etaSource === "google"
+                          ? "Google Maps"
+                          : "cached"}
+                        {liveDriverInfo.etaStale ? " (stale)" : ""}
+                        {liveDriverInfo.etaFreshnessLabel
+                          ? ` • ${liveDriverInfo.etaFreshnessLabel}`
+                          : ""}
+                      </Text>
+                    )}
+
+                    {liveDriverInfo.autoPickedUp && (
+                      <Text variant="caption" color={colors.success}>
+                        Pickup was auto-confirmed based on arrival proximity.
+                      </Text>
+                    )}
+
+                    {liveDriverInfo.isFetchingDriverLocation && (
+                      <Text variant="caption" color={colors.textTertiary}>
+                        Updating...
+                      </Text>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
 
             {isAccepted && !pickupConfirmed && (
               <Button
@@ -340,6 +451,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     gap: 8,
+  },
+  liveDriverCard: {
+    marginBottom: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+  },
+  liveDriverHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   safetySection: { marginTop: 8 },
   safetyRow: { flexDirection: "row", gap: 12 },

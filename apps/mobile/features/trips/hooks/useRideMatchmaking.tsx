@@ -128,6 +128,8 @@ export function useRideMatchmaking() {
   const requestRideMutation = trpc.trip.createTripRequest.useMutation({
     onSuccess: () => {
       void utils.trip.getTripRequests.invalidate();
+      void utils.trip.getTrips.invalidate();
+      void utils.trip.getTripById.invalidate();
     },
     // By omitting the explicit type, TypeScript perfectly infers TRPCClientErrorLike
     onError: (error) => {

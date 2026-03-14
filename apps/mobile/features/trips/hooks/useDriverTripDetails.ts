@@ -15,7 +15,10 @@ export function useDriverTripDetails() {
     data: trip,
     isLoading,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery(
+    { tripId: id },
+    { enabled: !!id, refetchInterval: 5000 }
+  );
 
   const isDriver = session?.user.id === trip?.driverId;
 
@@ -41,7 +44,7 @@ export function useDriverTripDetails() {
 
   const startTrip = trpc.trip.startTrip.useMutation({
     onSuccess: () => {
-      if (id) router.push(`/(app)/driver/trips/${id}/drive` as Href);
+      if (id) router.push(`/(app)/(modals)/drive?tripId=${id}` as Href);
     },
     onError: (error) => {
       Alert.alert("Error", error.message);

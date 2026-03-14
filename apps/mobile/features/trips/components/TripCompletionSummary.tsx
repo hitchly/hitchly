@@ -44,26 +44,9 @@ export const TripCompletionSummary = ({
             contentContainerStyle={styles.scrollGap}
           >
             <View style={styles.row}>
-              <Text style={styles.label}>Duration</Text>
-              <Text style={styles.value}>
-                {formatDuration(summary?.durationMinutes)}
-              </Text>
-            </View>
-
-            <View style={styles.row}>
               <Text style={styles.label}>Passengers</Text>
               <Text style={styles.value}>
                 {summary?.passengerCount ?? "TBD"}
-              </Text>
-            </View>
-
-            <View style={styles.row}>
-              <Text style={styles.label}>Total Distance</Text>
-              <Text style={styles.value}>
-                {summary?.totalDistanceKm !== null &&
-                summary?.totalDistanceKm !== undefined
-                  ? `${summary.totalDistanceKm.toFixed(1)} km`
-                  : "TBD"}
               </Text>
             </View>
 

@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert } from "react-native";
 
+import { clearBackgroundAuthToken } from "@/context/location-context";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
@@ -19,6 +20,9 @@ export function useSignOut() {
     setIsSigningOut(true);
 
     try {
+      // Clear background auth token first
+      await clearBackgroundAuthToken();
+
       await authClient.signOut();
       queryClient.clear();
       await utils.invalidate();

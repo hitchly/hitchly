@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
+const RIDER_TRIPS_POLL_INTERVAL_MS = 5000;
+
 export function useRiderTrips() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -14,7 +16,10 @@ export function useRiderTrips() {
     isLoading,
     refetch,
     isRefetching,
-  } = trpc.trip.getTrips.useQuery();
+  } = trpc.trip.getTrips.useQuery(undefined, {
+    refetchInterval: RIDER_TRIPS_POLL_INTERVAL_MS,
+    refetchIntervalInBackground: true,
+  });
 
   const activeRiderTrips = useMemo(() => {
     return (

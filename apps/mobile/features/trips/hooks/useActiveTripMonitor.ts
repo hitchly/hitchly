@@ -10,11 +10,21 @@ export function useActiveTripMonitor() {
 
   const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
     enabled: !!userId && role === AppRole.DRIVER,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: riderRequests } = trpc.trip.getTripRequests.useQuery(
     { riderId: userId ?? "" },
-    { enabled: !!userId && role === AppRole.RIDER }
+    {
+      enabled: !!userId && role === AppRole.RIDER,
+      refetchInterval: 5000,
+      refetchIntervalInBackground: true,
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
+    }
   );
 
   let activeTripId: string | undefined = undefined;

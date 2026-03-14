@@ -4,6 +4,7 @@
 import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
+  payments,
   tripRequests,
   trips,
   users,
@@ -28,7 +29,7 @@ import {
 } from "../../services/payment";
 import { protectedProcedure, router } from "../trpc";
 
-const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder (teammate will replace with real fare calc)
+const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // Deprecated: Use real payment records
 
 // Zod schemas for validation
 const createTripInputSchema = z.object({
@@ -788,15 +789,24 @@ export const tripRouter = router({
             .from(users)
             .where(eq(users.id, r.riderId))
             .limit(1);
+
+          const [payment] = await ctx.db
+            .select({ driverAmountCents: payments.driverAmountCents })
+            .from(payments)
+            .where(eq(payments.tripRequestId, r.id))
+            .limit(1);
+
           return {
             riderName: rider?.name ?? "Passenger",
-            amountCents: PLACEHOLDER_FARE_CENTS_PER_PASSENGER,
+            amountCents: payment?.driverAmountCents ?? 0,
           };
         })
       );
 
-      const totalEarningsCents =
-        passengerCount * PLACEHOLDER_FARE_CENTS_PER_PASSENGER;
+      const totalEarningsCents = perPassenger.reduce(
+        (sum, p) => sum + (p.amountCents ?? 0),
+        0
+      );
 
       // Calculate total trip distance using route caching
       let totalDistanceKm: number | null = null;
@@ -1131,6 +1141,7 @@ export const tripRouter = router({
       z.object({
         tripId: z.string().optional(),
         riderId: z.string().optional(),
+        type: z.enum(["rider", "driver"]).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -1159,18 +1170,26 @@ export const tripRouter = router({
         }
 
         conditions.push(eq(tripRequests.tripId, input.tripId));
-      } else if (input.riderId) {
+      } else if (input.type === "driver") {
+        // Consolidated driver view: get all requests for ALL trips owned by this driver
+        const driverTripIds = ctx.db
+          .select({ id: trips.id })
+          .from(trips)
+          .where(eq(trips.driverId, userId));
+
+        conditions.push(inArray(tripRequests.tripId, driverTripIds));
+      } else if (input.riderId || input.type === "rider") {
         // Viewing requests by a specific rider (must be self)
-        if (input.riderId !== userId) {
+        const targetRiderId = input.riderId ?? userId;
+        if (targetRiderId !== userId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You can only view your own requests",
           });
         }
-        conditions.push(eq(tripRequests.riderId, input.riderId));
+        conditions.push(eq(tripRequests.riderId, targetRiderId));
       } else {
-        // Default: get requests for current user's trips (if driver) or own requests (if rider)
-        // For simplicity, return user's own requests
+        // Default: get requests for current user as rider
         conditions.push(eq(tripRequests.riderId, userId));
       }
       let requests;
