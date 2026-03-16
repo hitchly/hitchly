@@ -215,13 +215,17 @@ export function useDriveTrip(tripId: string) {
   const updateStatusMutation = trpc.trip.updatePassengerStatus.useMutation({
     onSuccess: () => void refetch(),
     onError: (err) => {
-      if (err.message.includes("Rider has not confirmed pickup yet")) {
+      const message =
+        typeof err?.message === "string"
+          ? err.message
+          : "Something went wrong. Please try again.";
+      if (message.includes("Rider has not confirmed pickup yet")) {
         Alert.alert(
           "Waiting for Confirmation",
           "Waiting for passenger to confirm pickup..."
         );
       } else {
-        Alert.alert("Error", err.message);
+        Alert.alert("Error", message);
       }
     },
   });

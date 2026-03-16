@@ -22,6 +22,7 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
   const rawDate = trip.departureTime;
   const departureDate = rawDate ? new Date(rawDate) : null;
   const availableSeats = trip.maxSeats - trip.bookedSeats;
+  const isRecurring = Boolean(trip.recurringScheduleId);
 
   return (
     <Card style={styles.cardSpacing} onPress={onPress}>
@@ -41,10 +42,13 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
             {formatLocation(trip.destination)}
           </Text>
         </View>
-        <Chip
-          label={trip.status.toUpperCase().replace("_", " ")}
-          active={trip.status === "active" || trip.status === "in_progress"}
-        />
+        <View style={styles.headerChips}>
+          {isRecurring && <Chip label="RECURRING" />}
+          <Chip
+            label={trip.status.toUpperCase().replace("_", " ")}
+            active={trip.status === "active" || trip.status === "in_progress"}
+          />
+        </View>
       </View>
 
       <View style={styles.cardFooter}>
@@ -82,6 +86,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   arrow: { marginHorizontal: 6 },
+  headerChips: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",

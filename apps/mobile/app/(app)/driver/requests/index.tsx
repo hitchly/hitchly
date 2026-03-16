@@ -1,5 +1,6 @@
-import { DriverTripRequestsScreen } from "@/features/trips/screens/DriverTripRequestsScreen";
+import { DriverSwipeRequestsScreen } from "@/features/trips/screens/DriverSwipeRequestsScreen";
 
-export default function DriverTripRequests() {
-  return <DriverTripRequestsScreen />;
+export default function DriverRequests() {
+  // For drivers, the Requests tab should be the swipe experience.
+  return <DriverSwipeRequestsScreen />;
 }

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 import * as z from "zod";
@@ -15,6 +15,10 @@ const createTripSchema = z.object({
     message: "Departure must be in the future",
   }),
   maxSeats: z.number().min(1).max(5),
+
+  // Recurring fields
+  isRecurring: z.boolean().default(false),
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).default([]),
 });
 
 export type CreateTripFormData = z.infer<typeof createTripSchema>;
@@ -23,24 +27,34 @@ export function useCreateTrip() {
   const router = useRouter();
   const utils = trpc.useUtils();
   const [isToCampus, setIsToCampus] = useState(new Date().getHours() < 12);
+  const prevIsToCampusRef = useRef(isToCampus);
 
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const defaultAddress = userProfile?.profile.defaultAddress ?? "";
 
   const methods = useForm<CreateTripFormData>({
+<<<<<<< HEAD
     resolver: zodResolver(createTripSchema),
     mode: "onChange",
+=======
+    resolver: zodResolver(createTripSchema) as any,
+>>>>>>> 3e247b3 (Implemented recurring schedule)
     defaultValues: {
       origin: "",
       destination: "",
       departureTime: new Date(Date.now() + 15 * 60 * 1000),
       maxSeats: 1,
+      isRecurring: false,
+      daysOfWeek: [],
     },
   });
 
-  const { setValue } = methods;
+  const { setValue, getValues } = methods;
 
+  // Only overwrite origin/destination when the user changes direction (TO/FROM MCMASTER).
+  // This prevents overwriting a custom drop-off like "union station" when defaultAddress loads.
   useEffect(() => {
+<<<<<<< HEAD
     if (isToCampus) {
       setValue("origin", defaultAddress, {
         shouldValidate: true,
@@ -59,8 +73,34 @@ export function useCreateTrip() {
         shouldValidate: true,
         shouldDirty: true,
       });
+=======
+    if (prevIsToCampusRef.current !== isToCampus) {
+      prevIsToCampusRef.current = isToCampus;
+      if (isToCampus) {
+        setValue("origin", defaultAddress);
+        setValue("destination", McMaster.address);
+      } else {
+        setValue("origin", McMaster.address);
+        setValue("destination", defaultAddress);
+      }
+>>>>>>> 3e247b3 (Implemented recurring schedule)
     }
   }, [isToCampus, defaultAddress, setValue]);
+
+  // When defaultAddress first loads, fill only fields that are still empty so we don't overwrite e.g. "union station".
+  useEffect(() => {
+    const { origin, destination } = getValues();
+    const originEmpty = origin === "" || origin === undefined;
+    const destEmpty = destination === "" || destination === undefined;
+    if (!originEmpty && !destEmpty) return;
+    if (isToCampus) {
+      if (originEmpty) setValue("origin", defaultAddress);
+      if (destEmpty) setValue("destination", McMaster.address);
+    } else {
+      if (originEmpty) setValue("origin", McMaster.address);
+      if (destEmpty) setValue("destination", defaultAddress);
+    }
+  }, [defaultAddress, isToCampus, setValue, getValues]);
 
   const createTripMutation = trpc.trip.createTrip.useMutation({
     onSuccess: () => {
@@ -73,8 +113,42 @@ export function useCreateTrip() {
     },
   });
 
-  const onSubmit = (data: CreateTripFormData) => {
-    createTripMutation.mutate(data);
+  const createScheduleMutation = trpc.recurringSchedule.create.useMutation({
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
+  });
+
+  const generateUpcomingTripsMutation =
+    trpc.recurringSchedule.generateUpcomingTripsForUser.useMutation({
+      onError: (err) => {
+        Alert.alert("Error", err.message);
+      },
+    });
+
+  const onSubmit = async (data: CreateTripFormData) => {
+    if (data.isRecurring && data.daysOfWeek && data.daysOfWeek.length > 0) {
+      const schedule = await createScheduleMutation.mutateAsync({
+        origin: data.origin,
+        destination: data.destination,
+        departureTime: data.departureTime,
+        maxSeats: data.maxSeats,
+        daysOfWeek: data.daysOfWeek,
+      });
+
+      await generateUpcomingTripsMutation.mutateAsync({ daysAhead: 28 });
+
+      await utils.trip.getTrips.invalidate();
+      Alert.alert("Success", "Recurring ride scheduled!");
+      router.back();
+    } else {
+      createTripMutation.mutate({
+        origin: data.origin,
+        destination: data.destination,
+        departureTime: data.departureTime,
+        maxSeats: data.maxSeats,
+      });
+    }
   };
 
   return {
@@ -82,7 +156,12 @@ export function useCreateTrip() {
     isToCampus,
     setIsToCampus,
     defaultAddress,
-    isPending: createTripMutation.isPending,
-    onSubmit: methods.handleSubmit(onSubmit),
+    isPending:
+      createTripMutation.isPending ||
+      createScheduleMutation.isPending ||
+      generateUpcomingTripsMutation.isPending,
+    onSubmit: () => {
+      void methods.handleSubmit(onSubmit)();
+    },
   };
 }

@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    minHeight: "30%",
+    height: "90%",
     maxHeight: "90%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
@@ -103,6 +103,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   content: {
+    flex: 1,
     padding: 20,
+    minHeight: 0,
   },
 });

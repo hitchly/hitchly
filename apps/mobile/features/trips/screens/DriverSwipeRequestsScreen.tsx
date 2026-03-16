@@ -19,13 +19,8 @@ export function DriverSwipeRequestsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
 
-  const {
-    driverTrips,
-    allPendingRequests,
-    isLoading,
-    acceptRequest,
-    rejectRequest,
-  } = useDriverSwipeRequests();
+  const { allRequests, isLoading, acceptRequest, rejectRequest } =
+    useDriverSwipeRequests();
 
   const handleSwipeRight = (request: TripRequestWithDetails) => {
     acceptRequest(request.id);
@@ -63,8 +58,13 @@ export function DriverSwipeRequestsScreen() {
     return <Skeleton text="Loading Requests..." />;
   }
 
+<<<<<<< HEAD
   // STATE 2: NO ACTIVE TRIPS
   if (driverTrips.length === 0) {
+=======
+  // STATE 2: NO REQUESTS AT ALL
+  if (!allRequests || allRequests.length === 0) {
+>>>>>>> 3e247b3 (Implemented recurring schedule)
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -91,7 +91,7 @@ export function DriverSwipeRequestsScreen() {
             style={styles.emptyIcon}
           />
           <Text variant="h2" style={styles.emptyTitle}>
-            NO TRIPS FOUND
+            NO REQUESTS FOUND
           </Text>
           <Text
             variant="body"
@@ -99,7 +99,8 @@ export function DriverSwipeRequestsScreen() {
             align="center"
             style={styles.emptySubtext}
           >
-            Create a trip first to start receiving ride requests.
+            You&apos;ll see ride requests here when riders ask to join your
+            trips.
           </Text>
         </View>
       </SafeAreaView>
@@ -107,7 +108,7 @@ export function DriverSwipeRequestsScreen() {
   }
 
   // STATE 3: NO PENDING REQUESTS
-  if (allPendingRequests.length === 0) {
+  if (allRequests.filter((r) => r.status === "pending").length === 0) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -173,7 +174,7 @@ export function DriverSwipeRequestsScreen() {
 
       <View style={styles.swipeContainer}>
         <SwipeDeck
-          data={allPendingRequests}
+          data={allRequests.filter((r) => r.status === "pending")}
           renderCard={(request) => <RiderCard request={request} />}
           onSwipeLeft={handleSwipeLeft}
           onSwipeRight={handleSwipeRight}

@@ -22,6 +22,13 @@ export function useDriverTripDetails() {
 
   const isDriver = session?.user.id === trip?.driverId;
 
+  const { data: recurringSchedule } = trpc.recurringSchedule.getById.useQuery(
+    { id: trip?.recurringScheduleId as string },
+    {
+      enabled: Boolean(trip?.recurringScheduleId),
+    }
+  );
+
   const cancelTrip = trpc.trip.cancelTrip.useMutation({
     onSuccess: async () => {
       void utils.trip.getTrips.invalidate();
@@ -68,7 +75,12 @@ export function useDriverTripDetails() {
   };
 
   const handleCancel = () => {
-    Alert.alert("Cancel Trip", "Are you sure you want to cancel this trip?", [
+    const isRecurring = Boolean(trip?.recurringScheduleId);
+    const message = isRecurring
+      ? "This trip is part of a recurring schedule. Cancelling will stop all future occurrences of this recurring trip. Do you want to cancel the entire recurring trip?"
+      : "Are you sure you want to cancel this trip?";
+
+    Alert.alert("Cancel Trip", message, [
       { text: "No", style: "cancel" },
       {
         text: "Yes",
@@ -84,6 +96,7 @@ export function useDriverTripDetails() {
     trip,
     isLoading,
     isDriver,
+    recurringSchedule,
     cancelTrip: {
       isPending: cancelTrip.isPending,
     },

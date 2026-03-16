@@ -1,8 +1,8 @@
 // TODO: Fix linting errors in this file and re-enable eslint
 /* eslint-disable */
+import "dotenv/config"; // Load .env before any code that reads process.env (e.g. db client)
 import { db } from "@hitchly/db/client";
 import { profiles, users, vehicles } from "@hitchly/db/schema";
-import "dotenv/config";
 import { eq } from "drizzle-orm";
 
 const TEST_PASSWORD = "test1234"; // Change this in production! (min 8 chars for Better Auth)
@@ -24,6 +24,8 @@ const devAccounts = [
 
 async function seedDevAccounts() {
   console.log("🌱 Seeding developer test accounts...\n");
+
+  let hasFailure = false;
 
   for (const account of devAccounts) {
     try {
@@ -163,8 +165,19 @@ async function seedDevAccounts() {
       console.log(`✅ Created account: ${account.name} (${account.email})`);
       console.log(`   Password: ${account.password}\n`);
     } catch (error) {
+      hasFailure = true;
       console.error(`❌ Error creating account for ${account.email}:`, error);
     }
+  }
+
+  if (hasFailure) {
+    console.error(
+      "\n⚠️  Seeding had errors. Fix the issues above and run again."
+    );
+    console.error(
+      "   Common fix: set DB_PASSWORD (and other DB_* vars) in apps/api/.env\n"
+    );
+    process.exit(1);
   }
 
   console.log("✨ Seeding complete!");

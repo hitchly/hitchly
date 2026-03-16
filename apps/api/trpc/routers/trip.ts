@@ -4,7 +4,11 @@
 import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
+<<<<<<< HEAD
   payments,
+=======
+  recurringTripSchedules,
+>>>>>>> 3e247b3 (Implemented recurring schedule)
   tripRequests,
   trips,
   users,
@@ -530,6 +534,61 @@ export const tripRouter = router({
             eq(tripRequests.status, "pending")
           )
         );
+      // If this trip is part of a recurring schedule, cancel the whole schedule
+      if (cancelledTrip?.recurringScheduleId) {
+        const scheduleId = cancelledTrip.recurringScheduleId;
+        const now = new Date();
+
+        // Mark schedule as inactive
+        await ctx.db
+          .update(recurringTripSchedules)
+          .set({
+            isActive: false,
+            updatedAt: new Date(),
+          })
+          .where(eq(recurringTripSchedules.id, scheduleId));
+
+        // Find future trips for this schedule for this driver
+        const futureTrips = await ctx.db
+          .select()
+          .from(trips)
+          .where(
+            and(
+              eq(trips.driverId, ctx.userId),
+              eq(trips.recurringScheduleId, scheduleId),
+              gte(trips.departureTime, now),
+              ne(trips.status, "cancelled")
+            )
+          );
+
+        const futureTripIds = futureTrips.map((t) => t.id);
+
+        if (futureTripIds.length > 0) {
+          // Cancel those trips
+          await ctx.db
+            .update(trips)
+            .set({
+              status: "cancelled",
+              updatedAt: new Date(),
+            })
+            .where(inArray(trips.id, futureTripIds));
+
+          // Cancel pending requests for those trips
+          await ctx.db
+            .update(tripRequests)
+            .set({
+              status: "cancelled",
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                inArray(tripRequests.tripId, futureTripIds),
+                eq(tripRequests.status, "pending")
+              )
+            );
+        }
+      }
+
       // Send push notification to all accepted riders
       const acceptedRiders = await ctx.db
         .select({ userId: tripRequests.riderId, pushToken: users.pushToken })
@@ -684,12 +743,20 @@ export const tripRouter = router({
         });
       }
 
-      // Can only update passengers when trip is in_progress
-      if (trip.status !== "in_progress") {
+      // Can only update passengers when trip is active or in_progress (allow both so driver can pickup without explicitly "starting" first)
+      if (trip.status !== "active" && trip.status !== "in_progress") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Can only update passenger status when trip is in progress",
         });
+      }
+
+      // If trip is still "active", transition to "in_progress" so completeTrip works later
+      if (trip.status === "active") {
+        await ctx.db
+          .update(trips)
+          .set({ status: "in_progress", updatedAt: new Date() })
+          .where(eq(trips.id, input.tripId));
       }
 
       // Get request
@@ -1129,14 +1196,19 @@ export const tripRouter = router({
         });
       }
 
-      // Check if rider has a payment method
-      const hasPM = await hasPaymentMethod(riderId);
-      if (!hasPM) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "You must add a payment method before requesting rides. Go to Profile -> Payment Methods.",
-        });
+      // Check if rider has a payment method (skip in dev when Stripe/Expo Go can't add one)
+      const requirePaymentMethod =
+        process.env.REQUIRE_PAYMENT_METHOD !== "false" &&
+        process.env.REQUIRE_PAYMENT_METHOD !== "0";
+      if (requirePaymentMethod) {
+        const hasPM = await hasPaymentMethod(riderId);
+        if (!hasPM) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "You must add a payment method before requesting rides. Go to Profile -> Payment Methods.",
+          });
+        }
       }
 
       // Create trip request with pickup coordinates and fare estimation
@@ -1213,8 +1285,15 @@ export const tripRouter = router({
         }
         conditions.push(eq(tripRequests.riderId, targetRiderId));
       } else {
+<<<<<<< HEAD
         // Default: get requests for current user as rider
         conditions.push(eq(tripRequests.riderId, userId));
+=======
+        // Default: get requests for trips where the current user is the driver
+        conditions.push(
+          sql`${tripRequests.tripId} IN (SELECT ${trips.id} FROM ${trips} WHERE ${trips.driverId} = ${userId})`
+        );
+>>>>>>> 3e247b3 (Implemented recurring schedule)
       }
       let requests;
       try {
@@ -1361,21 +1440,27 @@ export const tripRouter = router({
         estimatedDetourSec
       );
 
-      // Create payment hold BEFORE marking as accepted
-      const paymentResult = await createPaymentHold(
-        input.requestId,
-        request.request.riderId,
-        request.trip.driverId,
-        totalCents,
-        platformFeeCents,
-        driverAmountCents
-      );
+      const requirePaymentMethod =
+        process.env.REQUIRE_PAYMENT_METHOD !== "false" &&
+        process.env.REQUIRE_PAYMENT_METHOD !== "0";
 
-      if (!paymentResult.success) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Payment failed: ${paymentResult.error}`,
-        });
+      if (requirePaymentMethod) {
+        // Create payment hold BEFORE marking as accepted
+        const paymentResult = await createPaymentHold(
+          input.requestId,
+          request.request.riderId,
+          request.trip.driverId,
+          totalCents,
+          platformFeeCents,
+          driverAmountCents
+        );
+
+        if (!paymentResult.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Payment failed: ${paymentResult.error}`,
+          });
+        }
       }
 
       const [acceptedRequest] = await ctx.db
@@ -1400,8 +1485,8 @@ export const tripRouter = router({
         })
         .where(eq(trips.id, request.trip.id));
 
-      // RETROACTIVE DISCOUNT: Update payment holds for all existing accepted riders
-      if (newBookedSeats > 1) {
+      // RETROACTIVE DISCOUNT: Update payment holds for all existing accepted riders (skip when payment not required)
+      if (requirePaymentMethod && newBookedSeats > 1) {
         const existingAcceptedRequests = await ctx.db
           .select()
           .from(tripRequests)

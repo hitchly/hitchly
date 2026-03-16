@@ -9,25 +9,12 @@ export default function DriverTabsLayout() {
   return (
     <Tabs screenOptions={tabsOptions}>
       <Tabs.Screen
-        name="index"
+        name="index" // Home
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "navigate-circle" : "navigate-circle-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="requests"
-        options={{
-          title: "Requests",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "notifications" : "notifications-outline"}
               size={24}
               color={color}
             />
@@ -58,6 +45,14 @@ export default function DriverTabsLayout() {
               color={color}
             />
           ),
+        }}
+      />
+      {/* Hide driver/requests stack from the tab bar, keep it addressable via navigation */}
+      <Tabs.Screen
+        name="requests"
+        options={{
+          // Hide the requests stack from the tab bar; Home/Trips/Account are the only visible tabs.
+          href: null,
         }}
       />
     </Tabs>

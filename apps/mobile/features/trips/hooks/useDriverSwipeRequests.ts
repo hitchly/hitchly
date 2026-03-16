@@ -10,6 +10,7 @@ export function useDriverSwipeRequests() {
   const userId = session?.user.id;
   const utils = trpc.useUtils();
 
+<<<<<<< HEAD
   // 1. Single consolidated query for ALL requests managed by this driver
   const { data: allRequests, isLoading } = trpc.trip.getTripRequests.useQuery(
     { type: "driver" },
@@ -41,6 +42,20 @@ export function useDriverSwipeRequests() {
       (req) => req.status === "pending"
     ) as TripRequestWithDetails[];
   }, [allRequests]);
+=======
+  // Fetch all requests for trips where the current user is the driver
+  const { data: requestsData, isLoading } = trpc.trip.getTripRequests.useQuery(
+    {},
+    {
+      enabled: !!userId,
+    }
+  );
+
+  const allRequests = useMemo(
+    () => (requestsData ?? []).map((req) => req as TripRequestWithDetails),
+    [requestsData]
+  );
+>>>>>>> 3e247b3 (Implemented recurring schedule)
 
   const handleMutationSuccess = (message: string) => {
     void utils.trip.getTripRequests.invalidate();
@@ -67,8 +82,7 @@ export function useDriverSwipeRequests() {
   });
 
   return {
-    driverTrips,
-    allPendingRequests,
+    allRequests,
     isLoading,
     acceptRequest: (requestId: string) => {
       acceptMutation.mutate({ requestId });

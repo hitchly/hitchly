@@ -1,5 +1,6 @@
-import { RequestsScreen } from "@/features/requests/screens/RequestsScreen";
+import { DriverSwipeRequestsScreen } from "@/features/trips/screens/DriverSwipeRequestsScreen";
 
-export default function DriverRequests() {
-  return <RequestsScreen />;
+export default function DriverHome() {
+  // Driver Home: swipe through incoming requests + access trips from cards.
+  return <DriverSwipeRequestsScreen />;
 }

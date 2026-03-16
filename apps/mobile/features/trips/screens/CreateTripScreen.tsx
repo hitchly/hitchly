@@ -1,9 +1,10 @@
 import { useRouter } from "expo-router";
-import { FormProvider } from "react-hook-form";
+import { Controller, FormProvider } from "react-hook-form";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ControlledDateTimePicker } from "@/components/form/ControlledDateTimePicker";
-import { ControlledInput } from "@/components/form/ControlledInput";
+import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
 import { ControlledNumericStepper } from "@/components/form/ControlledNumericStepper";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { FormSection } from "@/components/ui/FormSection";
@@ -20,6 +21,7 @@ import {
 export function CreateTripScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const {
     methods,
     isToCampus,
@@ -39,7 +41,10 @@ export function CreateTripScreen() {
     >
       <FormProvider {...methods}>
         <ScrollView
-          contentContainerStyle={styles.formContent}
+          contentContainerStyle={[
+            styles.formContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 100 },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -84,17 +89,17 @@ export function CreateTripScreen() {
             )}
 
             <View style={styles.inputGroup}>
-              <ControlledInput<CreateTripFormData>
+              <ControlledLocationInput<CreateTripFormData>
+                control={methods.control as any}
                 name="origin"
                 label="PICKUP LOCATION"
                 placeholder="Search pickup point..."
-                icon="location-outline"
               />
-              <ControlledInput<CreateTripFormData>
+              <ControlledLocationInput<CreateTripFormData>
+                control={methods.control as any}
                 name="destination"
                 label="DROP-OFF LOCATION"
                 placeholder="Search drop-off point..."
-                icon="flag-outline"
               />
             </View>
           </FormSection>
@@ -114,6 +119,76 @@ export function CreateTripScreen() {
                 max={6}
               />
             </View>
+          </FormSection>
+
+          <FormSection
+            title="REPEAT"
+            description="Set this ride to repeat on selected weekdays."
+          >
+            <Controller
+              control={methods.control}
+              name="isRecurring"
+              render={({ field: { value, onChange } }) => (
+                <SegmentedControl<"once" | "recurring">
+                  value={value ? "recurring" : "once"}
+                  onChange={(val) => {
+                    onChange(val === "recurring");
+                  }}
+                  options={[
+                    { label: "ONE-TIME", value: "once" },
+                    { label: "RECURRING", value: "recurring" },
+                  ]}
+                />
+              )}
+            />
+
+            <Controller
+              control={methods.control}
+              name="daysOfWeek"
+              render={({ field: { value = [], onChange } }) => {
+                const days = [
+                  { label: "S", index: 0 },
+                  { label: "M", index: 1 },
+                  { label: "T", index: 2 },
+                  { label: "W", index: 3 },
+                  { label: "T", index: 4 },
+                  { label: "F", index: 5 },
+                  { label: "S", index: 6 },
+                ];
+
+                const toggleDay = (idx: number) => {
+                  if (value.includes(idx)) {
+                    onChange(value.filter((d: number) => d !== idx));
+                  } else {
+                    onChange([...value, idx].sort());
+                  }
+                };
+
+                return (
+                  <View style={styles.weekdayRow}>
+                    {days.map((day) => {
+                      const selected = value.includes(day.index);
+                      return (
+                        <Text
+                          key={day.index}
+                          variant="captionSemibold"
+                          style={[
+                            styles.weekdayPill,
+                            selected && {
+                              backgroundColor: colors.primary,
+                              color: colors.surface,
+                            },
+                          ]}
+                          onPress={() => toggleDay(day.index)}
+                        >
+                          {day.label}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                );
+              }}
+            />
           </FormSection>
 
           <View style={styles.footer}>
@@ -142,9 +217,7 @@ export function CreateTripScreen() {
 }
 
 const styles = StyleSheet.create({
-  formContent: {
-    paddingBottom: 60,
-  },
+  formContent: {},
   inputGroup: {
     gap: 16,
   },
@@ -168,11 +241,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   footer: {
-    marginTop: 12,
+    marginTop: 24,
     gap: 16,
   },
   disclaimer: {
     paddingHorizontal: 20,
     lineHeight: 16,
+  },
+  weekdayRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    gap: 8,
+  },
+  weekdayPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    textAlign: "center",
+    overflow: "hidden",
   },
 });

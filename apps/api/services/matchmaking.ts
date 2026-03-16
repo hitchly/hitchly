@@ -154,8 +154,28 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
+/** McMaster is in Ontario; use Toronto time so rider "09:00" and driver 9am Eastern match. */
+const APP_TIMEZONE = "America/Toronto";
+
+/** Same calendar day in app timezone (McMaster = Ontario) so rider "today" matches driver "today". */
+function dateToDayStringInAppTz(d: Date): string {
+  const s = new Date(d).toLocaleDateString("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return s; // "YYYY-MM-DD" in en-CA
+}
+
 function formatTimeFromDate(date: Date): string {
-  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  const s = new Date(date).toLocaleTimeString("en-CA", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: APP_TIMEZONE,
+  });
+  return s;
 }
 
 function normalizeScore(rawScore: number): number {
@@ -241,6 +261,11 @@ export async function findMatchesForUser(
     return !hasActiveRequest;
   });
 
+  const matchmakingDebug = {
+    dbTrips: dbTrips.length,
+    afterActiveRequestFilter: filteredTrips.length,
+  };
+
   const allRides = filteredTrips.map((row) => ({
     ride: {
       id: row.trip.id,
@@ -261,11 +286,25 @@ export async function findMatchesForUser(
     prefs: row.prefs,
   }));
 
-  if (allRides.length === 0) {
+  // When rider picks a date, only show trips departing on that calendar day (same timezone as app)
+  let ridesToConsider = allRides;
+  if (request.desiredDate) {
+    const riderDay = dateToDayStringInAppTz(request.desiredDate);
+    ridesToConsider = allRides.filter((row) => {
+      const tripDay = dateToDayStringInAppTz(row.ride.startTime);
+      return tripDay === riderDay;
+    });
+    (matchmakingDebug as Record<string, number>).afterDateFilter =
+      ridesToConsider.length;
+    (matchmakingDebug as Record<string, unknown>).riderDay = riderDay;
+  }
+
+  if (ridesToConsider.length === 0) {
+    console.info("[matchmaking] No matches pipeline:", matchmakingDebug);
     return [];
   }
 
-  const tripIds = allRides.map((r) => r.ride.id);
+  const tripIds = ridesToConsider.map((r) => r.ride.id);
 
   const existingPickupsMap = new Map<string, Location[]>();
 
@@ -316,7 +355,7 @@ export async function findMatchesForUser(
     );
   }
 
-  const candidates = allRides.map((row) => {
+  const candidates = ridesToConsider.map((row) => {
     const bookedFromSchema = row.ride.bookedSeats || 0;
     const bookedFromTripRequests = tripRequestCountMap.get(row.ride.id) ?? 0;
     const currentPassengers = Math.max(
@@ -350,9 +389,17 @@ export async function findMatchesForUser(
   const availableCandidates = candidates.filter(
     (c) => c.availableSeats >= request.maxOccupancy
   );
-  if (availableCandidates.length === 0) return [];
+  (matchmakingDebug as Record<string, number>).candidates = candidates.length;
+  (matchmakingDebug as Record<string, number>).afterSeats =
+    availableCandidates.length;
+  if (availableCandidates.length === 0) {
+    console.info("[matchmaking] No matches pipeline:", matchmakingDebug);
+    return [];
+  }
 
-  const DIRECTION_TOLERANCE_KM = 10; // Within 10km of destination
+  const DIRECTION_TOLERANCE_KM = 10; // Within 10km of destination (e.g. McMaster campus)
+  // Toronto–McMaster is ~60km; allow rider and driver origins up to 80km so GTA↔Hamilton commutes match
+  const ORIGIN_TOLERANCE_KM = 80;
 
   const directionCompatibleCandidates = availableCandidates.filter((ride) => {
     // Calculate distance between driver's destination and rider's destination
@@ -371,10 +418,18 @@ export async function findMatchesForUser(
     );
 
     // Must be going to roughly the same destination (within tolerance)
-    return destDistanceKm <= DIRECTION_TOLERANCE_KM && originDistanceKm <= 20;
+    return (
+      destDistanceKm <= DIRECTION_TOLERANCE_KM &&
+      originDistanceKm <= ORIGIN_TOLERANCE_KM
+    );
   });
 
-  if (directionCompatibleCandidates.length === 0) return [];
+  (matchmakingDebug as Record<string, number>).afterDirection =
+    directionCompatibleCandidates.length;
+  if (directionCompatibleCandidates.length === 0) {
+    console.info("[matchmaking] No matches pipeline:", matchmakingDebug);
+    return [];
+  }
 
   const scoringPromises = directionCompatibleCandidates.map(async (ride) => {
     try {
@@ -439,8 +494,13 @@ export async function findMatchesForUser(
   const validScoredResults = scoredResults.filter(
     (r): r is NonNullable<typeof r> => r !== null
   );
+  (matchmakingDebug as Record<string, number>).afterScoring =
+    validScoredResults.length;
 
-  const minCost = Math.min(...validScoredResults.map((r) => r.cost));
+  const minCost =
+    validScoredResults.length > 0
+      ? Math.min(...validScoredResults.map((r) => r.cost))
+      : 0;
 
   const finalMatches: (RideMatch | null)[] = validScoredResults.map(
     ({
@@ -517,6 +577,13 @@ export async function findMatchesForUser(
     }
     return true;
   });
+
+  (matchmakingDebug as Record<string, number>).validMatches =
+    validMatches.length;
+  (matchmakingDebug as Record<string, number>).realMatches = realMatches.length;
+  if (realMatches.length === 0) {
+    console.info("[matchmaking] No matches pipeline:", matchmakingDebug);
+  }
 
   // If dummy matches are requested, generate and add them to the results
   if (request.includeDummyMatches) {

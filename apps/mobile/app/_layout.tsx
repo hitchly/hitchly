@@ -12,6 +12,7 @@ import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
 import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
 import { authClient } from "@/lib/auth-client";
+import { StripeErrorBoundary } from "@/lib/stripe-error-boundary";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";
 
@@ -78,11 +79,19 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <RoleProvider>
+<<<<<<< HEAD
           <LocationProvider>
             <StripeProviderWrapper>
               <AppContent />
             </StripeProviderWrapper>
           </LocationProvider>
+=======
+          <StripeErrorBoundary fallback={<AppContent />}>
+            <StripeProviderWrapper>
+              <AppContent />
+            </StripeProviderWrapper>
+          </StripeErrorBoundary>
+>>>>>>> 3e247b3 (Implemented recurring schedule)
         </RoleProvider>
       </QueryClientProvider>
     </trpc.Provider>

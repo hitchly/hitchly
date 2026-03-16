@@ -1,11 +1,18 @@
-import { ScrollView, StyleSheet, Switch, TextInput, View } from "react-native";
+import { useMemo } from "react";
+import { ScrollView, StyleSheet, Switch, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { DatePickerComponent } from "@/components/ui/date-picker";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { FormSection } from "@/components/ui/FormSection";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
+
+function toTimeString(date: Date): string {
+  const h = date.getHours();
+  const m = date.getMinutes();
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
 
 interface RideSearchFormProps {
   userAddress?: string | null;
@@ -35,6 +42,26 @@ export function RideSearchForm({
   onSearch,
 }: RideSearchFormProps) {
   const { colors } = useTheme();
+
+  const combinedDateTime = useMemo(() => {
+    const base = desiredDate ? new Date(desiredDate) : new Date();
+    const [rawH, rawM] = desiredArrivalTime.includes(":")
+      ? (desiredArrivalTime.split(":").map(Number) as [number, number])
+      : [9, 0];
+    const h = Number.isNaN(rawH) ? 9 : rawH;
+    const m = Number.isNaN(rawM) ? 0 : rawM;
+    base.setHours(h, m, 0, 0);
+    const min = new Date();
+    min.setSeconds(0, 0);
+    return base.getTime() >= min.getTime() ? base : min;
+  }, [desiredDate, desiredArrivalTime]);
+
+  const setCombinedDateTime = (date: Date) => {
+    setDesiredDate(
+      new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    );
+    setDesiredArrivalTime(toTimeString(date));
+  };
 
   return (
     <ScrollView
@@ -102,40 +129,20 @@ export function RideSearchForm({
       </FormSection>
 
       <FormSection title="LOGISTICS">
-        <Card style={styles.logisticsCard}>
-          <View style={styles.inputGroup}>
-            <Text variant="label" color={colors.textSecondary}>
-              DATE
-            </Text>
-            <DatePickerComponent
-              value={desiredDate ?? new Date()}
-              onChange={setDesiredDate}
-              minimumDate={new Date()}
-              backgroundColor={colors.surfaceSecondary}
-              borderColor={colors.border}
-              textColor={colors.text}
-              iconColor={colors.text}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text variant="label" color={colors.textSecondary}>
-              ARRIVAL TIME
-            </Text>
-            <TextInput
-              style={[
-                styles.timeInput,
-                {
-                  backgroundColor: colors.surfaceSecondary,
-                  borderColor: colors.border,
-                  color: colors.text,
-                },
-              ]}
-              value={desiredArrivalTime}
-              onChangeText={setDesiredArrivalTime}
-              placeholder="HH:MM"
-              placeholderTextColor={colors.textTertiary}
-            />
-          </View>
+        <Card style={styles.routeCard}>
+          <DateTimePicker
+            label="DATE & TIME"
+            value={combinedDateTime}
+            onChange={setCombinedDateTime}
+            minimumDate={new Date()}
+            mode="datetime"
+          />
+          <Button
+            title="SEARCH FOR RIDES"
+            onPress={onSearch}
+            style={[styles.searchBtn, { backgroundColor: colors.text }]}
+            textStyle={styles.searchBtnText}
+          />
         </Card>
       </FormSection>
 
@@ -152,14 +159,6 @@ export function RideSearchForm({
           </Card>
         </FormSection>
       )}
-
-      <Button
-        title="SEARCH FOR RIDES"
-        size="lg"
-        icon="search-outline"
-        onPress={onSearch}
-        style={styles.searchBtn}
-      />
     </ScrollView>
   );
 }
@@ -181,20 +180,12 @@ const styles = StyleSheet.create({
   line: { width: 1, flex: 1, marginVertical: 4 },
   locationContainer: { flex: 1, gap: 24 },
   locationItem: { gap: 4 },
-  logisticsCard: { padding: 20, gap: 20 },
-  inputGroup: { gap: 8 },
-  timeInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: "Inter-SemiBold",
-  },
   devCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
   },
-  searchBtn: { marginTop: 32 },
+  searchBtn: { marginTop: 16 },
+  searchBtnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
 });

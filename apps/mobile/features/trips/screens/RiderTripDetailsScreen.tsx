@@ -189,6 +189,7 @@ export function RiderTripDetailsScreen() {
         {/* Improved Minimalist Actions */}
         <View style={styles.actionsContainer}>
           {(userRequest?.status === "accepted" ||
+<<<<<<< HEAD
             userRequest?.status === "on_trip") &&
             trip.status === "in_progress" && (
               <Button
@@ -200,6 +201,18 @@ export function RiderTripDetailsScreen() {
                 }}
               />
             )}
+=======
+            userRequest?.status === "on_trip") && (
+            <Button
+              title="ENTER LIVE PORTAL"
+              icon="expand"
+              size="lg"
+              onPress={() => {
+                router.push(`/(app)/(modals)/ride?tripId=${trip.id}` as Href);
+              }}
+            />
+          )}
+>>>>>>> 3e247b3 (Implemented recurring schedule)
 
           {riderEtaDetails &&
             (trip.status === "active" || trip.status === "in_progress") && (
@@ -233,7 +246,7 @@ export function RiderTripDetailsScreen() {
               variant="secondary"
               icon="star"
               onPress={() => {
-                router.push(`/(app)/(modals)/review?tripId=${trip.id}` as Href);
+                router.push(`/(app)/(modals)/review/${trip.id}` as Href);
               }}
             />
           )}

@@ -8,6 +8,7 @@ import { locationRouter } from "./location";
 import { matchmakingRouter } from "./matchmaking";
 import { paymentRouter } from "./payment";
 import { profileRouter } from "./profile";
+import { recurringScheduleRouter } from "./recurringSchedule";
 import { reviewsRouter } from "./reviews";
 import { tripRouter } from "./trip";
 
@@ -21,7 +22,11 @@ export const appRouter = router({
   trip: tripRouter,
   payment: paymentRouter,
   reviews: reviewsRouter,
+<<<<<<< HEAD
   identity: identityRouter,
+=======
+  recurringSchedule: recurringScheduleRouter,
+>>>>>>> dac193d (Implemented recurring schedule)
 });
 
 export type AppRouter = typeof appRouter;
