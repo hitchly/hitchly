@@ -20,6 +20,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       dark: "./assets/images/ios-dark.png",
       tinted: "./assets/images/ios-tinted.png",
     },
+    infoPlist: {
+      NSCameraUsageDescription:
+        "Hitchly needs access to your camera to securely verify your Ontario Driver's License.",
+    },
   },
 
   android: {
@@ -32,6 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
+    permissions: ["android.permission.CAMERA"],
   },
 
   web: {
@@ -51,6 +56,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         dark: {
           backgroundColor: "#11181C",
         },
+      },
+    ],
+    [
+      "@stripe/stripe-identity-react-native",
+      {
+        cameraPermission:
+          "Hitchly needs access to your camera to securely verify your Ontario Driver's License.",
       },
     ],
   ],

@@ -5,10 +5,10 @@ import {
   integer,
   pgEnum,
   pgTable,
+  serial,
   text,
   timestamp,
   uuid,
-  serial,
 } from "drizzle-orm/pg-core";
 
 // --- ENUMS ---
@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   pushToken: text("push_token"), // Expo push notification token
+  isVerifiedDriver: boolean("is_verified_driver").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

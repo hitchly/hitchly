@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { db } from "@hitchly/db/client";
-import { stripeConnectAccounts } from "@hitchly/db/schema";
+import { stripeConnectAccounts, users } from "@hitchly/db/schema";
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
 import type { TRPCError } from "@trpc/server";
@@ -73,7 +73,7 @@ app.get("/stripe/refresh", (c: Context) => {
   return c.redirect("hitchly://driver-payouts");
 });
 
-// Stripe Webhook handler for Connect account updates
+// Stripe Webhook handler for Connect and Identity updates
 app.post("/stripe/webhook", async (c: Context) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeSecretKey) {
@@ -91,7 +91,6 @@ app.post("/stripe/webhook", async (c: Context) => {
     if (webhookSecret && sig) {
       event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } else {
-      // Safety: Cast JSON.parse to Stripe.Event to avoid 'any' assignment
       event = JSON.parse(rawBody) as Stripe.Event;
     }
   } catch (err) {
@@ -101,7 +100,7 @@ app.post("/stripe/webhook", async (c: Context) => {
     return c.json({ error: "Webhook signature verification failed" }, 400);
   }
 
-  // Handle Connect account updates
+  // 1. Handle Connect account updates
   if (event.type === "account.updated") {
     const account = event.data.object;
     const accountId = account.id;
@@ -118,9 +117,67 @@ app.post("/stripe/webhook", async (c: Context) => {
         })
         .where(eq(stripeConnectAccounts.stripeAccountId, accountId));
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unknown database error";
       // eslint-disable-next-line no-console
-      console.error(`❌ Failed to update account ${accountId}:`, err);
+      console.error(`❌ Failed to update account ${accountId}:`, message);
     }
+  }
+
+  // 2. Handle completed identity verification
+  if (event.type === "identity.verification_session.verified") {
+    const sessionSummary = event.data.object;
+    const userId = sessionSummary.metadata.userId;
+
+    if (userId) {
+      try {
+        // Expand the session to read the extracted document details
+        const session = await stripe.identity.verificationSessions.retrieve(
+          sessionSummary.id,
+          { expand: ["verified_outputs"] }
+        );
+
+        const state = session.verified_outputs?.address?.state;
+        const stateOrProvince =
+          typeof state === "string" ? state.toLowerCase() : undefined;
+
+        // Ensure the license was issued in Ontario
+        if (stateOrProvince === "on" || stateOrProvince === "ontario") {
+          // eslint-disable-next-line no-console
+          console.log(`✅ Driver verification complete for user ${userId}`);
+
+          // Update the database to unlock driver mode for this user
+          await db
+            .update(users)
+            .set({ isVerifiedDriver: true })
+            .where(eq(users.id, userId));
+        } else {
+          // eslint-disable-next-line no-console
+          console.log(
+            `⚠️ User ${userId} verified a license, but it was not from Ontario.`
+          );
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Unknown Stripe API error";
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ Failed to update verification status for user ${userId}:`,
+          message
+        );
+      }
+    }
+  }
+
+  // 3. Handle failed/canceled verifications
+  if (
+    event.type === "identity.verification_session.requires_input" ||
+    event.type === "identity.verification_session.canceled"
+  ) {
+    const session = event.data.object;
+    const userId = session.metadata.userId ?? "unknown";
+    // eslint-disable-next-line no-console
+    console.log(`⚠️ Verification failed or canceled for user: ${userId}`);
   }
 
   return c.json({ received: true });

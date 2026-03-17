@@ -3,6 +3,7 @@ import { router } from "../trpc";
 import { adminRouter } from "./admin";
 import { complaintsRouter } from "./complaints";
 import { healthRouter } from "./health";
+import { identityRouter } from "./identity";
 import { locationRouter } from "./location";
 import { matchmakingRouter } from "./matchmaking";
 import { paymentRouter } from "./payment";
@@ -20,6 +21,7 @@ export const appRouter = router({
   trip: tripRouter,
   payment: paymentRouter,
   reviews: reviewsRouter,
+  identity: identityRouter,
 });
 
 export type AppRouter = typeof appRouter;
