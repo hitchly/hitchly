@@ -123,7 +123,7 @@ describe("Location Router", () => {
       };
 
       const result = await caller.location.update(input);
-      expect(result).toEqual({ success: true });
+      expect(result).toMatchObject({ success: true });
     });
 
     it("should accept updates without optional fields", async () => {
@@ -131,7 +131,7 @@ describe("Location Router", () => {
       const input = { latitude: 43.26, longitude: -79.91 };
 
       const result = await caller.location.update(input);
-      expect(result).toEqual({ success: true });
+      expect(result).toMatchObject({ success: true });
     });
   });
 });

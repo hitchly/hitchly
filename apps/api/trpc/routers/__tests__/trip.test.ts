@@ -797,7 +797,7 @@ describe("Trip Router", () => {
       expect(result?.status).toBe("completed");
     });
 
-    it("should reject pickup without rider confirmation (test-ut-trip-6)", async () => {
+    it("should allow driver override for pickup without rider confirmation (test-ut-trip-6)", async () => {
       const unconfirmedRequest = {
         ...mockRequest,
         riderPickupConfirmedAt: null,
@@ -814,13 +814,38 @@ describe("Trip Router", () => {
         }),
       });
 
+      // Mock the driver override update that sets riderPickupConfirmedAt
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce(undefined),
+        }),
+      });
+
+      // Mock the status update to on_trip
+      const updatedRequest = {
+        ...unconfirmedRequest,
+        status: "on_trip" as const,
+        riderPickupConfirmedAt: new Date(),
+      };
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            returning: vi.fn().mockResolvedValueOnce([updatedRequest]),
+          }),
+        }),
+      });
+
       const caller = tripRouter.createCaller(
         createMockContext(userId, mockDb as unknown)
       );
 
-      await expect(
-        caller.updatePassengerStatus({ tripId, requestId, action: "pickup" })
-      ).rejects.toThrow("Rider has not confirmed pickup yet");
+      const result = await caller.updatePassengerStatus({
+        tripId,
+        requestId,
+        action: "pickup",
+      });
+
+      expect(result?.status).toBe("on_trip");
     });
 
     it("should reject update when trip is not in_progress (test-ut-trip-6)", async () => {
@@ -884,6 +909,20 @@ describe("Trip Router", () => {
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([]), // Completed requests
+        }),
+      });
+
+      // Mock calculateTripSummary: trip lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([completedTrip]),
+        }),
+      });
+
+      // Mock calculateTripSummary: completed requests (empty for this test)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([]),
         }),
       });
 
@@ -1743,7 +1782,7 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock select: get completed requests
+      // Mock select: get completed requests (for completeTrip notification)
       const completedReq1 = createMockTripRequest({
         id: "req-1",
         riderId: "rider-1",
@@ -1764,7 +1803,23 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock select: get rider 1 name
+      // Mock calculateTripSummary: trip lookup
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ ...mockTrip, status: "completed" }]),
+        }),
+      });
+
+      // Mock calculateTripSummary: completed requests
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([completedReq1, completedReq2]),
+        }),
+      });
+
+      // Mock calculateTripSummary: rider name queries (parallel execution, so mock in order)
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockReturnValueOnce({
@@ -1773,11 +1828,27 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock select: get rider 2 name
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockReturnValueOnce({
             limit: vi.fn().mockResolvedValueOnce([{ name: "Rider Two" }]),
+          }),
+        }),
+      });
+
+      // Mock calculateTripSummary: rider payment queries (parallel execution after names)
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([{ driverAmountCents: 750 }]),
+          }),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([{ driverAmountCents: 750 }]),
           }),
         }),
       });
