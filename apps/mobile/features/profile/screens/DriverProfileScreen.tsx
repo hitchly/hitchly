@@ -35,9 +35,9 @@ function AccountMasterSection() {
 }
 
 interface ProfileMasterProps {
-  profile: ProfileData;
-  preferences: PreferenceData;
-  vehicle: VehicleData;
+  profile: ProfileData | null;
+  preferences: PreferenceData | null;
+  vehicle: VehicleData | null;
   onSuccess: () => void;
 }
 
@@ -101,9 +101,9 @@ export function DriverProfileScreen() {
         <AccountMasterSection />
 
         <ProfileMasterSection
-          profile={p.userRecord.profile}
-          preferences={p.userRecord.preferences}
-          vehicle={p.userRecord.vehicle}
+          profile={p.userRecord.profile ?? null}
+          preferences={p.userRecord.preferences ?? null}
+          vehicle={p.userRecord.vehicle ?? null}
           onSuccess={p.onSuccess}
         />
       </ScrollView>

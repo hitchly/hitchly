@@ -29,7 +29,12 @@ export function ControlledLocationInput<T extends FieldValues>({
   const [searchError, setSearchError] = useState<string | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchLocations = async (query: string, attempt = 1): Promise<void> => {
+  const fetchLocations = async (
+    query: string,
+    onChange: (value: string) => void,
+    onSelectCallback?: (details: { lat: number; long: number }) => void,
+    attempt = 1
+  ): Promise<void> => {
     if (query.length < 4) {
       setResults([]);
       setSearchError(null);
@@ -61,7 +66,7 @@ export function ControlledLocationInput<T extends FieldValues>({
           // Increase delay between retries to give system more time
           const delay = 1500 * attempt;
           await new Promise((resolve) => setTimeout(resolve, delay));
-          await fetchLocations(query, attempt + 1);
+          await fetchLocations(query, onChange, onSelectCallback, attempt + 1);
           return;
         }
         throw e;
@@ -103,6 +108,17 @@ export function ControlledLocationInput<T extends FieldValues>({
 
       if (validResults.length === 0 && query.length >= 4) {
         setSearchError("No matching addresses found");
+      } else if (validResults.length === 1) {
+        // Auto-select if there's exactly one result
+        const singleResult = validResults[0];
+        if (singleResult) {
+          onChange(singleResult.fullAddress);
+          setResults([]);
+          onSelectCallback?.({
+            lat: singleResult.latitude,
+            long: singleResult.longitude,
+          });
+        }
       }
     } catch (error) {
       const errorMsg = String(error);
@@ -142,7 +158,7 @@ export function ControlledLocationInput<T extends FieldValues>({
             }
 
             searchTimeoutRef.current = setTimeout(() => {
-              void fetchLocations(text);
+              void fetchLocations(text, onChange, onSelect);
             }, 600);
           }}
           onSelect={(item) => {

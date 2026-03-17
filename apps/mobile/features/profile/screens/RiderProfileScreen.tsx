@@ -33,8 +33,8 @@ function AccountMasterSection() {
 }
 
 interface ProfileMasterProps {
-  profile: ProfileData;
-  preferences: PreferenceData;
+  profile: ProfileData | null;
+  preferences: PreferenceData | null;
   onSuccess: () => void;
 }
 
@@ -96,8 +96,8 @@ export function RiderProfileScreen() {
         <AccountMasterSection />
 
         <ProfileMasterSection
-          profile={p.userRecord.profile}
-          preferences={p.userRecord.preferences}
+          profile={p.userRecord.profile ?? null}
+          preferences={p.userRecord.preferences ?? null}
           onSuccess={p.onSuccess}
         />
       </ScrollView>

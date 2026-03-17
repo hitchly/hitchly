@@ -14,7 +14,7 @@ interface AddressSectionProps {
     defaultAddress: string | null;
     defaultLat: number | null;
     defaultLong: number | null;
-  };
+  } | null;
   onSuccess: () => void;
 }
 
@@ -26,6 +26,10 @@ export function AddressSection({ profile, onSuccess }: AddressSectionProps) {
     setIsOpen(false);
     onSuccess();
   };
+
+  if (!profile) {
+    return null;
+  }
 
   const hasAddress = (profile.defaultAddress ?? "") !== "";
 
