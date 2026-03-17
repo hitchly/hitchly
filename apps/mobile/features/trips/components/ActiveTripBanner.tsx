@@ -5,16 +5,22 @@ import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/Text";
+import {
+  formatWeeklyCommuteLabel,
+  isTripRecurring,
+} from "@/features/trips/utils/recurringTripLabels";
 import { useTheme } from "@/context/theme-context";
 
 interface ActiveTripBannerProps {
   tripId: string;
   roleLabel: string;
+  isRecurring?: boolean;
 }
 
 export const ActiveTripBanner = ({
   tripId,
   roleLabel,
+  isRecurring,
 }: ActiveTripBannerProps) => {
   const router = useRouter();
   const segments = useSegments(); // Use segments instead of pathname
@@ -79,6 +85,14 @@ export const ActiveTripBanner = ({
               <Text variant="caption" style={{ color: colors.textSecondary }}>
                 Tap to expand live portal
               </Text>
+              {isRecurring && (
+                <Text
+                  variant="caption"
+                  style={{ color: colors.primary, marginTop: 2 }}
+                >
+                  🔁 Recurring commute
+                </Text>
+              )}
             </View>
           </View>
 

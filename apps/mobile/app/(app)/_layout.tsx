@@ -10,7 +10,8 @@ import { useUserRole } from "@/context/role-context";
 function AppLayoutContent() {
   // These hooks should always be available since RoleProvider wraps this component
   const { isLoading: isRoleLoading } = useUserRole();
-  const { activeTripId, currentRoleLabel, isActive } = useActiveTripMonitor();
+  const { activeTripId, currentRoleLabel, isActive, isRecurring } =
+    useActiveTripMonitor();
 
   return (
     <DriverVerificationGuard>
@@ -28,7 +29,11 @@ function AppLayoutContent() {
     </DriverVerificationGuard>
 =======
       {!isRoleLoading && isActive && activeTripId && (
-        <ActiveTripBanner tripId={activeTripId} roleLabel={currentRoleLabel} />
+        <ActiveTripBanner
+          tripId={activeTripId}
+          roleLabel={currentRoleLabel}
+          isRecurring={isRecurring}
+        />
       )}
     </View>
 >>>>>>> dac193d (Implemented recurring schedule)

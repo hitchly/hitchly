@@ -5,6 +5,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/context/theme-context";
+import {
+  formatWeeklyCommuteLabel,
+  isTripRecurring,
+} from "@/features/trips/utils/recurringTripLabels";
 
 export interface RideMatch {
   rideId: string;
@@ -16,6 +20,8 @@ export interface RideMatch {
   bio: string;
   matchPercentage: number;
   uiLabel: string;
+  recurringScheduleId?: string | null;
+  departureTime?: string;
   details: {
     estimatedCost: number;
     estimatedDistanceKm: number;
@@ -99,6 +105,12 @@ export function TripCard({
   );
 
   const availableSeats = match.details.availableSeats;
+
+  const recurringMeta = isTripRecurring({
+    recurringScheduleId: match.recurringScheduleId,
+  })
+    ? formatWeeklyCommuteLabel(match.departureTime)
+    : null;
 
   return (
     <View
@@ -257,6 +269,30 @@ export function TripCard({
           {match.vehicle}
         </Text>
       </View>
+
+      {recurringMeta && (
+        <View style={styles.recurringRow}>
+          <Ionicons
+            name="repeat"
+            size={14}
+            color={colors.primary}
+            style={{ marginRight: 6 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.recurringTitle, { color: colors.text }]}>
+              {recurringMeta.title}
+            </Text>
+            <Text
+              style={[
+                styles.recurringSubtitle,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {recurringMeta.subtitle}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Bio if available */}
       {match.bio && (
@@ -418,6 +454,20 @@ const styles = StyleSheet.create({
   vehicleText: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  recurringRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  recurringTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  recurringSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
   bioSection: {
     marginBottom: 12,

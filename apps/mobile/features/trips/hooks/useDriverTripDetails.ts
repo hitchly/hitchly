@@ -49,6 +49,23 @@ export function useDriverTripDetails() {
     },
   });
 
+  const deactivateSchedule = trpc.recurringSchedule.delete.useMutation({
+    onSuccess: async () => {
+      void utils.recurringSchedule.listMine.invalidate();
+      void utils.trip.getTrips.invalidate();
+      if (id) {
+        await utils.trip.getTripById.invalidate({ tripId: id });
+      }
+      Alert.alert(
+        "Schedule stopped",
+        "Future rides for this recurring commute have been cancelled."
+      );
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
   const startTrip = trpc.trip.startTrip.useMutation({
     onSuccess: async () => {
       // Invalidate both trips list and the specific trip
@@ -104,6 +121,12 @@ export function useDriverTripDetails() {
       isPending: startTrip.isPending,
       mutate: (variables: { tripId: string }) => {
         startTrip.mutate(variables);
+      },
+    },
+    deactivateSchedule: {
+      isPending: deactivateSchedule.isPending,
+      mutate: (variables: { id: string }) => {
+        deactivateSchedule.mutate(variables);
       },
     },
     canStartRide: canStartRide(),

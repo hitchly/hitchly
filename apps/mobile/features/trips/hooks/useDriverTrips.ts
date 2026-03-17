@@ -35,66 +35,24 @@ export function useDriverTrips() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
 
-  const groupedDriverTrips = useMemo(() => {
+  const driverTrips = useMemo(() => {
     if (!trips || !currentUserId) return [];
 
-    const now = new Date();
-
-    // Only consider trips for this driver that aren't cancelled
-    const driverTrips = trips.filter(
-      (trip) => trip.status !== "cancelled" && trip.driverId === currentUserId
-    );
-
-    const bySchedule = new Map<string, typeof driverTrips>();
-    const standalone: typeof driverTrips = [];
-
-    for (const trip of driverTrips) {
-      if (!trip.recurringScheduleId) {
-        standalone.push(trip);
-        continue;
-      }
-
-      const key = trip.recurringScheduleId;
-      const list = bySchedule.get(key) ?? [];
-      list.push(trip);
-      bySchedule.set(key, list);
-    }
-
-    const grouped: typeof driverTrips = [...standalone];
-
-    for (const [, groupTrips] of bySchedule.entries()) {
-      const futureTrips = groupTrips.filter(
-        (t) => new Date(t.departureTime) >= now
+    // Show all non-cancelled trips for this driver (one row per instance),
+    // including both past and future, with most recent first.
+    return trips
+      .filter(
+        (trip) => trip.status !== "cancelled" && trip.driverId === currentUserId
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.departureTime).getTime() -
+          new Date(a.departureTime).getTime()
       );
-
-      if (futureTrips.length === 0) {
-        // If no future trips left, you could either skip or show the latest past one.
-        continue;
-      }
-
-      const [first, ...rest] = futureTrips;
-      if (!first) continue;
-
-      const nextTrip = rest.reduce((earliest, current) => {
-        return new Date(current.departureTime) <
-          new Date(earliest.departureTime)
-          ? current
-          : earliest;
-      }, first);
-
-      grouped.push(nextTrip);
-    }
-
-    // Sort by departureTime ascending so nearest upcoming trips appear first
-    return grouped.sort(
-      (a, b) =>
-        new Date(a.departureTime).getTime() -
-        new Date(b.departureTime).getTime()
-    );
   }, [trips, currentUserId]);
 
   return {
-    trips: groupedDriverTrips,
+    trips: driverTrips,
     isLoading,
     isRefetching,
     refetch,

@@ -41,6 +41,7 @@ export function useActiveTripMonitor() {
 
   let activeTripId: string | undefined = undefined;
   let currentRoleLabel = "";
+  let isRecurring = false;
 
   if (role === AppRole.DRIVER) {
     const activeDriverTrip = driverTrips?.find(
@@ -49,6 +50,7 @@ export function useActiveTripMonitor() {
     if (activeDriverTrip) {
       activeTripId = activeDriverTrip.id;
       currentRoleLabel = "DRIVING";
+      isRecurring = !!activeDriverTrip.recurringScheduleId;
     }
   }
 
@@ -61,6 +63,7 @@ export function useActiveTripMonitor() {
     if (activeRiderRequest) {
       activeTripId = activeRiderRequest.tripId;
       currentRoleLabel = "RIDING";
+      isRecurring = !!activeRiderRequest.trip?.recurringScheduleId;
     }
   }
 
@@ -68,5 +71,6 @@ export function useActiveTripMonitor() {
     activeTripId,
     currentRoleLabel,
     isActive: !!activeTripId,
+    isRecurring,
   };
 }

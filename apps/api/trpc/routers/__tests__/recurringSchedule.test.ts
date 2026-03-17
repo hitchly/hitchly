@@ -214,4 +214,50 @@ describe("recurringScheduleRouter", () => {
       expect(result.trips[0]?.id).toBeDefined();
     });
   });
+
+  describe("getNextTripOccurrence", () => {
+    it("returns the next future trip for a schedule (test-recurring-5)", async () => {
+      const userId = "driver-123";
+      const recurringScheduleId = "sched-1";
+      const after = new Date("2025-04-07T08:00:00Z");
+
+      const nextTrip = createMockTrip({
+        id: "trip-next",
+        recurringScheduleId,
+        departureTime: new Date("2025-04-14T08:00:00Z"),
+      });
+
+      (mockDb.select as Mock).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValueOnce([
+                {
+                  id: nextTrip.id,
+                  departureTime: nextTrip.departureTime,
+                  origin: nextTrip.origin,
+                  destination: nextTrip.destination,
+                },
+              ]),
+            }),
+          }),
+        }),
+      });
+
+      const caller = recurringScheduleRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
+
+      const result = await caller.getNextTripOccurrence({
+        recurringScheduleId,
+        after,
+      });
+
+      expect(result).toMatchObject({
+        id: "trip-next",
+        origin: nextTrip.origin,
+        destination: nextTrip.destination,
+      });
+    });
+  });
 });

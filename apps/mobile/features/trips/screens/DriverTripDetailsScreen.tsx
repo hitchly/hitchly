@@ -25,6 +25,7 @@ export function DriverTripDetailsScreen() {
     recurringSchedule,
     cancelTrip,
     startTrip,
+    deactivateSchedule,
     canStartRide,
     handleCancel,
     router,
@@ -329,14 +330,43 @@ export function DriverTripDetailsScreen() {
           )}
 
           {trip.status === "completed" && (
-            <Button
-              title="RATE RIDERS"
-              variant="secondary"
-              icon="star"
-              onPress={() => {
-                router.push(`/(app)/(modals)/review/${trip.id}` as Href);
-              }}
-            />
+            <>
+              <Button
+                title="RATE RIDERS"
+                variant="secondary"
+                icon="star"
+                onPress={() => {
+                  router.push(`/(app)/(modals)/review/${trip.id}` as Href);
+                }}
+              />
+              {isRecurring && recurringSchedule && (
+                <Button
+                  title="CANCEL RECURRING SCHEDULE"
+                  variant="ghost"
+                  onPress={() => {
+                    Alert.alert(
+                      "Cancel recurring schedule",
+                      "This will stop future rides for this recurring commute. Past trips stay in your history.",
+                      [
+                        { text: "KEEP SCHEDULE", style: "cancel" },
+                        {
+                          text: "STOP FUTURE RIDES",
+                          style: "destructive",
+                          onPress: () => {
+                            deactivateSchedule.mutate({
+                              id: recurringSchedule.id,
+                            });
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  isLoading={deactivateSchedule.isPending}
+                  style={styles.cancelRecurringBtn}
+                  textStyle={{ fontSize: 13 }}
+                />
+              )}
+            </>
           )}
 
           {canCancel && (
@@ -413,5 +443,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minWidth: 32,
+  },
+  cancelRecurringBtn: {
+    marginTop: 4,
+    opacity: 0.9,
   },
 });

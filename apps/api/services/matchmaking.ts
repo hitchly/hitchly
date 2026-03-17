@@ -58,6 +58,10 @@ export type RideMatch = {
   bio: string;
   matchPercentage: number;
   uiLabel: string;
+  /** Optional ID if this trip was generated from a recurring schedule */
+  recurringScheduleId?: string | null;
+  /** Serialized departure time for this trip instance */
+  departureTime?: string;
   details: {
     estimatedCost: number;
     estimatedDistanceKm: number;
@@ -278,6 +282,7 @@ export async function findMatchesForUser(
       maxSeats: row.trip.maxSeats,
       bookedSeats: row.trip.bookedSeats,
       status: row.trip.status as "scheduled" | "pending" | "active",
+      recurringScheduleId: row.trip.recurringScheduleId,
     },
     user: row.user,
     driverEmail: row.user.email,
@@ -382,6 +387,7 @@ export async function findMatchesForUser(
       maxPassengers: row.ride.maxSeats,
       availableSeats,
       prefs: row.prefs,
+      recurringScheduleId: row.ride.recurringScheduleId,
     };
   });
 
@@ -536,6 +542,8 @@ export async function findMatchesForUser(
             : matchPercentage > 60
               ? "Good Match"
               : "Fair Match",
+        recurringScheduleId: ride.recurringScheduleId,
+        departureTime: ride.departureTime?.toISOString?.() ?? undefined,
         details: {
           estimatedCost: cost ?? 0,
           estimatedDistanceKm: rideDistanceKm,
