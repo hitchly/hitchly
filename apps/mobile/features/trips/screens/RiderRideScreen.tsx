@@ -164,7 +164,7 @@ export function RiderRideScreen() {
               color={colors.textSecondary}
               style={styles.location}
             >
-              {statusInfo.location}
+              Driver Start Location: {statusInfo.location}
             </Text>
 
             {liveDriverInfo && (isAccepted || isOnTrip) && (
@@ -209,15 +209,15 @@ export function RiderRideScreen() {
                     </Text>
 
                     {!liveDriverInfo.hasArrivedAtTarget &&
-                      (liveDriverInfo.targetEtaLabel ||
-                        liveDriverInfo.targetDistanceKm != null ||
-                        liveDriverInfo.pickupEtaLabel ||
-                        liveDriverInfo.pickupDistanceKm != null) && (
+                      (liveDriverInfo.targetEtaLabel !== null ||
+                        liveDriverInfo.targetDistanceKm !== null ||
+                        liveDriverInfo.pickupEtaLabel !== null ||
+                        liveDriverInfo.pickupDistanceKm !== null) && (
                         <Text variant="caption" color={colors.textSecondary}>
                           ETA:{" "}
                           {liveDriverInfo.targetEtaLabel ??
                             liveDriverInfo.pickupEtaLabel ??
-                            (liveDriverInfo.targetDistanceKm != null
+                            (liveDriverInfo.targetDistanceKm !== null
                               ? liveDriverInfo.targetDistanceKm < 0.2
                                 ? "less than 1 min"
                                 : liveDriverInfo.targetDistanceKm < 0.8
@@ -227,7 +227,7 @@ export function RiderRideScreen() {
                                     : liveDriverInfo.targetDistanceKm < 5
                                       ? "6-10 min"
                                       : "10+ min"
-                              : liveDriverInfo.pickupDistanceKm != null
+                              : liveDriverInfo.pickupDistanceKm !== null
                                 ? liveDriverInfo.pickupDistanceKm < 0.2
                                   ? "less than 1 min"
                                   : liveDriverInfo.pickupDistanceKm < 0.8
@@ -245,22 +245,6 @@ export function RiderRideScreen() {
                       {liveDriverInfo.locationFreshnessLabel}
                     </Text>
 
-                    {(liveDriverInfo.targetEtaLabel ||
-                      liveDriverInfo.targetDistanceKm != null ||
-                      liveDriverInfo.pickupEtaLabel ||
-                      liveDriverInfo.pickupDistanceKm != null) && (
-                      <Text variant="caption" color={colors.textTertiary}>
-                        ETA source:{" "}
-                        {liveDriverInfo.etaSource === "google"
-                          ? "Google Maps"
-                          : "cached"}
-                        {liveDriverInfo.etaStale ? " (stale)" : ""}
-                        {liveDriverInfo.etaFreshnessLabel
-                          ? ` • ${liveDriverInfo.etaFreshnessLabel}`
-                          : ""}
-                      </Text>
-                    )}
-
                     {liveDriverInfo.autoPickedUp && (
                       <Text variant="caption" color={colors.success}>
                         Pickup was auto-confirmed based on arrival proximity.
@@ -275,16 +259,6 @@ export function RiderRideScreen() {
                   </>
                 )}
               </View>
-            )}
-
-            {isAccepted && !pickupConfirmed && (
-              <Button
-                title="CONFIRM PICKUP"
-                onPress={actions.handleConfirmPickup}
-                isLoading={isConfirming}
-                size="lg"
-                style={styles.mainAction}
-              />
             )}
 
             {isAccepted && pickupConfirmed && (
@@ -307,13 +281,27 @@ export function RiderRideScreen() {
             )}
 
             {!isCompleted && (
-              <Button
-                title="OPEN IN MAPS"
-                variant="secondary"
-                icon="navigate-outline"
-                onPress={actions.handleOpenMaps}
-                size="lg"
-              />
+              <View style={styles.cardActions}>
+                <Button
+                  title="OPEN IN MAPS"
+                  variant="secondary"
+                  icon="navigate-outline"
+                  onPress={actions.handleOpenMaps}
+                  size="lg"
+                  style={styles.fullWidth}
+                />
+
+                {isAccepted && !pickupConfirmed && (
+                  <Button
+                    title="MANUAL PICKUP FALLBACK"
+                    onPress={actions.handleConfirmPickup}
+                    isLoading={isConfirming}
+                    size="sm"
+                    variant="ghost"
+                    style={styles.manualPickupBtn}
+                  />
+                )}
+              </View>
             )}
           </Card>
         ) : (
@@ -442,6 +430,9 @@ const styles = StyleSheet.create({
   statusMessage: { fontSize: 28, marginBottom: 8, lineHeight: 32 },
   location: { marginBottom: 32, fontSize: 16 },
   mainAction: { marginBottom: 12 },
+  cardActions: { gap: 12 },
+  fullWidth: { width: "100%" },
+  manualPickupBtn: { marginTop: 4, alignSelf: "center" },
   confirmedBanner: {
     flexDirection: "row",
     alignItems: "center",

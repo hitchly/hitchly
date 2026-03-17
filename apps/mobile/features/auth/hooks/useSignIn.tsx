@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
-import { saveBackgroundAuthToken } from "@/context/location-context";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
@@ -29,8 +28,9 @@ export const useSignIn = () => {
         {
           onError: async (ctx) => {
             const errorMessage = ctx.error.message;
+            const errorCode = (ctx.error as { code?: string }).code;
             const isUnverified =
-              ctx.error.code === "EMAIL_NOT_VERIFIED" ||
+              errorCode === "EMAIL_NOT_VERIFIED" ||
               errorMessage.toLowerCase().includes("verified");
 
             if (isUnverified) {
@@ -53,11 +53,7 @@ export const useSignIn = () => {
               Alert.alert("Login Failed", ctx.error.message);
             }
           },
-          onSuccess: async (ctx) => {
-            // Save auth token for background tasks
-            if (ctx.data?.session?.token) {
-              await saveBackgroundAuthToken(ctx.data.session.token);
-            }
+          onSuccess: () => {
             queryClient.clear();
             void utils.invalidate();
           },

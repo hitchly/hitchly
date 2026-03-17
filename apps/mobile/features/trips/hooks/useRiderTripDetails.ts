@@ -1,4 +1,4 @@
-import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
+import { formatOrdinal, shortenAddress } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert } from "react-native";
 
@@ -9,7 +9,7 @@ const POLL_INTERVAL_MS = 5000;
 
 type LiveDriverPayload = {
   hasLocation?: boolean;
-  target?: "pickup" | "dropoff" | string | null;
+  target?: string | null;
   hasArrivedAtPickup?: boolean;
   hasArrivedAtDropoff?: boolean;
   hasArrivedAtTarget?: boolean;
@@ -31,19 +31,30 @@ type LiveDriverPayload = {
 function formatDistanceLabel(
   distanceKm: number | null | undefined
 ): string | null {
-  if (distanceKm == null || Number.isNaN(distanceKm)) return null;
+  if (
+    distanceKm === null ||
+    distanceKm === undefined ||
+    Number.isNaN(distanceKm)
+  )
+    return null;
 
   if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)} m`;
+    return `${String(Math.round(distanceKm * 1000))} m`;
   }
 
   return `${distanceKm.toFixed(1)} km`;
 }
 
 function formatEtaLabel(seconds: number | null | undefined): string | null {
-  if (seconds == null || Number.isNaN(seconds) || seconds < 0) return null;
+  if (
+    seconds === null ||
+    seconds === undefined ||
+    Number.isNaN(seconds) ||
+    seconds < 0
+  )
+    return null;
   if (seconds < 60) return "less than 1 min";
-  return `${Math.max(1, Math.round(seconds / 60))} min`;
+  return `${String(Math.max(1, Math.round(seconds / 60)))} min`;
 }
 
 export function useRiderTripDetails() {
@@ -103,25 +114,36 @@ export function useRiderTripDetails() {
   });
 
   const riderEtaDetails = (() => {
-    if (!trip || (trip.status !== "active" && trip.status !== "in_progress")) {
+    if (trip?.status !== "in_progress") {
       return null;
     }
     if (!userRequest) return null;
 
     if (userRequest.status === "accepted") {
-      const hasLocation = !!liveDriver?.hasLocation;
-      const hasArrived = !!liveDriver?.hasArrivedAtPickup;
+      if (!liveDriver) {
+        return {
+          title: "Driver en route",
+          message: "Fetching live driver location...",
+          sub: trip.origin
+            ? `Pickup: ${shortenAddress(trip.origin)}`
+            : undefined,
+        };
+      }
 
+      const hasLocation = !!liveDriver.hasLocation;
+      const hasArrived = !!liveDriver.hasArrivedAtPickup;
+
+      const isPickupTarget = liveDriver.target === "pickup";
       const distanceLabel = formatDistanceLabel(
-        liveDriver?.target === "pickup"
-          ? (liveDriver?.targetDistanceKm ?? null)
-          : (liveDriver?.pickupDistanceKm ?? null)
+        isPickupTarget
+          ? (liveDriver.targetDistanceKm ?? null)
+          : (liveDriver.pickupDistanceKm ?? null)
       );
 
       const etaLabel = formatEtaLabel(
-        liveDriver?.target === "pickup"
-          ? (liveDriver?.targetEtaSeconds ?? null)
-          : (liveDriver?.pickupEtaSeconds ?? null)
+        isPickupTarget
+          ? (liveDriver.targetEtaSeconds ?? null)
+          : (liveDriver.pickupEtaSeconds ?? null)
       );
 
       return {
@@ -135,9 +157,7 @@ export function useRiderTripDetails() {
               : etaLabel
                 ? `Driver is en route (ETA ${etaLabel}).`
                 : "Fetching live driver location...",
-        sub: trip.origin
-          ? `Pickup: ${formatCityProvince(trip.origin)}`
-          : undefined,
+        sub: trip.origin ? `Pickup: ${shortenAddress(trip.origin)}` : undefined,
       };
     }
 
@@ -165,9 +185,7 @@ export function useRiderTripDetails() {
               : `Dropping passengers off, you're ${formatOrdinal(
                   idx + 1
                 )} to be dropped off`,
-          sub: trip.destination
-            ? formatCityProvince(trip.destination)
-            : undefined,
+          sub: trip.destination ? shortenAddress(trip.destination) : undefined,
         };
       }
 
@@ -181,9 +199,7 @@ export function useRiderTripDetails() {
               : destinationEtaLabel
                 ? `Arriving in ${destinationEtaLabel}.`
                 : "Arriving at destination shortly.",
-        sub: trip.destination
-          ? formatCityProvince(trip.destination)
-          : undefined,
+        sub: trip.destination ? shortenAddress(trip.destination) : undefined,
       };
     }
 

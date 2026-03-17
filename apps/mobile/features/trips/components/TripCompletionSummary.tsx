@@ -1,4 +1,4 @@
-import { formatCurrency, formatDuration } from "@hitchly/utils";
+import { formatCurrency } from "@hitchly/utils";
 import {
   Modal,
   ScrollView,

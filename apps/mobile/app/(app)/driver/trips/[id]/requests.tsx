@@ -1,10 +1,5 @@
-import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/ui/Text";
+import { DriverTripRequestsScreen } from "@/features/trips/screens/DriverTripRequestsScreen";
 
 export default function DriverTripsDetailsRequests() {
-  return (
-    <Card>
-      <Text>Driver Trips Details Requests</Text>
-    </Card>
-  );
+  return <DriverTripRequestsScreen />;
 }

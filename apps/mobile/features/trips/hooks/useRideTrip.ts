@@ -1,4 +1,4 @@
-import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
+import { formatOrdinal, shortenAddress } from "@hitchly/utils";
 import { useMemo } from "react";
 import { Alert } from "react-native";
 
@@ -12,11 +12,16 @@ const LOCATION_POLL_INTERVAL_MS = 5000;
 function formatDistanceLabel(
   distanceKm: number | null | undefined
 ): string | null {
-  if (distanceKm == null || Number.isNaN(distanceKm)) return null;
+  if (
+    distanceKm === null ||
+    distanceKm === undefined ||
+    Number.isNaN(distanceKm)
+  )
+    return null;
 
   if (distanceKm < 1) {
     const meters = Math.round(distanceKm * 1000);
-    return `${meters} m away`;
+    return `${String(meters)} m away`;
   }
 
   return `${distanceKm.toFixed(1)} km away`;
@@ -25,15 +30,20 @@ function formatDistanceLabel(
 function formatEtaLabel(
   durationSeconds: number | null | undefined
 ): string | null {
-  if (durationSeconds == null || Number.isNaN(durationSeconds)) return null;
+  if (
+    durationSeconds === null ||
+    durationSeconds === undefined ||
+    Number.isNaN(durationSeconds)
+  )
+    return null;
 
   const totalMinutes = Math.max(1, Math.round(durationSeconds / 60));
-  if (totalMinutes < 60) return `${totalMinutes} min`;
+  if (totalMinutes < 60) return `${String(totalMinutes)} min`;
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (minutes === 0) return `${hours} hr`;
-  return `${hours} hr ${minutes} min`;
+  if (minutes === 0) return `${String(hours)} hr`;
+  return `${String(hours)} hr ${String(minutes)} min`;
 }
 
 function formatFreshnessLabel(
@@ -50,13 +60,13 @@ function formatFreshnessLabel(
 
   const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
   if (diffSec < 10) return "Updated just now";
-  if (diffSec < 60) return `Updated ${diffSec}s ago`;
+  if (diffSec < 60) return `Updated ${String(diffSec)}s ago`;
 
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `Updated ${diffMin}m ago`;
+  if (diffMin < 60) return `Updated ${String(diffMin)}m ago`;
 
   const diffHr = Math.floor(diffMin / 60);
-  return `Updated ${diffHr}h ago`;
+  return `Updated ${String(diffHr)}h ago`;
 }
 
 type LiveLocationPayload = {
@@ -76,7 +86,7 @@ type LiveLocationPayload = {
   autoPickedUp?: boolean;
   autoDropoffEligible?: boolean;
   autoDroppedOff?: boolean;
-  requestStatus?: "accepted" | "on_trip" | "completed" | string;
+  requestStatus?: string;
   driverLocation?: {
     latitude: number;
     longitude: number;
@@ -195,6 +205,15 @@ export function useRideTrip(tripId: string) {
     if (!trip) return null;
 
     if (isAccepted) {
+      if (trip.status === "active") {
+        return {
+          title: "TRIP ACCEPTED",
+          message:
+            "The driver has accepted your request. We'll notify you once they start the trip.",
+          location: shortenAddress(trip.origin),
+        };
+      }
+
       const distancePrefix = targetDistanceLabel
         ? `Driver is ${targetDistanceLabel}.`
         : "Driver location unavailable right now.";
@@ -209,7 +228,7 @@ export function useRideTrip(tripId: string) {
       return {
         title: "WAITING FOR PICKUP",
         message,
-        location: formatCityProvince(trip.origin),
+        location: shortenAddress(trip.origin),
       };
     }
 
@@ -218,7 +237,7 @@ export function useRideTrip(tripId: string) {
         return {
           title: "ARRIVING",
           message: "You are arriving at your destination now.",
-          location: formatCityProvince(trip.destination),
+          location: shortenAddress(trip.destination),
         };
       }
 
@@ -228,7 +247,7 @@ export function useRideTrip(tripId: string) {
           message: `Dropping passengers off. You are ${formatOrdinal(
             dropoffOrder
           )} to be dropped off.`,
-          location: formatCityProvince(trip.destination),
+          location: shortenAddress(trip.destination),
         };
       }
 
@@ -241,7 +260,7 @@ export function useRideTrip(tripId: string) {
       return {
         title: "ON THE WAY",
         message: enRouteMessage,
-        location: formatCityProvince(trip.destination),
+        location: shortenAddress(trip.destination),
       };
     }
 
@@ -249,7 +268,7 @@ export function useRideTrip(tripId: string) {
       return {
         title: "TRIP COMPLETED",
         message: "Thank you for riding with Hitchly!",
-        location: formatCityProvince(trip.destination),
+        location: shortenAddress(trip.destination),
       };
     }
 

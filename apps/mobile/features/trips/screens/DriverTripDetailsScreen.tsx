@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { shortenAddress } from "@hitchly/utils";
 import { type Href } from "expo-router";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +14,7 @@ import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { useDriverTripDetails } from "@/features/trips/hooks/useDriverTripDetails";
 
-const formatLocation = (loc: string) => loc.split(",")[0] ?? "Unknown";
+const formatLocation = (loc: string) => shortenAddress(loc);
 
 export function DriverTripDetailsScreen() {
   const { colors } = useTheme();
@@ -72,11 +73,7 @@ export function DriverTripDetailsScreen() {
         <View style={styles.header}>
           <Badge
             label={trip.status.toUpperCase()}
-            variant={
-              trip.status === "active" || trip.status === "in_progress"
-                ? "success"
-                : "secondary"
-            }
+            variant={trip.status === "in_progress" ? "success" : "secondary"}
           />
         </View>
 

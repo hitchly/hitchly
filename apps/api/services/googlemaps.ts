@@ -233,7 +233,7 @@ export async function getDetourAndRideDetails(
 
     const riderRoute = await getRouteDetails(
       rider.origin,
-      driverTrip.destination,
+      rider.destination,
       [],
       departureTime,
       false

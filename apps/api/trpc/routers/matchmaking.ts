@@ -55,7 +55,8 @@ export const matchmakingRouter = router({
         .where(inArray(reviews.targetUserId, realDriverIds))
         .groupBy(reviews.targetUserId);
 
-      const ratingMap = new Map<string, number>();
+      // SQL avg() returns string in PostgreSQL, so we parse it
+      const ratingMap = new Map<string, string | number>();
       ratingResults.forEach((r) => {
         ratingMap.set(r.targetUserId, r.average);
       });
@@ -66,9 +67,13 @@ export const matchmakingRouter = router({
         }
 
         const realRating = ratingMap.get(match.driverId);
+        // Parse string from SQL avg() to number, then round to 1 decimal
+        const parsedRating = realRating
+          ? Math.round(parseFloat(String(realRating)) * 10) / 10
+          : 5.0;
         return {
           ...match,
-          rating: realRating ? Number(realRating.toFixed(1)) : 5.0,
+          rating: parsedRating,
         };
       });
     }),

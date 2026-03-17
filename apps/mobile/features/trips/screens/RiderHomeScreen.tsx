@@ -166,7 +166,7 @@ export function RiderHomeScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={[styles.deckHeader, { borderBottomColor: colors.border }]}>
-        <View>
+        <View style={styles.headerTextContainer}>
           <Text variant="h2">SWIPE TO MATCH</Text>
           <Text variant="caption" color={colors.textSecondary}>
             {filteredMatches.length} rides found for{" "}
@@ -178,6 +178,7 @@ export function RiderHomeScreen() {
           variant="ghost"
           size="sm"
           onPress={() => void handlers.resetSearch()}
+          style={styles.resetBtn}
         />
       </View>
 
@@ -189,7 +190,17 @@ export function RiderHomeScreen() {
         >
           <SwipeDeck
             data={filteredMatches}
-            renderCard={(match) => <TripCard match={match} />}
+            renderCard={(match) => (
+              <TripCard
+                match={match}
+                showArrival={formState.direction === "toMcmaster"}
+                destinationLabel={
+                  formState.direction === "toMcmaster"
+                    ? "McMaster University"
+                    : "Your Destination"
+                }
+              />
+            )}
             onSwipeLeft={handlers.handleSwipeLeft}
             onSwipeRight={handlers.handleSwipeRight}
             onCardTap={(match) => {
@@ -256,4 +267,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   instructionRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  headerTextContainer: { flex: 1, marginRight: 12 },
+  resetBtn: { width: "auto" },
 });

@@ -1794,10 +1794,15 @@ describe("Trip Router", () => {
       );
       const result = await caller.completeTrip({ tripId: "trip-1" });
 
-      expect(result.summary.passengerCount).toBe(2);
-      expect(result.summary.totalEarningsCents).toBe(1500); // 2 * 750 placeholder
-      expect(result.summary.perPassenger).toHaveLength(2);
-      expect(result.summary.perPassenger[0]?.riderName).toBe("Rider One");
+      const summary = result.summary;
+      if (!summary) throw new Error("Trip summary is missing");
+
+      expect(summary.passengerCount).toBe(2);
+      expect(summary.totalEarningsCents).toBe(1500); // 2 * 750 placeholder
+      expect(summary.perPassenger).toHaveLength(2);
+      expect((summary.perPassenger[0] as { riderName: string }).riderName).toBe(
+        "Rider One"
+      );
     });
   });
 

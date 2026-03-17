@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { formatDate } from "@hitchly/utils";
+import { formatDate, shortenAddress } from "@hitchly/utils";
 import type { Href } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -34,7 +34,11 @@ const getBadgeVariant = (status: string) => {
 };
 
 export function DriverTripRequestsScreen() {
-  const { tripId } = useLocalSearchParams<{ tripId?: string }>();
+  const { id, tripId } = useLocalSearchParams<{
+    id?: string;
+    tripId?: string;
+  }>();
+  const effectiveTripId = id ?? tripId;
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -47,7 +51,7 @@ export function DriverTripRequestsScreen() {
     isAccepting,
     rejectRequest,
     isRejecting,
-  } = useDriverTripRequests(tripId);
+  } = useDriverTripRequests(effectiveTripId);
 
   // Check if there's actually anything to swipe
   const hasPendingRequests = requests.some((req) => req.status === "pending");
@@ -123,7 +127,7 @@ export function DriverTripRequestsScreen() {
                         style={styles.routeText}
                         numberOfLines={1}
                       >
-                        {trip.origin}
+                        {shortenAddress(trip.origin)}
                       </Text>
                       <Ionicons
                         name="arrow-forward"
@@ -135,7 +139,7 @@ export function DriverTripRequestsScreen() {
                         style={styles.routeText}
                         numberOfLines={1}
                       >
-                        {trip.destination}
+                        {shortenAddress(trip.destination)}
                       </Text>
                     </View>
                     <Text variant="caption" color={colors.textSecondary}>

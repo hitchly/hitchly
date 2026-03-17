@@ -28,6 +28,9 @@ export default function DriverDriveScreen() {
     summaryVisible,
     setSummaryVisible,
     summaryData,
+    liveStatusInfo,
+    tripStatus,
+    isStarted,
     actions,
   } = useDriveTrip(tripId);
 
@@ -90,8 +93,25 @@ export default function DriverDriveScreen() {
 
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
-          <View style={[styles.pulseDot, { backgroundColor: colors.text }]} />
-          <Text variant="h3">Trip Status</Text>
+          <View
+            style={[
+              styles.pulseDot,
+              {
+                backgroundColor: isStarted
+                  ? tripStatus === "completed"
+                    ? colors.success
+                    : colors.text
+                  : colors.textTertiary,
+              },
+            ]}
+          />
+          <Text variant="h3">
+            {tripStatus === "completed"
+              ? "Trip Completed"
+              : isStarted
+                ? "Live Trip Status"
+                : "Trip Scheduled"}
+          </Text>
         </View>
         <Pressable
           onPress={handleClose}
@@ -106,7 +126,51 @@ export default function DriverDriveScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {currentStop ? (
+        {!isStarted ? (
+          <View style={styles.scheduledContainer}>
+            <View style={styles.centerContent}>
+              <Ionicons
+                name="car-outline"
+                size={64}
+                color={colors.textTertiary}
+              />
+              <Text variant="h1" style={styles.mt16}>
+                TRIP SCHEDULED
+              </Text>
+              <Text
+                variant="body"
+                color={colors.textSecondary}
+                align="center"
+                style={styles.mt8}
+              >
+                Waiting for you to begin. Click below to start the live trip and
+                see pickups.
+              </Text>
+            </View>
+
+            <View style={styles.startTripContainer}>
+              <Button
+                title="START TRIP"
+                onPress={() => {
+                  actions.handleStartTrip();
+                }}
+                isLoading={isUpdatingStatus}
+                size="lg"
+                variant="primary"
+                style={styles.startBtn}
+              />
+              <Text
+                variant="caption"
+                color={colors.textSecondary}
+                align="center"
+                style={styles.mt8}
+              >
+                Starting the trip will notify your riders that you are on the
+                way.
+              </Text>
+            </View>
+          </View>
+        ) : currentStop ? (
           <View style={styles.statusContainer}>
             <Text variant="h1" style={styles.statusTitle}>
               {currentStop.type === "pickup" ? "Pickup" : "Drop-off"}
@@ -133,6 +197,23 @@ export default function DriverDriveScreen() {
                   {currentStop.location}
                 </Text>
               </View>
+
+              {(liveStatusInfo.distanceLabel ?? liveStatusInfo.etaLabel) ? (
+                <View style={styles.locationRow}>
+                  <Ionicons
+                    name="navigate-circle"
+                    size={16}
+                    color={colors.text}
+                    style={styles.ml4}
+                  />
+                  <Text variant="bodySemibold" color={colors.text}>
+                    {liveStatusInfo.distanceLabel}
+                    {liveStatusInfo.etaLabel
+                      ? ` • ${liveStatusInfo.etaLabel}`
+                      : ""}
+                  </Text>
+                </View>
+              ) : null}
 
               <View style={styles.actionsContainer}>
                 {isWaitingForRider && (
@@ -162,16 +243,28 @@ export default function DriverDriveScreen() {
                 <Button
                   title={
                     currentStop.type === "pickup"
-                      ? "CONFIRM PICKUP"
-                      : "CONFIRM DROP OFF"
+                      ? "MANUAL PICKUP FALLBACK"
+                      : "MANUAL DROP-OFF FALLBACK"
                   }
                   onPress={() => {
                     actions.handleAction();
                   }}
-                  disabled={isWaitingForRider}
+                  disabled={false}
                   isLoading={isUpdatingStatus}
-                  size="lg"
+                  variant="ghost"
+                  size="sm"
+                  style={styles.manualBtn}
                 />
+                {!isWaitingForRider && (
+                  <Text
+                    variant="caption"
+                    color={colors.textSecondary}
+                    align="center"
+                    style={styles.mt4}
+                  >
+                    Manual fallback is always available for testing.
+                  </Text>
+                )}
               </View>
             </Card>
 
@@ -341,4 +434,14 @@ const styles = StyleSheet.create({
   mt16: { marginTop: 16 },
   mb24: { marginBottom: 24 },
   ml4: { marginLeft: 4 },
+  manualBtn: { marginTop: 4, alignSelf: "center" },
+  mt4: { marginTop: 4 },
+  scheduledContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+    minHeight: 400,
+    paddingVertical: 40,
+  },
+  startTripContainer: { paddingHorizontal: 20, paddingBottom: 20 },
+  startBtn: { width: "100%", height: 56, borderRadius: 12 },
 });

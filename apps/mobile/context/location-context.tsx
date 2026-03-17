@@ -17,8 +17,9 @@ import { useUserRole } from "@/context/role-context";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
 
+// This must match the storagePrefix used in auth-client.ts expoClient config
+const COOKIE_STORAGE_KEY = "hitchly_cookie";
 export const LOCATION_TRACKING_TASK = "LOCATION_TRACKING";
-const AUTH_TOKEN_KEY = "hitchly_auth_token";
 
 // Types
 interface LocationContextValue {
@@ -27,6 +28,13 @@ interface LocationContextValue {
   stopBackgroundTracking: () => Promise<void>;
   error: string | null;
 }
+
+interface StoredCookieValue {
+  value: string;
+  expires: string | null;
+}
+
+type StoredCookies = Record<string, StoredCookieValue>;
 
 // Context
 const LocationContext = createContext<LocationContextValue>({
@@ -41,37 +49,36 @@ const LocationContext = createContext<LocationContextValue>({
   error: null,
 });
 
-// Helper: Get auth token for background tasks
-const getBackgroundAuthToken = async (): Promise<string | null> => {
+// Helper: Get formatted cookie string for background tasks
+// Reads from the same storage key that expo client uses
+const getBackgroundAuthCookie = async (): Promise<string | null> => {
   try {
-    return await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    const cookieJson = await SecureStore.getItemAsync(COOKIE_STORAGE_KEY);
+    if (!cookieJson) return null;
+
+    const parsed = JSON.parse(cookieJson) as StoredCookies;
+
+    // Format cookies, filtering out expired ones
+    const formattedCookies = Object.entries(parsed)
+      .filter(([, cookieValue]) => {
+        if (cookieValue.expires && new Date(cookieValue.expires) < new Date()) {
+          return false;
+        }
+        return true;
+      })
+      .map(([name, cookieValue]) => `${name}=${cookieValue.value}`)
+      .join("; ");
+
+    return formattedCookies || null;
   } catch {
     return null;
-  }
-};
-
-// Helper: Save auth token for background tasks
-export const saveBackgroundAuthToken = async (token: string): Promise<void> => {
-  try {
-    await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-  } catch (error) {
-    console.error("Failed to save auth token:", error);
-  }
-};
-
-// Helper: Clear auth token
-export const clearBackgroundAuthToken = async (): Promise<void> => {
-  try {
-    await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-  } catch (error) {
-    console.error("Failed to clear auth token:", error);
   }
 };
 
 // Helper: Send location update from background
 const sendBackgroundLocationUpdate = async (
   baseUrl: string,
-  token: string,
+  cookie: string,
   data: {
     latitude: number;
     longitude: number;
@@ -80,23 +87,17 @@ const sendBackgroundLocationUpdate = async (
   }
 ): Promise<void> => {
   try {
-    const response = await fetch(`${baseUrl}/api/trpc/location.update`, {
+    await fetch(`${baseUrl}/trpc/location.update`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        Origin: "hitchly://",
+        Cookie: cookie,
+        "expo-origin": "hitchly://",
       },
-      body: JSON.stringify({
-        json: data,
-      }),
+      body: JSON.stringify(data),
     });
-
-    if (!response.ok) {
-      console.error("Background location update failed:", response.status);
-    }
-  } catch (error) {
-    console.error("Background location update error:", error);
+  } catch {
+    // Background location update failed silently
   }
 };
 
@@ -106,7 +107,6 @@ if (!TaskManager.isTaskDefined(LOCATION_TRACKING_TASK)) {
     const { data, error } = body;
 
     if (error) {
-      console.error("Background location error:", error);
       return;
     }
 
@@ -115,13 +115,10 @@ if (!TaskManager.isTaskDefined(LOCATION_TRACKING_TASK)) {
       const loc = locations[0];
 
       if (loc) {
-        // Get stored auth token
-        const token = await getBackgroundAuthToken();
+        // Get stored auth cookie
+        const cookie = await getBackgroundAuthCookie();
 
-        if (!token) {
-          console.warn(
-            "No auth token available for background location update"
-          );
+        if (!cookie) {
           return;
         }
 
@@ -129,7 +126,7 @@ if (!TaskManager.isTaskDefined(LOCATION_TRACKING_TASK)) {
         const baseUrl =
           process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
-        await sendBackgroundLocationUpdate(baseUrl, token, {
+        await sendBackgroundLocationUpdate(baseUrl, cookie, {
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
           heading: loc.coords.heading,
@@ -153,12 +150,10 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     refetchInterval: 5000,
   });
 
-  // Find active trip (in_progress or active status)
+  // Find active trip (in_progress status only)
   const activeDriverTrip = useMemo(() => {
     if (!driverTrips) return null;
-    return driverTrips.find(
-      (trip) => trip.status === "in_progress" || trip.status === "active"
-    );
+    return driverTrips.find((trip) => trip.status === "in_progress");
   }, [driverTrips]);
 
   // Start background tracking
@@ -166,23 +161,28 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
 
-      // Request foreground permissions first
       const { status: foregroundStatus } =
-        await Location.requestForegroundPermissionsAsync();
+        await Location.getForegroundPermissionsAsync();
 
       if (foregroundStatus !== PermissionStatus.GRANTED) {
-        setError("Foreground location permission denied");
-        return false;
+        const { status: requestedStatus } =
+          await Location.requestForegroundPermissionsAsync();
+        if (requestedStatus !== PermissionStatus.GRANTED) {
+          setError("Foreground location permission denied");
+          return false;
+        }
       }
 
-      // Request background permissions
       const { status: backgroundStatus } =
-        await Location.requestBackgroundPermissionsAsync();
+        await Location.getBackgroundPermissionsAsync();
 
       if (backgroundStatus !== PermissionStatus.GRANTED) {
-        setError("Background location permission denied");
-        // Fall back to foreground-only tracking
-        return false;
+        const { status: requestedStatus } =
+          await Location.requestBackgroundPermissionsAsync();
+        if (requestedStatus !== PermissionStatus.GRANTED) {
+          setError("Background location permission denied");
+          return false;
+        }
       }
 
       // Check if already tracking
@@ -199,7 +199,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       await Location.startLocationUpdatesAsync(LOCATION_TRACKING_TASK, {
         accuracy: Accuracy.High,
         timeInterval: 10000, // Update every 10 seconds
-        distanceInterval: 50, // OR every 50 meters
         foregroundService: {
           notificationTitle: "Hitchly is tracking your ride",
           notificationBody: "Your location is being shared with your riders.",
@@ -209,12 +208,10 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setIsTracking(true);
-      console.log("Background location tracking started");
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(`Failed to start tracking: ${errorMessage}`);
-      console.error("Failed to start background tracking:", err);
       return false;
     }
   }, []);
@@ -229,44 +226,21 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       if (hasStarted) {
         await Location.stopLocationUpdatesAsync(LOCATION_TRACKING_TASK);
         setIsTracking(false);
-        console.log("Background location tracking stopped");
       }
-    } catch (err) {
-      console.error("Failed to stop background tracking:", err);
+    } catch {
+      // Already stopped or not tracking
     }
   }, []);
-
-  // Save session token when user logs in
-  useEffect(() => {
-    const saveToken = async () => {
-      // The session object from authClient.useSession() contains the token
-      // It may be directly on session or nested depending on better-auth version
-      interface SessionWithToken {
-        token?: string;
-        session?: { token?: string };
-      }
-      const sessionWithToken = session as SessionWithToken | null;
-      const token = sessionWithToken?.token ?? sessionWithToken?.session?.token;
-      if (token) {
-        await saveBackgroundAuthToken(token);
-      }
-    };
-
-    saveToken().catch(console.error);
-  }, [session]);
 
   // Auto-start/stop tracking based on active trip status
   useEffect(() => {
     const manageTracking = async () => {
-      // Only for drivers with an active trip
       if (role === AppRole.DRIVER && activeDriverTrip) {
-        // Check if tracking is not already active
         const hasStarted = await Location.hasStartedLocationUpdatesAsync(
           LOCATION_TRACKING_TASK
         );
 
         if (!hasStarted) {
-          console.log("Active trip detected, starting background tracking");
           await startBackgroundTracking();
         }
       } else {
@@ -276,28 +250,24 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         );
 
         if (hasStarted) {
-          console.log("No active trip, stopping background tracking");
           await stopBackgroundTracking();
         }
       }
     };
 
-    manageTracking().catch(console.error);
+    void manageTracking();
   }, [role, activeDriverTrip, startBackgroundTracking, stopBackgroundTracking]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop tracking when provider unmounts
-      stopBackgroundTracking().catch(console.error);
+      void stopBackgroundTracking();
     };
   }, [stopBackgroundTracking]);
 
-  // Clear token on sign out
+  // Stop tracking on sign out
   useEffect(() => {
     if (!session?.user) {
-      clearBackgroundAuthToken().catch(console.error);
-      stopBackgroundTracking().catch(console.error);
+      void stopBackgroundTracking();
     }
   }, [session?.user, stopBackgroundTracking]);
 
@@ -318,7 +288,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook for using location context
 export const useLocationTracking = () => {
   const context = useContext(LocationContext);
 

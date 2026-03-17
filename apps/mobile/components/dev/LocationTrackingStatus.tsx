@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 
 import { useLocationTracking } from "@/context/location-context";
+import { useUserRole } from "@/context/role-context";
 import { useTheme } from "@/context/theme-context";
 import { useActiveTripMonitor } from "@/features/trips/hooks/useActiveTripMonitor";
-import { useUserRole } from "@/context/role-context";
 
 /**
  * Development component to display and test location tracking status.
@@ -32,14 +32,13 @@ export function LocationTrackingStatus() {
 
         const background = await Location.getBackgroundPermissionsAsync();
         setBackgroundPermission(background.status);
-      } catch (err) {
-        console.error("Failed to check permissions:", err);
+      } catch {
         setForegroundPermission("error");
         setBackgroundPermission("error");
       }
     };
 
-    checkPermissions();
+    void checkPermissions();
   }, []);
 
   const handleStartTracking = async () => {
@@ -47,7 +46,7 @@ export function LocationTrackingStatus() {
     if (success) {
       Alert.alert("Success", "Background tracking started successfully");
     } else {
-      Alert.alert("Failed", error || "Could not start background tracking");
+      Alert.alert("Failed", error ?? "Could not start background tracking");
     }
   };
 
@@ -75,9 +74,7 @@ export function LocationTrackingStatus() {
         <Text style={[styles.label, { color: colors.textSecondary }]}>
           User Role:
         </Text>
-        <Text style={[styles.value, { color: colors.text }]}>
-          {role || "Unknown"}
-        </Text>
+        <Text style={[styles.value, { color: colors.text }]}>{role}</Text>
       </View>
 
       <View style={styles.section}>
@@ -94,7 +91,7 @@ export function LocationTrackingStatus() {
         </Text>
       </View>
 
-      {activeTripId && (
+      {activeTripId ? (
         <View style={styles.section}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>
             Trip ID:
@@ -108,7 +105,7 @@ export function LocationTrackingStatus() {
             {activeTripId.slice(0, 8)}...
           </Text>
         </View>
-      )}
+      ) : null}
 
       {/* Tracking Status */}
       <View style={styles.divider} />
@@ -170,7 +167,9 @@ export function LocationTrackingStatus() {
                 : colors.primary,
             },
           ]}
-          onPress={handleStartTracking}
+          onPress={() => {
+            void handleStartTracking();
+          }}
           disabled={isTracking}
         >
           <Text style={styles.buttonText}>Start Tracking</Text>
@@ -183,7 +182,9 @@ export function LocationTrackingStatus() {
               backgroundColor: isTracking ? colors.error : colors.textSecondary,
             },
           ]}
-          onPress={handleStopTracking}
+          onPress={() => {
+            void handleStopTracking();
+          }}
           disabled={!isTracking}
         >
           <Text style={styles.buttonText}>Stop Tracking</Text>
@@ -192,7 +193,9 @@ export function LocationTrackingStatus() {
 
       <TouchableOpacity
         style={[styles.refreshButton, { borderColor: colors.border }]}
-        onPress={handleRefreshPermissions}
+        onPress={() => {
+          void handleRefreshPermissions();
+        }}
       >
         <Text style={[styles.refreshText, { color: colors.primary }]}>
           🔄 Refresh Permissions
@@ -206,8 +209,9 @@ export function LocationTrackingStatus() {
         </Text>
         <Text style={[styles.infoText, { color: colors.textSecondary }]}>
           • Tracking starts automatically for drivers with active trips{"\n"}•
-          Background updates every 10s or 50m{"\n"}• Requires "Always" location
-          permission on iOS{"\n"}• Requires "Allow all the time" on Android
+          Background updates every 10s or 50m{"\n"}• Requires &quot;Always&quot;
+          location permission on iOS{"\n"}• Requires &quot;Allow all the
+          time&quot; on Android
           {"\n"}• Stops automatically when trip completes
         </Text>
       </View>

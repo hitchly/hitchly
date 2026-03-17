@@ -43,8 +43,14 @@ export function useDriverTripDetails() {
   });
 
   const startTrip = trpc.trip.startTrip.useMutation({
-    onSuccess: () => {
-      if (id) router.push(`/(app)/(modals)/drive?tripId=${id}` as Href);
+    onSuccess: async () => {
+      // Invalidate both trips list and the specific trip
+      void utils.trip.getTrips.invalidate();
+      await utils.trip.getTripById.invalidate({ tripId: id });
+
+      if (id) {
+        router.push(`/(app)/(modals)/drive?tripId=${id}` as Href);
+      }
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
@@ -55,10 +61,10 @@ export function useDriverTripDetails() {
     if (!trip?.departureTime) return { canStart: false };
     const departure = new Date(trip.departureTime);
     const now = new Date();
-    const tenMinutesBefore = new Date(departure.getTime() - 10 * 60 * 1000);
+    const fifteenMinutesBefore = new Date(departure.getTime() - 20 * 60 * 1000);
 
-    if (now >= tenMinutesBefore) return { canStart: true };
-    return { canStart: false, availableAt: tenMinutesBefore };
+    if (now >= fifteenMinutesBefore) return { canStart: true };
+    return { canStart: false, availableAt: fifteenMinutesBefore };
   };
 
   const handleCancel = () => {
