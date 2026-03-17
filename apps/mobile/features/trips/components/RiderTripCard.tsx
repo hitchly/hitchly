@@ -1,3 +1,4 @@
+import { shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
@@ -14,7 +15,7 @@ interface RiderTripCardProps {
   onPress: () => void;
 }
 
-const formatLocation = (loc: string) => loc.split(",")[0] ?? loc;
+const formatLocation = (loc: string) => shortenAddress(loc);
 
 export function RiderTripCard({
   trip,

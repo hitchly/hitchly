@@ -91,11 +91,26 @@ export const formatCityProvince = (address?: string | null) => {
     .split(",")
     .map((p) => p.trim())
     .filter(Boolean);
+
   if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const province =
-      parts[parts.length - 1]?.split(" ")[0] || parts[parts.length - 1];
-    return `${city}, ${province}`;
+    // If the last part is a country, skip it and look at the preceding parts
+    const lastPart = parts[parts.length - 1]!;
+    const isCountry =
+      lastPart.toLowerCase() === "canada" ||
+      lastPart.toLowerCase() === "usa" ||
+      lastPart.toLowerCase() === "united states" ||
+      lastPart === "CA" ||
+      lastPart === "US";
+
+    const baseIdx = isCountry ? parts.length - 2 : parts.length - 1;
+
+    if (baseIdx >= 1) {
+      const city = parts[baseIdx - 1];
+      const province = parts[baseIdx]?.split(" ")[0];
+      return `${city}, ${province}`;
+    }
+
+    return parts[baseIdx] || address;
   }
   return address;
 };
@@ -137,4 +152,84 @@ export const formatDuration = (minutes: number | null | undefined): string => {
 
   if (h <= 0) return `${m} min`;
   return `${h} hr ${m} min`;
+};
+/**
+ * Shortens a full address to just the street line.
+ * If the first part is a number (street number) and the next part exists,
+ * it joins them to avoid truncating at the street number.
+ */
+export const shortenAddress = (address?: string | null): string => {
+  if (!address) return "Location";
+  const parts = address.split(",").map((p) => p.trim());
+  if (parts.length < 2) return parts[0] || "Location";
+
+  const firstPart = parts[0]!;
+  const secondPart = parts[1]!;
+
+  // If first part is just a number, it's likely a street number
+  if (
+    !isNaN(Number(firstPart.replace(/[a-zA-Z]/g, ""))) &&
+    firstPart.length < 10
+  ) {
+    return `${firstPart} ${secondPart}`;
+  }
+
+  return firstPart;
+};
+
+/**
+ * Formats an address to show "Street, City" or "POI, City".
+ * Example: "1280 Main St W, Hamilton, ON, Canada" -> "1280 Main St W, Hamilton"
+ */
+export const formatStreetCity = (address?: string | null): string => {
+  if (!address) return "Location";
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length < 2) return parts[0] || "Location";
+
+  const firstPart = parts[0]!;
+  // Check if first part is just a number (street number)
+  const isStreetNumber =
+    !isNaN(Number(firstPart.replace(/[a-zA-Z]/g, ""))) && firstPart.length < 10;
+
+  if (isStreetNumber && parts.length >= 3) {
+    return `${parts[0]} ${parts[1]}, ${parts[2]}`;
+  }
+
+  return `${parts[0]}, ${parts[1]}`;
+};
+
+/**
+ * Extracts only the city name from an address.
+ * Example: "1280 Main St W, Hamilton, ON, Canada" -> "Hamilton"
+ */
+export const formatCity = (address?: string | null): string => {
+  if (!address) return "Location";
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return "Location";
+  if (parts.length === 1) return parts[0]!;
+
+  // Identify Country
+  const lastPart = parts[parts.length - 1]!;
+  const isCountry =
+    lastPart.toLowerCase() === "canada" ||
+    lastPart.toLowerCase() === "usa" ||
+    lastPart.toLowerCase() === "united states" ||
+    lastPart === "CA" ||
+    lastPart === "US";
+
+  // Strip country if present to focus on City/Province
+  const effectiveParts = isCountry ? parts.slice(0, -1) : parts;
+
+  if (effectiveParts.length === 0) return parts[0]!;
+  if (effectiveParts.length === 1) return effectiveParts[0]!;
+
+  // Hierarchy is usually [..., City, Province]
+  // The city is the one before the province
+  return effectiveParts[effectiveParts.length - 2]!;
 };

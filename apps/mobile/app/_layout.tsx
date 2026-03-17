@@ -7,6 +7,7 @@ import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { NavTheme } from "@/constants/theme";
+import { LocationProvider } from "@/context/location-context";
 import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
 import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
@@ -77,9 +78,11 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <RoleProvider>
-          <StripeProviderWrapper>
-            <AppContent />
-          </StripeProviderWrapper>
+          <LocationProvider>
+            <StripeProviderWrapper>
+              <AppContent />
+            </StripeProviderWrapper>
+          </LocationProvider>
         </RoleProvider>
       </QueryClientProvider>
     </trpc.Provider>

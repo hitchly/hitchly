@@ -64,6 +64,7 @@ export async function getRouteDetails(
     destination: toGoogleLatLng(destination),
     key: process.env.GOOGLE_MAPS_API_KEY,
     departure_time: safeDepTime,
+    region: "ca",
   };
 
   if (waypoints.length > 0) {
@@ -133,6 +134,7 @@ export async function geocodeAddress(
       params: {
         address,
         key: apiKey,
+        region: "ca",
       },
     });
 
@@ -231,7 +233,7 @@ export async function getDetourAndRideDetails(
 
     const riderRoute = await getRouteDetails(
       rider.origin,
-      driverTrip.destination,
+      rider.destination,
       [],
       departureTime,
       false

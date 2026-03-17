@@ -29,6 +29,7 @@ export function useCreateTrip() {
 
   const methods = useForm<CreateTripFormData>({
     resolver: zodResolver(createTripSchema),
+    mode: "onChange",
     defaultValues: {
       origin: "",
       destination: "",
@@ -41,11 +42,23 @@ export function useCreateTrip() {
 
   useEffect(() => {
     if (isToCampus) {
-      setValue("origin", defaultAddress);
-      setValue("destination", McMaster.address);
+      setValue("origin", defaultAddress, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue("destination", McMaster.address, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     } else {
-      setValue("origin", McMaster.address);
-      setValue("destination", defaultAddress);
+      setValue("origin", McMaster.address, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue("destination", defaultAddress, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
   }, [isToCampus, defaultAddress, setValue]);
 

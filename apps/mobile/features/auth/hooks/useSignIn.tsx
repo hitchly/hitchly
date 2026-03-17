@@ -28,8 +28,9 @@ export const useSignIn = () => {
         {
           onError: async (ctx) => {
             const errorMessage = ctx.error.message;
+            const errorCode = (ctx.error as { code?: string }).code;
             const isUnverified =
-              ctx.error.code === "EMAIL_NOT_VERIFIED" ||
+              errorCode === "EMAIL_NOT_VERIFIED" ||
               errorMessage.toLowerCase().includes("verified");
 
             if (isUnverified) {

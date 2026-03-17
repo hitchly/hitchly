@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { shortenAddress } from "@hitchly/utils";
 import { type Href, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +14,7 @@ import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { useRiderTripDetails } from "@/features/trips/hooks/useRiderTripDetails";
 
-const formatLocation = (loc: string) => loc.split(",")[0] ?? "Unknown";
+const formatLocation = (loc: string) => shortenAddress(loc);
 
 export function RiderTripDetailsScreen() {
   const { colors } = useTheme();
@@ -188,16 +189,17 @@ export function RiderTripDetailsScreen() {
         {/* Improved Minimalist Actions */}
         <View style={styles.actionsContainer}>
           {(userRequest?.status === "accepted" ||
-            userRequest?.status === "on_trip") && (
-            <Button
-              title="ENTER LIVE PORTAL"
-              icon="expand"
-              size="lg"
-              onPress={() => {
-                router.push(`/(app)/rider/trips/${trip.id}/ride` as Href);
-              }}
-            />
-          )}
+            userRequest?.status === "on_trip") &&
+            trip.status === "in_progress" && (
+              <Button
+                title="ENTER LIVE PORTAL"
+                icon="expand"
+                size="lg"
+                onPress={() => {
+                  router.push(`/(app)/(modals)/ride?tripId=${trip.id}` as Href);
+                }}
+              />
+            )}
 
           {riderEtaDetails &&
             (trip.status === "active" || trip.status === "in_progress") && (

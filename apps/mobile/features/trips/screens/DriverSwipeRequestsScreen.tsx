@@ -64,7 +64,7 @@ export function DriverSwipeRequestsScreen() {
   }
 
   // STATE 2: NO ACTIVE TRIPS
-  if (!driverTrips || driverTrips.length === 0) {
+  if (driverTrips.length === 0) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}

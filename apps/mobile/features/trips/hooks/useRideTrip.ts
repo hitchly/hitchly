@@ -1,4 +1,4 @@
-import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
+import { formatOrdinal, shortenAddress } from "@hitchly/utils";
 import { useMemo } from "react";
 import { Alert } from "react-native";
 
@@ -6,6 +6,95 @@ import { authClient } from "@/lib/auth-client";
 import { openStopNavigation } from "@/lib/navigation";
 import { isTestAccount } from "@/lib/test-accounts";
 import { trpc } from "@/lib/trpc";
+
+const LOCATION_POLL_INTERVAL_MS = 5000;
+
+function formatDistanceLabel(
+  distanceKm: number | null | undefined
+): string | null {
+  if (
+    distanceKm === null ||
+    distanceKm === undefined ||
+    Number.isNaN(distanceKm)
+  )
+    return null;
+
+  if (distanceKm < 1) {
+    const meters = Math.round(distanceKm * 1000);
+    return `${String(meters)} m away`;
+  }
+
+  return `${distanceKm.toFixed(1)} km away`;
+}
+
+function formatEtaLabel(
+  durationSeconds: number | null | undefined
+): string | null {
+  if (
+    durationSeconds === null ||
+    durationSeconds === undefined ||
+    Number.isNaN(durationSeconds)
+  )
+    return null;
+
+  const totalMinutes = Math.max(1, Math.round(durationSeconds / 60));
+  if (totalMinutes < 60) return `${String(totalMinutes)} min`;
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (minutes === 0) return `${String(hours)} hr`;
+  return `${String(hours)} hr ${String(minutes)} min`;
+}
+
+function formatFreshnessLabel(
+  updatedAt: string | Date | null | undefined
+): string {
+  if (!updatedAt) return "Last updated unknown";
+
+  const ts =
+    typeof updatedAt === "string"
+      ? new Date(updatedAt).getTime()
+      : updatedAt.getTime();
+
+  if (Number.isNaN(ts)) return "Last updated unknown";
+
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 10) return "Updated just now";
+  if (diffSec < 60) return `Updated ${String(diffSec)}s ago`;
+
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Updated ${String(diffMin)}m ago`;
+
+  const diffHr = Math.floor(diffMin / 60);
+  return `Updated ${String(diffHr)}h ago`;
+}
+
+type LiveLocationPayload = {
+  hasLocation?: boolean;
+  target?: "pickup" | "dropoff";
+  targetDistanceKm?: number | null;
+  targetEtaSeconds?: number | null;
+  pickupDistanceKm?: number | null;
+  pickupEtaSeconds?: number | null;
+  etaSource?: "google" | "cache";
+  etaComputedAt?: string | null;
+  etaStale?: boolean;
+  hasArrivedAtTarget?: boolean;
+  hasArrivedAtPickup?: boolean;
+  hasArrivedAtDropoff?: boolean;
+  autoPickupEligible?: boolean;
+  autoPickedUp?: boolean;
+  autoDropoffEligible?: boolean;
+  autoDroppedOff?: boolean;
+  requestStatus?: string;
+  driverLocation?: {
+    latitude: number;
+    longitude: number;
+    heading: number | null;
+    speed: number | null;
+    updatedAt: string | Date;
+  } | null;
+} | null;
 
 export function useRideTrip(tripId: string) {
   const { data: session } = authClient.useSession();
@@ -19,11 +108,34 @@ export function useRideTrip(tripId: string) {
     data: trip,
     isLoading,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId }, { enabled: !!tripId });
+  } = trpc.trip.getTripById.useQuery(
+    { tripId },
+    {
+      enabled: !!tripId,
+      refetchInterval: LOCATION_POLL_INTERVAL_MS,
+      refetchIntervalInBackground: true,
+    }
+  );
+
+  const {
+    data: liveDriverRaw,
+    isFetching: isFetchingDriverLocation,
+    refetch: refetchDriverLocation,
+  } = trpc.location.getTripDriverLiveLocation.useQuery(
+    { tripId },
+    {
+      enabled: !!tripId,
+      refetchInterval: LOCATION_POLL_INTERVAL_MS,
+      refetchIntervalInBackground: true,
+    }
+  );
+
+  const liveDriver = (liveDriverRaw ?? null) as LiveLocationPayload;
 
   const confirmPickupMutation = trpc.trip.confirmRiderPickup.useMutation({
     onSuccess: () => {
       void refetch();
+      void refetchDriverLocation();
       void utils.trip.getTripRequests.invalidate();
       Alert.alert("Success", "Pickup confirmed");
     },
@@ -32,25 +144,60 @@ export function useRideTrip(tripId: string) {
     },
   });
 
-  // Derived State
   const userRequest = useMemo(
     () => trip?.requests.find((req) => req.riderId === currentUserId),
     [trip, currentUserId]
   );
 
-  const isAccepted = userRequest?.status === "accepted";
-  const isOnTrip = userRequest?.status === "on_trip";
-  const isCompleted = userRequest?.status === "completed";
+  const backendRequestStatus = liveDriver?.requestStatus;
+  const effectiveStatus =
+    backendRequestStatus === "completed"
+      ? "completed"
+      : backendRequestStatus === "on_trip"
+        ? "on_trip"
+        : backendRequestStatus === "accepted"
+          ? "accepted"
+          : userRequest?.status;
+
+  const isAccepted = effectiveStatus === "accepted";
+  const isOnTrip = effectiveStatus === "on_trip";
+  const isCompleted = effectiveStatus === "completed";
   const pickupConfirmed = !!userRequest?.riderPickupConfirmedAt;
 
-  // Calculate dropoff order
+  const hasDriverLocation = !!liveDriver?.hasLocation;
+  const target = liveDriver?.target ?? (isOnTrip ? "dropoff" : "pickup");
+
+  const rawTargetDistanceKm =
+    liveDriver?.targetDistanceKm ??
+    (target === "pickup" ? (liveDriver?.pickupDistanceKm ?? null) : null);
+
+  const rawTargetEtaSeconds =
+    liveDriver?.targetEtaSeconds ??
+    (target === "pickup" ? (liveDriver?.pickupEtaSeconds ?? null) : null);
+
+  const hasArrivedAtTarget = !!liveDriver?.hasArrivedAtTarget;
+  const hasArrivedAtPickup = !!liveDriver?.hasArrivedAtPickup;
+  const hasArrivedAtDropoff = !!liveDriver?.hasArrivedAtDropoff;
+
+  const autoPickedUp = !!liveDriver?.autoPickedUp;
+  const autoDroppedOff = !!liveDriver?.autoDroppedOff;
+
+  const etaSource = liveDriver?.etaSource ?? "google";
+  const etaComputedAt = liveDriver?.etaComputedAt ?? null;
+  const etaStale = !!liveDriver?.etaStale;
+
+  const targetDistanceLabel = formatDistanceLabel(rawTargetDistanceKm);
+  const targetEtaLabel = formatEtaLabel(rawTargetEtaSeconds);
+
+  const locationUpdatedAt = liveDriver?.driverLocation?.updatedAt ?? null;
+  const locationFreshnessLabel = formatFreshnessLabel(locationUpdatedAt);
+  const etaFreshnessLabel = formatFreshnessLabel(etaComputedAt);
+
   const dropoffOrder = useMemo(() => {
-    if (!isOnTrip || !trip?.requests) return null;
+    if (!isOnTrip || !trip?.requests || !userRequest?.id) return null;
     const onTripRequests = trip.requests.filter((r) => r.status === "on_trip");
     const idx = onTripRequests.findIndex((r) => r.id === userRequest.id);
-    if (idx >= 0 && onTripRequests.length > 1) {
-      return idx + 1;
-    }
+    if (idx >= 0 && onTripRequests.length > 1) return idx + 1;
     return null;
   }, [isOnTrip, trip?.requests, userRequest?.id]);
 
@@ -58,42 +205,145 @@ export function useRideTrip(tripId: string) {
     if (!trip) return null;
 
     if (isAccepted) {
+      if (trip.status === "active") {
+        return {
+          title: "TRIP ACCEPTED",
+          message:
+            "The driver has accepted your request. We'll notify you once they start the trip.",
+          location: shortenAddress(trip.origin),
+        };
+      }
+
+      const distancePrefix = targetDistanceLabel
+        ? `Driver is ${targetDistanceLabel}.`
+        : "Driver location unavailable right now.";
+      const etaSuffix = targetEtaLabel ? ` ETA: ${targetEtaLabel}.` : "";
+
+      const message = pickupConfirmed
+        ? "Pickup confirmed. Waiting for driver to start the trip."
+        : hasArrivedAtPickup
+          ? "Driver has arrived at your pickup point."
+          : `${distancePrefix}${etaSuffix} Heading to your pickup point.`;
+
       return {
         title: "WAITING FOR PICKUP",
-        message: pickupConfirmed
-          ? "Pickup confirmed. Waiting for driver to start the trip."
-          : "Driver is on the way.",
-        location: formatCityProvince(trip.origin),
+        message,
+        location: shortenAddress(trip.origin),
       };
     }
+
     if (isOnTrip) {
+      if (hasArrivedAtDropoff) {
+        return {
+          title: "ARRIVING",
+          message: "You are arriving at your destination now.",
+          location: shortenAddress(trip.destination),
+        };
+      }
+
       if (dropoffOrder) {
         return {
           title: "ON THE WAY",
           message: `Dropping passengers off. You are ${formatOrdinal(
             dropoffOrder
           )} to be dropped off.`,
-          location: formatCityProvince(trip.destination),
+          location: shortenAddress(trip.destination),
         };
       }
+
+      const enRouteMessage = targetDistanceLabel
+        ? `Destination is ${targetDistanceLabel}.${
+            targetEtaLabel ? ` ETA: ${targetEtaLabel}.` : ""
+          }`
+        : "Arriving at destination shortly.";
+
       return {
         title: "ON THE WAY",
-        message: "Arriving at destination shortly.",
-        location: formatCityProvince(trip.destination),
+        message: enRouteMessage,
+        location: shortenAddress(trip.destination),
       };
     }
+
     if (isCompleted) {
       return {
         title: "TRIP COMPLETED",
         message: "Thank you for riding with Hitchly!",
-        location: formatCityProvince(trip.destination),
+        location: shortenAddress(trip.destination),
       };
     }
+
     return null;
-  }, [trip, isAccepted, isOnTrip, isCompleted, pickupConfirmed, dropoffOrder]);
+  }, [
+    trip,
+    isAccepted,
+    isOnTrip,
+    isCompleted,
+    pickupConfirmed,
+    dropoffOrder,
+    hasArrivedAtPickup,
+    hasArrivedAtDropoff,
+    targetDistanceLabel,
+    targetEtaLabel,
+  ]);
+
+  const liveDriverInfo = useMemo(() => {
+    if (!isAccepted && !isOnTrip && !isCompleted) return null;
+
+    return {
+      hasDriverLocation,
+      isFetchingDriverLocation,
+      target,
+      hasArrivedAtTarget,
+      hasArrivedAtPickup,
+      hasArrivedAtDropoff,
+      autoPickedUp,
+      autoDroppedOff,
+      targetDistanceKm: rawTargetDistanceKm,
+      targetDistanceLabel,
+      targetEtaSeconds: rawTargetEtaSeconds,
+      targetEtaLabel,
+      // backwards compatibility for existing screen fields:
+      pickupDistanceKm: target === "pickup" ? rawTargetDistanceKm : null,
+      pickupDistanceLabel: target === "pickup" ? targetDistanceLabel : null,
+      pickupEtaSeconds: target === "pickup" ? rawTargetEtaSeconds : null,
+      pickupEtaLabel: target === "pickup" ? targetEtaLabel : null,
+      etaSource,
+      etaStale,
+      etaComputedAt,
+      locationFreshnessLabel,
+      etaFreshnessLabel,
+      driverLocation: liveDriver?.driverLocation ?? null,
+      requestStatus: backendRequestStatus ?? userRequest?.status ?? null,
+    };
+  }, [
+    isAccepted,
+    isOnTrip,
+    isCompleted,
+    hasDriverLocation,
+    isFetchingDriverLocation,
+    target,
+    hasArrivedAtTarget,
+    hasArrivedAtPickup,
+    hasArrivedAtDropoff,
+    autoPickedUp,
+    autoDroppedOff,
+    rawTargetDistanceKm,
+    targetDistanceLabel,
+    rawTargetEtaSeconds,
+    targetEtaLabel,
+    etaSource,
+    etaStale,
+    etaComputedAt,
+    locationFreshnessLabel,
+    etaFreshnessLabel,
+    liveDriver?.driverLocation,
+    backendRequestStatus,
+    userRequest?.status,
+  ]);
 
   const handleConfirmPickup = () => {
     if (!userRequest?.id) return;
+
     Alert.alert(
       "Confirm Pickup",
       "Confirm that you have been picked up by the driver?",
@@ -111,9 +361,15 @@ export function useRideTrip(tripId: string) {
 
   const handleOpenMaps = () => {
     if (!trip) return;
+
     if (isAccepted) {
-      void openStopNavigation(trip.originLat ?? 0, trip.originLng ?? 0);
-    } else if (isOnTrip) {
+      if (trip.originLat && trip.originLng) {
+        void openStopNavigation(trip.originLat, trip.originLng);
+      }
+      return;
+    }
+
+    if (isOnTrip && userRequest) {
       const dropoffLat = userRequest.dropoffLat ?? trip.destLat;
       const dropoffLng = userRequest.dropoffLng ?? trip.destLng;
       if (dropoffLat && dropoffLng) {
@@ -133,10 +389,12 @@ export function useRideTrip(tripId: string) {
     isCompleted,
     pickupConfirmed,
     statusInfo,
+    liveDriverInfo,
     isConfirming: confirmPickupMutation.isPending,
     actions: {
       handleConfirmPickup,
       handleOpenMaps,
+      refetchDriverLocation,
     },
   };
 }
