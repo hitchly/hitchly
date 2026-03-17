@@ -4,11 +4,8 @@
 import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
-<<<<<<< HEAD
   payments,
-=======
   recurringTripSchedules,
->>>>>>> 3e247b3 (Implemented recurring schedule)
   tripRequests,
   trips,
   users,
@@ -1285,15 +1282,8 @@ export const tripRouter = router({
         }
         conditions.push(eq(tripRequests.riderId, targetRiderId));
       } else {
-<<<<<<< HEAD
         // Default: get requests for current user as rider
         conditions.push(eq(tripRequests.riderId, userId));
-=======
-        // Default: get requests for trips where the current user is the driver
-        conditions.push(
-          sql`${tripRequests.tripId} IN (SELECT ${trips.id} FROM ${trips} WHERE ${trips.driverId} = ${userId})`
-        );
->>>>>>> 3e247b3 (Implemented recurring schedule)
       }
       let requests;
       try {

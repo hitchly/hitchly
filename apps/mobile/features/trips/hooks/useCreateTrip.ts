@@ -33,12 +33,8 @@ export function useCreateTrip() {
   const defaultAddress = userProfile?.profile.defaultAddress ?? "";
 
   const methods = useForm<CreateTripFormData>({
-<<<<<<< HEAD
-    resolver: zodResolver(createTripSchema),
-    mode: "onChange",
-=======
     resolver: zodResolver(createTripSchema) as any,
->>>>>>> 3e247b3 (Implemented recurring schedule)
+    mode: "onChange",
     defaultValues: {
       origin: "",
       destination: "",
@@ -54,36 +50,27 @@ export function useCreateTrip() {
   // Only overwrite origin/destination when the user changes direction (TO/FROM MCMASTER).
   // This prevents overwriting a custom drop-off like "union station" when defaultAddress loads.
   useEffect(() => {
-<<<<<<< HEAD
-    if (isToCampus) {
-      setValue("origin", defaultAddress, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      setValue("destination", McMaster.address, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    } else {
-      setValue("origin", McMaster.address, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      setValue("destination", defaultAddress, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-=======
     if (prevIsToCampusRef.current !== isToCampus) {
       prevIsToCampusRef.current = isToCampus;
       if (isToCampus) {
-        setValue("origin", defaultAddress);
-        setValue("destination", McMaster.address);
+        setValue("origin", defaultAddress, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        setValue("destination", McMaster.address, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       } else {
-        setValue("origin", McMaster.address);
-        setValue("destination", defaultAddress);
+        setValue("origin", McMaster.address, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        setValue("destination", defaultAddress, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       }
->>>>>>> 3e247b3 (Implemented recurring schedule)
     }
   }, [isToCampus, defaultAddress, setValue]);
 
@@ -160,8 +147,6 @@ export function useCreateTrip() {
       createTripMutation.isPending ||
       createScheduleMutation.isPending ||
       generateUpcomingTripsMutation.isPending,
-    onSubmit: () => {
-      void methods.handleSubmit(onSubmit)();
-    },
+    onSubmit: methods.handleSubmit(onSubmit as any),
   };
 }

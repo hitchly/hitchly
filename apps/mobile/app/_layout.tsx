@@ -79,19 +79,13 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <RoleProvider>
-<<<<<<< HEAD
           <LocationProvider>
-            <StripeProviderWrapper>
-              <AppContent />
-            </StripeProviderWrapper>
+            <StripeErrorBoundary fallback={<AppContent />}>
+              <StripeProviderWrapper>
+                <AppContent />
+              </StripeProviderWrapper>
+            </StripeErrorBoundary>
           </LocationProvider>
-=======
-          <StripeErrorBoundary fallback={<AppContent />}>
-            <StripeProviderWrapper>
-              <AppContent />
-            </StripeProviderWrapper>
-          </StripeErrorBoundary>
->>>>>>> 3e247b3 (Implemented recurring schedule)
         </RoleProvider>
       </QueryClientProvider>
     </trpc.Provider>

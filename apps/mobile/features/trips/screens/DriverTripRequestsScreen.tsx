@@ -34,16 +34,11 @@ const getBadgeVariant = (status: string) => {
 };
 
 export function DriverTripRequestsScreen() {
-<<<<<<< HEAD
   const { id, tripId } = useLocalSearchParams<{
     id?: string;
     tripId?: string;
   }>();
   const effectiveTripId = id ?? tripId;
-=======
-  // Route file is .../driver/trips/[id]/requests.tsx, so param is `id`
-  const { id } = useLocalSearchParams<{ id?: string }>();
->>>>>>> 3e247b3 (Implemented recurring schedule)
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -56,11 +51,7 @@ export function DriverTripRequestsScreen() {
     isAccepting,
     rejectRequest,
     isRejecting,
-<<<<<<< HEAD
   } = useDriverTripRequests(effectiveTripId);
-=======
-  } = useDriverTripRequests(id);
->>>>>>> 3e247b3 (Implemented recurring schedule)
 
   // Check if there's actually anything to swipe
   const hasPendingRequests = requests.some((req) => req.status === "pending");
