@@ -96,8 +96,8 @@ export function RiderProfileScreen() {
         <AccountMasterSection />
 
         <ProfileMasterSection
-          profile={p.userRecord.profile ?? null}
-          preferences={p.userRecord.preferences ?? null}
+          profile={p.userRecord.profile}
+          preferences={p.userRecord.preferences}
           onSuccess={p.onSuccess}
         />
       </ScrollView>

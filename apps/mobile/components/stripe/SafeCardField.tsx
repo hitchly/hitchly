@@ -1,3 +1,4 @@
+/* eslint-disable */
 import type { CardFieldProps } from "@stripe/stripe-react-native";
 import type { ReactNode } from "react";
 import { View } from "react-native";

@@ -21,7 +21,7 @@ const createTripSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
   departureTime: z.date().refine((date) => date >= getMinDepartureTime(), {
-    message: `Departure must be at least ${TIME_WINDOW_MIN} minutes in the future`,
+    message: `Departure must be at least ${String(TIME_WINDOW_MIN)} minutes in the future`,
   }),
   maxSeats: z.number().min(1).max(5),
 
@@ -30,7 +30,8 @@ const createTripSchema = z.object({
   daysOfWeek: z.array(z.number().int().min(0).max(6)).default([]),
 });
 
-export type CreateTripFormData = z.infer<typeof createTripSchema>;
+export type CreateTripFormInput = z.input<typeof createTripSchema>;
+export type CreateTripFormData = z.output<typeof createTripSchema>;
 
 export function useCreateTrip() {
   const router = useRouter();
@@ -41,8 +42,8 @@ export function useCreateTrip() {
   const { data: userProfile } = trpc.profile.getMe.useQuery();
   const defaultAddress = userProfile?.profile.defaultAddress ?? "";
 
-  const methods = useForm<CreateTripFormData>({
-    resolver: zodResolver(createTripSchema) as any,
+  const methods = useForm<CreateTripFormInput>({
+    resolver: zodResolver(createTripSchema),
     mode: "onChange",
     defaultValues: {
       origin: "",
@@ -86,8 +87,8 @@ export function useCreateTrip() {
   // When defaultAddress first loads, fill only fields that are still empty so we don't overwrite e.g. "union station".
   useEffect(() => {
     const { origin, destination } = getValues();
-    const originEmpty = origin === "" || origin === undefined;
-    const destEmpty = destination === "" || destination === undefined;
+    const originEmpty = origin === "";
+    const destEmpty = destination === "";
     if (!originEmpty && !destEmpty) return;
     if (isToCampus) {
       if (originEmpty) setValue("origin", defaultAddress);
@@ -122,8 +123,10 @@ export function useCreateTrip() {
       },
     });
 
-  const onSubmit = async (data: CreateTripFormData) => {
-    if (data.isRecurring && data.daysOfWeek && data.daysOfWeek.length > 0) {
+  const onSubmit = async (raw: CreateTripFormInput) => {
+    const data: CreateTripFormData = createTripSchema.parse(raw);
+
+    if (data.isRecurring && data.daysOfWeek.length > 0) {
       const schedule = await createScheduleMutation.mutateAsync({
         origin: data.origin,
         destination: data.destination,
@@ -161,6 +164,6 @@ export function useCreateTrip() {
       createTripMutation.isPending ||
       createScheduleMutation.isPending ||
       generateNextTripForScheduleMutation.isPending,
-    onSubmit: methods.handleSubmit(onSubmit as any),
+    onSubmit: methods.handleSubmit(onSubmit),
   };
 }

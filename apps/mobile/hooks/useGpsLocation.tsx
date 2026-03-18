@@ -11,7 +11,7 @@ export const useGPSLocation = (
 ) => {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(true);
+  const isMountedRef = useRef<boolean>(true);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -120,6 +120,7 @@ export const useGPSLocation = (
             4
           )}, ${loc.coords.longitude.toFixed(4)}`;
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!isMountedRef.current) return;
 
       onLocationFound({

@@ -21,11 +21,12 @@ export function useDriverTripDetails() {
   );
 
   const isDriver = session?.user.id === trip?.driverId;
+  const recurringScheduleId = trip?.recurringScheduleId;
 
   const { data: recurringSchedule } = trpc.recurringSchedule.getById.useQuery(
-    { id: trip?.recurringScheduleId as string },
+    { id: recurringScheduleId ?? "" },
     {
-      enabled: Boolean(trip?.recurringScheduleId),
+      enabled: Boolean(recurringScheduleId),
     }
   );
 

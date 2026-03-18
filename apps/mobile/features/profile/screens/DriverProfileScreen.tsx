@@ -101,9 +101,9 @@ export function DriverProfileScreen() {
         <AccountMasterSection />
 
         <ProfileMasterSection
-          profile={p.userRecord.profile ?? null}
-          preferences={p.userRecord.preferences ?? null}
-          vehicle={p.userRecord.vehicle ?? null}
+          profile={p.userRecord.profile}
+          preferences={p.userRecord.preferences}
+          vehicle={p.userRecord.vehicle}
           onSuccess={p.onSuccess}
         />
       </ScrollView>

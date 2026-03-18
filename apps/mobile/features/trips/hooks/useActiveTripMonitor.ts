@@ -12,7 +12,7 @@ export function useActiveTripMonitor() {
   try {
     const roleContext = useUserRole();
     role = roleContext.role;
-  } catch (error) {
+  } catch {
     // RoleProvider not ready - use default role
     // This prevents crashes during initial render
     // The component should wait for providers to be ready before rendering

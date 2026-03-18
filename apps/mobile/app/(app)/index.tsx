@@ -1,6 +1,6 @@
-import { Component, type ReactNode } from "react";
 import type { Href } from "expo-router";
 import { Redirect } from "expo-router";
+import { Component, type ReactNode } from "react";
 
 import { ROLE_ROUTES } from "@/constants/roles";
 import { useUserRole } from "@/context/role-context";
@@ -20,8 +20,8 @@ interface AppIndexState {
 /**
  * AppIndex with error boundary to handle provider initialization errors
  */
-export default class AppIndex extends Component<{}, AppIndexState> {
-  constructor(props: {}) {
+export default class AppIndex extends Component<object, AppIndexState> {
+  constructor(props: object) {
     super(props);
     this.state = { hasError: false };
   }

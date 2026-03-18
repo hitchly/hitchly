@@ -216,7 +216,7 @@ export function useDriveTrip(tripId: string) {
     onSuccess: () => void refetch(),
     onError: (err) => {
       const message =
-        typeof err?.message === "string"
+        typeof err.message === "string"
           ? err.message
           : "Something went wrong. Please try again.";
       if (message.includes("Rider has not confirmed pickup yet")) {

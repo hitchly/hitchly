@@ -1,9 +1,8 @@
-import { TRPCError } from "@trpc/server";
-import Stripe from "stripe";
-
 import { db } from "@hitchly/db/client";
 import { users } from "@hitchly/db/schema";
+import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import Stripe from "stripe";
 
 import { protectedProcedure, router } from "../trpc";
 

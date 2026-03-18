@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { SafeCardField } from "@/components/stripe/SafeCardField";
-
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FormSection } from "@/components/ui/FormSection";

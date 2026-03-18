@@ -12,12 +12,12 @@ import { IconBox } from "@/components/ui/IconBox";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
-import { trpc } from "@/lib/trpc";
 import { useRiderTripDetails } from "@/features/trips/hooks/useRiderTripDetails";
 import {
   formatWeeklyCommuteLabel,
   isTripRecurring,
 } from "@/features/trips/utils/recurringTripLabels";
+import { trpc } from "@/lib/trpc";
 
 const formatLocation = (loc: string) => shortenAddress(loc);
 

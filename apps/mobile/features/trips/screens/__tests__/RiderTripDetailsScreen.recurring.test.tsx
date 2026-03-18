@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";

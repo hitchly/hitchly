@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from "react";
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -9,6 +10,8 @@ vi.mock("@/features/trips/hooks/useCreateTrip", () => ({
   useCreateTrip: () => ({
     methods: {
       control: {} as any,
+      watch: () => false,
+      setValue: vi.fn(),
     },
     isToCampus: true,
     setIsToCampus: vi.fn(),

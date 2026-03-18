@@ -1,11 +1,11 @@
-import { Component, type ReactNode } from "react";
 import { Stack } from "expo-router";
+import { Component, type ReactNode } from "react";
 import { View } from "react-native";
 
+import { useUserRole } from "@/context/role-context";
 import { DriverVerificationGuard } from "@/features/identity/components/DriverVerificationGuard";
 import { ActiveTripBanner } from "@/features/trips/components/ActiveTripBanner";
 import { useActiveTripMonitor } from "@/features/trips/hooks/useActiveTripMonitor";
-import { useUserRole } from "@/context/role-context";
 
 function AppLayoutContent() {
   // These hooks should always be available since RoleProvider wraps this component
@@ -37,8 +37,8 @@ interface AppLayoutState {
 /**
  * AppLayout with error boundary to handle provider initialization errors
  */
-export default class AppLayout extends Component<{}, AppLayoutState> {
-  constructor(props: {}) {
+export default class AppLayout extends Component<object, AppLayoutState> {
+  constructor(props: object) {
     super(props);
     this.state = { hasError: false };
   }

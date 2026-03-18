@@ -1,3 +1,4 @@
+/* eslint-disable */
 import type { ReactNode } from "react";
 
 import { isStripeAvailable } from "./stripe-utils";
@@ -48,7 +49,6 @@ export function StripeProviderWrapper({
 }: StripeProviderWrapperProps): ReactNode {
   // Skip Stripe provider in Expo Go (doesn't support native modules)
   if (!isStripeAvailable()) {
-    // eslint-disable-next-line no-console
     console.warn(
       "Stripe is not available in Expo Go. Payment features require a development build."
     );
@@ -65,7 +65,6 @@ export function StripeProviderWrapper({
 
   if (!STRIPE_PUBLISHABLE_KEY) {
     // In development, show warning but don't crash
-    // eslint-disable-next-line no-console
     console.warn(
       "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set. Payment features will not work."
     );

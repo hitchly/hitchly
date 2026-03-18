@@ -2,7 +2,6 @@ import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
   recurringTripSchedules,
-  trips,
 } from "@hitchly/db/schema";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
@@ -121,7 +120,7 @@ describe("recurringScheduleRouter", () => {
       );
 
       await expect(caller.create(tooSoon)).rejects.toThrow(
-        `Departure time must be at least ${TIME_WINDOW_MIN} minutes in the future`
+        `Departure time must be at least ${String(TIME_WINDOW_MIN)} minutes in the future`
       );
     });
 
@@ -189,14 +188,12 @@ describe("recurringScheduleRouter", () => {
       // For simplicity, say no existing trips match, and each insert returns a trip id
       // generateUpcomingTripsForUser loops day by day, so we mock select+insert chains
       // using a simple pattern: for every call to select(trips) return empty.
-      (mockDb.select as Mock).mockImplementationOnce(() => {
-        // First call already configured above; subsequent selects are for existing trips
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([]),
-          }),
-        };
-      });
+      // Subsequent selects are for existing trips
+      mockDb.select.mockImplementationOnce(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }));
 
       mockDb.insert.mockReturnValue({
         values: vi.fn().mockReturnValue({
@@ -227,7 +224,7 @@ describe("recurringScheduleRouter", () => {
         departureTime: new Date("2025-04-14T08:00:00Z"),
       });
 
-      (mockDb.select as Mock).mockReturnValueOnce({
+      mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             orderBy: vi.fn().mockReturnValue({

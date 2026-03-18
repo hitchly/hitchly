@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { createMockContext } from "../../../lib/tests/mockContext";
 import { createMockDb } from "../../../lib/tests/mockDb";
 import { recurringScheduleRouter } from "../recurringSchedule";
-import { recurringTripSchedules } from "@hitchly/db/schema";
 
 interface MockDb {
   select: Mock;
@@ -38,7 +37,7 @@ describe("recurringScheduleRouter delete (deactivate)", () => {
       where: vi.fn().mockResolvedValueOnce([{ ...existing, isActive: false }]),
     });
 
-    (mockDb.update as Mock).mockReturnValueOnce({
+    mockDb.update.mockReturnValueOnce({
       set: updateSpy,
     });
 

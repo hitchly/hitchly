@@ -6,7 +6,7 @@ import {
   users,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
-import { and, eq, gte, gt, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, eq, gte, gt, isNull, lte, ne, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { geocodeAddress } from "../../services/googlemaps";
@@ -77,7 +77,7 @@ function validateScheduleTime(departureTime: Date) {
   if (departureTime < minDepartureTime) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: `Departure time must be at least ${TIME_WINDOW_MIN} minutes in the future`,
+      message: `Departure time must be at least ${String(TIME_WINDOW_MIN)} minutes in the future`,
     });
   }
 
@@ -214,7 +214,7 @@ export const recurringScheduleRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [schedule] = await ctx.db
+      const schedulesResult = (await ctx.db
         .select()
         .from(recurringTripSchedules)
         .where(
@@ -223,7 +223,8 @@ export const recurringScheduleRouter = router({
             eq(recurringTripSchedules.userId, ctx.userId)
           )
         )
-        .limit(1);
+        .limit(1)) as (typeof recurringTripSchedules.$inferSelect)[];
+      const schedule = schedulesResult[0];
 
       if (!schedule) {
         throw new TRPCError({
@@ -254,9 +255,10 @@ export const recurringScheduleRouter = router({
         .limit(1);
 
       if (existing.length > 0) {
+        const id = existing[0]?.id;
         return {
           created: false,
-          trip: { id: existing[0]!.id, departureTime: nextDepartureTime },
+          trip: id ? { id, departureTime: nextDepartureTime } : null,
         };
       }
 
@@ -309,10 +311,12 @@ export const recurringScheduleRouter = router({
             )
           )
         );
+      const typedSchedules =
+        schedules as (typeof recurringTripSchedules.$inferSelect)[];
 
       const createdTrips: { id: string }[] = [];
 
-      for (const schedule of schedules) {
+      for (const schedule of typedSchedules) {
         for (let i = 0; i <= daysAhead; i++) {
           const day = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
           if (!isScheduleEnabledForDay(schedule, day)) continue;
@@ -344,7 +348,7 @@ export const recurringScheduleRouter = router({
 
           if (existing.length > 0) continue;
 
-          const [trip] = await ctx.db
+          const [_trip] = await ctx.db
             .insert(trips)
             .values({
               id: crypto.randomUUID(),
@@ -363,7 +367,7 @@ export const recurringScheduleRouter = router({
             })
             .returning({ id: trips.id });
 
-          createdTrips.push({ id: schedule.id });
+          createdTrips.push({ id: _trip?.id ?? schedule.id });
         }
       }
 
@@ -402,25 +406,28 @@ export const recurringScheduleRouter = router({
   update: protectedProcedure
     .input(updateScheduleInputSchema)
     .mutation(async ({ ctx, input }) => {
-      const [existing] = await ctx.db
+      const existingRows = (await ctx.db
         .select()
         .from(recurringTripSchedules)
-        .where(eq(recurringTripSchedules.id, input.id));
+        .where(
+          eq(recurringTripSchedules.id, input.id)
+        )) as (typeof recurringTripSchedules.$inferSelect)[];
+      const existing = existingRows[0];
 
-      if (!existing || existing.userId !== ctx.userId) {
+      if (existing?.userId !== ctx.userId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Schedule not found",
         });
       }
 
-      const updates: any = {};
+      const updates: Partial<typeof recurringTripSchedules.$inferInsert> = {};
 
       if (typeof input.maxSeats === "number") {
         if (input.maxSeats < 1 || input.maxSeats > MAX_SEATS) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `Max seats must be between 1 and ${MAX_SEATS}`,
+            message: `Max seats must be between 1 and ${String(MAX_SEATS)}`,
           });
         }
         updates.maxSeats = input.maxSeats;
@@ -481,12 +488,15 @@ export const recurringScheduleRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const [existing] = await ctx.db
+      const existingRows = (await ctx.db
         .select()
         .from(recurringTripSchedules)
-        .where(eq(recurringTripSchedules.id, input.id));
+        .where(
+          eq(recurringTripSchedules.id, input.id)
+        )) as (typeof recurringTripSchedules.$inferSelect)[];
+      const existing = existingRows[0];
 
-      if (!existing || existing.userId !== ctx.userId) {
+      if (existing?.userId !== ctx.userId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Schedule not found",

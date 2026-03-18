@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { renderHook, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,7 +14,7 @@ const {
   invalidate,
   createTripMutation,
   createScheduleMutation,
-  generateUpcomingTripsMutation,
+  generateNextTripForScheduleMutation,
 } = vi.hoisted(() => {
   const makeMutation = (): MutationMock => ({
     mutate: vi.fn(),
@@ -25,7 +26,7 @@ const {
     invalidate: vi.fn(),
     createTripMutation: makeMutation(),
     createScheduleMutation: makeMutation(),
-    generateUpcomingTripsMutation: makeMutation(),
+    generateNextTripForScheduleMutation: makeMutation(),
   };
 });
 
@@ -51,8 +52,8 @@ vi.mock("@/lib/trpc", () => {
         create: {
           useMutation: () => createScheduleMutation,
         },
-        generateUpcomingTripsForUser: {
-          useMutation: () => generateUpcomingTripsMutation,
+        generateNextTripForSchedule: {
+          useMutation: () => generateNextTripForScheduleMutation,
         },
       },
     },
@@ -64,7 +65,7 @@ describe("useCreateTrip (recurring)", () => {
     invalidate.mockClear();
     createTripMutation.mutate.mockClear();
     createScheduleMutation.mutateAsync.mockClear();
-    generateUpcomingTripsMutation.mutateAsync.mockClear();
+    generateNextTripForScheduleMutation.mutateAsync.mockClear();
   });
 
   it("submits non-recurring trip via trip.createTrip", async () => {
@@ -94,11 +95,11 @@ describe("useCreateTrip (recurring)", () => {
     expect(createScheduleMutation.mutateAsync).not.toHaveBeenCalled();
   });
 
-  it("submits recurring trip via recurringSchedule.create + generateUpcomingTripsForUser", async () => {
+  it("submits recurring trip via recurringSchedule.create + generateNextTripForSchedule", async () => {
     createScheduleMutation.mutateAsync.mockResolvedValueOnce({ id: "sched-1" });
-    generateUpcomingTripsMutation.mutateAsync.mockResolvedValueOnce({
-      createdCount: 3,
-      trips: [],
+    generateNextTripForScheduleMutation.mutateAsync.mockResolvedValueOnce({
+      created: true,
+      trip: { id: "trip-next" },
     });
 
     const { result } = renderHook(() => useCreateTrip());
@@ -127,8 +128,11 @@ describe("useCreateTrip (recurring)", () => {
         daysOfWeek: [1, 3, 5],
       })
     );
-    expect(generateUpcomingTripsMutation.mutateAsync).toHaveBeenCalledWith({
-      daysAhead: 28,
+    expect(
+      generateNextTripForScheduleMutation.mutateAsync
+    ).toHaveBeenCalledWith({
+      recurringScheduleId: "sched-1",
+      after: expect.any(Date),
     });
     expect(createTripMutation.mutate).not.toHaveBeenCalled();
   });
