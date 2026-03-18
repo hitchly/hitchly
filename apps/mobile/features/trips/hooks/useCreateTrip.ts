@@ -8,11 +8,20 @@ import * as z from "zod";
 import { McMaster } from "@/constants/location";
 import { trpc } from "@/lib/trpc";
 
+const TIME_WINDOW_MIN = 15;
+
+const getMinDepartureTime = () => {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  d.setMinutes(d.getMinutes() + TIME_WINDOW_MIN);
+  return d;
+};
+
 const createTripSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
-  departureTime: z.date().refine((date) => date > new Date(), {
-    message: "Departure must be in the future",
+  departureTime: z.date().refine((date) => date >= getMinDepartureTime(), {
+    message: `Departure must be at least ${TIME_WINDOW_MIN} minutes in the future`,
   }),
   maxSeats: z.number().min(1).max(5),
 
@@ -38,7 +47,7 @@ export function useCreateTrip() {
     defaultValues: {
       origin: "",
       destination: "",
-      departureTime: new Date(Date.now() + 15 * 60 * 1000),
+      departureTime: getMinDepartureTime(),
       maxSeats: 1,
       isRecurring: false,
       daysOfWeek: [],
@@ -106,8 +115,8 @@ export function useCreateTrip() {
     },
   });
 
-  const generateUpcomingTripsMutation =
-    trpc.recurringSchedule.generateUpcomingTripsForUser.useMutation({
+  const generateNextTripForScheduleMutation =
+    trpc.recurringSchedule.generateNextTripForSchedule.useMutation({
       onError: (err) => {
         Alert.alert("Error", err.message);
       },
@@ -123,7 +132,12 @@ export function useCreateTrip() {
         daysOfWeek: data.daysOfWeek,
       });
 
-      await generateUpcomingTripsMutation.mutateAsync({ daysAhead: 28 });
+      if (schedule?.id) {
+        await generateNextTripForScheduleMutation.mutateAsync({
+          recurringScheduleId: schedule.id,
+          after: new Date(),
+        });
+      }
 
       await utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Recurring ride scheduled!");
@@ -146,7 +160,7 @@ export function useCreateTrip() {
     isPending:
       createTripMutation.isPending ||
       createScheduleMutation.isPending ||
-      generateUpcomingTripsMutation.isPending,
+      generateNextTripForScheduleMutation.isPending,
     onSubmit: methods.handleSubmit(onSubmit as any),
   };
 }

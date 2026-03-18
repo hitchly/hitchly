@@ -18,25 +18,15 @@ function AppLayoutContent() {
       <View style={{ flex: 1 }}>
         <Stack screenOptions={{ headerShown: false }} />
 
-<<<<<<< HEAD
-        {isActive && activeTripId && (
+        {!isRoleLoading && isActive && activeTripId && (
           <ActiveTripBanner
             tripId={activeTripId}
             roleLabel={currentRoleLabel}
+            isRecurring={isRecurring}
           />
         )}
       </View>
     </DriverVerificationGuard>
-=======
-      {!isRoleLoading && isActive && activeTripId && (
-        <ActiveTripBanner
-          tripId={activeTripId}
-          roleLabel={currentRoleLabel}
-          isRecurring={isRecurring}
-        />
-      )}
-    </View>
->>>>>>> dac193d (Implemented recurring schedule)
   );
 }
 

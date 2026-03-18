@@ -14,12 +14,65 @@ import { router, protectedProcedure } from "../trpc";
 
 const APP_TIMEZONE = "America/Toronto";
 
+const buildDepartureTimeForDay = (day: Date, departureMinutes: number) => {
+  const hours = Math.floor(departureMinutes / 60);
+  const minutes = departureMinutes % 60;
+  const departureTime = new Date(day);
+  departureTime.setHours(hours, minutes, 0, 0);
+  return departureTime;
+};
+
+const isScheduleEnabledForDay = (
+  schedule: typeof recurringTripSchedules.$inferSelect,
+  day: Date
+) => {
+  const dayOfWeek = day.getDay(); // 0-6
+  return (
+    (dayOfWeek === 0 && schedule.sunday) ||
+    (dayOfWeek === 1 && schedule.monday) ||
+    (dayOfWeek === 2 && schedule.tuesday) ||
+    (dayOfWeek === 3 && schedule.wednesday) ||
+    (dayOfWeek === 4 && schedule.thursday) ||
+    (dayOfWeek === 5 && schedule.friday) ||
+    (dayOfWeek === 6 && schedule.saturday)
+  );
+};
+
+const findNextEnabledDay = (
+  schedule: typeof recurringTripSchedules.$inferSelect,
+  after: Date,
+  daysAhead = 60
+) => {
+  // search from next minute onward (inclusive of same-day future time)
+  const start = new Date(after);
+  for (let i = 0; i <= daysAhead; i++) {
+    const day = new Date(start);
+    day.setDate(day.getDate() + i);
+    day.setHours(0, 0, 0, 0);
+
+    if (!isScheduleEnabledForDay(schedule, day)) continue;
+    const departureTime = buildDepartureTimeForDay(
+      day,
+      schedule.departureMinutes
+    );
+    // effectiveFrom/effectiveTo are timestamps; compare against the actual occurrence time
+    // (not midnight of the day) so "today" isn't accidentally skipped.
+    if (departureTime < schedule.effectiveFrom) continue;
+    if (schedule.effectiveTo && departureTime > schedule.effectiveTo) continue;
+    if (departureTime <= after) continue;
+    return departureTime;
+  }
+  return null;
+};
+
 // Helper to get minutes from midnight in APP_TIMEZONE, ensuring TIME_WINDOW_MIN
 function validateScheduleTime(departureTime: Date) {
   const now = new Date();
-  const minDepartureTime = new Date(
-    now.getTime() + TIME_WINDOW_MIN * 60 * 1000
-  );
+  // Users pick times at minute precision; align the "15 minutes ahead" rule
+  // to minute granularity to avoid surprising rejections due to seconds/ms.
+  const minDepartureTime = new Date(now);
+  minDepartureTime.setSeconds(0, 0);
+  minDepartureTime.setMinutes(minDepartureTime.getMinutes() + TIME_WINDOW_MIN);
 
   if (departureTime < minDepartureTime) {
     throw new TRPCError({
@@ -103,7 +156,11 @@ export const recurringScheduleRouter = router({
       }
 
       const now = new Date();
-      const effectiveFrom = input.effectiveFrom ?? now;
+      const effectiveFromRaw = input.effectiveFrom ?? now;
+      // Default to "today" (date-level) instead of "this exact instant" so the
+      // first occurrence can still be later today.
+      const effectiveFrom = new Date(effectiveFromRaw);
+      effectiveFrom.setHours(0, 0, 0, 0);
 
       const departureMinutes = validateScheduleTime(input.departureTime);
 
@@ -149,6 +206,82 @@ export const recurringScheduleRouter = router({
       return schedule;
     }),
 
+  generateNextTripForSchedule: protectedProcedure
+    .input(
+      z.object({
+        recurringScheduleId: z.string(),
+        after: z.coerce.date(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [schedule] = await ctx.db
+        .select()
+        .from(recurringTripSchedules)
+        .where(
+          and(
+            eq(recurringTripSchedules.id, input.recurringScheduleId),
+            eq(recurringTripSchedules.userId, ctx.userId)
+          )
+        )
+        .limit(1);
+
+      if (!schedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      }
+      if (!schedule.isActive) {
+        return { created: false, trip: null };
+      }
+
+      const nextDepartureTime = findNextEnabledDay(schedule, input.after, 60);
+      if (!nextDepartureTime) {
+        return { created: false, trip: null };
+      }
+
+      const existing = await ctx.db
+        .select({ id: trips.id })
+        .from(trips)
+        .where(
+          and(
+            eq(trips.driverId, schedule.userId),
+            eq(trips.recurringScheduleId, schedule.id),
+            eq(trips.departureTime, nextDepartureTime),
+            ne(trips.status, "cancelled")
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        return {
+          created: false,
+          trip: { id: existing[0]!.id, departureTime: nextDepartureTime },
+        };
+      }
+
+      const [trip] = await ctx.db
+        .insert(trips)
+        .values({
+          id: crypto.randomUUID(),
+          driverId: schedule.userId,
+          origin: schedule.origin,
+          destination: schedule.destination,
+          originLat: schedule.originLat,
+          originLng: schedule.originLng,
+          destLat: schedule.destLat,
+          destLng: schedule.destLng,
+          departureTime: nextDepartureTime,
+          maxSeats: schedule.maxSeats,
+          bookedSeats: 0,
+          status: "pending",
+          recurringScheduleId: schedule.id,
+        })
+        .returning({ id: trips.id, departureTime: trips.departureTime });
+
+      return { created: true, trip };
+    }),
+
   generateUpcomingTripsForUser: protectedProcedure
     .input(
       z
@@ -182,24 +315,15 @@ export const recurringScheduleRouter = router({
       for (const schedule of schedules) {
         for (let i = 0; i <= daysAhead; i++) {
           const day = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-          const dayOfWeek = day.getDay(); // 0-6
+          if (!isScheduleEnabledForDay(schedule, day)) continue;
 
-          const isEnabled =
-            (dayOfWeek === 0 && schedule.sunday) ||
-            (dayOfWeek === 1 && schedule.monday) ||
-            (dayOfWeek === 2 && schedule.tuesday) ||
-            (dayOfWeek === 3 && schedule.wednesday) ||
-            (dayOfWeek === 4 && schedule.thursday) ||
-            (dayOfWeek === 5 && schedule.friday) ||
-            (dayOfWeek === 6 && schedule.saturday);
-
-          if (!isEnabled) continue;
-
-          if (day < schedule.effectiveFrom) continue;
-          if (schedule.effectiveTo && day > schedule.effectiveTo) continue;
-
-          const departureTime = new Date(day);
-          departureTime.setHours(0, schedule.departureMinutes, 0, 0);
+          const departureTime = buildDepartureTimeForDay(
+            day,
+            schedule.departureMinutes
+          );
+          if (departureTime < schedule.effectiveFrom) continue;
+          if (schedule.effectiveTo && departureTime > schedule.effectiveTo)
+            continue;
 
           const minDepartureTime = new Date(
             now.getTime() + TIME_WINDOW_MIN * 60 * 1000

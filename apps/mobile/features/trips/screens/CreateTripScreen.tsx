@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Controller, FormProvider } from "react-hook-form";
+import { Controller, FormProvider, useWatch } from "react-hook-form";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -30,6 +30,11 @@ export function CreateTripScreen() {
     isPending,
     onSubmit,
   } = useCreateTrip();
+
+  const isRecurring = useWatch({
+    control: methods.control,
+    name: "isRecurring",
+  });
 
   return (
     <ModalSheet
@@ -108,7 +113,7 @@ export function CreateTripScreen() {
             <ControlledDateTimePicker<CreateTripFormData>
               name="departureTime"
               label="DEPARTURE TIME"
-              minimumDate={new Date()}
+              minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
             />
 
             <View style={styles.stepperContainer}>
@@ -132,7 +137,11 @@ export function CreateTripScreen() {
                 <SegmentedControl<"once" | "recurring">
                   value={value ? "recurring" : "once"}
                   onChange={(val) => {
-                    onChange(val === "recurring");
+                    const next = val === "recurring";
+                    onChange(next);
+                    if (!next) {
+                      methods.setValue("daysOfWeek", [], { shouldDirty: true });
+                    }
                   }}
                   options={[
                     { label: "ONE-TIME", value: "once" },
@@ -142,53 +151,55 @@ export function CreateTripScreen() {
               )}
             />
 
-            <Controller
-              control={methods.control}
-              name="daysOfWeek"
-              render={({ field: { value = [], onChange } }) => {
-                const days = [
-                  { label: "S", index: 0 },
-                  { label: "M", index: 1 },
-                  { label: "T", index: 2 },
-                  { label: "W", index: 3 },
-                  { label: "T", index: 4 },
-                  { label: "F", index: 5 },
-                  { label: "S", index: 6 },
-                ];
+            {isRecurring ? (
+              <Controller
+                control={methods.control}
+                name="daysOfWeek"
+                render={({ field: { value = [], onChange } }) => {
+                  const days = [
+                    { label: "S", index: 0 },
+                    { label: "M", index: 1 },
+                    { label: "T", index: 2 },
+                    { label: "W", index: 3 },
+                    { label: "T", index: 4 },
+                    { label: "F", index: 5 },
+                    { label: "S", index: 6 },
+                  ];
 
-                const toggleDay = (idx: number) => {
-                  if (value.includes(idx)) {
-                    onChange(value.filter((d: number) => d !== idx));
-                  } else {
-                    onChange([...value, idx].sort());
-                  }
-                };
+                  const toggleDay = (idx: number) => {
+                    if (value.includes(idx)) {
+                      onChange(value.filter((d: number) => d !== idx));
+                    } else {
+                      onChange([...value, idx].sort());
+                    }
+                  };
 
-                return (
-                  <View style={styles.weekdayRow}>
-                    {days.map((day) => {
-                      const selected = value.includes(day.index);
-                      return (
-                        <Text
-                          key={day.index}
-                          variant="captionSemibold"
-                          style={[
-                            styles.weekdayPill,
-                            selected && {
-                              backgroundColor: colors.primary,
-                              color: colors.surface,
-                            },
-                          ]}
-                          onPress={() => toggleDay(day.index)}
-                        >
-                          {day.label}
-                        </Text>
-                      );
-                    })}
-                  </View>
-                );
-              }}
-            />
+                  return (
+                    <View style={styles.weekdayRow}>
+                      {days.map((day) => {
+                        const selected = value.includes(day.index);
+                        return (
+                          <Text
+                            key={day.index}
+                            variant="captionSemibold"
+                            style={[
+                              styles.weekdayPill,
+                              selected && {
+                                backgroundColor: colors.primary,
+                                color: colors.surface,
+                              },
+                            ]}
+                            onPress={() => toggleDay(day.index)}
+                          >
+                            {day.label}
+                          </Text>
+                        );
+                      })}
+                    </View>
+                  );
+                }}
+              />
+            ) : null}
           </FormSection>
 
           <View style={styles.footer}>

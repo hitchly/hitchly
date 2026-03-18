@@ -22,11 +22,8 @@ export const appRouter = router({
   trip: tripRouter,
   payment: paymentRouter,
   reviews: reviewsRouter,
-<<<<<<< HEAD
   identity: identityRouter,
-=======
   recurringSchedule: recurringScheduleRouter,
->>>>>>> dac193d (Implemented recurring schedule)
 });
 
 export type AppRouter = typeof appRouter;
