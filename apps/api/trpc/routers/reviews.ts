@@ -73,34 +73,6 @@ export const reviewsRouter = router({
         .from(reviews)
         .where(eq(reviews.targetUserId, input.userId));
 
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/6072d4f3-03fe-4f4e-97a4-1cc2be655d4d",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "9ea726",
-          },
-          body: JSON.stringify({
-            sessionId: "9ea726",
-            runId: "pre-fix",
-            hypothesisId: "H_avg_string",
-            location: "apps/api/trpc/routers/reviews.ts:69",
-            message: "reviews.getUserScore raw aggregate types",
-            data: {
-              hasRow: Boolean(result[0]),
-              averageType: typeof result[0]?.average,
-              averageValue: result[0]?.average ?? null,
-              countType: typeof result[0]?.count,
-              countValue: result[0]?.count ?? null,
-            },
-            timestamp: Date.now(),
-          }),
-        }
-      ).catch(() => {});
-      // #endregion agent log
-
       const avgNum =
         typeof result[0]?.average === "number"
           ? result[0].average
