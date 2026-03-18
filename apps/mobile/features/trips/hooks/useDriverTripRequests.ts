@@ -10,6 +10,7 @@ export function useDriverTripRequests(tripId?: string) {
 
   const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
     enabled: !!userId && !tripId,
+    refetchInterval: 5000,
   });
 
   const targetTripId = tripId ?? driverTrips?.[0]?.id;
@@ -21,7 +22,10 @@ export function useDriverTripRequests(tripId?: string) {
     isRefetching,
   } = trpc.trip.getTripRequests.useQuery(
     { tripId: targetTripId ?? "" },
-    { enabled: !!targetTripId }
+    {
+      enabled: !!targetTripId,
+      refetchInterval: 5000,
+    }
   );
 
   const requests = requestsData ?? [];

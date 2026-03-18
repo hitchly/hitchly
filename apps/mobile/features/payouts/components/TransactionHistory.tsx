@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
 import { Text } from "@/components/ui/Text";
@@ -62,8 +63,8 @@ export function TransactionHistory({ payments }: Props) {
           <View style={styles.left}>
             <Text variant="bodySemibold">{payment.riderName}</Text>
             <Text variant="caption" numberOfLines={1}>
-              {payment.origin.split(",")[0]} →{" "}
-              {payment.destination.split(",")[0]}
+              {shortenAddress(payment.origin)} →{" "}
+              {shortenAddress(payment.destination)}
             </Text>
             <Text
               variant="caption"

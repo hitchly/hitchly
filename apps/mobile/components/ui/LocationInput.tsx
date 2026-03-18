@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type {
   NativeSyntheticEvent,
   StyleProp,
@@ -8,10 +8,9 @@ import type {
 } from "react-native";
 import {
   ActivityIndicator,
-  Keyboard,
-  Pressable,
   StyleSheet,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -59,11 +58,16 @@ export function LocationInput({
     if (results.length > 0) setShowDropdown(true);
   };
 
+  const handleSelectItem = useCallback(
+    (item: LocationResult): void => {
+      onSelect(item);
+      setShowDropdown(false);
+    },
+    [onSelect]
+  );
+
   const handleBlur = (_e: NativeSyntheticEvent<TargetedEvent>): void => {
     setIsFocused(false);
-    setTimeout(() => {
-      setShowDropdown(false);
-    }, 200);
   };
 
   const hasError = (error ?? "") !== "";
@@ -124,21 +128,19 @@ export function LocationInput({
           ]}
         >
           {results.map((item, index) => (
-            <Pressable
+            <TouchableOpacity
               key={item.id}
-              style={({ pressed }) => [
+              style={[
                 styles.dropdownItem,
                 index !== results.length - 1 && {
-                  borderBottomColor: colors.divider,
                   borderBottomWidth: 1,
+                  borderBottomColor: colors.divider,
                 },
-                pressed && { backgroundColor: colors.surfaceSecondary },
               ]}
               onPress={() => {
-                onSelect(item);
-                setShowDropdown(false);
-                Keyboard.dismiss();
+                handleSelectItem(item);
               }}
+              activeOpacity={0.7}
             >
               <View
                 style={[
@@ -160,7 +162,7 @@ export function LocationInput({
                   {item.subtitle}
                 </Text>
               </View>
-            </Pressable>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -179,6 +181,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     width: "100%",
     position: "relative",
+    zIndex: 1,
   },
   label: {
     marginBottom: 8,
@@ -200,10 +203,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dropdown: {
-    position: "absolute",
-    top: 80,
-    left: 0,
-    right: 0,
+    marginTop: 4,
     borderRadius: 8,
     borderWidth: 1,
     shadowColor: "#000",
@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 5,
     overflow: "hidden",
+    maxHeight: 200,
   },
   dropdownItem: {
     flexDirection: "row",

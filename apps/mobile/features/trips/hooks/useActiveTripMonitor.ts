@@ -10,20 +10,29 @@ export function useActiveTripMonitor() {
 
   const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
     enabled: !!userId && role === AppRole.DRIVER,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: riderRequests } = trpc.trip.getTripRequests.useQuery(
     { riderId: userId ?? "" },
-    { enabled: !!userId && role === AppRole.RIDER }
+    {
+      enabled: !!userId && role === AppRole.RIDER,
+      refetchInterval: 5000,
+      refetchIntervalInBackground: true,
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
+    }
   );
 
   let activeTripId: string | undefined = undefined;
   let currentRoleLabel = "";
 
   if (role === AppRole.DRIVER) {
-    // UBER LOGIC: Active when picking up ("active") or driving ("in_progress")
     const activeDriverTrip = driverTrips?.find(
-      (t) => t.status === "in_progress" || t.status === "active"
+      (t) => t.status === "in_progress"
     );
     if (activeDriverTrip) {
       activeTripId = activeDriverTrip.id;
@@ -32,9 +41,10 @@ export function useActiveTripMonitor() {
   }
 
   if (role === AppRole.RIDER) {
-    // UBER LOGIC: Active when waiting for pickup ("accepted") or in car ("on_trip")
     const activeRiderRequest = riderRequests?.find(
-      (r) => r.status === "on_trip" || r.status === "accepted"
+      (r) =>
+        (r.status === "on_trip" || r.status === "accepted") &&
+        r.trip?.status === "in_progress"
     );
     if (activeRiderRequest) {
       activeTripId = activeRiderRequest.tripId;

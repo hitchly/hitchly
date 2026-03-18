@@ -29,9 +29,15 @@ export interface RideMatch {
 
 interface TripCardProps {
   match: RideMatch;
+  showArrival?: boolean;
+  destinationLabel?: string;
 }
 
-export function TripCard({ match }: TripCardProps) {
+export function TripCard({
+  match,
+  showArrival = false,
+  destinationLabel = "McMaster University",
+}: TripCardProps) {
   const { colors } = useTheme();
 
   const formatTime = (timeString: string) => {
@@ -51,6 +57,46 @@ export function TripCard({ match }: TripCardProps) {
       return timeString;
     }
   };
+
+  const getArrivalTime = (
+    departureStr: string,
+    durationSec: number | undefined
+  ) => {
+    if (
+      !departureStr ||
+      !departureStr.includes(":") ||
+      durationSec === undefined
+    )
+      return null;
+    try {
+      const parts = departureStr.split(":").map(Number);
+      const hours = parts[0];
+      const minutes = parts[1];
+
+      if (
+        hours === undefined ||
+        minutes === undefined ||
+        isNaN(hours) ||
+        isNaN(minutes)
+      ) {
+        return null;
+      }
+
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+      const arrivalDate = new Date(date.getTime() + durationSec * 1000);
+      const h = arrivalDate.getHours().toString().padStart(2, "0");
+      const m = arrivalDate.getMinutes().toString().padStart(2, "0");
+      return `${h}:${m}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const arrivalTime = getArrivalTime(
+    match.details.arrivalAtPickup || "",
+    match.details.estimatedDurationSec || 0
+  );
 
   const availableSeats = match.details.availableSeats;
 
@@ -123,7 +169,8 @@ export function TripCard({ match }: TripCardProps) {
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            McMaster University
+            {destinationLabel}{" "}
+            {showArrival && arrivalTime ? ` • ${arrivalTime}` : ""}
           </Text>
         </View>
       </View>
@@ -143,6 +190,22 @@ export function TripCard({ match }: TripCardProps) {
             {formatTime(match.details.arrivalAtPickup || "")}
           </Text>
         </View>
+
+        {showArrival && (
+          <View style={styles.detailItem}>
+            <Ionicons
+              name="flag-outline"
+              size={18}
+              color={colors.textSecondary}
+            />
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+              Arrival (Est)
+            </Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>
+              {arrivalTime || "N/A"}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.detailItem}>
           <Ionicons

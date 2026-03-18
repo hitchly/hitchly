@@ -4,6 +4,7 @@
 import {
   MAX_SEATS,
   TIME_WINDOW_MIN,
+  payments,
   tripRequests,
   trips,
   users,
@@ -27,8 +28,6 @@ import {
   updatePaymentHold,
 } from "../../services/payment";
 import { protectedProcedure, router } from "../trpc";
-
-const PLACEHOLDER_FARE_CENTS_PER_PASSENGER = 750; // $7.50 placeholder (teammate will replace with real fare calc)
 
 // Zod schemas for validation
 const createTripInputSchema = z.object({
@@ -79,6 +78,82 @@ function filterTripsByTime(
     (trip) =>
       trip.departureTime >= window.start && trip.departureTime <= window.end
   );
+}
+
+/**
+ * Helper to calculate trip summary data (earnings, duration, etc)
+ */
+async function calculateTripSummary(ctx: any, tripId: string) {
+  const [trip] = await ctx.db.select().from(trips).where(eq(trips.id, tripId));
+
+  if (!trip || trip.status !== "completed") return null;
+
+  const completedRequests = await ctx.db
+    .select()
+    .from(tripRequests)
+    .where(
+      and(eq(tripRequests.tripId, tripId), eq(tripRequests.status, "completed"))
+    );
+
+  const passengerCount = completedRequests.length;
+  const startedAt = trip.updatedAt; // best-available proxy
+  const completedAt = trip.updatedAt; // status changed at this time
+
+  const durationMinutes =
+    startedAt instanceof Date && completedAt instanceof Date
+      ? Math.max(
+          0,
+          Math.round((completedAt.getTime() - startedAt.getTime()) / 60000)
+        )
+      : null;
+
+  const perPassenger = await Promise.all(
+    completedRequests.map(async (r: any) => {
+      const [rider] = await ctx.db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, r.riderId))
+        .limit(1);
+
+      const [payment] = await ctx.db
+        .select({ driverAmountCents: payments.driverAmountCents })
+        .from(payments)
+        .where(eq(payments.tripRequestId, r.id))
+        .limit(1);
+
+      return {
+        riderName: rider?.name ?? "Passenger",
+        amountCents: payment?.driverAmountCents ?? 0,
+      };
+    })
+  );
+
+  const totalEarningsCents = perPassenger.reduce(
+    (sum, p) => sum + (p.amountCents ?? 0),
+    0
+  );
+
+  let totalDistanceKm: number | null = null;
+  if (trip.originLat && trip.originLng && trip.destLat && trip.destLng) {
+    const waypoints = completedRequests
+      .filter((r: any) => r.pickupLat && r.pickupLng)
+      .map((r: any) => ({ lat: r.pickupLat, lng: r.pickupLng }));
+
+    const distanceResult = await calculateTripDistance(
+      { lat: trip.originLat, lng: trip.originLng },
+      { lat: trip.destLat, lng: trip.destLng },
+      waypoints
+    );
+    totalDistanceKm = distanceResult?.distanceKm ?? null;
+  }
+
+  return {
+    durationMinutes,
+    totalEarningsCents,
+    passengerCount,
+    perPassenger,
+    totalDistanceKm,
+  };
 }
 
 /**
@@ -344,11 +419,16 @@ export const tripRouter = router({
       };
 
       const driver = await getDriver();
+      const summary =
+        trip.status === "completed"
+          ? await calculateTripSummary(ctx, input.tripId)
+          : null;
 
       return {
         ...trip,
         driver,
         requests: sortedRequests,
+        summary,
       };
     }),
 
@@ -634,10 +714,14 @@ export const tripRouter = router({
       // Validate status transitions
       if (input.action === "pickup") {
         if (!request.riderPickupConfirmedAt) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Rider has not confirmed pickup yet",
-          });
+          // DRIVER OVERRIDE: If driver manually confirms pickup, we mark it as confirmed
+          await ctx.db
+            .update(tripRequests)
+            .set({
+              riderPickupConfirmedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(tripRequests.id, input.requestId));
         }
         if (request.status !== "accepted") {
           throw new TRPCError({
@@ -753,7 +837,6 @@ export const tripRouter = router({
 
       // Update trip status to completed
       const completedAt = new Date();
-      const startedAt = trip.updatedAt; // best-available proxy for "trip started" timestamp (set in startTrip)
       const [completedTrip] = await ctx.db
         .update(trips)
         .set({
@@ -771,56 +854,7 @@ export const tripRouter = router({
             eq(tripRequests.status, "completed")
           )
         );
-
-      const passengerCount = completedRequests.length;
-      const durationMinutes =
-        startedAt instanceof Date
-          ? Math.max(
-              0,
-              Math.round((completedAt.getTime() - startedAt.getTime()) / 60000)
-            )
-          : null;
-
-      const perPassenger = await Promise.all(
-        completedRequests.map(async (r) => {
-          const [rider] = await ctx.db
-            .select({ name: users.name })
-            .from(users)
-            .where(eq(users.id, r.riderId))
-            .limit(1);
-          return {
-            riderName: rider?.name ?? "Passenger",
-            amountCents: PLACEHOLDER_FARE_CENTS_PER_PASSENGER,
-          };
-        })
-      );
-
-      const totalEarningsCents =
-        passengerCount * PLACEHOLDER_FARE_CENTS_PER_PASSENGER;
-
-      // Calculate total trip distance using route caching
-      let totalDistanceKm: number | null = null;
-      if (trip.originLat && trip.originLng && trip.destLat && trip.destLng) {
-        const waypoints = completedRequests
-          .filter((r) => r.pickupLat && r.pickupLng)
-          .map((r) => ({ lat: r.pickupLat, lng: r.pickupLng }));
-
-        const distanceResult = await calculateTripDistance(
-          { lat: trip.originLat, lng: trip.originLng },
-          { lat: trip.destLat, lng: trip.destLng },
-          waypoints
-        );
-
-        totalDistanceKm = distanceResult?.distanceKm ?? null;
-      }
-
-      const summary = {
-        durationMinutes,
-        totalEarningsCents,
-        passengerCount,
-        perPassenger,
-        totalDistanceKm,
-      };
+      const summary = await calculateTripSummary(ctx, input.tripId);
 
       // Send push notification to all completed riders
       if (completedRequests.length > 0) {
@@ -1131,6 +1165,7 @@ export const tripRouter = router({
       z.object({
         tripId: z.string().optional(),
         riderId: z.string().optional(),
+        type: z.enum(["rider", "driver"]).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -1159,18 +1194,26 @@ export const tripRouter = router({
         }
 
         conditions.push(eq(tripRequests.tripId, input.tripId));
-      } else if (input.riderId) {
+      } else if (input.type === "driver") {
+        // Consolidated driver view: get all requests for ALL trips owned by this driver
+        const driverTripIds = ctx.db
+          .select({ id: trips.id })
+          .from(trips)
+          .where(eq(trips.driverId, userId));
+
+        conditions.push(inArray(tripRequests.tripId, driverTripIds));
+      } else if (input.riderId || input.type === "rider") {
         // Viewing requests by a specific rider (must be self)
-        if (input.riderId !== userId) {
+        const targetRiderId = input.riderId ?? userId;
+        if (targetRiderId !== userId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You can only view your own requests",
           });
         }
-        conditions.push(eq(tripRequests.riderId, input.riderId));
+        conditions.push(eq(tripRequests.riderId, targetRiderId));
       } else {
-        // Default: get requests for current user's trips (if driver) or own requests (if rider)
-        // For simplicity, return user's own requests
+        // Default: get requests for current user as rider
         conditions.push(eq(tripRequests.riderId, userId));
       }
       let requests;

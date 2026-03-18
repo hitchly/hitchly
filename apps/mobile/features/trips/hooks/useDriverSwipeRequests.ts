@@ -10,41 +10,37 @@ export function useDriverSwipeRequests() {
   const userId = session?.user.id;
   const utils = trpc.useUtils();
 
-  const { data: driverTrips, isLoading: isLoadingTrips } =
-    trpc.trip.getTrips.useQuery(undefined, {
+  // 1. Single consolidated query for ALL requests managed by this driver
+  const { data: allRequests, isLoading } = trpc.trip.getTripRequests.useQuery(
+    { type: "driver" },
+    {
       enabled: !!userId,
-    });
-
-  const tripIds = useMemo(
-    () =>
-      driverTrips
-        ?.filter(
-          (trip) => trip.status === "pending" || trip.status === "active"
-        )
-        .map((trip) => trip.id) ?? [],
-    [driverTrips]
+      refetchInterval: 5000,
+    }
   );
 
-  const requestQueries = tripIds.map((tripId) =>
-    trpc.trip.getTripRequests.useQuery(
-      { tripId },
-      { enabled: !!userId && tripIds.length > 0 }
-    )
-  );
-
-  const allPendingRequests = useMemo(() => {
-    const requests: TripRequestWithDetails[] = [];
-    requestQueries.forEach((query) => {
-      if (query.data) {
-        query.data
-          .filter((req) => req.status === "pending")
-          .forEach((req) => requests.push(req as TripRequestWithDetails));
+  // 2. Extract unique trips from the requests
+  const driverTrips = useMemo(() => {
+    if (!allRequests) return [];
+    const tripMap = new Map<
+      string,
+      NonNullable<(typeof allRequests)[0]["trip"]>
+    >();
+    for (const req of allRequests) {
+      if (req.trip && !tripMap.has(req.trip.id)) {
+        tripMap.set(req.trip.id, req.trip);
       }
-    });
-    return requests;
-  }, [requestQueries]);
+    }
+    return Array.from(tripMap.values());
+  }, [allRequests]);
 
-  const isLoading = isLoadingTrips || requestQueries.some((q) => q.isLoading);
+  // 3. Filter for pending ones to show in the swipe portal
+  const allPendingRequests = useMemo(() => {
+    if (!allRequests) return [];
+    return allRequests.filter(
+      (req) => req.status === "pending"
+    ) as TripRequestWithDetails[];
+  }, [allRequests]);
 
   const handleMutationSuccess = (message: string) => {
     void utils.trip.getTripRequests.invalidate();

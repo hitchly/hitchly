@@ -1,9 +1,61 @@
-import { formatCityProvince, formatOrdinal } from "@hitchly/utils";
+import { formatOrdinal, shortenAddress } from "@hitchly/utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc";
+
+const POLL_INTERVAL_MS = 5000;
+
+type LiveDriverPayload = {
+  hasLocation?: boolean;
+  target?: string | null;
+  hasArrivedAtPickup?: boolean;
+  hasArrivedAtDropoff?: boolean;
+  hasArrivedAtTarget?: boolean;
+  targetDistanceKm?: number | null;
+  targetEtaSeconds?: number | null;
+  pickupDistanceKm?: number | null;
+  pickupEtaSeconds?: number | null;
+  autoPickedUp?: boolean;
+  autoDroppedOff?: boolean;
+  driverLocation?: {
+    latitude: number;
+    longitude: number;
+    heading: number | null;
+    speed: number | null;
+    updatedAt: string | Date;
+  } | null;
+} | null;
+
+function formatDistanceLabel(
+  distanceKm: number | null | undefined
+): string | null {
+  if (
+    distanceKm === null ||
+    distanceKm === undefined ||
+    Number.isNaN(distanceKm)
+  )
+    return null;
+
+  if (distanceKm < 1) {
+    return `${String(Math.round(distanceKm * 1000))} m`;
+  }
+
+  return `${distanceKm.toFixed(1)} km`;
+}
+
+function formatEtaLabel(seconds: number | null | undefined): string | null {
+  if (
+    seconds === null ||
+    seconds === undefined ||
+    Number.isNaN(seconds) ||
+    seconds < 0
+  )
+    return null;
+  if (seconds < 60) return "less than 1 min";
+  return `${String(Math.max(1, Math.round(seconds / 60)))} min`;
+}
 
 export function useRiderTripDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,7 +68,26 @@ export function useRiderTripDetails() {
     data: trip,
     isLoading,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId: id }, { enabled: !!id });
+  } = trpc.trip.getTripById.useQuery(
+    { tripId: id },
+    {
+      enabled: !!id,
+      refetchInterval: POLL_INTERVAL_MS,
+      refetchIntervalInBackground: true,
+    }
+  );
+
+  const { data: liveDriverRaw } =
+    trpc.location.getTripDriverLiveLocation.useQuery(
+      { tripId: id },
+      {
+        enabled: !!id,
+        refetchInterval: POLL_INTERVAL_MS,
+        refetchIntervalInBackground: true,
+      }
+    );
+
+  const liveDriver = (liveDriverRaw ?? null) as LiveDriverPayload;
 
   const userRequest =
     trip?.requests.find(
@@ -43,18 +114,50 @@ export function useRiderTripDetails() {
   });
 
   const riderEtaDetails = (() => {
-    if (!trip || (trip.status !== "active" && trip.status !== "in_progress")) {
+    if (trip?.status !== "in_progress") {
       return null;
     }
     if (!userRequest) return null;
 
     if (userRequest.status === "accepted") {
+      if (!liveDriver) {
+        return {
+          title: "Driver en route",
+          message: "Fetching live driver location...",
+          sub: trip.origin
+            ? `Pickup: ${shortenAddress(trip.origin)}`
+            : undefined,
+        };
+      }
+
+      const hasLocation = !!liveDriver.hasLocation;
+      const hasArrived = !!liveDriver.hasArrivedAtPickup;
+
+      const isPickupTarget = liveDriver.target === "pickup";
+      const distanceLabel = formatDistanceLabel(
+        isPickupTarget
+          ? (liveDriver.targetDistanceKm ?? null)
+          : (liveDriver.pickupDistanceKm ?? null)
+      );
+
+      const etaLabel = formatEtaLabel(
+        isPickupTarget
+          ? (liveDriver.targetEtaSeconds ?? null)
+          : (liveDriver.pickupEtaSeconds ?? null)
+      );
+
       return {
-        title: "Driver en route",
-        message: "Driver arriving in 5 minutes (placeholder)",
-        sub: trip.origin
-          ? `Pickup: ${formatCityProvince(trip.origin)}`
-          : undefined,
+        title: hasArrived ? "Driver arrived" : "Driver en route",
+        message: hasArrived
+          ? "Your driver has arrived at your pickup point."
+          : hasLocation && distanceLabel && etaLabel
+            ? `Driver is ${distanceLabel} away from pickup (ETA ${etaLabel}).`
+            : hasLocation && distanceLabel
+              ? `Driver is ${distanceLabel} away from pickup.`
+              : etaLabel
+                ? `Driver is en route (ETA ${etaLabel}).`
+                : "Fetching live driver location...",
+        sub: trip.origin ? `Pickup: ${shortenAddress(trip.origin)}` : undefined,
       };
     }
 
@@ -64,21 +167,42 @@ export function useRiderTripDetails() {
       );
       const idx = onTripRequests.findIndex((r) => r.id === userRequest.id);
 
+      const destinationDistanceLabel = formatDistanceLabel(
+        liveDriver?.targetDistanceKm ?? null
+      );
+      const destinationEtaLabel = formatEtaLabel(
+        liveDriver?.targetEtaSeconds ?? null
+      );
+
       if (idx >= 0 && onTripRequests.length > 1) {
         return {
           title: "On the way",
-          message: `Dropping passengers off, you're ${formatOrdinal(idx + 1)} to be dropped off`,
-          sub: "ETA placeholders to be replaced with live data",
+          message:
+            destinationDistanceLabel && destinationEtaLabel
+              ? `Dropping passengers off, you're ${formatOrdinal(
+                  idx + 1
+                )} to be dropped off • ${destinationDistanceLabel} remaining (ETA ${destinationEtaLabel}).`
+              : `Dropping passengers off, you're ${formatOrdinal(
+                  idx + 1
+                )} to be dropped off`,
+          sub: trip.destination ? shortenAddress(trip.destination) : undefined,
         };
       }
+
       return {
         title: "On the way",
-        message: "Arriving at destination in 10 minutes (placeholder)",
-        sub: trip.destination
-          ? formatCityProvince(trip.destination)
-          : undefined,
+        message:
+          destinationDistanceLabel && destinationEtaLabel
+            ? `${destinationDistanceLabel} to destination (ETA ${destinationEtaLabel}).`
+            : destinationDistanceLabel
+              ? `${destinationDistanceLabel} to destination.`
+              : destinationEtaLabel
+                ? `Arriving in ${destinationEtaLabel}.`
+                : "Arriving at destination shortly.",
+        sub: trip.destination ? shortenAddress(trip.destination) : undefined,
       };
     }
+
     return null;
   })();
 
@@ -107,6 +231,20 @@ export function useRiderTripDetails() {
     isRider,
     userRequest,
     riderEtaDetails,
+    liveDriver: {
+      hasLocation: !!liveDriver?.hasLocation,
+      target: liveDriver?.target ?? null,
+      hasArrivedAtPickup: !!liveDriver?.hasArrivedAtPickup,
+      hasArrivedAtDropoff: !!liveDriver?.hasArrivedAtDropoff,
+      hasArrivedAtTarget: !!liveDriver?.hasArrivedAtTarget,
+      targetDistanceKm: liveDriver?.targetDistanceKm ?? null,
+      targetEtaSeconds: liveDriver?.targetEtaSeconds ?? null,
+      pickupDistanceKm: liveDriver?.pickupDistanceKm ?? null,
+      etaSecondsToPickup: liveDriver?.pickupEtaSeconds ?? null,
+      autoPickedUp: !!liveDriver?.autoPickedUp,
+      autoDroppedOff: !!liveDriver?.autoDroppedOff,
+      driverLocation: liveDriver?.driverLocation ?? null,
+    },
     cancelTripRequest: {
       isPending: cancelTripRequest.isPending,
     },

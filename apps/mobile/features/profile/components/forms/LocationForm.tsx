@@ -1,7 +1,7 @@
 import { saveAddressSchema, type SaveAddressInput } from "@hitchly/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Keyboard, ScrollView, StyleSheet, View } from "react-native";
 
 import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
 import { SubmitButton } from "@/components/form/SubmitButton";
@@ -52,7 +52,14 @@ export function LocationForm({ initialData, onSuccess }: LocationFormProps) {
 
   return (
     <FormProvider {...methods}>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="always"
+        onScrollBeginDrag={() => {
+          Keyboard.dismiss();
+        }}
+      >
         <FormSection
           title="HOME ADDRESS"
           description="Enter your primary pickup or drop-off location."
@@ -106,14 +113,16 @@ export function LocationForm({ initialData, onSuccess }: LocationFormProps) {
             </Text>
           )}
         </View>
-      </View>
+      </ScrollView>
     </FormProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: {},
+  scrollContent: {
     paddingVertical: 8,
+    paddingBottom: 24,
   },
   gpsButton: {
     alignSelf: "flex-start",

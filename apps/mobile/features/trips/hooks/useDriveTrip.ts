@@ -1,10 +1,47 @@
-import { formatCityProvince } from "@hitchly/utils";
+import { shortenAddress } from "@hitchly/utils";
 import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
 import type { TripCompletionSummaryData } from "@/features/trips/components/TripCompletionSummary";
 import { openStopNavigation } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
+
+function formatDistanceLabel(
+  distanceKm: number | null | undefined
+): string | null {
+  if (
+    distanceKm === null ||
+    distanceKm === undefined ||
+    Number.isNaN(distanceKm)
+  )
+    return null;
+
+  if (distanceKm < 1) {
+    const meters = Math.round(distanceKm * 1000);
+    return `${String(meters)} m away`;
+  }
+
+  return `${distanceKm.toFixed(1)} km away`;
+}
+
+function formatEtaLabel(
+  durationSeconds: number | null | undefined
+): string | null {
+  if (
+    durationSeconds === null ||
+    durationSeconds === undefined ||
+    Number.isNaN(durationSeconds)
+  )
+    return null;
+
+  const totalMinutes = Math.max(1, Math.round(durationSeconds / 60));
+  if (totalMinutes < 60) return `${String(totalMinutes)} min`;
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (minutes === 0) return `${String(hours)} hr`;
+  return `${String(hours)} hr ${String(minutes)} min`;
+}
 
 // Strictly type the data to remove all `any` usages
 type RequestStatus =
@@ -33,6 +70,7 @@ interface ActiveTrip {
   destLng: number | null;
   status: string; // Add status to track if already completed
   requests: ActiveRequest[];
+  summary?: TripCompletionSummaryData;
 }
 
 export interface DriveStop {
@@ -65,7 +103,7 @@ const getCurrentStop = (
         type: "pickup",
         requestId: request.id,
         passengerName: request.rider?.name ?? "Passenger",
-        location: formatCityProvince(trip.origin),
+        location: shortenAddress(trip.origin),
         lat: request.pickupLat,
         lng: request.pickupLng,
       };
@@ -82,7 +120,7 @@ const getCurrentStop = (
           type: "dropoff",
           requestId: request.id,
           passengerName: request.rider?.name ?? "Passenger",
-          location: formatCityProvince(trip.destination),
+          location: shortenAddress(trip.destination),
           lat: dropoffLat,
           lng: dropoffLng,
         };
@@ -105,7 +143,21 @@ export function useDriveTrip(tripId: string) {
     isLoading,
     error,
     refetch,
-  } = trpc.trip.getTripById.useQuery({ tripId }, { enabled: !!tripId });
+  } = trpc.trip.getTripById.useQuery(
+    { tripId },
+    {
+      enabled: !!tripId,
+      refetchInterval: 3000, // Keep UI in sync with backend auto-complete
+    }
+  );
+
+  const { data: liveStatus } = trpc.location.getDriverLiveStatus.useQuery(
+    { tripId },
+    {
+      enabled: !!tripId,
+      refetchInterval: 3000,
+    }
+  );
 
   // Safely cast the incoming trpc data
   const trip = tripData as unknown as ActiveTrip | undefined;
@@ -120,9 +172,45 @@ export function useDriveTrip(tripId: string) {
       setSummaryVisible(true);
     },
     onError: (err) => {
+      // If trip is already completed (race condition with auto-complete), just refresh data
+      if (
+        err.message.includes("Can only complete trips that are in progress")
+      ) {
+        void utils.trip.getTripById.invalidate({ tripId });
+        return;
+      }
       Alert.alert("Error Completing Trip", err.message);
     },
   });
+
+  // Show summary when trip is auto-completed by backend (e.g., via location tracking)
+  useEffect(() => {
+    if (!trip) return;
+
+    if (
+      trip.status === "completed" &&
+      trip.summary &&
+      !summaryVisible &&
+      !completeTripMutation.isPending
+    ) {
+      setSummaryData(trip.summary);
+      setSummaryVisible(true);
+    } else if (
+      trip.status === "completed" &&
+      !trip.summary &&
+      !summaryVisible &&
+      !completeTripMutation.isPending
+    ) {
+      // If we are completed but don't have a summary yet, refresh to get it
+      void utils.trip.getTripById.invalidate({ tripId });
+    }
+  }, [
+    trip,
+    summaryVisible,
+    completeTripMutation.isPending,
+    tripId,
+    utils.trip.getTripById,
+  ]);
 
   const updateStatusMutation = trpc.trip.updatePassengerStatus.useMutation({
     onSuccess: () => void refetch(),
@@ -186,14 +274,6 @@ export function useDriveTrip(tripId: string) {
 
     const action = currentStop.type === "pickup" ? "pickup" : "dropoff";
 
-    if (isWaitingForRider) {
-      Alert.alert(
-        "Waiting for Confirmation",
-        "Waiting for passenger to confirm pickup..."
-      );
-      return;
-    }
-
     const actionText =
       currentStop.type === "pickup"
         ? "Passenger Picked Up"
@@ -231,6 +311,20 @@ export function useDriveTrip(tripId: string) {
     void openStopNavigation(currentStop.lat, currentStop.lng);
   };
 
+  const startTripMutation = trpc.trip.startTrip.useMutation({
+    onSuccess: async () => {
+      void refetch();
+      await utils.trip.getTripById.invalidate({ tripId });
+    },
+    onError: (err) => {
+      Alert.alert("Error Starting Trip", err.message);
+    },
+  });
+
+  const handleStartTrip = () => {
+    startTripMutation.mutate({ tripId });
+  };
+
   return {
     tripHasError: !!error,
     isLoading,
@@ -239,13 +333,35 @@ export function useDriveTrip(tripId: string) {
     allCompleted,
     hasPendingRequests,
     isWaitingForRider,
-    isUpdatingStatus: updateStatusMutation.isPending,
+    isUpdatingStatus:
+      updateStatusMutation.isPending || startTripMutation.isPending,
     summaryVisible,
     setSummaryVisible,
     summaryData,
+    tripStatus: trip?.status ?? "pending",
+    isStarted: trip?.status === "in_progress" || trip?.status === "completed",
+    liveStatusInfo: {
+      distanceLabel: formatDistanceLabel(
+        liveStatus && "targetDistanceKm" in liveStatus
+          ? liveStatus.targetDistanceKm
+          : null
+      ),
+      etaLabel: formatEtaLabel(
+        liveStatus && "targetEtaSeconds" in liveStatus
+          ? liveStatus.targetEtaSeconds
+          : null
+      ),
+      targetType:
+        liveStatus && "targetType" in liveStatus ? liveStatus.targetType : null,
+      isLocationStale:
+        liveStatus && "isLocationStale" in liveStatus
+          ? liveStatus.isLocationStale
+          : false,
+    },
     actions: {
       handleAction,
       handleOpenMaps,
+      handleStartTrip,
     },
   };
 }
