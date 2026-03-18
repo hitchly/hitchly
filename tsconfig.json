@@ -1,13 +1,31 @@
 {
   "files": [],
   "references": [
-    { "path": "./apps/api" },
-    { "path": "./apps/admin" },
-    { "path": "./apps/mobile" },
-    { "path": "./packages/db" },
-    { "path": "./packages/tsconfig" },
-    { "path": "./packages/eslint-config" },
-    { "path": "./packages/utils" },
-    { "path": "./packages/api-types" }
-  ]
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/admin"
+    },
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./packages/db"
+    },
+    {
+      "path": "./packages/tsconfig"
+    },
+    {
+      "path": "./packages/eslint-config"
+    },
+    {
+      "path": "./packages/utils"
+    },
+    {
+      "path": "./packages/api-types"
+    }
+  ],
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

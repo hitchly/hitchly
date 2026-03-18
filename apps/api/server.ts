@@ -138,15 +138,16 @@ app.post("/stripe/webhook", async (c: Context) => {
         );
 
         const state = session.verified_outputs?.address?.state;
-        const stateOrProvince =
-          typeof state === "string" ? state.toLowerCase() : undefined;
+        const stateOrProvince = state ? state.toLowerCase() : "unknown";
 
-        // Ensure the license was issued in Ontario
-        if (stateOrProvince === "on" || stateOrProvince === "ontario") {
-          // eslint-disable-next-line no-console
+        // Bypass strict province check in development mode
+        const isDevelopment = process.env.NODE_ENV !== "production";
+        const isOntario =
+          stateOrProvince === "on" || stateOrProvince === "ontario";
+
+        if (isOntario || isDevelopment) {
           console.log(`✅ Driver verification complete for user ${userId}`);
 
-          // Update the database to unlock driver mode for this user
           await db
             .update(users)
             .set({ isVerifiedDriver: true })
@@ -154,7 +155,7 @@ app.post("/stripe/webhook", async (c: Context) => {
         } else {
           // eslint-disable-next-line no-console
           console.log(
-            `⚠️ User ${userId} verified a license, but it was not from Ontario.`
+            `⚠️ User ${userId} verified a license, but it was not from Ontario. State found: ${stateOrProvince}`
           );
         }
       } catch (err) {

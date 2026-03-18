@@ -13,7 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.hitchly.app",
+    bundleIdentifier: "com.hitchly.mobile",
     buildNumber: "1",
     icon: {
       light: "./assets/images/ios-light.png",
@@ -27,7 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   android: {
-    package: "com.hitchly.app",
+    package: "com.hitchly.mobile",
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: "#F5F7FA",
@@ -56,13 +56,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         dark: {
           backgroundColor: "#11181C",
         },
-      },
-    ],
-    [
-      "@stripe/stripe-identity-react-native",
-      {
-        cameraPermission:
-          "Hitchly needs access to your camera to securely verify your Ontario Driver's License.",
       },
     ],
   ],

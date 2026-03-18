@@ -16,38 +16,20 @@ export const identityRouter = router({
     try {
       const session = await stripe.identity.verificationSessions.create({
         type: "document",
-        metadata: {
-          // Pass the user ID so the webhook knows who just verified
-          userId: ctx.userId,
-        },
-        options: {
-          document: {
-            require_id_number: true,
-            require_matching_selfie: true,
-            require_live_capture: true,
-            allowed_types: ["driving_license"],
-          },
-        },
+        metadata: { userId: ctx.userId },
       });
 
-      // Strict null check ensures ephemeralKeySecret is typed strictly as a string
-      if (!session.client_secret) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Stripe session created without a client secret",
-        });
+      if (!session.url) {
+        throw new Error("Stripe did not return a session URL.");
       }
 
       return {
-        sessionId: session.id,
-        // The client_secret acts as the ephemeral key for the mobile SDK
-        ephemeralKeySecret: session.client_secret,
+        url: session.url,
       };
     } catch {
-      // Omitted the unused 'error' variable binding to satisfy ESLint
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create Stripe Identity session",
+        message: "Failed to initialize verification.",
       });
     }
   }),

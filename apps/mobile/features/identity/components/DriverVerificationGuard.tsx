@@ -1,13 +1,13 @@
+import * as WebBrowser from "expo-web-browser";
 import type { ReactNode } from "react";
-import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useUserRole } from "@/context/role-context";
 import { useTheme } from "@/context/theme-context";
-import { useDriverVerification } from "@/features/identity/hooks/useDriverVerification";
 import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc";
 
 export const DriverVerificationGuard = ({
   children,
@@ -17,24 +17,29 @@ export const DriverVerificationGuard = ({
   const { colors } = useTheme();
   const { role } = useUserRole();
   const { data: session, refetch } = authClient.useSession();
-  const { present, status, isLoading, error } = useDriverVerification();
+
+  const { mutateAsync: createSession, isPending } =
+    trpc.identity.createVerificationSession.useMutation();
 
   const isDriver = role === "driver";
-
   const isVerified = session?.user.isVerifiedDriver;
-
-  useEffect(() => {
-    if (status === "FlowCompleted") {
-      void refetch();
-    }
-  }, [status, refetch]);
 
   if (!isDriver || isVerified) {
     return <>{children}</>;
   }
 
-  const handleVerifyPress = () => {
-    void present();
+  const handleVerifyPress = async () => {
+    try {
+      const { url } = await createSession();
+
+      if (url) {
+        await WebBrowser.openBrowserAsync(url);
+
+        void refetch();
+      }
+    } catch (error) {
+      console.error("Failed to open verification", error);
+    }
   };
 
   return (
@@ -56,21 +61,10 @@ export const DriverVerificationGuard = ({
           valid Ontario Driver&apos;s License before accepting rides.
         </Text>
 
-        {error && (
-          <Text
-            variant="bodySemibold"
-            color={colors.error}
-            align="center"
-            style={styles.errorText}
-          >
-            {error.message}
-          </Text>
-        )}
-
         <Button
           title="VERIFY ONTARIO LICENSE"
           onPress={handleVerifyPress}
-          isLoading={isLoading}
+          isLoading={isPending}
           variant="primary"
           style={styles.actionButton}
         />
@@ -80,28 +74,10 @@ export const DriverVerificationGuard = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  content: {
-    padding: 24,
-    paddingBottom: 60,
-  },
-  header: {
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  title: {
-    marginBottom: 12,
-  },
-  description: {
-    marginBottom: 32,
-  },
-  errorText: {
-    marginBottom: 24,
-  },
-  actionButton: {
-    marginTop: 8,
-  },
+  container: { flex: 1, justifyContent: "center" },
+  content: { padding: 24, paddingBottom: 60 },
+  header: { marginBottom: 16, alignItems: "center" },
+  title: { marginBottom: 12 },
+  description: { marginBottom: 32 },
+  actionButton: { marginTop: 8 },
 });
