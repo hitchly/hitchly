@@ -1,6 +1,6 @@
 import * as WebBrowser from "expo-web-browser";
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -37,8 +37,11 @@ export const DriverVerificationGuard = ({
 
         void refetch();
       }
-    } catch (error) {
-      console.error("Failed to open verification", error);
+    } catch {
+      Alert.alert(
+        "Verification Error",
+        "An error occurred while trying to start the verification process. Please try again later."
+      );
     }
   };
 
@@ -63,7 +66,7 @@ export const DriverVerificationGuard = ({
 
         <Button
           title="VERIFY ONTARIO LICENSE"
-          onPress={handleVerifyPress}
+          onPress={void handleVerifyPress}
           isLoading={isPending}
           variant="primary"
           style={styles.actionButton}
