@@ -146,6 +146,7 @@ app.post("/stripe/webhook", async (c: Context) => {
           stateOrProvince === "on" || stateOrProvince === "ontario";
 
         if (isOntario || isDevelopment) {
+          // eslint-disable-next-line no-console
           console.log(`✅ Driver verification complete for user ${userId}`);
 
           await db
