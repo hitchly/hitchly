@@ -3,9 +3,10 @@
  * It prevents the Mobile/Admin apps from importing Hono runtime code.
  */
 import { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { AuthType } from "../../apps/api/auth/auth";
 import type { AppRouter } from "../../apps/api/trpc/routers";
 
-export type { AppRouter };
+export type { AppRouter, AuthType };
 
 /**
  * Inference Helpers

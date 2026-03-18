@@ -29,7 +29,7 @@ const isAdmin = t.middleware(async ({ ctx, next }) => {
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, ctx.userId),
-    columns: { role: true },
+    columns: { role: true, isVerifiedDriver: true },
   });
 
   if (user?.role !== "admin") {

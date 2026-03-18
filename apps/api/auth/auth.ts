@@ -23,6 +23,16 @@ export const auth = betterAuth({
     usePlural: true,
   }),
 
+  user: {
+    additionalFields: {
+      isVerifiedDriver: {
+        type: "boolean",
+        required: true,
+        defaultValue: false,
+      },
+    },
+  },
+
   trustedOrigins: ["null", "exp://", "hitchly://", "http://localhost:3000"],
 
   advanced: {
@@ -47,3 +57,5 @@ export const auth = betterAuth({
     },
   },
 });
+
+export type AuthType = typeof auth;

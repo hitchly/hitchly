@@ -13,7 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.hitchly.app",
+    bundleIdentifier: "com.hitchly.mobile",
     buildNumber: "1",
     icon: {
       light: "./assets/images/ios-light.png",
@@ -26,11 +26,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSLocationWhenInUseUsageDescription:
         "Hitchly needs access to your location to show your position on the map and provide navigation during rides.",
       UIBackgroundModes: ["location", "fetch", "remote-notification"],
+      NSCameraUsageDescription:
+        "Hitchly needs access to your camera to securely verify your Ontario Driver's License.",
     },
   },
 
   android: {
-    package: "com.hitchly.app",
+    package: "com.hitchly.mobile",
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: "#F5F7FA",
@@ -45,6 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "ACCESS_BACKGROUND_LOCATION",
       "FOREGROUND_SERVICE",
       "FOREGROUND_SERVICE_LOCATION",
+      "android.permission.CAMERA",
     ],
   },
 
