@@ -15,24 +15,11 @@ export function useRequests() {
 
   const isDriver = userProfile?.profile.appRole === AppRole.DRIVER;
 
-  const { data: driverTrips, isLoading: isLoadingTrips } =
-    trpc.trip.getTrips.useQuery(undefined, { enabled: !!userId && isDriver });
-
-  const activeDriverTrips = useMemo(
-    () => driverTrips?.filter((trip) => trip.status !== "cancelled") ?? [],
-    [driverTrips]
-  );
-
-  const firstTripId = activeDriverTrips[0]?.id;
-
   const {
     data: driverRequests,
     isLoading: isLoadingDriverRequests,
     refetch: refetchDriverReqs,
-  } = trpc.trip.getTripRequests.useQuery(
-    { tripId: firstTripId ?? "" },
-    { enabled: !!userId && !!firstTripId && isDriver }
-  );
+  } = trpc.trip.getTripRequests.useQuery({}, { enabled: !!userId && isDriver });
 
   const {
     data: riderRequests,
@@ -45,7 +32,6 @@ export function useRequests() {
 
   const isLoading =
     isLoadingProfile ||
-    isLoadingTrips ||
     (isDriver ? isLoadingDriverRequests : isLoadingRiderRequests);
 
   const filteredRequests = useMemo(() => {

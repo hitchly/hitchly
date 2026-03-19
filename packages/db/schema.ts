@@ -244,7 +244,66 @@ export const trips = pgTable("trips", {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+  // Optional link back to a recurring schedule that generated this trip
+  recurringScheduleId: text("recurring_schedule_id"),
 });
+
+// Recurring trip schedules - define weekly patterns that materialize into trips
+export const recurringTripSchedules = pgTable("recurring_trip_schedules", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  role: appRoleEnum("role").default("driver").notNull(),
+
+  // Addresses and optional cached coordinates, mirroring trips
+  origin: text("origin").notNull(),
+  destination: text("destination").notNull(),
+  originLat: doublePrecision("origin_lat"),
+  originLng: doublePrecision("origin_lng"),
+  destLat: doublePrecision("dest_lat"),
+  destLng: doublePrecision("dest_lng"),
+
+  // Time-of-day in minutes from midnight, interpreted in the scheduleTimezone
+  departureMinutes: integer("departure_minutes").notNull(),
+  scheduleTimezone: text("schedule_timezone").notNull(),
+
+  // 0 (Sunday) - 6 (Saturday) integers
+  sunday: boolean("sunday").default(false).notNull(),
+  monday: boolean("monday").default(false).notNull(),
+  tuesday: boolean("tuesday").default(false).notNull(),
+  wednesday: boolean("wednesday").default(false).notNull(),
+  thursday: boolean("thursday").default(false).notNull(),
+  friday: boolean("friday").default(false).notNull(),
+  saturday: boolean("saturday").default(false).notNull(),
+
+  maxSeats: integer("max_seats").notNull(),
+
+  // Active window
+  effectiveFrom: timestamp("effective_from").notNull(),
+  effectiveTo: timestamp("effective_to"),
+  isActive: boolean("is_active").default(true).notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const recurringTripSchedulesRelations = relations(
+  recurringTripSchedules,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [recurringTripSchedules.userId],
+      references: [users.id],
+    }),
+  })
+);
 
 // 2. REPORTS TABLE
 // Stores the warnings/bans

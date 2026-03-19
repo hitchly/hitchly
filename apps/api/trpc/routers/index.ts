@@ -8,6 +8,7 @@ import { locationRouter } from "./location";
 import { matchmakingRouter } from "./matchmaking";
 import { paymentRouter } from "./payment";
 import { profileRouter } from "./profile";
+import { recurringScheduleRouter } from "./recurringSchedule";
 import { reviewsRouter } from "./reviews";
 import { tripRouter } from "./trip";
 
@@ -22,6 +23,7 @@ export const appRouter = router({
   payment: paymentRouter,
   reviews: reviewsRouter,
   identity: identityRouter,
+  recurringSchedule: recurringScheduleRouter,
 });
 
 export type AppRouter = typeof appRouter;

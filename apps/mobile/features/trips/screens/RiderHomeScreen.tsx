@@ -204,7 +204,7 @@ export function RiderHomeScreen() {
             onSwipeLeft={handlers.handleSwipeLeft}
             onSwipeRight={handlers.handleSwipeRight}
             onCardTap={(match) => {
-              router.push(`/(app)/trips/${match.rideId}` as Href);
+              router.push(`/(app)/rider/trips/${match.rideId}` as Href);
             }}
             onDeckEmpty={() => {
               /* empty */

@@ -91,7 +91,7 @@ export function DriverSwipeRequestsScreen() {
             style={styles.emptyIcon}
           />
           <Text variant="h2" style={styles.emptyTitle}>
-            NO TRIPS FOUND
+            NO REQUESTS FOUND
           </Text>
           <Text
             variant="body"
@@ -99,7 +99,8 @@ export function DriverSwipeRequestsScreen() {
             align="center"
             style={styles.emptySubtext}
           >
-            Create a trip first to start receiving ride requests.
+            You&apos;ll see ride requests here when riders ask to join your
+            trips.
           </Text>
         </View>
       </SafeAreaView>

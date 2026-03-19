@@ -33,8 +33,8 @@ function AccountMasterSection() {
 }
 
 interface ProfileMasterProps {
-  profile: ProfileData;
-  preferences: PreferenceData;
+  profile: ProfileData | null;
+  preferences: PreferenceData | null;
   onSuccess: () => void;
 }
 

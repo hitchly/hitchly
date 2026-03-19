@@ -1,5 +1,6 @@
 // TODO: Fix linter warnings and ensure all TypeScript types are properly defined.
 /* eslint-disable */
+import "dotenv/config";
 import { db } from "@hitchly/db/client";
 import {
   preferences,
@@ -9,7 +10,6 @@ import {
   users,
   vehicles,
 } from "@hitchly/db/schema";
-import "dotenv/config";
 import { eq } from "drizzle-orm";
 
 // McMaster University coordinates

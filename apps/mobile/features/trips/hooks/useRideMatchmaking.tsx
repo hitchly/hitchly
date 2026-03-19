@@ -86,7 +86,8 @@ export function useRideMatchmaking() {
       origin,
       destination,
       desiredArrivalTime,
-      desiredDate: desiredDate ?? undefined,
+      // Default to today so matchmaking only returns trips on the selected day
+      desiredDate: desiredDate ?? new Date(),
       maxOccupancy: 1,
       preference: "costPriority",
       includeDummyMatches,

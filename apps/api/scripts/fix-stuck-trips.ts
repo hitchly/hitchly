@@ -1,8 +1,8 @@
 // TODO: Fix linting errors in this file and re-enable eslint
 /* eslint-disable */
+import "dotenv/config";
 import { db } from "@hitchly/db/client";
 import { tripRequests, trips, users } from "@hitchly/db/schema";
-import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
 
 /**

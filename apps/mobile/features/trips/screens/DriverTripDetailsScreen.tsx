@@ -22,8 +22,10 @@ export function DriverTripDetailsScreen() {
     trip,
     isLoading,
     isDriver,
+    recurringSchedule,
     cancelTrip,
     startTrip,
+    deactivateSchedule,
     canStartRide,
     handleCancel,
     router,
@@ -57,6 +59,7 @@ export function DriverTripDetailsScreen() {
   const departureDate = trip.departureTime
     ? new Date(trip.departureTime)
     : null;
+  const isRecurring = Boolean(trip.recurringScheduleId);
   const pendingRequestsCount = trip.requests.filter(
     (r) => r.status === "pending"
   ).length;
@@ -114,6 +117,104 @@ export function DriverTripDetailsScreen() {
             </View>
           </Card>
         </FormSection>
+
+        {isRecurring && (
+          <FormSection title="RECURRING TRIP">
+            <Card style={styles.cardPadding}>
+              <Text variant="bodySemibold">This is a recurring ride</Text>
+              <Text
+                variant="caption"
+                color={colors.textSecondary}
+                style={{ marginTop: 4 }}
+              >
+                When you cancel this trip, all future occurrences in this
+                recurring series will also be cancelled.
+              </Text>
+              {recurringSchedule && (
+                <View style={{ marginTop: 12, gap: 4 }}>
+                  <Text variant="label" color={colors.textSecondary}>
+                    SCHEDULE
+                  </Text>
+                  <View style={styles.weekdayRow}>
+                    {[
+                      {
+                        label: "S",
+                        key: "sunday",
+                        on: recurringSchedule.sunday,
+                      },
+                      {
+                        label: "M",
+                        key: "monday",
+                        on: recurringSchedule.monday,
+                      },
+                      {
+                        label: "T",
+                        key: "tuesday",
+                        on: recurringSchedule.tuesday,
+                      },
+                      {
+                        label: "W",
+                        key: "wednesday",
+                        on: recurringSchedule.wednesday,
+                      },
+                      {
+                        label: "T",
+                        key: "thursday",
+                        on: recurringSchedule.thursday,
+                      },
+                      {
+                        label: "F",
+                        key: "friday",
+                        on: recurringSchedule.friday,
+                      },
+                      {
+                        label: "S",
+                        key: "saturday",
+                        on: recurringSchedule.saturday,
+                      },
+                    ].map((day) => (
+                      <View
+                        key={day.key}
+                        style={[
+                          styles.weekdayPill,
+                          day.on && {
+                            backgroundColor: colors.primary,
+                          },
+                        ]}
+                      >
+                        <Text
+                          variant="captionSemibold"
+                          style={{
+                            color: day.on
+                              ? colors.surface
+                              : colors.textSecondary,
+                          }}
+                        >
+                          {day.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text variant="caption" color={colors.textSecondary}>
+                    Repeats at{" "}
+                    {new Date(
+                      new Date().setHours(
+                        Math.floor(recurringSchedule.departureMinutes / 60),
+                        recurringSchedule.departureMinutes % 60,
+                        0,
+                        0
+                      )
+                    ).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    .
+                  </Text>
+                </View>
+              )}
+            </Card>
+          </FormSection>
+        )}
 
         <FormSection title="TRIP DETAILS">
           <Card style={styles.noPaddingCard}>
@@ -229,14 +330,43 @@ export function DriverTripDetailsScreen() {
           )}
 
           {trip.status === "completed" && (
-            <Button
-              title="RATE RIDERS"
-              variant="secondary"
-              icon="star"
-              onPress={() => {
-                router.push(`/(app)/driver/trips/${trip.id}/review` as Href);
-              }}
-            />
+            <>
+              <Button
+                title="RATE RIDERS"
+                variant="secondary"
+                icon="star"
+                onPress={() => {
+                  router.push(`/(app)/(modals)/review/${trip.id}` as Href);
+                }}
+              />
+              {isRecurring && recurringSchedule && (
+                <Button
+                  title="CANCEL RECURRING SCHEDULE"
+                  variant="ghost"
+                  onPress={() => {
+                    Alert.alert(
+                      "Cancel recurring schedule",
+                      "This will stop future rides for this recurring commute. Past trips stay in your history.",
+                      [
+                        { text: "KEEP SCHEDULE", style: "cancel" },
+                        {
+                          text: "STOP FUTURE RIDES",
+                          style: "destructive",
+                          onPress: () => {
+                            deactivateSchedule.mutate({
+                              id: recurringSchedule.id,
+                            });
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  isLoading={deactivateSchedule.isPending}
+                  style={styles.cancelRecurringBtn}
+                  textStyle={{ fontSize: 13 }}
+                />
+              )}
+            </>
           )}
 
           {canCancel && (
@@ -300,4 +430,22 @@ const styles = StyleSheet.create({
   // Actions
   actionsContainer: { gap: 12, marginTop: 8 },
   cancelBtn: { marginTop: 8, opacity: 0.8 },
+  weekdayRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    gap: 8,
+  },
+  weekdayPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 32,
+  },
+  cancelRecurringBtn: {
+    marginTop: 4,
+    opacity: 0.9,
+  },
 });

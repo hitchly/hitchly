@@ -1,4 +1,7 @@
+import { db } from "@hitchly/db/client";
+import { users } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { protectedProcedure, router } from "../trpc";
@@ -33,4 +36,22 @@ export const identityRouter = router({
       });
     }
   }),
+
+  bypassDriverVerificationForTesting: protectedProcedure.mutation(
+    async ({ ctx }) => {
+      if (process.env.NODE_ENV === "production") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not available in production.",
+        });
+      }
+
+      await db
+        .update(users)
+        .set({ isVerifiedDriver: true })
+        .where(eq(users.id, ctx.userId));
+
+      return { ok: true };
+    }
+  ),
 });

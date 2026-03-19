@@ -1,5 +1,5 @@
 import * as Location from "expo-location";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 export const useGPSLocation = (
@@ -10,6 +10,18 @@ export const useGPSLocation = (
   }) => void
 ) => {
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const getLocation = async () => {
     setIsGeocoding(true);
@@ -33,6 +45,17 @@ export const useGPSLocation = (
         );
         return;
       }
+
+      // Set timeout for location fetch (15 seconds)
+      timeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIsGeocoding(false);
+          Alert.alert(
+            "Timeout",
+            "Location fetch timed out. Please try again or enter your address manually."
+          );
+        }
+      }, 15000);
 
       let loc: Location.LocationObject | null = null;
       let attempt = 0;
@@ -58,6 +81,11 @@ export const useGPSLocation = (
 
       loc ??= await Location.getLastKnownPositionAsync();
 
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
       if (!loc) {
         Alert.alert(
           "Location Error",
@@ -65,6 +93,8 @@ export const useGPSLocation = (
         );
         return;
       }
+
+      if (!isMountedRef.current) return;
 
       let place: Location.LocationGeocodedAddress | null = null;
       try {
@@ -86,17 +116,39 @@ export const useGPSLocation = (
           ]
             .filter((item): item is string => Boolean(item))
             .join(", ")
-        : `Location: ${loc.coords.latitude.toFixed(4)}, ${loc.coords.longitude.toFixed(4)}`;
+        : `Location: ${loc.coords.latitude.toFixed(
+            4
+          )}, ${loc.coords.longitude.toFixed(4)}`;
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!isMountedRef.current) return;
 
       onLocationFound({
         address,
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
-    } catch {
-      Alert.alert("Error", "Could not fetch location.");
+    } catch (error) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!isMountedRef.current) return;
+
+      const message = error instanceof Error ? error.message : "Unknown error";
+      // eslint-disable-next-line no-console
+      console.error("GPS Fetch Error:", message);
+
+      if (error instanceof Error && error.message.includes("timeout")) {
+        Alert.alert("Timeout", "Location fetch timed out. Please try again.");
+      } else {
+        Alert.alert("Error", "Could not fetch location. Please try again.");
+      }
     } finally {
-      setIsGeocoding(false);
+      if (isMountedRef.current) {
+        setIsGeocoding(false);
+      }
     }
   };
 

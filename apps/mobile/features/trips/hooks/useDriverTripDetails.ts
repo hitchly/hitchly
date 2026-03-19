@@ -21,6 +21,14 @@ export function useDriverTripDetails() {
   );
 
   const isDriver = session?.user.id === trip?.driverId;
+  const recurringScheduleId = trip?.recurringScheduleId;
+
+  const { data: recurringSchedule } = trpc.recurringSchedule.getById.useQuery(
+    { id: recurringScheduleId ?? "" },
+    {
+      enabled: Boolean(recurringScheduleId),
+    }
+  );
 
   const cancelTrip = trpc.trip.cancelTrip.useMutation({
     onSuccess: async () => {
@@ -36,6 +44,23 @@ export function useDriverTripDetails() {
           },
         },
       ]);
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
+
+  const deactivateSchedule = trpc.recurringSchedule.delete.useMutation({
+    onSuccess: async () => {
+      void utils.recurringSchedule.listMine.invalidate();
+      void utils.trip.getTrips.invalidate();
+      if (id) {
+        await utils.trip.getTripById.invalidate({ tripId: id });
+      }
+      Alert.alert(
+        "Schedule stopped",
+        "Future rides for this recurring commute have been cancelled."
+      );
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
@@ -68,7 +93,12 @@ export function useDriverTripDetails() {
   };
 
   const handleCancel = () => {
-    Alert.alert("Cancel Trip", "Are you sure you want to cancel this trip?", [
+    const isRecurring = Boolean(trip?.recurringScheduleId);
+    const message = isRecurring
+      ? "This trip is part of a recurring schedule. Cancelling will stop all future occurrences of this recurring trip. Do you want to cancel the entire recurring trip?"
+      : "Are you sure you want to cancel this trip?";
+
+    Alert.alert("Cancel Trip", message, [
       { text: "No", style: "cancel" },
       {
         text: "Yes",
@@ -84,6 +114,7 @@ export function useDriverTripDetails() {
     trip,
     isLoading,
     isDriver,
+    recurringSchedule,
     cancelTrip: {
       isPending: cancelTrip.isPending,
     },
@@ -91,6 +122,12 @@ export function useDriverTripDetails() {
       isPending: startTrip.isPending,
       mutate: (variables: { tripId: string }) => {
         startTrip.mutate(variables);
+      },
+    },
+    deactivateSchedule: {
+      isPending: deactivateSchedule.isPending,
+      mutate: (variables: { id: string }) => {
+        deactivateSchedule.mutate(variables);
       },
     },
     canStartRide: canStartRide(),

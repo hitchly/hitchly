@@ -35,9 +35,9 @@ function AccountMasterSection() {
 }
 
 interface ProfileMasterProps {
-  profile: ProfileData;
-  preferences: PreferenceData;
-  vehicle: VehicleData;
+  profile: ProfileData | null;
+  preferences: PreferenceData | null;
+  vehicle: VehicleData | null;
   onSuccess: () => void;
 }
 

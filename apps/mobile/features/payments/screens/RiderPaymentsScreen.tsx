@@ -1,7 +1,7 @@
-import { CardField } from "@stripe/stripe-react-native";
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
+import { SafeCardField } from "@/components/stripe/SafeCardField";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FormSection } from "@/components/ui/FormSection";
@@ -12,6 +12,7 @@ import { useTheme } from "@/context/theme-context";
 import { PaymentMethodItem } from "@/features/payments/components/PaymentMethodItem";
 import { RiderPaymentHistory } from "@/features/payments/components/RiderPaymentHistory";
 import { useRiderPayments } from "@/features/payments/hooks/useRiderPayments";
+import { isStripeAvailable } from "@/lib/stripe-utils";
 
 export function RiderPaymentsScreen() {
   const { colors } = useTheme();
@@ -84,36 +85,93 @@ export function RiderPaymentsScreen() {
               <Text variant="bodySemibold" style={{ marginBottom: 4 }}>
                 New Card Details
               </Text>
-              <CardField
-                postalCodeEnabled={true}
-                cardStyle={{
-                  backgroundColor: colors.surface,
-                  textColor: colors.text,
-                  placeholderColor: colors.textSecondary,
-                  borderRadius: 8,
-                }}
-                style={styles.cardField}
-                onCardChange={(d) => {
-                  setCardComplete(d.complete);
-                }}
-              />
-              <View style={styles.row}>
-                <Button
-                  title="CANCEL"
-                  variant="ghost"
-                  style={{ flex: 1 }}
-                  onPress={() => {
-                    setShowAdd(false);
-                  }}
-                />
-                <Button
-                  title="SAVE CARD"
-                  style={{ flex: 1 }}
-                  onPress={() => void handleSavePress()}
-                  isLoading={isAddingCard}
-                  disabled={!cardComplete}
-                />
-              </View>
+              {isStripeAvailable() ? (
+                <>
+                  <SafeCardField
+                    postalCodeEnabled={true}
+                    cardStyle={{
+                      backgroundColor: colors.surface,
+                      textColor: colors.text,
+                      placeholderColor: colors.textSecondary,
+                      borderRadius: 8,
+                    }}
+                    style={styles.cardField}
+                    onCardChange={(d) => {
+                      setCardComplete(d.complete);
+                    }}
+                    fallback={
+                      <View style={styles.expoGoMessage}>
+                        <Text
+                          variant="body"
+                          color={colors.textSecondary}
+                          align="center"
+                        >
+                          Card field not available in Expo Go
+                        </Text>
+                      </View>
+                    }
+                  />
+                  <View style={styles.row}>
+                    <Button
+                      title="CANCEL"
+                      variant="ghost"
+                      style={{ flex: 1 }}
+                      onPress={() => {
+                        setShowAdd(false);
+                      }}
+                    />
+                    <Button
+                      title="SAVE CARD"
+                      style={{ flex: 1 }}
+                      onPress={() => void handleSavePress()}
+                      isLoading={isAddingCard}
+                      disabled={!cardComplete}
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.expoGoMessage}>
+                  <IconBox
+                    name="information-circle-outline"
+                    variant="subtle"
+                    style={{ marginBottom: 12 }}
+                  />
+                  <Text
+                    variant="body"
+                    color={colors.textSecondary}
+                    align="center"
+                  >
+                    Payment features require a development build. Stripe is not
+                    available in Expo Go.
+                  </Text>
+                  <Text
+                    variant="caption"
+                    color={colors.textTertiary}
+                    align="center"
+                    style={{ marginTop: 8 }}
+                  >
+                    To test payments, build the app using: npx expo run:android
+                    or npx expo run:ios
+                  </Text>
+                  <Text
+                    variant="caption"
+                    color={colors.textTertiary}
+                    align="center"
+                    style={{ marginTop: 12 }}
+                  >
+                    To request rides in Expo Go without a card, set
+                    REQUIRE_PAYMENT_METHOD=false in apps/api/.env
+                  </Text>
+                  <Button
+                    title="CLOSE"
+                    variant="ghost"
+                    style={{ marginTop: 16 }}
+                    onPress={() => {
+                      setShowAdd(false);
+                    }}
+                  />
+                </View>
+              )}
             </Card>
           ) : (
             <Button
@@ -121,6 +179,13 @@ export function RiderPaymentsScreen() {
               variant="secondary"
               icon="add-outline"
               onPress={() => {
+                if (!isStripeAvailable()) {
+                  Alert.alert(
+                    "Stripe Not Available",
+                    "Payment features require a development build. Stripe is not available in Expo Go.\n\nTo test payments: npx expo run:android or npx expo run:ios\n\nTo request rides in Expo Go without a card: set REQUIRE_PAYMENT_METHOD=false in apps/api/.env"
+                  );
+                  return;
+                }
                 setShowAdd(true);
               }}
             />
@@ -191,5 +256,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     marginVertical: 32,
     opacity: 0.5,
+  },
+  expoGoMessage: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

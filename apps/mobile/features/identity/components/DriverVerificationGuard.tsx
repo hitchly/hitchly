@@ -21,6 +21,9 @@ export const DriverVerificationGuard = ({
   const { mutateAsync: createSession, isPending } =
     trpc.identity.createVerificationSession.useMutation();
 
+  const { mutateAsync: bypassVerification, isPending: isBypassing } =
+    trpc.identity.bypassDriverVerificationForTesting.useMutation();
+
   const isDriver = role === "driver";
   const isVerified = session?.user.isVerifiedDriver;
 
@@ -43,6 +46,32 @@ export const DriverVerificationGuard = ({
         "An error occurred while trying to start the verification process. Please try again later."
       );
     }
+  };
+
+  const handleBypassPress = () => {
+    Alert.alert(
+      "Bypass verification?",
+      "This is only intended for local testing. Your account will be marked as verified.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Bypass (dev)",
+          style: "destructive",
+          onPress: () =>
+            void (async () => {
+              try {
+                await bypassVerification();
+                void refetch();
+              } catch {
+                Alert.alert(
+                  "Bypass Failed",
+                  "Unable to bypass verification. Please try again."
+                );
+              }
+            })(),
+        },
+      ]
+    );
   };
 
   return (
@@ -71,6 +100,16 @@ export const DriverVerificationGuard = ({
           variant="primary"
           style={styles.actionButton}
         />
+
+        {__DEV__ ? (
+          <Button
+            title="BYPASS (DEV)"
+            onPress={handleBypassPress}
+            isLoading={isBypassing}
+            variant="secondary"
+            style={styles.bypassButton}
+          />
+        ) : null}
       </View>
     </View>
   );
@@ -83,4 +122,5 @@ const styles = StyleSheet.create({
   title: { marginBottom: 12 },
   description: { marginBottom: 32 },
   actionButton: { marginTop: 8 },
+  bypassButton: { marginTop: 12 },
 });

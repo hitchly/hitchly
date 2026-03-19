@@ -13,7 +13,7 @@ interface AboutMeSectionProps {
     faculty: string | null;
     year: number | null;
     universityRole: UpdateProfileInput["universityRole"];
-  };
+  } | null;
   onSuccess: () => void;
 }
 
@@ -24,6 +24,10 @@ export function AboutMeSection({ profile, onSuccess }: AboutMeSectionProps) {
     setIsOpen(false);
     onSuccess();
   };
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <>

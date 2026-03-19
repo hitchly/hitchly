@@ -849,7 +849,7 @@ describe("Trip Router", () => {
     });
 
     it("should reject update when trip is not in_progress (test-ut-trip-6)", async () => {
-      const activeTrip = { ...mockTrip, status: "active" as const };
+      const activeTrip = { ...mockTrip, status: "pending" as const };
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([activeTrip]),

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { shortenAddress } from "@hitchly/utils";
 import { type Href, useRouter } from "expo-router";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Badge } from "@/components/ui/Badge";
@@ -13,12 +13,18 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { useRiderTripDetails } from "@/features/trips/hooks/useRiderTripDetails";
+import {
+  formatWeeklyCommuteLabel,
+  isTripRecurring,
+} from "@/features/trips/utils/recurringTripLabels";
+import { trpc } from "@/lib/trpc";
 
 const formatLocation = (loc: string) => shortenAddress(loc);
 
 export function RiderTripDetailsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const {
     trip,
     isLoading,
@@ -27,6 +33,19 @@ export function RiderTripDetailsScreen() {
     cancelTripRequest,
     handleCancelRequest,
   } = useRiderTripDetails();
+
+  const createRequestMutation = trpc.trip.createTripRequest.useMutation({
+    onSuccess: async () => {
+      if (!trip) return;
+      await utils.trip.getTripById.invalidate({ tripId: trip.id });
+      void utils.trip.getTripRequests.invalidate();
+      void utils.trip.getTrips.invalidate();
+      Alert.alert("Success", "Request for next ride sent.");
+    },
+    onError: (error) => {
+      Alert.alert("Error", error.message);
+    },
+  });
 
   if (isLoading) return <Skeleton text="FETCHING TRIP..." />;
 
@@ -56,6 +75,42 @@ export function RiderTripDetailsScreen() {
     : null;
   const isPendingOrAccepted =
     userRequest?.status === "pending" || userRequest?.status === "accepted";
+
+  const recurringMeta = isTripRecurring(trip)
+    ? formatWeeklyCommuteLabel(trip.departureTime)
+    : null;
+
+  const handleRideAgainNextWeek = async () => {
+    if (!trip.recurringScheduleId || !trip.departureTime) {
+      return;
+    }
+    if (!userRequest?.pickupLat || !userRequest.pickupLng) {
+      Alert.alert(
+        "Unavailable",
+        "We couldn't find your original pickup location for this trip."
+      );
+      return;
+    }
+
+    const next = await utils.recurringSchedule.getNextTripOccurrence.fetch({
+      recurringScheduleId: trip.recurringScheduleId,
+      after: new Date(trip.departureTime),
+    });
+
+    if (!next) {
+      Alert.alert(
+        "Not posted yet",
+        "Next week's ride isn't posted yet. Please check back later."
+      );
+      return;
+    }
+
+    await createRequestMutation.mutateAsync({
+      tripId: next.id,
+      pickupLat: userRequest.pickupLat,
+      pickupLng: userRequest.pickupLng,
+    });
+  };
 
   return (
     <SafeAreaView
@@ -186,6 +241,29 @@ export function RiderTripDetailsScreen() {
           </Card>
         </FormSection>
 
+        {isTripRecurring(trip) && recurringMeta && (
+          <FormSection title="RECURRING TRIP">
+            <Card style={styles.cardPadding}>
+              <Text variant="bodySemibold">🔁 {recurringMeta.title}</Text>
+              <Text
+                variant="body"
+                color={colors.textSecondary}
+                style={{ marginTop: 4 }}
+              >
+                {recurringMeta.subtitle}
+              </Text>
+              <Text
+                variant="caption"
+                color={colors.textSecondary}
+                style={{ marginTop: 8 }}
+              >
+                You are requesting one occurrence at a time. Future weeks must
+                be requested separately.
+              </Text>
+            </Card>
+          </FormSection>
+        )}
+
         {/* Improved Minimalist Actions */}
         <View style={styles.actionsContainer}>
           {(userRequest?.status === "accepted" ||
@@ -228,14 +306,32 @@ export function RiderTripDetailsScreen() {
             )}
 
           {trip.status === "completed" && (
-            <Button
-              title="LEAVE REVIEW"
-              variant="secondary"
-              icon="star"
-              onPress={() => {
-                router.push(`/(app)/(modals)/review?tripId=${trip.id}` as Href);
-              }}
-            />
+            <>
+              <Button
+                title="LEAVE REVIEW"
+                variant="secondary"
+                icon="star"
+                onPress={() => {
+                  router.push(`/(app)/(modals)/review/${trip.id}` as Href);
+                }}
+              />
+              {isTripRecurring(trip) && (
+                <Button
+                  title={
+                    recurringMeta
+                      ? `REQUEST NEXT ${recurringMeta.subtitle.split(" ")[2]?.toUpperCase() ?? "WEEK"}`
+                      : "REQUEST NEXT WEEK"
+                  }
+                  variant="ghost"
+                  onPress={() => {
+                    void handleRideAgainNextWeek();
+                  }}
+                  isLoading={createRequestMutation.isPending}
+                  style={styles.rideAgainBtn}
+                  textStyle={{ fontSize: 13 }}
+                />
+              )}
+            </>
           )}
 
           {isPendingOrAccepted && (
@@ -298,4 +394,5 @@ const styles = StyleSheet.create({
   safetyRow: { flexDirection: "row", gap: 12 },
   flex1: { flex: 1 },
   cancelBtn: { marginTop: 8, opacity: 0.8 },
+  rideAgainBtn: { marginTop: 8 },
 });

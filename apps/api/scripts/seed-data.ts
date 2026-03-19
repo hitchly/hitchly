@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import "dotenv/config";
 import { db } from "@hitchly/db/client";
 import * as schema from "@hitchly/db/schema";
 import { inArray } from "drizzle-orm";

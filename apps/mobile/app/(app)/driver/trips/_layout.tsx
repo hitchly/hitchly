@@ -2,16 +2,21 @@ import { Stack } from "expo-router";
 
 import { useStackOptions } from "@/hooks/useNavigationOptions";
 
+/** Ensure tapping "Trips" tab shows the list (My Trips), not Create Trip. */
+export const unstable_settings = {
+  initialRouteName: "index",
+};
+
 export default function DriverTripsLayout() {
   const stackOptions = useStackOptions();
 
   return (
-    <Stack screenOptions={stackOptions}>
+    <Stack screenOptions={stackOptions} initialRouteName="index">
       <Stack.Screen
         name="index"
         options={{
           headerShown: false,
-          title: "Trip History",
+          title: "My Trips",
           headerLargeTitle: true,
         }}
       />

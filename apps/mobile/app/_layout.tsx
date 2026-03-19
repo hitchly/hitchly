@@ -12,6 +12,7 @@ import { RoleProvider } from "@/context/role-context";
 import { AppThemeProvider } from "@/context/theme-context";
 import { RoleTransitionOverlay } from "@/features/profile/components/RoleTransitionOverlay";
 import { authClient } from "@/lib/auth-client";
+import { StripeErrorBoundary } from "@/lib/stripe-error-boundary";
 import { StripeProviderWrapper } from "@/lib/stripe-provider";
 import { trpc, trpcClient } from "@/lib/trpc";
 
@@ -79,9 +80,11 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <RoleProvider>
           <LocationProvider>
-            <StripeProviderWrapper>
-              <AppContent />
-            </StripeProviderWrapper>
+            <StripeErrorBoundary fallback={<AppContent />}>
+              <StripeProviderWrapper>
+                <AppContent />
+              </StripeProviderWrapper>
+            </StripeErrorBoundary>
           </LocationProvider>
         </RoleProvider>
       </QueryClientProvider>

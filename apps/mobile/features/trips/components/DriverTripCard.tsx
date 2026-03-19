@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
+import { formatWeeklyCommuteLabel } from "@/features/trips/utils/recurringTripLabels";
 import type { RouterOutputs } from "@/lib/trpc";
 
 type Trip = RouterOutputs["trip"]["getTrips"][number];
@@ -22,6 +23,10 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
   const rawDate = trip.departureTime;
   const departureDate = rawDate ? new Date(rawDate) : null;
   const availableSeats = trip.maxSeats - trip.bookedSeats;
+  const isRecurring = Boolean(trip.recurringScheduleId);
+  const recurringMeta = isRecurring
+    ? formatWeeklyCommuteLabel(trip.departureTime)
+    : null;
 
   return (
     <Card style={styles.cardSpacing} onPress={onPress}>
@@ -41,24 +46,38 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
             {formatLocation(trip.destination)}
           </Text>
         </View>
-        <Chip
-          label={trip.status.toUpperCase().replace("_", " ")}
-          active={trip.status === "active" || trip.status === "in_progress"}
-        />
+        <View style={styles.headerChips}>
+          {isRecurring && <Chip label="RECURRING" />}
+          <Chip
+            label={trip.status.toUpperCase().replace("_", " ")}
+            active={trip.status === "active" || trip.status === "in_progress"}
+          />
+        </View>
       </View>
 
       <View style={styles.cardFooter}>
-        <Text variant="caption" color={colors.textSecondary}>
-          {departureDate
-            ? `${departureDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })} at ${departureDate.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`
-            : "Time TBD"}
-        </Text>
+        <View style={styles.footerLeft}>
+          <Text variant="caption" color={colors.textSecondary}>
+            {departureDate
+              ? `${departureDate.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })} at ${departureDate.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`
+              : "Time TBD"}
+          </Text>
+          {recurringMeta && (
+            <Text
+              variant="caption"
+              color={colors.textSecondary}
+              style={styles.recurringSubtitle}
+            >
+              🔁 {recurringMeta.subtitle}
+            </Text>
+          )}
+        </View>
         <Text variant="caption" color={colors.textSecondary}>
           {availableSeats} seat{availableSeats !== 1 ? "s" : ""} left
         </Text>
@@ -82,10 +101,24 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   arrow: { marginHorizontal: 6 },
+  headerChips: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 4,
+  },
+  footerLeft: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 2,
+    flexShrink: 1,
+  },
+  recurringSubtitle: {
+    opacity: 0.9,
   },
 });

@@ -73,11 +73,26 @@ export const reviewsRouter = router({
         .from(reviews)
         .where(eq(reviews.targetUserId, input.userId));
 
-      const average = result[0]?.average ? result[0].average.toFixed(1) : "New";
+      const avgNum =
+        typeof result[0]?.average === "number"
+          ? result[0].average
+          : typeof result[0]?.average === "string"
+            ? Number.parseFloat(result[0].average)
+            : Number.NaN;
+
+      const average = Number.isFinite(avgNum) ? avgNum.toFixed(1) : "New";
+
+      const countRaw = result[0]?.count;
+      const count =
+        typeof countRaw === "number"
+          ? countRaw
+          : typeof countRaw === "string"
+            ? Number.parseInt(countRaw, 10)
+            : 0;
 
       return {
         average,
-        count: result[0]?.count ?? 0,
+        count: Number.isFinite(count) ? count : 0,
       };
     }),
 });

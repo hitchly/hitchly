@@ -1,9 +1,56 @@
-import { SetupIntent, useStripe } from "@stripe/stripe-react-native";
+/* eslint-disable */
 import { useState } from "react";
 import { Alert } from "react-native";
 
 import type { RouterOutputs } from "@/lib/trpc";
+import { isStripeAvailable } from "@/lib/stripe-utils";
 import { trpc } from "@/lib/trpc";
+
+// Lazy load Stripe module to avoid native module errors in Expo Go
+// Module is loaded at runtime via require(), not at module evaluation time
+let stripeModuleCache: any = null;
+let StripeSetupIntent: any = null;
+
+function getStripeModule(): any {
+  if (stripeModuleCache !== null) {
+    return stripeModuleCache;
+  }
+
+  if (!isStripeAvailable()) {
+    stripeModuleCache = false; // Mark as checked, not available
+    return null;
+  }
+
+  try {
+    // require() is called at runtime here, not at module load time
+    stripeModuleCache = require("@stripe/stripe-react-native");
+    StripeSetupIntent = stripeModuleCache?.SetupIntent;
+    return stripeModuleCache;
+  } catch (error) {
+    // Stripe not available - mark as checked
+    stripeModuleCache = false;
+    return null;
+  }
+}
+
+// Create a safe hook wrapper that always returns a function
+// This allows us to call it unconditionally per React rules
+function createSafeUseStripe() {
+  return function useStripeSafe() {
+    const module = getStripeModule();
+    if (module?.useStripe) {
+      try {
+        return module.useStripe();
+      } catch (error) {
+        // StripeProvider not in tree
+        return null;
+      }
+    }
+    return null;
+  };
+}
+
+const useStripeSafe = createSafeUseStripe();
 
 type PaymentMethod =
   RouterOutputs["payment"]["getPaymentMethods"]["methods"][number];
@@ -25,7 +72,10 @@ interface UseRiderPaymentsReturn {
 }
 
 export function useRiderPayments(): UseRiderPaymentsReturn {
-  const { confirmSetupIntent } = useStripe();
+  // Always call hook unconditionally (React rules)
+  // This hook safely handles Stripe not being available
+  const stripe = useStripeSafe();
+
   const utils = trpc.useUtils();
   const [isAddingCard, setIsAddingCard] = useState(false);
 
@@ -57,6 +107,14 @@ export function useRiderPayments(): UseRiderPaymentsReturn {
   });
 
   const handleAddCard = async (cardComplete: boolean): Promise<boolean> => {
+    if (!isStripeAvailable() || !stripe) {
+      Alert.alert(
+        "Stripe Not Available",
+        "Payment features require a development build. Stripe is not available in Expo Go."
+      );
+      return false;
+    }
+
     if (!cardComplete) {
       Alert.alert("Error", "Please complete card details");
       return false;
@@ -67,15 +125,21 @@ export function useRiderPayments(): UseRiderPaymentsReturn {
     try {
       const { clientSecret } = await createSetupIntent.mutateAsync();
 
-      const { error, setupIntent } = await confirmSetupIntent(clientSecret, {
-        paymentMethodType: "Card",
-      });
+      const { error, setupIntent } = await stripe.confirmSetupIntent(
+        clientSecret,
+        {
+          paymentMethodType: "Card",
+        }
+      );
 
       if (error) {
         throw new Error(error.message);
       }
 
-      if (setupIntent.status === SetupIntent.Status.Succeeded) {
+      // Check status - use string literal if SetupIntent isn't available
+      const succeededStatus =
+        StripeSetupIntent?.Status?.Succeeded ?? "Succeeded";
+      if (setupIntent.status === succeededStatus) {
         Alert.alert("Success", "Card added successfully!");
         void utils.payment.getPaymentMethods.invalidate();
         return true;
