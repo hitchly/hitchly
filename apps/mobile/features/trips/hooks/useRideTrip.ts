@@ -233,7 +233,7 @@ export function useRideTrip(tripId: string) {
             "The driver has accepted your request. We'll notify you once they start the trip.",
           location: formatCityProvince(trip.origin),
           pickupLocation:
-            userRequest?.pickupAddress || shortenAddress(trip.origin),
+            userRequest?.pickupAddress ?? shortenAddress(trip.origin),
         };
       }
 
@@ -253,7 +253,7 @@ export function useRideTrip(tripId: string) {
         message,
         location: formatCityProvince(trip.origin),
         pickupLocation:
-          userRequest?.pickupAddress || shortenAddress(trip.origin),
+          userRequest?.pickupAddress ?? shortenAddress(trip.origin),
       };
     }
 
@@ -310,6 +310,7 @@ export function useRideTrip(tripId: string) {
     targetDistanceLabel,
     targetEtaLabel,
     preferredDestinationLabel,
+    userRequest?.pickupAddress,
   ]);
 
   const liveDriverInfo = useMemo(() => {

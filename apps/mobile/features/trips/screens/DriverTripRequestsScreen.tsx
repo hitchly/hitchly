@@ -127,7 +127,7 @@ export function DriverTripRequestsScreen() {
                         style={styles.routeText}
                         numberOfLines={1}
                       >
-                        {shortenAddress(request.pickupAddress || trip.origin)}
+                        {shortenAddress(request.pickupAddress ?? trip.origin)}
                       </Text>
                       <Ionicons
                         name="arrow-forward"
@@ -140,7 +140,7 @@ export function DriverTripRequestsScreen() {
                         numberOfLines={1}
                       >
                         {shortenAddress(
-                          request.dropoffLabel || trip.destination
+                          request.dropoffLabel ?? trip.destination
                         )}
                       </Text>
                     </View>

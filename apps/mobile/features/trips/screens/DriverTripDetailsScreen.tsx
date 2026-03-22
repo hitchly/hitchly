@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { shortenAddress } from "@hitchly/utils";
-import { type Href } from "expo-router";
 import * as Location from "expo-location";
+import { type Href } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -58,11 +58,14 @@ export function DriverTripDetailsScreen() {
   useEffect(() => {
     let active = true;
     const requestsWithCoords = routePickupRequests.filter(
-      (request) =>
-        request.pickupLat !== null &&
-        request.pickupLat !== undefined &&
-        request.pickupLng !== null &&
-        request.pickupLng !== undefined
+      (
+        request
+      ): request is typeof request & {
+        pickupLat: number;
+        pickupLng: number;
+      } =>
+        typeof request.pickupLat === "number" &&
+        typeof request.pickupLng === "number"
     );
 
     if (requestsWithCoords.length === 0) {
@@ -77,17 +80,20 @@ export function DriverTripDetailsScreen() {
         requestsWithCoords.map(async (request) => {
           try {
             const [place] = await Location.reverseGeocodeAsync({
-              latitude: request.pickupLat!,
-              longitude: request.pickupLng!,
+              latitude: request.pickupLat,
+              longitude: request.pickupLng,
             });
             const address = formatAddressFromGeocode(place ?? null);
-            return [request.id, address || "Pickup location"] as const;
+            const line = address !== "" ? address : "Pickup location";
+            return [request.id, line] as const;
           } catch {
             return [request.id, "Pickup location"] as const;
           }
         })
       );
 
+      // `active` can be false if the effect cleaned up while geocoding was in flight
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- stale async guard
       if (!active) return;
       setPickupAddressByRequestId(Object.fromEntries(entries));
     })();
@@ -144,8 +150,8 @@ export function DriverTripDetailsScreen() {
               key: request.id,
               label: pickupLabel,
               value:
-                request.pickupAddress ||
-                pickupAddressByRequestId[request.id] ||
+                request.pickupAddress ??
+                pickupAddressByRequestId[request.id] ??
                 "Pickup location",
             };
           }),

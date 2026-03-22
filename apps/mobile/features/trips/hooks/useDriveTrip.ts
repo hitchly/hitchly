@@ -104,7 +104,7 @@ const getCurrentStop = (
         type: "pickup",
         requestId: request.id,
         passengerName: request.rider?.name ?? "Passenger",
-        location: request.pickupAddress || shortenAddress(trip.origin),
+        location: request.pickupAddress ?? shortenAddress(trip.origin),
         lat: request.pickupLat,
         lng: request.pickupLng,
       };

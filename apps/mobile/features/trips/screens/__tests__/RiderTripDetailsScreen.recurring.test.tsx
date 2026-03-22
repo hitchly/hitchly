@@ -33,6 +33,10 @@ vi.mock("react-native", () => ({
   ScrollView: ({ children }: any) => <div>{children}</div>,
   StyleSheet: { create: (x: any) => x },
   View: ({ children }: any) => <div>{children}</div>,
+  TurboModuleRegistry: {
+    getEnforcing: vi.fn(() => ({})),
+    get: vi.fn(() => null),
+  },
 }));
 
 vi.mock("@/components/ui/Card", () => ({
