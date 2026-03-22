@@ -10,6 +10,6 @@ export default {
     user: process.env.DB_USER ?? "postgres",
     password: process.env.DB_PASSWORD ?? "postgres",
     database: process.env.DB_NAME ?? "hitchly_db",
-    ssl: false,
+    url: process.env.DATABASE_URL,
   },
 } satisfies Config;
