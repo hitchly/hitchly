@@ -8,6 +8,43 @@ export interface GeocodedAddress {
   isoCountryCode?: string | null;
 }
 
+export interface CampusDropoffOption {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+export const MCMASTER_DROPOFF_OPTIONS: CampusDropoffOption[] = [
+  {
+    id: "thode-library",
+    label: "Thode Library",
+    lat: 43.2611011,
+    lng: -79.9225905,
+  },
+  { id: "musc", label: "MUSC", lat: 43.26347, lng: -79.91781 },
+  { id: "dbac", label: "DBAC", lat: 43.2652879, lng: -79.9158237 },
+  {
+    id: "mills-library",
+    label: "Mills Library",
+    lat: 43.26276,
+    lng: -79.91764,
+  },
+  {
+    id: "etb",
+    label: "ETB (Engineering Technology Building)",
+    lat: 43.25853,
+    lng: -79.92003,
+  },
+  { id: "mdcl", label: "MDCL", lat: 43.26107, lng: -79.91686 },
+  {
+    id: "pgcll",
+    label: "PGCLL (Peter George Centre for Living and Learning)",
+    lat: 43.2654,
+    lng: -79.9182642,
+  },
+];
+
 /**
  * Formats a date or date string into a readable short format (e.g., "Oct 24, 02:30 PM").
  */

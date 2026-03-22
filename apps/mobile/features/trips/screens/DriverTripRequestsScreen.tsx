@@ -127,7 +127,7 @@ export function DriverTripRequestsScreen() {
                         style={styles.routeText}
                         numberOfLines={1}
                       >
-                        {shortenAddress(trip.origin)}
+                        {shortenAddress(request.pickupAddress ?? trip.origin)}
                       </Text>
                       <Ionicons
                         name="arrow-forward"
@@ -139,13 +139,20 @@ export function DriverTripRequestsScreen() {
                         style={styles.routeText}
                         numberOfLines={1}
                       >
-                        {shortenAddress(trip.destination)}
+                        {shortenAddress(
+                          request.dropoffLabel ?? trip.destination
+                        )}
                       </Text>
                     </View>
                     <Text variant="caption" color={colors.textSecondary}>
                       {formatDate(trip.departureTime)} •{" "}
                       {trip.maxSeats - trip.bookedSeats} seats available
                     </Text>
+                    {request.dropoffLabel && (
+                      <Text variant="caption" color={colors.textSecondary}>
+                        Preferred drop-off: {request.dropoffLabel}
+                      </Text>
+                    )}
                   </View>
                 )}
 

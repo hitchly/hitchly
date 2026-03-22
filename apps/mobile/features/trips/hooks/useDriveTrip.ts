@@ -57,6 +57,7 @@ interface ActiveRequest {
   status: RequestStatus;
   pickupLat: number;
   pickupLng: number;
+  pickupAddress?: string | null;
   dropoffLat: number | null;
   dropoffLng: number | null;
   riderPickupConfirmedAt: string | null;
@@ -103,7 +104,7 @@ const getCurrentStop = (
         type: "pickup",
         requestId: request.id,
         passengerName: request.rider?.name ?? "Passenger",
-        location: shortenAddress(trip.origin),
+        location: request.pickupAddress ?? shortenAddress(trip.origin),
         lat: request.pickupLat,
         lng: request.pickupLng,
       };

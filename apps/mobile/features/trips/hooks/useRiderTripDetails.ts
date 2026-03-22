@@ -185,7 +185,9 @@ export function useRiderTripDetails() {
               : `Dropping passengers off, you're ${formatOrdinal(
                   idx + 1
                 )} to be dropped off`,
-          sub: trip.destination ? shortenAddress(trip.destination) : undefined,
+          sub:
+            userRequest.dropoffLabel ??
+            (trip.destination ? shortenAddress(trip.destination) : undefined),
         };
       }
 
@@ -199,7 +201,9 @@ export function useRiderTripDetails() {
               : destinationEtaLabel
                 ? `Arriving in ${destinationEtaLabel}.`
                 : "Arriving at destination shortly.",
-        sub: trip.destination ? shortenAddress(trip.destination) : undefined,
+        sub:
+          userRequest.dropoffLabel ??
+          (trip.destination ? shortenAddress(trip.destination) : undefined),
       };
     }
 

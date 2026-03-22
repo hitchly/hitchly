@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { shortenAddress } from "@hitchly/utils";
+import * as Location from "expo-location";
 import { type Href, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,9 +19,20 @@ import {
   formatWeeklyCommuteLabel,
   isTripRecurring,
 } from "@/features/trips/utils/recurringTripLabels";
+import { openStopNavigation } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
 
 const formatLocation = (loc: string) => shortenAddress(loc);
+const formatAddressFromGeocode = (
+  place: Location.LocationGeocodedAddress | null
+) =>
+  [
+    place?.name && place.name !== place.street ? place.name : null,
+    place?.street ?? null,
+    place?.city ?? null,
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(", ");
 
 export function RiderTripDetailsScreen() {
   const { colors } = useTheme();
@@ -30,6 +43,7 @@ export function RiderTripDetailsScreen() {
     isLoading,
     userRequest,
     riderEtaDetails,
+    liveDriver,
     cancelTripRequest,
     handleCancelRequest,
   } = useRiderTripDetails();
@@ -46,6 +60,66 @@ export function RiderTripDetailsScreen() {
       Alert.alert("Error", error.message);
     },
   });
+
+  const [pickupAddressByRequestId, setPickupAddressByRequestId] = useState<
+    Record<string, string>
+  >({});
+
+  const routePickupRequests = useMemo(
+    () =>
+      (trip?.requests ?? []).filter((request) =>
+        ["pending", "accepted", "on_trip", "completed"].includes(request.status)
+      ),
+    [trip?.requests]
+  );
+
+  useEffect(() => {
+    let active = true;
+    const requestsWithCoords = routePickupRequests.filter(
+      (
+        request
+      ): request is typeof request & {
+        pickupLat: number;
+        pickupLng: number;
+      } =>
+        typeof request.pickupLat === "number" &&
+        typeof request.pickupLng === "number"
+    );
+
+    if (requestsWithCoords.length === 0) {
+      setPickupAddressByRequestId({});
+      return () => {
+        active = false;
+      };
+    }
+
+    void (async () => {
+      const entries = await Promise.all(
+        requestsWithCoords.map(async (request) => {
+          try {
+            const [place] = await Location.reverseGeocodeAsync({
+              latitude: request.pickupLat,
+              longitude: request.pickupLng,
+            });
+            const address = formatAddressFromGeocode(place ?? null);
+            const line = address !== "" ? address : "Pickup location";
+            return [request.id, line] as const;
+          } catch {
+            return [request.id, "Pickup location"] as const;
+          }
+        })
+      );
+
+      // `active` can be false if the effect cleaned up while geocoding was in flight
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- stale async guard
+      if (!active) return;
+      setPickupAddressByRequestId(Object.fromEntries(entries));
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [routePickupRequests]);
 
   if (isLoading) return <Skeleton text="FETCHING TRIP..." />;
 
@@ -79,6 +153,48 @@ export function RiderTripDetailsScreen() {
   const recurringMeta = isTripRecurring(trip)
     ? formatWeeklyCommuteLabel(trip.departureTime)
     : null;
+  const routeStops =
+    routePickupRequests.length > 0
+      ? [
+          ...routePickupRequests.map((request, index) => {
+            const riderLabel =
+              request.id === userRequest?.id
+                ? "YOUR PICKUP"
+                : request.rider?.name
+                  ? `${request.rider.name.toUpperCase()} PICKUP`
+                  : `PICKUP ${String(index + 1)}`;
+
+            const pickupValue =
+              request.pickupAddress ??
+              pickupAddressByRequestId[request.id] ??
+              "Pickup location";
+
+            return {
+              key: request.id,
+              label: riderLabel,
+              value: pickupValue,
+            };
+          }),
+          {
+            key: "dropoff",
+            label: "DROP-OFF",
+            value:
+              userRequest?.dropoffLabel ?? formatLocation(trip.destination),
+          },
+        ]
+      : [
+          {
+            key: "driver-origin",
+            label: "PICKUP",
+            value: formatLocation(trip.origin),
+          },
+          {
+            key: "dropoff",
+            label: "DROP-OFF",
+            value:
+              userRequest?.dropoffLabel ?? formatLocation(trip.destination),
+          },
+        ];
 
   const handleRideAgainNextWeek = async () => {
     if (!trip.recurringScheduleId || !trip.departureTime) {
@@ -112,6 +228,35 @@ export function RiderTripDetailsScreen() {
     });
   };
 
+  const handleOpenMaps = () => {
+    if (!userRequest) return;
+
+    if (userRequest.status === "accepted") {
+      const liveLat = liveDriver.driverLocation?.latitude;
+      const liveLng = liveDriver.driverLocation?.longitude;
+      const targetLat = liveLat ?? trip.originLat;
+      const targetLng = liveLng ?? trip.originLng;
+      if (typeof targetLat === "number" && typeof targetLng === "number") {
+        void openStopNavigation(targetLat, targetLng);
+      } else {
+        Alert.alert(
+          "Location unavailable",
+          "Map location is not available yet."
+        );
+      }
+      return;
+    }
+
+    const dropoffLat = userRequest.dropoffLat ?? trip.destLat;
+    const dropoffLng = userRequest.dropoffLng ?? trip.destLng;
+    if (typeof dropoffLat === "number" && typeof dropoffLng === "number") {
+      void openStopNavigation(dropoffLat, dropoffLng);
+      return;
+    }
+
+    Alert.alert("Location unavailable", "Destination location is unavailable.");
+  };
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -139,35 +284,36 @@ export function RiderTripDetailsScreen() {
           <Card style={styles.cardPadding}>
             <View style={styles.routeRow}>
               <View style={styles.timeline}>
-                <View style={[styles.dot, { backgroundColor: colors.text }]} />
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
-                <View
-                  style={[
-                    styles.dot,
-                    styles.dotOutline,
-                    { borderColor: colors.border },
-                  ]}
-                />
+                {routeStops.map((stop, index) => (
+                  <View key={stop.key} style={styles.timelineItem}>
+                    <View
+                      style={[
+                        styles.dot,
+                        index === routeStops.length - 1
+                          ? [styles.dotOutline, { borderColor: colors.border }]
+                          : { backgroundColor: colors.text },
+                      ]}
+                    />
+                    {index < routeStops.length - 1 && (
+                      <View
+                        style={[
+                          styles.line,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                    )}
+                  </View>
+                ))}
               </View>
               <View style={styles.locationContainer}>
-                <View style={styles.locationItem}>
-                  <Text variant="label" color={colors.textSecondary}>
-                    PICKUP
-                  </Text>
-                  <Text variant="bodySemibold">
-                    {formatLocation(trip.origin)}
-                  </Text>
-                </View>
-                <View style={styles.locationItem}>
-                  <Text variant="label" color={colors.textSecondary}>
-                    DROP-OFF
-                  </Text>
-                  <Text variant="bodySemibold">
-                    {formatLocation(trip.destination)}
-                  </Text>
-                </View>
+                {routeStops.map((stop) => (
+                  <View key={stop.key} style={styles.locationItem}>
+                    <Text variant="label" color={colors.textSecondary}>
+                      {stop.label}
+                    </Text>
+                    <Text variant="bodySemibold">{stop.value}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </Card>
@@ -298,9 +444,7 @@ export function RiderTripDetailsScreen() {
                   variant="secondary"
                   icon="navigate"
                   style={styles.flex1}
-                  onPress={() => {
-                    /* Maps logic */
-                  }}
+                  onPress={handleOpenMaps}
                 />
               </View>
             )}
@@ -374,10 +518,11 @@ const styles = StyleSheet.create({
   cardPadding: { padding: 20 },
   noPaddingCard: { padding: 0 },
   routeRow: { flexDirection: "row", gap: 20 },
-  timeline: { alignItems: "center", width: 12, paddingVertical: 4 },
+  timeline: { width: 12, paddingVertical: 4 },
+  timelineItem: { alignItems: "center", minHeight: 40 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   dotOutline: { backgroundColor: "transparent", borderWidth: 1.5 },
-  line: { width: 1, flex: 1, marginVertical: 4 },
+  line: { width: 1, flex: 1, marginVertical: 4, minHeight: 16 },
   locationContainer: { flex: 1, gap: 24 },
   locationItem: { gap: 4 },
   etaHeader: {
