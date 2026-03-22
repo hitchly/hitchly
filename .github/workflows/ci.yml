@@ -87,7 +87,6 @@ jobs:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: hitchly_db
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hitchly_db
     services:
       postgres:
         image: postgres:15-alpine
