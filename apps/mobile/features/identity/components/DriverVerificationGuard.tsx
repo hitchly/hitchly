@@ -95,7 +95,7 @@ export const DriverVerificationGuard = ({
 
         <Button
           title="VERIFY ONTARIO LICENSE"
-          onPress={void handleVerifyPress}
+          onPress={() => void handleVerifyPress()}
           isLoading={isPending}
           variant="primary"
           style={styles.actionButton}
