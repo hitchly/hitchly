@@ -28,6 +28,11 @@
       "esm"
     ],
     "clean": true,
+    "platform": "node",
+    "external": [
+      "pg",
+      "drizzle-orm"
+    ],
     "noExternal": [
       "@hitchly/db",
       "@hitchly/emails"
