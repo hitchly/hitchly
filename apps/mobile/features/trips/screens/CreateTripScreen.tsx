@@ -1,11 +1,10 @@
 /* eslint-disable */
 import { useRouter } from "expo-router";
-import { Controller, FormProvider } from "react-hook-form";
+import { Controller, FormProvider, useWatch } from "react-hook-form";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ControlledDateTimePicker } from "@/components/form/ControlledDateTimePicker";
-import { ControlledLocationInput } from "@/components/form/ControlledLocationInput";
 import { ControlledNumericStepper } from "@/components/form/ControlledNumericStepper";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { FormSection } from "@/components/ui/FormSection";
@@ -13,11 +12,85 @@ import { IconBox } from "@/components/ui/IconBox";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
+import { McMaster } from "@/constants/location";
 import { useTheme } from "@/context/theme-context";
 import {
   useCreateTrip,
   type CreateTripFormData,
 } from "@/features/trips/hooks/useCreateTrip";
+
+function homeLineOrPlaceholder(defaultAddress: string): string {
+  const t = defaultAddress.trim();
+  return t !== "" ? t : "Not set — add your home address in Profile";
+}
+
+function ReadOnlyRouteAddresses({
+  isToCampus,
+  defaultAddress,
+}: {
+  isToCampus: boolean;
+  defaultAddress: string;
+}) {
+  const { colors } = useTheme();
+  const origin = useWatch<CreateTripFormData, "origin">({ name: "origin" });
+  const destination = useWatch<CreateTripFormData, "destination">({
+    name: "destination",
+  });
+
+  const originStr = typeof origin === "string" ? origin.trim() : "";
+  const destStr = typeof destination === "string" ? destination.trim() : "";
+
+  const pickupDisplay =
+    originStr !== ""
+      ? origin
+      : isToCampus
+        ? homeLineOrPlaceholder(defaultAddress)
+        : McMaster.address;
+
+  const dropoffDisplay =
+    destStr !== ""
+      ? destination
+      : isToCampus
+        ? McMaster.address
+        : homeLineOrPlaceholder(defaultAddress);
+
+  return (
+    <View style={styles.inputGroup}>
+      <View style={styles.staticField}>
+        <Text variant="label" color={colors.textSecondary}>
+          PICKUP LOCATION
+        </Text>
+        <View
+          style={[
+            styles.staticValueBox,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.surfaceSecondary,
+            },
+          ]}
+        >
+          <Text variant="body">{pickupDisplay}</Text>
+        </View>
+      </View>
+      <View style={styles.staticField}>
+        <Text variant="label" color={colors.textSecondary}>
+          DROP-OFF LOCATION
+        </Text>
+        <View
+          style={[
+            styles.staticValueBox,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.surfaceSecondary,
+            },
+          ]}
+        >
+          <Text variant="body">{dropoffDisplay}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export function CreateTripScreen() {
   const { colors } = useTheme();
@@ -66,9 +139,9 @@ export function CreateTripScreen() {
 
           <FormSection
             title="ROUTE"
-            description="Specify where you're starting and ending your journey."
+            description="Pickup and drop-off use your profile home address and McMaster. Change your home address in Profile if needed."
           >
-            {!defaultAddress && (
+            {!defaultAddress.trim() && (
               <View
                 style={[
                   styles.callout,
@@ -86,25 +159,15 @@ export function CreateTripScreen() {
                   color={colors.textSecondary}
                   style={styles.calloutText}
                 >
-                  Tip: Set your home address in Profile to enable auto-fill.
+                  Set your home address in Profile before publishing a ride.
                 </Text>
               </View>
             )}
 
-            <View style={styles.inputGroup}>
-              <ControlledLocationInput<CreateTripFormData>
-                control={methods.control as any}
-                name="origin"
-                label="PICKUP LOCATION"
-                placeholder="Search pickup point..."
-              />
-              <ControlledLocationInput<CreateTripFormData>
-                control={methods.control as any}
-                name="destination"
-                label="DROP-OFF LOCATION"
-                placeholder="Search drop-off point..."
-              />
-            </View>
+            <ReadOnlyRouteAddresses
+              isToCampus={isToCampus}
+              defaultAddress={defaultAddress}
+            />
           </FormSection>
 
           <FormSection title="LOGISTICS">
@@ -229,6 +292,17 @@ const styles = StyleSheet.create({
   formContent: {},
   inputGroup: {
     gap: 16,
+  },
+  staticField: {
+    gap: 6,
+  },
+  staticValueBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: "center",
   },
   callout: {
     flexDirection: "row",

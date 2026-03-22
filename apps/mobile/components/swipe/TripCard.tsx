@@ -37,12 +37,14 @@ interface TripCardProps {
   match: RideMatch;
   showArrival?: boolean;
   destinationLabel?: string;
+  pickupLabel?: string;
 }
 
 export function TripCard({
   match,
   showArrival = false,
   destinationLabel = "McMaster University",
+  pickupLabel = "Pickup location",
 }: TripCardProps) {
   const { colors } = useTheme();
 
@@ -175,7 +177,7 @@ export function TripCard({
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {match.details.arrivalAtPickup || "Pickup location"}
+            {pickupLabel}
           </Text>
           <Text
             style={[styles.routeText, { color: colors.text }]}

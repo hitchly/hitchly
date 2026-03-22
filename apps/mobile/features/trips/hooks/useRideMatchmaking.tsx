@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MCMASTER_DROPOFF_OPTIONS } from "@hitchly/utils";
 import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
@@ -8,9 +9,17 @@ import { trpc } from "@/lib/trpc";
 
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
 
+function getDefaultArrivalTime(): string {
+  const now = new Date();
+  const nextHour = new Date(now);
+  nextHour.setMinutes(0, 0, 0);
+  nextHour.setHours(nextHour.getHours() + 1);
+  return `${String(nextHour.getHours()).padStart(2, "0")}:00`;
+}
+
 export interface RideSearchParams {
-  origin: { lat: number; lng: number };
-  destination: { lat: number; lng: number };
+  origin: { lat: number; lng: number; address?: string };
+  destination: { lat: number; lng: number; address?: string };
   desiredArrivalTime: string;
   desiredDate?: Date;
   maxOccupancy: number;
@@ -25,10 +34,15 @@ export function useRideMatchmaking() {
     trpc.profile.getMe.useQuery();
   const isTestUser = isTestAccount(userProfile?.email);
 
-  const [desiredArrivalTime, setDesiredArrivalTime] = useState("09:00");
+  const [desiredArrivalTime, setDesiredArrivalTime] = useState(
+    getDefaultArrivalTime
+  );
   const [desiredDate, setDesiredDate] = useState<Date | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [includeDummyMatches, setIncludeDummyMatches] = useState(false);
+  const [selectedDropoffId, setSelectedDropoffId] = useState<string | null>(
+    null
+  );
   const [direction, setDirection] = useState<"toMcmaster" | "fromMcmaster">(
     "toMcmaster"
   );
@@ -74,13 +88,32 @@ export function useRideMatchmaking() {
     if (!userProfile?.profile.defaultLat || !userProfile.profile.defaultLong)
       return null;
 
-    const homeCoords = {
+    const homePoint = {
       lat: userProfile.profile.defaultLat,
       lng: userProfile.profile.defaultLong,
+      address: userProfile.profile.defaultAddress ?? "Home",
     };
-    const origin = direction === "toMcmaster" ? homeCoords : MCMASTER_COORDS;
+    const mcmasterPoint = {
+      ...MCMASTER_COORDS,
+      address: "McMaster University",
+    };
+    const selectedDropoffOption =
+      direction === "toMcmaster" && selectedDropoffId
+        ? MCMASTER_DROPOFF_OPTIONS.find(
+            (option) => option.id === selectedDropoffId
+          )
+        : null;
+    const selectedDropoffPoint = selectedDropoffOption
+      ? {
+          lat: selectedDropoffOption.lat,
+          lng: selectedDropoffOption.lng,
+          address: selectedDropoffOption.label,
+        }
+      : mcmasterPoint;
+
+    const origin = direction === "toMcmaster" ? homePoint : mcmasterPoint;
     const destination =
-      direction === "toMcmaster" ? MCMASTER_COORDS : homeCoords;
+      direction === "toMcmaster" ? selectedDropoffPoint : homePoint;
 
     return {
       origin,
@@ -98,12 +131,13 @@ export function useRideMatchmaking() {
     desiredDate,
     includeDummyMatches,
     direction,
+    selectedDropoffId,
   ]);
 
   // Provide a safe fallback shape to avoid non-null assertions
   const fallbackParams: RideSearchParams = {
-    origin: MCMASTER_COORDS,
-    destination: MCMASTER_COORDS,
+    origin: { ...MCMASTER_COORDS, address: "McMaster University" },
+    destination: { ...MCMASTER_COORDS, address: "McMaster University" },
     desiredArrivalTime: "09:00",
     maxOccupancy: 1,
     preference: "costPriority",
@@ -163,6 +197,23 @@ export function useRideMatchmaking() {
         tripId: matchData.rideId,
         pickupLat: searchParamsData.origin.lat,
         pickupLng: searchParamsData.origin.lng,
+        pickupAddress: searchParamsData.origin.address,
+        dropoffLat:
+          direction === "toMcmaster"
+            ? searchParamsData.destination.lat
+            : undefined,
+        dropoffLng:
+          direction === "toMcmaster"
+            ? searchParamsData.destination.lng
+            : undefined,
+        dropoffLabel:
+          direction === "toMcmaster"
+            ? searchParamsData.destination.address
+            : undefined,
+        dropoffOptionId:
+          direction === "toMcmaster" && selectedDropoffId
+            ? selectedDropoffId
+            : undefined,
         estimatedDistanceKm: matchData.details.estimatedDistanceKm,
         estimatedDurationSec: matchData.details.estimatedDurationSec,
         estimatedDetourSec: matchData.details.detourMinutes * 60,
@@ -192,6 +243,7 @@ export function useRideMatchmaking() {
     setHasSearched(false);
     setDesiredDate(null);
     setIncludeDummyMatches(false);
+    setSelectedDropoffId(null);
     setSwipedCardIds(new Set());
     await AsyncStorage.removeItem("swipedCardIds");
   };
@@ -213,6 +265,8 @@ export function useRideMatchmaking() {
       setDesiredDate,
       includeDummyMatches,
       setIncludeDummyMatches,
+      selectedDropoffId,
+      setSelectedDropoffId,
       direction,
       setDirection,
     },

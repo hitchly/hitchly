@@ -18,6 +18,14 @@ import { useDriverSwipeRequests } from "@/features/trips/hooks/useDriverSwipeReq
 export function DriverSwipeRequestsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const navigateBackOrHome = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/(app)/driver");
+  };
 
   const {
     driverTrips,
@@ -38,7 +46,7 @@ export function DriverSwipeRequestsScreen() {
   const handleCardTap = (request: TripRequestWithDetails) => {
     Alert.alert(
       "REQUEST DETAILS",
-      `Rider: ${request.rider?.name ?? request.rider?.email ?? "Unknown"}\nTrip: ${request.trip.origin} → ${request.trip.destination}`,
+      `Rider: ${request.rider?.name ?? request.rider?.email ?? "Unknown"}\nTrip: ${request.pickupAddress ?? request.trip.origin} → ${request.dropoffLabel ?? request.trip.destination}`,
       [{ text: "OK" }]
     );
   };
@@ -51,7 +59,7 @@ export function DriverSwipeRequestsScreen() {
         {
           text: "Done",
           onPress: () => {
-            router.back();
+            navigateBackOrHome();
           },
         },
       ]
@@ -75,7 +83,7 @@ export function DriverSwipeRequestsScreen() {
             variant="ghost"
             icon="close"
             onPress={() => {
-              router.back();
+              navigateBackOrHome();
             }}
           />
           <Text variant="h2" style={styles.title}>
@@ -119,7 +127,7 @@ export function DriverSwipeRequestsScreen() {
             variant="ghost"
             icon="close"
             onPress={() => {
-              router.back();
+              navigateBackOrHome();
             }}
           />
           <Text variant="h2" style={styles.title}>
@@ -163,7 +171,7 @@ export function DriverSwipeRequestsScreen() {
           variant="ghost"
           icon="close"
           onPress={() => {
-            router.back();
+            navigateBackOrHome();
           }}
         />
         <Text variant="h2" style={styles.title}>

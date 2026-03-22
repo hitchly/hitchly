@@ -1,5 +1,9 @@
-import { formatOrdinal, shortenAddress } from "@hitchly/utils";
-import { useMemo } from "react";
+import {
+  formatCityProvince,
+  formatOrdinal,
+  shortenAddress,
+} from "@hitchly/utils";
+import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
@@ -131,6 +135,21 @@ export function useRideTrip(tripId: string) {
   );
 
   const liveDriver = (liveDriverRaw ?? null) as LiveLocationPayload;
+  const [lastKnownDriverLocation, setLastKnownDriverLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const lat = liveDriver?.driverLocation?.latitude;
+    const lng = liveDriver?.driverLocation?.longitude;
+    if (typeof lat === "number" && typeof lng === "number") {
+      setLastKnownDriverLocation({ latitude: lat, longitude: lng });
+    }
+  }, [
+    liveDriver?.driverLocation?.latitude,
+    liveDriver?.driverLocation?.longitude,
+  ]);
 
   const confirmPickupMutation = trpc.trip.confirmRiderPickup.useMutation({
     onSuccess: () => {
@@ -163,6 +182,8 @@ export function useRideTrip(tripId: string) {
   const isOnTrip = effectiveStatus === "on_trip";
   const isCompleted = effectiveStatus === "completed";
   const pickupConfirmed = !!userRequest?.riderPickupConfirmedAt;
+  const preferredDestinationLabel =
+    userRequest?.dropoffLabel ?? shortenAddress(trip?.destination);
 
   const hasDriverLocation = !!liveDriver?.hasLocation;
   const target = liveDriver?.target ?? (isOnTrip ? "dropoff" : "pickup");
@@ -210,7 +231,9 @@ export function useRideTrip(tripId: string) {
           title: "TRIP ACCEPTED",
           message:
             "The driver has accepted your request. We'll notify you once they start the trip.",
-          location: shortenAddress(trip.origin),
+          location: formatCityProvince(trip.origin),
+          pickupLocation:
+            userRequest?.pickupAddress || shortenAddress(trip.origin),
         };
       }
 
@@ -228,7 +251,9 @@ export function useRideTrip(tripId: string) {
       return {
         title: "WAITING FOR PICKUP",
         message,
-        location: shortenAddress(trip.origin),
+        location: formatCityProvince(trip.origin),
+        pickupLocation:
+          userRequest?.pickupAddress || shortenAddress(trip.origin),
       };
     }
 
@@ -237,7 +262,7 @@ export function useRideTrip(tripId: string) {
         return {
           title: "ARRIVING",
           message: "You are arriving at your destination now.",
-          location: shortenAddress(trip.destination),
+          location: preferredDestinationLabel,
         };
       }
 
@@ -247,7 +272,7 @@ export function useRideTrip(tripId: string) {
           message: `Dropping passengers off. You are ${formatOrdinal(
             dropoffOrder
           )} to be dropped off.`,
-          location: shortenAddress(trip.destination),
+          location: preferredDestinationLabel,
         };
       }
 
@@ -260,7 +285,7 @@ export function useRideTrip(tripId: string) {
       return {
         title: "ON THE WAY",
         message: enRouteMessage,
-        location: shortenAddress(trip.destination),
+        location: preferredDestinationLabel,
       };
     }
 
@@ -268,7 +293,7 @@ export function useRideTrip(tripId: string) {
       return {
         title: "TRIP COMPLETED",
         message: "Thank you for riding with Hitchly!",
-        location: shortenAddress(trip.destination),
+        location: preferredDestinationLabel,
       };
     }
 
@@ -284,6 +309,7 @@ export function useRideTrip(tripId: string) {
     hasArrivedAtDropoff,
     targetDistanceLabel,
     targetEtaLabel,
+    preferredDestinationLabel,
   ]);
 
   const liveDriverInfo = useMemo(() => {
@@ -363,8 +389,22 @@ export function useRideTrip(tripId: string) {
     if (!trip) return;
 
     if (isAccepted) {
-      if (trip.originLat && trip.originLng) {
-        void openStopNavigation(trip.originLat, trip.originLng);
+      if (trip.status === "active") return;
+
+      const liveLat = liveDriver?.driverLocation?.latitude;
+      const liveLng = liveDriver?.driverLocation?.longitude;
+      const cachedLat = lastKnownDriverLocation?.latitude;
+      const cachedLng = lastKnownDriverLocation?.longitude;
+      const targetLat = liveLat ?? cachedLat ?? trip.originLat;
+      const targetLng = liveLng ?? cachedLng ?? trip.originLng;
+
+      if (typeof targetLat === "number" && typeof targetLng === "number") {
+        void openStopNavigation(targetLat, targetLng);
+      } else {
+        Alert.alert(
+          "Location unavailable",
+          "We could not find a map location for this ride yet."
+        );
       }
       return;
     }
@@ -374,9 +414,20 @@ export function useRideTrip(tripId: string) {
       const dropoffLng = userRequest.dropoffLng ?? trip.destLng;
       if (dropoffLat && dropoffLng) {
         void openStopNavigation(dropoffLat, dropoffLng);
+      } else {
+        Alert.alert(
+          "Location unavailable",
+          "We could not find your destination location."
+        );
       }
     }
   };
+
+  const mapsDisabledReason =
+    isAccepted && trip?.status === "active"
+      ? "Maps tracking unlocks when the driver starts the trip."
+      : null;
+  const canOpenMaps = !mapsDisabledReason;
 
   return {
     isLoading,
@@ -395,6 +446,8 @@ export function useRideTrip(tripId: string) {
       handleConfirmPickup,
       handleOpenMaps,
       refetchDriverLocation,
+      canOpenMaps,
+      mapsDisabledReason,
     },
   };
 }

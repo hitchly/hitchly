@@ -356,10 +356,12 @@ export const tripRequests = pgTable("trip_requests", {
   // Pickup location coordinates (for route optimization)
   pickupLat: doublePrecision("pickup_lat").notNull(),
   pickupLng: doublePrecision("pickup_lng").notNull(),
+  pickupAddress: text("pickup_address"), // Persistent address string for reliable display
 
   // Dropoff location coordinates (for individual passenger destinations)
   dropoffLat: doublePrecision("dropoff_lat"),
   dropoffLng: doublePrecision("dropoff_lng"),
+  dropoffLabel: text("dropoff_label"),
 
   // Fare estimation parameters (stored at request time for consistent pricing)
   estimatedDistanceKm: doublePrecision("estimated_distance_km"),

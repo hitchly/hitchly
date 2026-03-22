@@ -42,7 +42,7 @@ export function RiderTripCard({
       <View style={styles.cardHeader}>
         <View style={styles.routeContainer}>
           <Text variant="bodySemibold" numberOfLines={1}>
-            {formatLocation(trip.origin)}
+            {formatLocation(userRequest?.pickupAddress || trip.origin)}
           </Text>
           <Text
             variant="body"

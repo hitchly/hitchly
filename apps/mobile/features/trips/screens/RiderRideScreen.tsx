@@ -159,13 +159,36 @@ export function RiderRideScreen() {
             <Text variant="h1" style={styles.statusMessage}>
               {statusInfo.message}
             </Text>
-            <Text
-              variant="body"
-              color={colors.textSecondary}
-              style={styles.location}
-            >
-              Driver Start Location: {statusInfo.location}
-            </Text>
+            {isAccepted && !isOnTrip && (
+              <>
+                {statusInfo.pickupLocation && (
+                  <Text
+                    variant="bodySemibold"
+                    color={colors.text}
+                    style={styles.pickupLocation}
+                  >
+                    Your Pickup Point: {statusInfo.pickupLocation}
+                  </Text>
+                )}
+                <Text
+                  variant="body"
+                  color={colors.textSecondary}
+                  style={styles.location}
+                >
+                  Driver Start Location: {statusInfo.location}
+                </Text>
+              </>
+            )}
+
+            {isOnTrip && (
+              <Text
+                variant="body"
+                color={colors.textSecondary}
+                style={styles.location}
+              >
+                Your Destination: {statusInfo.location}
+              </Text>
+            )}
 
             {liveDriverInfo && (isAccepted || isOnTrip) && (
               <View
@@ -287,9 +310,20 @@ export function RiderRideScreen() {
                   variant="secondary"
                   icon="navigate-outline"
                   onPress={actions.handleOpenMaps}
+                  disabled={!actions.canOpenMaps}
                   size="lg"
                   style={styles.fullWidth}
                 />
+                {!actions.canOpenMaps && actions.mapsDisabledReason && (
+                  <Button
+                    title={actions.mapsDisabledReason.toUpperCase()}
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    style={styles.mapsHelperBtn}
+                    textStyle={{ color: colors.textSecondary, fontSize: 12 }}
+                  />
+                )}
 
                 {isAccepted && !pickupConfirmed && (
                   <Button
@@ -428,10 +462,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   statusMessage: { fontSize: 28, marginBottom: 8, lineHeight: 32 },
+  pickupLocation: { marginBottom: 4, fontSize: 16 },
   location: { marginBottom: 32, fontSize: 16 },
   mainAction: { marginBottom: 12 },
   cardActions: { gap: 12 },
   fullWidth: { width: "100%" },
+  mapsHelperBtn: { marginTop: -2, opacity: 0.9 },
   manualPickupBtn: { marginTop: 4, alignSelf: "center" },
   confirmedBanner: {
     flexDirection: "row",

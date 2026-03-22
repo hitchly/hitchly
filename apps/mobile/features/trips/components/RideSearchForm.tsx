@@ -1,5 +1,15 @@
-import { useMemo } from "react";
-import { ScrollView, StyleSheet, Switch, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import { MCMASTER_DROPOFF_OPTIONS } from "@hitchly/utils";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -25,6 +35,8 @@ interface RideSearchFormProps {
   isTestUser: boolean;
   includeDummyMatches: boolean;
   setIncludeDummyMatches: (val: boolean) => void;
+  selectedDropoffId: string | null;
+  setSelectedDropoffId: (id: string | null) => void;
   onSearch: () => void;
 }
 
@@ -39,9 +51,27 @@ export function RideSearchForm({
   isTestUser,
   includeDummyMatches,
   setIncludeDummyMatches,
+  selectedDropoffId,
+  setSelectedDropoffId,
   onSearch,
 }: RideSearchFormProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [dropoffModalOpen, setDropoffModalOpen] = useState(false);
+
+  const dropoffDisplayLabel = useMemo(() => {
+    if (!selectedDropoffId) return "No preference";
+    return (
+      MCMASTER_DROPOFF_OPTIONS.find((o) => o.id === selectedDropoffId)?.label ??
+      "No preference"
+    );
+  }, [selectedDropoffId]);
+
+  useEffect(() => {
+    if (direction !== "toMcmaster") {
+      setDropoffModalOpen(false);
+    }
+  }, [direction]);
 
   const combinedDateTime = useMemo(() => {
     const base = desiredDate ? new Date(desiredDate) : new Date();
@@ -125,18 +155,45 @@ export function RideSearchForm({
               </View>
             </View>
           </View>
-        </Card>
-      </FormSection>
 
-      <FormSection title="LOGISTICS">
-        <Card style={styles.routeCard}>
-          <DateTimePicker
-            label="DATE & TIME"
-            value={combinedDateTime}
-            onChange={setCombinedDateTime}
-            minimumDate={new Date()}
-            mode="datetime"
-          />
+          {direction === "toMcmaster" && (
+            <View style={styles.dropoffBlock}>
+              <Text variant="caption" color={colors.textTertiary}>
+                Specified Location (optional)
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setDropoffModalOpen(true);
+                }}
+                style={[
+                  styles.dropoffSelect,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+              >
+                <Text variant="body" numberOfLines={1} style={styles.flexOne}>
+                  {dropoffDisplayLabel}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
+            </View>
+          )}
+
+          <View style={styles.dateTimeSection}>
+            <DateTimePicker
+              label="DATE & TIME"
+              value={combinedDateTime}
+              onChange={setCombinedDateTime}
+              minimumDate={new Date()}
+              mode="datetime"
+            />
+          </View>
           <Button
             title="SEARCH FOR RIDES"
             onPress={onSearch}
@@ -145,6 +202,101 @@ export function RideSearchForm({
           />
         </Card>
       </FormSection>
+
+      <Modal
+        visible={dropoffModalOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => {
+          setDropoffModalOpen(false);
+        }}
+      >
+        <View style={styles.modalRoot}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => {
+              setDropoffModalOpen(false);
+            }}
+          />
+          <View
+            style={[
+              styles.modalSheet,
+              {
+                backgroundColor: colors.background,
+                paddingBottom: Math.max(insets.bottom, 16),
+              },
+            ]}
+          >
+            <Text variant="bodySemibold" style={styles.modalTitle}>
+              Campus drop-off
+            </Text>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Pressable
+                onPress={() => {
+                  setSelectedDropoffId(null);
+                  setDropoffModalOpen(false);
+                }}
+                style={[
+                  styles.modalRow,
+                  {
+                    borderBottomColor: colors.border,
+                    backgroundColor:
+                      selectedDropoffId === null
+                        ? colors.border + "40"
+                        : "transparent",
+                  },
+                ]}
+              >
+                <Text variant="body">No preference</Text>
+                {selectedDropoffId === null ? (
+                  <Ionicons name="checkmark" size={22} color={colors.text} />
+                ) : null}
+              </Pressable>
+              {MCMASTER_DROPOFF_OPTIONS.map((option) => {
+                const selected = selectedDropoffId === option.id;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setSelectedDropoffId(option.id);
+                      setDropoffModalOpen(false);
+                    }}
+                    style={[
+                      styles.modalRow,
+                      {
+                        borderBottomColor: colors.border,
+                        backgroundColor: selected
+                          ? colors.border + "40"
+                          : "transparent",
+                      },
+                    ]}
+                  >
+                    <Text variant="body">{option.label}</Text>
+                    {selected ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={22}
+                        color={colors.text}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Button
+              title="Done"
+              variant="secondary"
+              onPress={() => {
+                setDropoffModalOpen(false);
+              }}
+              style={styles.modalDoneBtn}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {isTestUser && (
         <FormSection title="DEVELOPER OPTIONS">
@@ -186,6 +338,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
+  dropoffBlock: { marginTop: 20, marginBottom: 4, gap: 6 },
+  dropoffSelect: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  flexOne: { flex: 1 },
+  /** Breathing room after FROM/TO (and optional drop-off) before scheduling */
+  dateTimeSection: { marginTop: 20 },
   searchBtn: { marginTop: 16 },
   searchBtnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
+  modalRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    maxHeight: "72%",
+  },
+  modalTitle: { marginBottom: 8 },
+  modalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  modalDoneBtn: { marginTop: 12 },
 });
