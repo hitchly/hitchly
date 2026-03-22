@@ -30,7 +30,8 @@
     "shims": true,
     "clean": true,
     "platform": "node",
-    "treeshake": true,
+    "bundle": true,
+    "skipNodeModulesBundle": true,
     "noExternal": [
       "@hitchly/db",
       "@hitchly/emails"
