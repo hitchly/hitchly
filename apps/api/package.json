@@ -27,13 +27,10 @@
     "format": [
       "esm"
     ],
+    "shims": true,
     "clean": true,
     "platform": "node",
-    "external": [
-      "pg",
-      "drizzle-orm",
-      "dotenv"
-    ],
+    "treeshake": true,
     "noExternal": [
       "@hitchly/db",
       "@hitchly/emails"
