@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "esbuild server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
+    "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest",
