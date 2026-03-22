@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsup server.ts --format esm --clean --no-external @hitchly/db --no-external @hitchly/emails",
+    "build": "tsup",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "lint": "eslint . --max-warnings 0",
@@ -19,6 +19,19 @@
     "seed:test": "tsx scripts/seed-test-data.ts",
     "verify:dev": "tsx scripts/verify-dev-accounts.ts",
     "migrate:rides-to-trips": "tsx scripts/migrate-rides-to-trips.ts"
+  },
+  "tsup": {
+    "entry": [
+      "server.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "clean": true,
+    "noExternal": [
+      "@hitchly/db",
+      "@hitchly/emails"
+    ]
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.10",
