@@ -10,6 +10,7 @@ import {
   trips,
   users,
 } from "@hitchly/db/schema";
+import { MCMASTER_DROPOFF_OPTIONS } from "@hitchly/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -383,8 +384,10 @@ export const tripRouter = router({
               riderId: tripRequests.riderId,
               pickupLat: tripRequests.pickupLat,
               pickupLng: tripRequests.pickupLng,
+              pickupAddress: tripRequests.pickupAddress,
               dropoffLat: tripRequests.dropoffLat,
               dropoffLng: tripRequests.dropoffLng,
+              dropoffLabel: tripRequests.dropoffLabel,
               status: tripRequests.status,
               createdAt: tripRequests.createdAt,
               updatedAt: tripRequests.updatedAt,
@@ -403,8 +406,10 @@ export const tripRouter = router({
             riderId: req.riderId,
             pickupLat: req.pickupLat,
             pickupLng: req.pickupLng,
+            pickupAddress: req.pickupAddress,
             dropoffLat: req.dropoffLat,
             dropoffLng: req.dropoffLng,
+            dropoffLabel: req.dropoffLabel,
             status: req.status,
             createdAt: req.createdAt,
             updatedAt: req.updatedAt,
@@ -1219,6 +1224,12 @@ export const tripRouter = router({
         tripId: z.string(),
         pickupLat: z.number(),
         pickupLng: z.number(),
+        pickupAddress: z.string().optional(),
+        dropoffLat: z.number().optional(),
+        dropoffLng: z.number().optional(),
+        dropoffLabel: z.string().optional(),
+        /** When set, server resolves canonical campus coordinates from @hitchly/utils */
+        dropoffOptionId: z.string().optional(),
         // Fare estimation parameters from matchmaking (for consistent pricing)
         estimatedDistanceKm: z.number().optional(),
         estimatedDurationSec: z.number().optional(),
@@ -1306,6 +1317,53 @@ export const tripRouter = router({
         }
       }
 
+      let dropoffLat = input.dropoffLat;
+      let dropoffLng = input.dropoffLng;
+      let dropoffLabel = input.dropoffLabel;
+
+      if (input.dropoffOptionId) {
+        const option = MCMASTER_DROPOFF_OPTIONS.find(
+          (o) => o.id === input.dropoffOptionId
+        );
+        if (!option) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid McMaster drop-off option",
+          });
+        }
+        dropoffLat = option.lat;
+        dropoffLng = option.lng;
+        dropoffLabel = option.label;
+      } else if (
+        dropoffLat !== undefined &&
+        dropoffLng !== undefined &&
+        dropoffLabel?.trim()
+      ) {
+        const normalized = dropoffLabel.trim().toLowerCase();
+        const byLabel = MCMASTER_DROPOFF_OPTIONS.find(
+          (option) => option.label.trim().toLowerCase() === normalized
+        );
+        if (byLabel) {
+          // Known campus spot: always persist canonical coords from the server
+          // package (avoids client/API coordinate drift and float rounding).
+          dropoffLat = byLabel.lat;
+          dropoffLng = byLabel.lng;
+          dropoffLabel = byLabel.label;
+        }
+        // Else: generic destination (e.g. "McMaster University") — keep client values
+      }
+
+      if (
+        (dropoffLat !== undefined && dropoffLng === undefined) ||
+        (dropoffLat === undefined && dropoffLng !== undefined)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Drop-off coordinates must include both latitude and longitude",
+        });
+      }
+
       // Create trip request with pickup coordinates and fare estimation
       const requestId = crypto.randomUUID();
       const [request] = await ctx.db
@@ -1316,6 +1374,10 @@ export const tripRouter = router({
           riderId,
           pickupLat: input.pickupLat,
           pickupLng: input.pickupLng,
+          pickupAddress: input.pickupAddress,
+          dropoffLat,
+          dropoffLng,
+          dropoffLabel,
           // Store fare estimation parameters for consistent pricing
           estimatedDistanceKm: input.estimatedDistanceKm,
           estimatedDurationSec: input.estimatedDurationSec,
@@ -1390,6 +1452,12 @@ export const tripRouter = router({
             id: tripRequests.id,
             tripId: tripRequests.tripId,
             riderId: tripRequests.riderId,
+            pickupLat: tripRequests.pickupLat,
+            pickupLng: tripRequests.pickupLng,
+            pickupAddress: tripRequests.pickupAddress,
+            dropoffLat: tripRequests.dropoffLat,
+            dropoffLng: tripRequests.dropoffLng,
+            dropoffLabel: tripRequests.dropoffLabel,
             status: tripRequests.status,
             createdAt: tripRequests.createdAt,
             updatedAt: tripRequests.updatedAt,
@@ -1409,6 +1477,12 @@ export const tripRouter = router({
             id: tripRequests.id,
             tripId: tripRequests.tripId,
             riderId: tripRequests.riderId,
+            pickupLat: tripRequests.pickupLat,
+            pickupLng: tripRequests.pickupLng,
+            pickupAddress: tripRequests.pickupAddress,
+            dropoffLat: tripRequests.dropoffLat,
+            dropoffLng: tripRequests.dropoffLng,
+            dropoffLabel: tripRequests.dropoffLabel,
             status: tripRequests.status,
             createdAt: tripRequests.createdAt,
             updatedAt: tripRequests.updatedAt,

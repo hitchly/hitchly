@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { shortenAddress } from "@hitchly/utils";
+import * as Location from "expo-location";
 import { type Href } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -15,6 +17,16 @@ import { useTheme } from "@/context/theme-context";
 import { useDriverTripDetails } from "@/features/trips/hooks/useDriverTripDetails";
 
 const formatLocation = (loc: string) => shortenAddress(loc);
+const formatAddressFromGeocode = (
+  place: Location.LocationGeocodedAddress | null
+) =>
+  [
+    place?.name && place.name !== place.street ? place.name : null,
+    place?.street ?? null,
+    place?.city ?? null,
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(", ");
 
 export function DriverTripDetailsScreen() {
   const { colors } = useTheme();
@@ -30,6 +42,66 @@ export function DriverTripDetailsScreen() {
     handleCancel,
     router,
   } = useDriverTripDetails();
+
+  const [pickupAddressByRequestId, setPickupAddressByRequestId] = useState<
+    Record<string, string>
+  >({});
+
+  const routePickupRequests = useMemo(
+    () =>
+      (trip?.requests ?? []).filter((request) =>
+        ["pending", "accepted", "on_trip", "completed"].includes(request.status)
+      ),
+    [trip?.requests]
+  );
+
+  useEffect(() => {
+    let active = true;
+    const requestsWithCoords = routePickupRequests.filter(
+      (
+        request
+      ): request is typeof request & {
+        pickupLat: number;
+        pickupLng: number;
+      } =>
+        typeof request.pickupLat === "number" &&
+        typeof request.pickupLng === "number"
+    );
+
+    if (requestsWithCoords.length === 0) {
+      setPickupAddressByRequestId({});
+      return () => {
+        active = false;
+      };
+    }
+
+    void (async () => {
+      const entries = await Promise.all(
+        requestsWithCoords.map(async (request) => {
+          try {
+            const [place] = await Location.reverseGeocodeAsync({
+              latitude: request.pickupLat,
+              longitude: request.pickupLng,
+            });
+            const address = formatAddressFromGeocode(place ?? null);
+            const line = address !== "" ? address : "Pickup location";
+            return [request.id, line] as const;
+          } catch {
+            return [request.id, "Pickup location"] as const;
+          }
+        })
+      );
+
+      // `active` can be false if the effect cleaned up while geocoding was in flight
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- stale async guard
+      if (!active) return;
+      setPickupAddressByRequestId(Object.fromEntries(entries));
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [routePickupRequests]);
 
   if (isLoading) return <Skeleton text="LOADING TRIP DETAILS..." />;
 
@@ -64,6 +136,64 @@ export function DriverTripDetailsScreen() {
     (r) => r.status === "pending"
   ).length;
 
+  const routeStops =
+    routePickupRequests.length > 0
+      ? [
+          ...routePickupRequests.map((request, index) => {
+            const riderNameUpper = request.rider?.name
+              ? request.rider.name.toUpperCase()
+              : null;
+            const pickupLabel = riderNameUpper
+              ? `${riderNameUpper} PICKUP`
+              : `PICKUP ${String(index + 1)}`;
+            return {
+              key: request.id,
+              label: pickupLabel,
+              value:
+                request.pickupAddress ??
+                pickupAddressByRequestId[request.id] ??
+                "Pickup location",
+            };
+          }),
+          {
+            key: "dropoff",
+            label: "DROP-OFF",
+            value: formatLocation(trip.destination),
+          },
+          ...routePickupRequests
+            .map((request, index) => {
+              const preferred = request.dropoffLabel?.trim();
+              if (!preferred) return null;
+              const riderNameUpper = request.rider?.name
+                ? request.rider.name.toUpperCase()
+                : null;
+              const prefLabel = riderNameUpper
+                ? `${riderNameUpper} — PREFERRED DROP-OFF`
+                : `RIDER ${String(index + 1)} — PREFERRED DROP-OFF`;
+              return {
+                key: `${request.id}-preferred-dropoff`,
+                label: prefLabel,
+                value: preferred,
+              };
+            })
+            .filter(
+              (stop): stop is { key: string; label: string; value: string } =>
+                stop !== null
+            ),
+        ]
+      : [
+          {
+            key: "driver-origin",
+            label: "PICKUP",
+            value: formatLocation(trip.origin),
+          },
+          {
+            key: "dropoff",
+            label: "DROP-OFF",
+            value: formatLocation(trip.destination),
+          },
+        ];
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -82,38 +212,47 @@ export function DriverTripDetailsScreen() {
 
         <FormSection title="ROUTE">
           <Card style={styles.cardPadding}>
-            <View style={styles.routeRow}>
-              <View style={styles.timeline}>
-                <View style={[styles.dot, { backgroundColor: colors.text }]} />
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
-                <View
-                  style={[
-                    styles.dot,
-                    styles.dotOutline,
-                    { borderColor: colors.border },
-                  ]}
-                />
-              </View>
-              <View style={styles.locationContainer}>
-                <View style={styles.locationItem}>
-                  <Text variant="label" color={colors.textSecondary}>
-                    PICKUP
-                  </Text>
-                  <Text variant="bodySemibold">
-                    {formatLocation(trip.origin)}
-                  </Text>
-                </View>
-                <View style={styles.locationItem}>
-                  <Text variant="label" color={colors.textSecondary}>
-                    DROP-OFF
-                  </Text>
-                  <Text variant="bodySemibold">
-                    {formatLocation(trip.destination)}
-                  </Text>
-                </View>
-              </View>
+            <View style={styles.routeStopsList}>
+              {routeStops.map((stop, index) => {
+                const isLast = index === routeStops.length - 1;
+                return (
+                  <View
+                    key={stop.key}
+                    style={[
+                      styles.routeStopRow,
+                      isLast && styles.routeStopRowLast,
+                    ]}
+                  >
+                    <View style={styles.routeStopGutter}>
+                      <View
+                        style={[
+                          styles.routeDot,
+                          isLast
+                            ? [
+                                styles.routeDotOutline,
+                                { borderColor: colors.textSecondary },
+                              ]
+                            : { backgroundColor: colors.text },
+                        ]}
+                      />
+                      {!isLast ? (
+                        <View
+                          style={[
+                            styles.routeConnector,
+                            { backgroundColor: colors.border },
+                          ]}
+                        />
+                      ) : null}
+                    </View>
+                    <View style={styles.routeStopText}>
+                      <Text variant="label" color={colors.textSecondary}>
+                        {stop.label}
+                      </Text>
+                      <Text variant="bodySemibold">{stop.value}</Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           </Card>
         </FormSection>
@@ -401,14 +540,42 @@ const styles = StyleSheet.create({
   cardPadding: { padding: 20 },
   noPaddingCard: { padding: 0, overflow: "hidden" },
 
-  // Route Visualization
-  routeRow: { flexDirection: "row", gap: 20 },
-  timeline: { alignItems: "center", width: 12, paddingVertical: 4 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  dotOutline: { backgroundColor: "transparent", borderWidth: 1.5 },
-  line: { width: 1, flex: 1, marginVertical: 4 },
-  locationContainer: { flex: 1, gap: 24 },
-  locationItem: { gap: 4 },
+  // Route: one row per stop so dots align with that row’s text
+  routeStopsList: { gap: 0 },
+  routeStopRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 14,
+    paddingBottom: 18,
+  },
+  routeStopRowLast: {
+    paddingBottom: 0,
+  },
+  routeStopGutter: {
+    width: 14,
+    alignItems: "center",
+  },
+  routeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 3,
+  },
+  routeDotOutline: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+  },
+  routeConnector: {
+    width: 1,
+    flex: 1,
+    marginTop: 6,
+    minHeight: 12,
+  },
+  routeStopText: {
+    flex: 1,
+    gap: 4,
+    paddingRight: 4,
+  },
 
   // List Rows
   detailItem: { padding: 16, gap: 4 },
