@@ -31,7 +31,8 @@
     "platform": "node",
     "external": [
       "pg",
-      "drizzle-orm"
+      "drizzle-orm",
+      "dotenv"
     ],
     "noExternal": [
       "@hitchly/db",
