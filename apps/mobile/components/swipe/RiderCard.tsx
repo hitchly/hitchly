@@ -8,6 +8,8 @@ export interface TripRequestWithDetails {
   id: string;
   tripId: string;
   riderId: string;
+  pickupAddress?: string | null;
+  dropoffLabel?: string | null;
   status: "pending" | "accepted" | "rejected" | "cancelled";
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -116,13 +118,13 @@ export function RiderCard({ request }: RiderCardProps) {
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {request.trip.origin}
+            {request.pickupAddress ?? request.trip.origin}
           </Text>
           <Text
             style={[styles.routeText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {request.trip.destination}
+            {request.dropoffLabel ?? request.trip.destination}
           </Text>
         </View>
       </View>

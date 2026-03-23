@@ -100,6 +100,8 @@ export function RiderHomeScreen() {
           setDesiredArrivalTime={formState.setDesiredArrivalTime}
           includeDummyMatches={formState.includeDummyMatches}
           setIncludeDummyMatches={formState.setIncludeDummyMatches}
+          selectedDropoffId={formState.selectedDropoffId}
+          setSelectedDropoffId={formState.setSelectedDropoffId}
           onSearch={() => {
             setHasSearched(true);
           }}
@@ -194,6 +196,7 @@ export function RiderHomeScreen() {
               <TripCard
                 match={match}
                 showArrival={formState.direction === "toMcmaster"}
+                pickupLabel={searchParams.origin.address}
                 destinationLabel={
                   formState.direction === "toMcmaster"
                     ? "McMaster University"

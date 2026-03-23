@@ -180,6 +180,9 @@ importers:
       '@hitchly/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@hitchly/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@hono/node-server':
         specifier: ^1.19.9
         version: 1.19.11(hono@4.12.8)

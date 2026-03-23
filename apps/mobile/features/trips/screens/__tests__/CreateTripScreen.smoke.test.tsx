@@ -70,9 +70,6 @@ vi.mock("@/components/ui/IconBox", () => ({
   IconBox: () => <div />,
 }));
 
-vi.mock("@/components/form/ControlledLocationInput", () => ({
-  ControlledLocationInput: () => <div />,
-}));
 vi.mock("@/components/form/ControlledDateTimePicker", () => ({
   ControlledDateTimePicker: () => <div />,
 }));
@@ -88,6 +85,12 @@ vi.mock("react-hook-form", async () => {
   return {
     ...actual,
     FormProvider: ({ children }: any) => <div>{children}</div>,
+    useWatch: ({ name }: { name?: string }) => {
+      if (name === "origin") return "Home St";
+      if (name === "destination")
+        return "McMaster University, 1280 Main St W, Hamilton, ON";
+      return "";
+    },
     Controller: ({ name, render }: any) => {
       const value =
         name === "daysOfWeek" ? [] : name === "isRecurring" ? false : undefined;
