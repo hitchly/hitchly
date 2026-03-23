@@ -168,6 +168,11 @@ app.post("/stripe/webhook", async (c: Context) => {
           message
         );
       }
+    } else {
+      // eslint-disable-next-line no-console
+      console.log(
+        "⚠️ Webhook received, but no userId found in metadata. Did you use 'stripe trigger'?"
+      );
     }
   }
 
