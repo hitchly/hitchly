@@ -10,6 +10,10 @@ const pool = new Pool({
   password:
     process.env.DB_PASSWORD != null ? String(process.env.DB_PASSWORD) : "",
   database: process.env.DB_NAME,
+  ssl:
+    process.env.NODE_ENV === "production" || process.env.PGSSLMODE === "require"
+      ? { rejectUnauthorized: false }
+      : undefined,
 });
 
 export const db = drizzle(pool, { schema });
