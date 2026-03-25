@@ -21,6 +21,9 @@ export const DriverVerificationGuard = ({
   const { mutateAsync: createSession, isPending } =
     trpc.identity.createVerificationSession.useMutation();
 
+  const { mutateAsync: checkVerificationSession } =
+    trpc.identity.checkVerificationSession.useMutation();
+
   const { mutateAsync: bypassVerification, isPending: isBypassing } =
     trpc.identity.bypassDriverVerificationForTesting.useMutation();
 
@@ -33,11 +36,31 @@ export const DriverVerificationGuard = ({
 
   const handleVerifyPress = async () => {
     try {
-      const { url } = await createSession();
+      const { url, sessionId } = await createSession();
 
       if (url) {
         await WebBrowser.openBrowserAsync(url);
 
+        // Poll for verification status a few times after returning
+        for (let i = 0; i < 5; i++) {
+          // Wait a moment before checking
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          const result = await checkVerificationSession({ sessionId });
+
+          if (result.verified) {
+            void refetch();
+            return;
+          }
+
+          // If verification failed for a known reason, show it
+          if ("reason" in result && result.reason) {
+            Alert.alert("Verification Failed", result.reason);
+            return;
+          }
+        }
+
+        // If we've exhausted retries, just refetch anyway
         void refetch();
       }
     } catch {
