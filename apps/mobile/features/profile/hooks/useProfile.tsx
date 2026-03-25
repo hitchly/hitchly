@@ -18,7 +18,7 @@ export function useProfile() {
   );
 
   const isDriver = ["driver", "both"].includes(
-    userRecord?.profile.appRole ?? ""
+    userRecord?.profile.appRole ?? "rider"
   );
 
   const { data: earnings } = trpc.profile.getDriverEarnings.useQuery(

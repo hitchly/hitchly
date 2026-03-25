@@ -85,7 +85,9 @@ export function useRideMatchmaking() {
   }, [swipedCardIds]);
 
   const searchParams = useMemo<RideSearchParams | null>(() => {
-    if (!userProfile?.profile.defaultLat || !userProfile.profile.defaultLong)
+    if (!userProfile) return null;
+
+    if (!userProfile.profile.defaultLat || !userProfile.profile.defaultLong)
       return null;
 
     const homePoint = {
