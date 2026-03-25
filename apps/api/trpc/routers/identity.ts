@@ -3,6 +3,7 @@ import { users } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
+import { z } from "zod";
 
 import { protectedProcedure, router } from "../trpc";
 
@@ -28,6 +29,7 @@ export const identityRouter = router({
 
       return {
         url: session.url,
+        sessionId: session.id,
       };
     } catch {
       throw new TRPCError({
@@ -36,6 +38,47 @@ export const identityRouter = router({
       });
     }
   }),
+
+  checkVerificationSession: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const session = await stripe.identity.verificationSessions.retrieve(
+          input.sessionId,
+          { expand: ["verified_outputs"] }
+        );
+
+        if (session.status === "verified") {
+          const state = session.verified_outputs?.address?.state;
+          const stateOrProvince = state ? state.toLowerCase() : "unknown";
+
+          const isDevelopment = process.env.NODE_ENV !== "production";
+          const isOntario =
+            stateOrProvince === "on" || stateOrProvince === "ontario";
+
+          if (isOntario || isDevelopment) {
+            await db
+              .update(users)
+              .set({ isVerifiedDriver: true })
+              .where(eq(users.id, ctx.userId));
+
+            return { verified: true };
+          }
+
+          return {
+            verified: false,
+            reason: "License is not from Ontario.",
+          };
+        }
+
+        return { verified: false, status: session.status };
+      } catch {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to check verification status.",
+        });
+      }
+    }),
 
   bypassDriverVerificationForTesting: protectedProcedure.mutation(
     async ({ ctx }) => {
