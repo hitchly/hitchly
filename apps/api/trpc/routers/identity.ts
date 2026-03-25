@@ -15,6 +15,11 @@ if (!STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
+// Check if we're using Stripe in test mode
+const isStripeTestMode = () => {
+  return STRIPE_SECRET_KEY.startsWith("sk_test_");
+};
+
 export const identityRouter = router({
   createVerificationSession: protectedProcedure.mutation(async ({ ctx }) => {
     try {
@@ -52,11 +57,10 @@ export const identityRouter = router({
           const state = session.verified_outputs?.address?.state;
           const stateOrProvince = state ? state.toLowerCase() : "unknown";
 
-          const isDevelopment = process.env.NODE_ENV !== "production";
           const isOntario =
             stateOrProvince === "on" || stateOrProvince === "ontario";
 
-          if (isOntario || isDevelopment) {
+          if (isOntario || isStripeTestMode()) {
             await db
               .update(users)
               .set({ isVerifiedDriver: true })
@@ -82,7 +86,7 @@ export const identityRouter = router({
 
   bypassDriverVerificationForTesting: protectedProcedure.mutation(
     async ({ ctx }) => {
-      if (process.env.NODE_ENV === "production") {
+      if (!isStripeTestMode()) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Not available in production.",

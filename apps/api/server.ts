@@ -85,6 +85,11 @@ app.post("/stripe/webhook", async (c: Context) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const rawBody = await c.req.text();
 
+  // Check if we're using Stripe in test mode
+  const isStripeTestMode = () => {
+    return stripeSecretKey.startsWith("sk_test_");
+  };
+
   let event: Stripe.Event;
 
   try {
@@ -140,12 +145,10 @@ app.post("/stripe/webhook", async (c: Context) => {
         const state = session.verified_outputs?.address?.state;
         const stateOrProvince = state ? state.toLowerCase() : "unknown";
 
-        // Bypass strict province check in development mode
-        const isDevelopment = process.env.NODE_ENV !== "production";
         const isOntario =
           stateOrProvince === "on" || stateOrProvince === "ontario";
 
-        if (isOntario || isDevelopment) {
+        if (isOntario || isStripeTestMode()) {
           // eslint-disable-next-line no-console
           console.log(`✅ Driver verification complete for user ${userId}`);
 
