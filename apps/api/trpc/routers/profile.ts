@@ -42,6 +42,31 @@ export const profileRouter = router({
       });
     }
 
+    // Auto-create profile if it doesn't exist (handles manual email verification bypass, etc.)
+    // TypeScript can't infer that profile can be null, so we check at runtime
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!userRecord.profile) {
+      await ctx.db.insert(profiles).values({
+        userId: ctx.userId,
+        appRole: "rider",
+        universityRole: "student",
+      });
+
+      // Refetch to get the newly created profile
+      const updatedUser = await ctx.db.query.users.findFirst({
+        where: eq(users.id, ctx.userId),
+        with: {
+          profile: true,
+          preferences: true,
+          vehicle: true,
+        },
+      });
+
+      if (updatedUser) {
+        return updatedUser;
+      }
+    }
+
     return userRecord;
   }),
 
