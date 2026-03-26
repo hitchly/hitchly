@@ -296,12 +296,7 @@ export function useDriveTrip(tripId: string) {
               { tripId, requestId: currentStop.requestId, action },
               {
                 onSuccess: () => {
-                  if (action === "dropoff") {
-                    Alert.alert(
-                      "Payment (Placeholder)",
-                      `Transaction will complete now and ${currentStop.passengerName} will be charged.`
-                    );
-                  }
+                  void 0;
                 },
               }
             );

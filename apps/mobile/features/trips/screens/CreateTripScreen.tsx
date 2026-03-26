@@ -17,6 +17,7 @@ import { useTheme } from "@/context/theme-context";
 import {
   useCreateTrip,
   type CreateTripFormData,
+  type CreateTripFormInput,
 } from "@/features/trips/hooks/useCreateTrip";
 
 function homeLineOrPlaceholder(defaultAddress: string): string {
@@ -105,7 +106,11 @@ export function CreateTripScreen() {
     onSubmit,
   } = useCreateTrip();
 
-  const isRecurring = methods.watch("isRecurring");
+  const isRecurring =
+    useWatch<CreateTripFormInput>({
+      control: methods.control,
+      name: "isRecurring",
+    }) ?? false;
 
   return (
     <ModalSheet
