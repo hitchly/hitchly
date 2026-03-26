@@ -3,7 +3,7 @@ import { getOtpHtml } from "./templates/otp";
 
 export class EmailClient {
   private apiKey: string;
-  private fromEmail = "hitchly.testing@gmail.com";
+  private fromEmail = "hitchly.payments@gmail.com";
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
