@@ -7,6 +7,7 @@ import { admin, emailOTP } from "better-auth/plugins";
 import { emailClient } from "../lib/email";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   plugins: [
     expo(),
     admin(),
@@ -33,11 +34,17 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: ["null", "exp://", "hitchly://", "http://localhost:3000"],
+  trustedOrigins: [
+    "null",
+    "exp://",
+    "hitchly://",
+    "http://localhost:3000",
+    "https://hitchly.onrender.com",
+  ],
 
   advanced: {
     defaultCookieAttributes: {
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     },
   },

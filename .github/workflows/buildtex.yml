@@ -2,10 +2,10 @@ name: buildtex
 
 on:
   push:
-    branches: main
+    branches: [main]
     paths: [docs/**]
   pull_request:
-    branches: main
+    branches: [main]
     paths: [docs/**]
 
 concurrency:
@@ -52,7 +52,7 @@ jobs:
       - name: Commit and push PDFs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: 'Add/Update PDF${{ env.PLURAL_S }} for changed LaTeX file${{ env.PLURAL_S }}: ${{ env.CHANGED_FILENAMES }}'
-          file_pattern: 'docs/*.pdf'
+          commit_message: "Add/Update PDF${{ env.PLURAL_S }} for changed LaTeX file${{ env.PLURAL_S }}: ${{ env.CHANGED_FILENAMES }}"
+          file_pattern: "docs/*.pdf"
           # No branch specified - pushes to current branch (PR branch for PRs, main for direct pushes)
           # PDFs in PR branches will be included when PR is merged to main

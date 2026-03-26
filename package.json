@@ -2,7 +2,7 @@
   "name": "hitchly",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@10.33.0",
   "type": "module",
   "scripts": {
     "build": "turbo run build",
@@ -18,9 +18,9 @@
     "ios": "pnpm --filter @hitchly/mobile ios"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@hitchly/eslint-config": "workspace:*",
     "@hitchly/tsconfig": "workspace:*",
-    "@eslint/js": "^9.39.1",
     "@types/react": "~19.1.10",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
