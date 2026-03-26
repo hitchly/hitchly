@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { expo } from "@better-auth/expo";
 import { db } from "@hitchly/db/client";
 import { betterAuth } from "better-auth";
@@ -13,7 +14,14 @@ export const auth = betterAuth({
     admin(),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        await emailClient.sendOtp(email, otp);
+        console.log(`[AUTH] Sending OTP to ${email}...`);
+        try {
+          await emailClient.sendOtp(email, otp);
+          console.log(`[AUTH] OTP sent to ${email}`);
+        } catch (error) {
+          console.error("[AUTH] OTP FAILED:", error);
+          throw error;
+        }
       },
       sendVerificationOnSignUp: true,
     }),
