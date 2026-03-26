@@ -10,7 +10,6 @@ import {
   trips,
   users,
 } from "@hitchly/db/schema";
-import { MCMASTER_DROPOFF_OPTIONS } from "@hitchly/utils";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -30,6 +29,43 @@ import {
   updatePaymentHold,
 } from "../../services/payment";
 import { protectedProcedure, router } from "../trpc";
+
+type CampusDropoffOption = {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+};
+
+const MCMASTER_DROPOFF_OPTIONS: CampusDropoffOption[] = [
+  {
+    id: "thode-library",
+    label: "Thode Library",
+    lat: 43.2611011,
+    lng: -79.9225905,
+  },
+  { id: "musc", label: "MUSC", lat: 43.26347, lng: -79.91781 },
+  { id: "dbac", label: "DBAC", lat: 43.2652879, lng: -79.9158237 },
+  {
+    id: "mills-library",
+    label: "Mills Library",
+    lat: 43.26276,
+    lng: -79.91764,
+  },
+  {
+    id: "etb",
+    label: "ETB (Engineering Technology Building)",
+    lat: 43.25853,
+    lng: -79.92003,
+  },
+  { id: "mdcl", label: "MDCL", lat: 43.26107, lng: -79.91686 },
+  {
+    id: "pgcll",
+    label: "PGCLL (Peter George Centre for Living and Learning)",
+    lat: 43.2654,
+    lng: -79.9182642,
+  },
+];
 
 const buildDepartureTimeForDay = (day: Date, departureMinutes: number) => {
   const hours = Math.floor(departureMinutes / 60);
@@ -1310,7 +1346,7 @@ export const tripRouter = router({
 
       if (input.dropoffOptionId) {
         const option = MCMASTER_DROPOFF_OPTIONS.find(
-          (o) => o.id === input.dropoffOptionId
+          (o: CampusDropoffOption) => o.id === input.dropoffOptionId
         );
         if (!option) {
           throw new TRPCError({
@@ -1328,7 +1364,8 @@ export const tripRouter = router({
       ) {
         const normalized = dropoffLabel.trim().toLowerCase();
         const byLabel = MCMASTER_DROPOFF_OPTIONS.find(
-          (option) => option.label.trim().toLowerCase() === normalized
+          (option: CampusDropoffOption) =>
+            option.label.trim().toLowerCase() === normalized
         );
         if (byLabel) {
           // Known campus spot: always persist canonical coords from the server
