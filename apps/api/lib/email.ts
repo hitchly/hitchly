@@ -1,10 +1,9 @@
 import { EmailClient } from "@hitchly/emails";
 
-const gmailUser = process.env.GMAIL_USER;
-const gmailPass = process.env.GMAIL_APP_PASS;
+const brevoKey = process.env.BREVO_API_KEY;
 
-if (!gmailUser || !gmailPass) {
-  throw new Error("Missing GMAIL_USER or GMAIL_APP_PASS environment variables");
+if (!brevoKey) {
+  throw new Error("Missing BREVO_API_KEY environment variable");
 }
 
-export const emailClient = new EmailClient(gmailUser, gmailPass);
+export const emailClient = new EmailClient(brevoKey);
