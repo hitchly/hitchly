@@ -12,10 +12,17 @@ export function useProfile() {
     isRefetching,
   } = trpc.profile.getMe.useQuery();
 
-  const { data: ratingData } = trpc.reviews.getUserScore.useQuery(
-    { userId: session?.user.id ?? "" },
-    { enabled: (session?.user.id ?? "") !== "" }
-  );
+  const { data: ratingData, refetch: refetchRating } =
+    trpc.reviews.getUserScore.useQuery(
+      { userId: session?.user.id ?? "" },
+      {
+        enabled: (session?.user.id ?? "") !== "",
+        refetchOnMount: "always",
+        refetchOnReconnect: true,
+        refetchInterval: 5000,
+        refetchIntervalInBackground: true,
+      }
+    );
 
   const isDriver = ["driver", "both"].includes(
     userRecord?.profile.appRole ?? "rider"
@@ -30,6 +37,7 @@ export function useProfile() {
 
   const handleRefresh = (): void => {
     void refetch();
+    void refetchRating();
   };
 
   const onSuccess = (): void => {

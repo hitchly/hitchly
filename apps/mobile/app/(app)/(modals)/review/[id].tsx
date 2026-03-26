@@ -28,6 +28,7 @@ interface TripRequest {
 export default function TripReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const { data: session } = authClient.useSession();
   const userId = session?.user.id;
 
@@ -63,6 +64,8 @@ export default function TripReviewScreen() {
       },
       {
         onSuccess: () => {
+          void utils.reviews.getUserScore.invalidate();
+          void utils.profile.getMe.invalidate();
           setIsDriverRated(true);
           Alert.alert("Success", "Rating submitted!");
         },
@@ -82,6 +85,8 @@ export default function TripReviewScreen() {
       },
       {
         onSuccess: () => {
+          void utils.reviews.getUserScore.invalidate();
+          void utils.profile.getMe.invalidate();
           setRatedRiderIds((prev) => new Set(prev).add(riderId));
           Alert.alert("Success", "Rating submitted!");
         },
