@@ -162,7 +162,11 @@ describe("RiderTripDetailsScreen recurring UI", () => {
     fireEvent.click(getByText(/REQUEST NEXT/));
 
     await waitFor(() => {
-      expect(nextTripMutateAsync).toHaveBeenCalled();
+      expect(nextTripMutateAsync).toHaveBeenCalledWith({
+        recurringScheduleId: "sched-1",
+        after: new Date("2025-04-07T08:00:00.000Z"),
+        targetWeekday: 1,
+      });
       expect(createRequestMutateAsync).toHaveBeenCalledWith({
         tripId: "trip-next",
         pickupLat: 43.1,

@@ -256,5 +256,50 @@ describe("recurringScheduleRouter", () => {
         destination: nextTrip.destination,
       });
     });
+
+    it("applies weekday targeting for multi-day schedules (test-recurring-6)", async () => {
+      const userId = "driver-123";
+      const recurringScheduleId = "sched-1";
+      const after = new Date("2025-04-10T08:00:00Z"); // Thu
+      const targetWeekday = 4; // Thu
+
+      const thursdayTrip = createMockTrip({
+        id: "trip-next-thursday",
+        recurringScheduleId,
+        departureTime: new Date("2025-04-17T08:00:00Z"),
+      });
+
+      const whereSpy = vi.fn().mockReturnValue({
+        orderBy: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValueOnce([
+            {
+              id: thursdayTrip.id,
+              departureTime: thursdayTrip.departureTime,
+              origin: thursdayTrip.origin,
+              destination: thursdayTrip.destination,
+            },
+          ]),
+        }),
+      });
+
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: whereSpy,
+        }),
+      });
+
+      const caller = recurringScheduleRouter.createCaller(
+        createMockContext(userId, mockDb as unknown)
+      );
+
+      const result = await caller.getNextTripOccurrence({
+        recurringScheduleId,
+        after,
+        targetWeekday,
+      });
+
+      expect(whereSpy).toHaveBeenCalledTimes(1);
+      expect(result?.id).toBe("trip-next-thursday");
+    });
   });
 });

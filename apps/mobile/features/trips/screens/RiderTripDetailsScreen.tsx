@@ -208,9 +208,19 @@ export function RiderTripDetailsScreen() {
       return;
     }
 
+    const tripDepartureDate = new Date(trip.departureTime);
+    if (Number.isNaN(tripDepartureDate.getTime())) {
+      Alert.alert(
+        "Unavailable",
+        "Could not determine this trip's day of week."
+      );
+      return;
+    }
+
     const next = await utils.recurringSchedule.getNextTripOccurrence.fetch({
       recurringScheduleId: trip.recurringScheduleId,
-      after: new Date(trip.departureTime),
+      after: tripDepartureDate,
+      targetWeekday: tripDepartureDate.getDay(),
     });
 
     if (!next) {
