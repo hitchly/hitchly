@@ -143,6 +143,7 @@ export function useCreateTrip() {
         });
       }
 
+      await utils.recurringSchedule.listMine.invalidate();
       await utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Recurring ride scheduled!");
       safeLeaveCreateTripScreen(router);

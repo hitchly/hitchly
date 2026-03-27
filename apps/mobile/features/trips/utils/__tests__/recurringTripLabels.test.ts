@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatNextTripLine,
+  formatRecurringDaysLabel,
   formatWeeklyCommuteLabel,
   isTripRecurring,
 } from "../recurringTripLabels";
@@ -22,5 +24,18 @@ describe("recurringTripLabels", () => {
   it("returns null for invalid dates", () => {
     expect(formatWeeklyCommuteLabel(undefined)).toBeNull();
     expect(formatWeeklyCommuteLabel(null)).toBeNull();
+  });
+
+  it("formats recurring days label from schedule day array", () => {
+    expect(formatRecurringDaysLabel([1, 5])).toBe("Occurs every Mon, Fri");
+    expect(formatRecurringDaysLabel([5, 1, 5])).toBe("Occurs every Mon, Fri");
+    expect(formatRecurringDaysLabel([])).toBeNull();
+  });
+
+  it("formats next trip line with weekday and ordinal day", () => {
+    const line = formatNextTripLine(new Date("2025-03-27T01:23:00Z"));
+    expect(line).toContain("Next trip is");
+    expect(line).toContain("March");
+    expect(line).toMatch(/\b\d{1,2}(st|nd|rd|th)\b/i);
   });
 });

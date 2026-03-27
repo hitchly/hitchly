@@ -176,26 +176,9 @@ export function CreateTripScreen() {
             />
           </FormSection>
 
-          <FormSection title="LOGISTICS">
-            <ControlledDateTimePicker<CreateTripFormData>
-              name="departureTime"
-              label="DEPARTURE TIME"
-              minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
-            />
-
-            <View style={styles.stepperContainer}>
-              <ControlledNumericStepper<CreateTripFormData>
-                name="maxSeats"
-                label="AVAILABLE SEATS"
-                min={1}
-                max={6}
-              />
-            </View>
-          </FormSection>
-
           <FormSection
             title="REPEAT"
-            description="Set this ride to repeat on selected weekdays."
+            description="For recurring rides, choose weekdays first; the departure time below applies on those days."
           >
             <Controller
               control={methods.control}
@@ -268,6 +251,26 @@ export function CreateTripScreen() {
               />
             ) : null}
           </FormSection>
+
+          <View>
+            <ControlledDateTimePicker<CreateTripFormData>
+              name="departureTime"
+              label="DEPARTURE TIME"
+              mode={isRecurring ? "time" : "datetime"}
+              minimumDate={
+                isRecurring ? undefined : new Date(Date.now() + 15 * 60 * 1000)
+              }
+            />
+
+            <View style={styles.stepperContainer}>
+              <ControlledNumericStepper<CreateTripFormData>
+                name="maxSeats"
+                label="AVAILABLE SEATS"
+                min={1}
+                max={6}
+              />
+            </View>
+          </View>
 
           <View style={styles.footer}>
             <SubmitButton

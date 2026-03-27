@@ -12,6 +12,7 @@ type MutationMock = {
 
 const {
   invalidate,
+  invalidateListMine,
   createTripMutation,
   createScheduleMutation,
   generateNextTripForScheduleMutation,
@@ -24,6 +25,7 @@ const {
 
   return {
     invalidate: vi.fn(),
+    invalidateListMine: vi.fn(),
     createTripMutation: makeMutation(),
     createScheduleMutation: makeMutation(),
     generateNextTripForScheduleMutation: makeMutation(),
@@ -35,6 +37,7 @@ vi.mock("@/lib/trpc", () => {
     trpc: {
       useUtils: () => ({
         trip: { getTrips: { invalidate } },
+        recurringSchedule: { listMine: { invalidate: invalidateListMine } },
       }),
       profile: {
         getMe: {
@@ -63,6 +66,7 @@ vi.mock("@/lib/trpc", () => {
 describe("useCreateTrip (recurring)", () => {
   beforeEach(() => {
     invalidate.mockClear();
+    invalidateListMine.mockClear();
     createTripMutation.mutate.mockClear();
     createScheduleMutation.mutateAsync.mockClear();
     generateNextTripForScheduleMutation.mutateAsync.mockClear();

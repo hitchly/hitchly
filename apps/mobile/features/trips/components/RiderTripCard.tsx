@@ -1,6 +1,7 @@
 import { shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
@@ -13,6 +14,12 @@ interface RiderTripCardProps {
   trip: Trip;
   currentUserId?: string;
   onPress: () => void;
+  onRequestNext?: (input: {
+    trip: Trip;
+    pickupLat: number;
+    pickupLng: number;
+  }) => Promise<void> | void;
+  isRequestingNext?: boolean;
 }
 
 const formatLocation = (loc: string) => shortenAddress(loc);
@@ -21,6 +28,8 @@ export function RiderTripCard({
   trip,
   currentUserId,
   onPress,
+  onRequestNext,
+  isRequestingNext = false,
 }: RiderTripCardProps) {
   const { colors } = useTheme();
 
@@ -36,6 +45,18 @@ export function RiderTripCard({
   const displayStatus = userRequest ? `REQ: ${requestStatus}` : tripStatus;
   const isActive =
     trip.status === "active" || userRequest?.status === "accepted";
+  const canRequestNext =
+    Boolean(onRequestNext) &&
+    Boolean(trip.recurringScheduleId) &&
+    trip.status === "completed" &&
+    userRequest?.status === "completed" &&
+    typeof userRequest.pickupLat === "number" &&
+    typeof userRequest.pickupLng === "number";
+  const requestNextLabel = departureDate
+    ? `REQUEST NEXT ${departureDate
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toUpperCase()}`
+    : "REQUEST NEXT";
 
   return (
     <Card style={styles.cardSpacing} onPress={onPress}>
@@ -75,6 +96,23 @@ export function RiderTripCard({
           Driver: {trip.driver?.name ?? "Hitchly Driver"}
         </Text>
       </View>
+      {canRequestNext ? (
+        <Button
+          title={requestNextLabel}
+          size="sm"
+          variant="secondary"
+          isLoading={isRequestingNext}
+          onPress={() => {
+            if (!onRequestNext) return;
+            void onRequestNext({
+              trip,
+              pickupLat: userRequest.pickupLat,
+              pickupLng: userRequest.pickupLng,
+            });
+          }}
+          style={styles.requestNextButton}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -98,6 +136,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 4,
+  },
+  requestNextButton: {
     marginTop: 4,
   },
 });

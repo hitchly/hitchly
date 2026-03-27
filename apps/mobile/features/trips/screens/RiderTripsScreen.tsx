@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
+import { Alert } from "react-native";
 import {
   Pressable,
   RefreshControl,
@@ -14,11 +15,62 @@ import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
 import { RiderTripCard } from "@/features/trips/components/RiderTripCard";
 import { useRiderTrips } from "@/features/trips/hooks/useRiderTrips";
+import type { RouterOutputs } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
+
+type Trip = RouterOutputs["trip"]["getTrips"][number];
 
 export function RiderTripsScreen() {
   const { colors } = useTheme();
   const { trips, isLoading, isRefetching, refetch, router, currentUserId } =
     useRiderTrips();
+  const utils = trpc.useUtils();
+  const createRequestMutation = trpc.trip.createTripRequest.useMutation({
+    onSuccess: async () => {
+      await utils.trip.getTrips.invalidate();
+      void utils.trip.getTripRequests.invalidate();
+    },
+    onError: (err) => {
+      Alert.alert("Request failed", err.message);
+    },
+  });
+
+  const handleRequestNext = async (input: {
+    trip: Trip;
+    pickupLat: number;
+    pickupLng: number;
+  }) => {
+    if (!input.trip.recurringScheduleId || !input.trip.departureTime) return;
+
+    const tripDepartureDate = new Date(input.trip.departureTime);
+    if (Number.isNaN(tripDepartureDate.getTime())) {
+      Alert.alert(
+        "Unavailable",
+        "Could not determine this trip's day of week."
+      );
+      return;
+    }
+
+    const next = await utils.recurringSchedule.getNextTripOccurrence.fetch({
+      recurringScheduleId: input.trip.recurringScheduleId,
+      after: tripDepartureDate,
+      targetWeekday: tripDepartureDate.getDay(),
+    });
+
+    if (!next) {
+      Alert.alert(
+        "Not posted yet",
+        "Next week's ride isn't posted yet. Please check back later."
+      );
+      return;
+    }
+
+    await createRequestMutation.mutateAsync({
+      tripId: next.id,
+      pickupLat: input.pickupLat,
+      pickupLng: input.pickupLng,
+    });
+  };
 
   if (isLoading) return <Skeleton text="Loading your rides..." />;
 
@@ -75,6 +127,8 @@ export function RiderTripsScreen() {
               key={trip.id}
               trip={trip}
               currentUserId={currentUserId}
+              onRequestNext={handleRequestNext}
+              isRequestingNext={createRequestMutation.isPending}
               onPress={() => {
                 router.push(`/(app)/rider/trips/${trip.id}` as Href);
               }}
