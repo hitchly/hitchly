@@ -1,10 +1,11 @@
-import { describe, expect, it, vi, type MockInstance } from "vitest";
+import type { MockInstance } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Context } from "../../../context";
 import { infrastructureRouter } from "../../admin/infrastructure";
 
 // ----------------------------------------------------------------------------
-// 1. Mocks (Schema & ORM)
+// 1. Mocks (Schema & ORM) - Added pushTokens
 // ----------------------------------------------------------------------------
 
 vi.mock("@hitchly/db/schema", () => ({
@@ -12,6 +13,7 @@ vi.mock("@hitchly/db/schema", () => ({
   routes: "routes_table",
   tripRequests: "trip_requests_table",
   verifications: "verifications_table",
+  pushTokens: "push_tokens_table", // Added this missing export
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -25,8 +27,8 @@ vi.mock("drizzle-orm", () => ({
 // 2. Strictly Typed Mocks
 // ----------------------------------------------------------------------------
 
-interface DrizzleChainMock {
-  where: MockInstance<unknown[]>;
+interface DrizzleChain {
+  where: MockInstance<[unknown], Promise<unknown[]>>;
   then: (resolve: (val: unknown) => void) => void;
 }
 
@@ -77,50 +79,43 @@ describe("Infrastructure Router", () => {
     const db = createMockDb();
     const caller = createCaller(db);
 
-    // 1. Latency Mock
     db.query.users.findFirst.mockResolvedValue({ id: "user-123" });
 
-    // 2. Chainable Select Mocking
-    db.from.mockImplementation((table: string): DrizzleChainMock => {
+    db.from.mockImplementation((table: string): DrizzleChain => {
       const defaultResult = [{ value: 0 }];
       const where = vi.fn().mockResolvedValue(defaultResult);
+
+      // Handle the .from().then() pattern for queries without .where()
       const then = (resolve: (val: unknown) => void) => {
-        resolve(defaultResult);
+        if (table === "routes_table") {
+          resolve([{ value: 50 }]);
+        } else if (table === "push_tokens_table") {
+          resolve([{ value: 150 }]);
+        } else {
+          resolve(defaultResult);
+        }
       };
 
-      if (table === "users_table") {
-        where.mockResolvedValue([{ value: 150 }]);
-      } else if (table === "routes_table") {
-        return {
-          where,
-          then: (resolve) => {
-            resolve([{ value: 50 }]);
-          },
-        };
-      } else if (table === "trip_requests_table") {
+      if (table === "trip_requests_table") {
         where.mockResolvedValue([{ value: 2000 }]);
       }
 
       return { where, then };
     });
 
-    // 3. Logs Mock
     const now = new Date();
     db.query.verifications.findMany.mockResolvedValue([
       { identifier: "user@mcmaster.ca", createdAt: now },
     ]);
 
-    // Execute
     const result = await caller.metrics();
 
-    // Assertions
     expect(result.kpis.latency).toBeDefined();
     expect(result.kpis.mobileInstalls).toBe(150);
     expect(result.kpis.cacheCount).toBe(50);
     expect(result.quota.directions).toBe(2000);
     expect(result.quota.geocoding).toBe(4000);
 
-    // Check if result.logs[0] exists before checking message
     const firstLog = result.logs[0];
     expect(firstLog).toBeDefined();
     if (firstLog) {
@@ -137,7 +132,6 @@ describe("Infrastructure Router", () => {
     db.query.users.findFirst.mockResolvedValue(null);
     db.query.verifications.findMany.mockResolvedValue([]);
 
-    // Fixed the syntax error { {; } here
     db.from.mockReturnValue({
       where: vi.fn().mockResolvedValue([]),
       then: (resolve: (val: unknown) => void) => {
