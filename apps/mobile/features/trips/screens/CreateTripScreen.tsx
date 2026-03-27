@@ -178,7 +178,7 @@ export function CreateTripScreen() {
 
           <FormSection
             title="REPEAT"
-            description="For recurring rides, choose weekdays first; the departure time below applies on those days."
+            description="Toggle recurring to repeat weekly on the selected departure day/time."
           >
             <Controller
               control={methods.control}
@@ -200,66 +200,14 @@ export function CreateTripScreen() {
                 />
               )}
             />
-
-            {isRecurring ? (
-              <Controller
-                control={methods.control}
-                name="daysOfWeek"
-                render={({ field: { value = [], onChange } }) => {
-                  const days = [
-                    { label: "S", index: 0 },
-                    { label: "M", index: 1 },
-                    { label: "T", index: 2 },
-                    { label: "W", index: 3 },
-                    { label: "T", index: 4 },
-                    { label: "F", index: 5 },
-                    { label: "S", index: 6 },
-                  ];
-
-                  const toggleDay = (idx: number) => {
-                    if (value.includes(idx)) {
-                      onChange(value.filter((d: number) => d !== idx));
-                    } else {
-                      onChange([...value, idx].sort());
-                    }
-                  };
-
-                  return (
-                    <View style={styles.weekdayRow}>
-                      {days.map((day) => {
-                        const selected = value.includes(day.index);
-                        return (
-                          <Text
-                            key={day.index}
-                            variant="captionSemibold"
-                            style={[
-                              styles.weekdayPill,
-                              selected && {
-                                backgroundColor: colors.primary,
-                                color: colors.surface,
-                              },
-                            ]}
-                            onPress={() => toggleDay(day.index)}
-                          >
-                            {day.label}
-                          </Text>
-                        );
-                      })}
-                    </View>
-                  );
-                }}
-              />
-            ) : null}
           </FormSection>
 
           <View>
             <ControlledDateTimePicker<CreateTripFormData>
               name="departureTime"
-              label="DEPARTURE TIME"
-              mode={isRecurring ? "time" : "datetime"}
-              minimumDate={
-                isRecurring ? undefined : new Date(Date.now() + 15 * 60 * 1000)
-              }
+              label="DEPARTURE"
+              mode="datetime"
+              minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
             />
 
             <View style={styles.stepperContainer}>
@@ -339,18 +287,5 @@ const styles = StyleSheet.create({
   disclaimer: {
     paddingHorizontal: 20,
     lineHeight: 16,
-  },
-  weekdayRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    gap: 8,
-  },
-  weekdayPill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    textAlign: "center",
-    overflow: "hidden",
   },
 });

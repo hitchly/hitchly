@@ -8,6 +8,7 @@ import * as z from "zod";
 import { McMaster } from "@/constants/location";
 import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import { trpc } from "@/lib/trpc";
+import { getWeekdayInToronto } from "@/features/trips/utils/timezoneWeekday";
 
 const TIME_WINDOW_MIN = 15;
 
@@ -127,13 +128,16 @@ export function useCreateTrip() {
   const onSubmit = async (raw: CreateTripFormInput) => {
     const data: CreateTripFormData = createTripSchema.parse(raw);
 
-    if (data.isRecurring && data.daysOfWeek.length > 0) {
+    if (data.isRecurring) {
+      const inferredWeekday =
+        getWeekdayInToronto(data.departureTime) ?? data.departureTime.getDay();
       const schedule = await createScheduleMutation.mutateAsync({
         origin: data.origin,
         destination: data.destination,
         departureTime: data.departureTime,
         maxSeats: data.maxSeats,
-        daysOfWeek: data.daysOfWeek,
+        daysOfWeek: [inferredWeekday],
+        effectiveFrom: data.departureTime,
       });
 
       if (schedule?.id) {

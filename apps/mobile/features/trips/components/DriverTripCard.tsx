@@ -1,4 +1,4 @@
-import { shortenAddress } from "@hitchly/utils";
+import { formatTripDateTime, shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
@@ -69,21 +69,8 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
           <Text variant="caption" color={colors.textSecondary}>
             {departureDate
               ? showRecurringMeta
-                ? (nextTripLine ??
-                  `${departureDate.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })} at ${departureDate.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}`)
-                : `${departureDate.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })} at ${departureDate.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}`
+                ? (nextTripLine ?? formatTripDateTime(departureDate))
+                : formatTripDateTime(departureDate)
               : "Time TBD"}
           </Text>
           {recurringSubtitle && (

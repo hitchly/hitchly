@@ -19,6 +19,7 @@ import {
   formatWeeklyCommuteLabel,
   isTripRecurring,
 } from "@/features/trips/utils/recurringTripLabels";
+import { getWeekdayInToronto } from "@/features/trips/utils/timezoneWeekday";
 import { openStopNavigation } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
 
@@ -216,11 +217,19 @@ export function RiderTripDetailsScreen() {
       );
       return;
     }
+    const targetWeekday = getWeekdayInToronto(tripDepartureDate);
+    if (targetWeekday === null) {
+      Alert.alert(
+        "Unavailable",
+        "Could not determine this trip's day of week."
+      );
+      return;
+    }
 
     const next = await utils.recurringSchedule.getNextTripOccurrence.fetch({
       recurringScheduleId: trip.recurringScheduleId,
       after: tripDepartureDate,
-      targetWeekday: tripDepartureDate.getDay(),
+      targetWeekday,
     });
 
     if (!next) {

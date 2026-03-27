@@ -210,7 +210,7 @@ export function RiderHomeScreen() {
               router.push(`/(app)/rider/trips/${match.rideId}` as Href);
             }}
             onDeckEmpty={() => {
-              /* empty */
+              void handlers.resetSearch();
             }}
           />
         </SwipeErrorBoundary>

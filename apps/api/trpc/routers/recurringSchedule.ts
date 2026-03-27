@@ -391,7 +391,7 @@ export const recurringScheduleRouter = router({
 
       if (input.targetWeekday !== undefined) {
         whereConditions.push(
-          sql`extract(dow from ${trips.departureTime}) = ${input.targetWeekday}`
+          sql`extract(dow from (${trips.departureTime} AT TIME ZONE 'America/Toronto')) = ${input.targetWeekday}`
         );
       }
 

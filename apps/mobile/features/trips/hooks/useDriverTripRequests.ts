@@ -8,27 +8,28 @@ export function useDriverTripRequests(tripId?: string) {
   const userId = session?.user.id;
   const utils = trpc.useUtils();
 
-  const { data: driverTrips } = trpc.trip.getTrips.useQuery(undefined, {
-    enabled: !!userId && !tripId,
-    refetchInterval: 5000,
-  });
+  const tripScopedQuery = trpc.trip.getTripRequests.useQuery(
+    { tripId: tripId ?? "" },
+    { enabled: Boolean(tripId), refetchInterval: 5000 }
+  );
 
-  const targetTripId = tripId ?? driverTrips?.[0]?.id;
-
-  const {
-    data: requestsData,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = trpc.trip.getTripRequests.useQuery(
-    { tripId: targetTripId ?? "" },
+  const driverHomeQuery = trpc.trip.getTripRequests.useQuery(
+    { type: "driver" },
     {
-      enabled: !!targetTripId,
+      enabled: Boolean(userId) && !tripId,
       refetchInterval: 5000,
     }
   );
 
-  const requests = requestsData ?? [];
+  const effectiveQuery = tripId ? tripScopedQuery : driverHomeQuery;
+  const rawRequests = effectiveQuery.data ?? [];
+  const requests =
+    tripId === undefined
+      ? rawRequests.filter((r) => r.status === "pending")
+      : rawRequests;
+  const isLoading = effectiveQuery.isLoading;
+  const isRefetching = effectiveQuery.isRefetching;
+  const refetch = effectiveQuery.refetch;
 
   const handleSuccess = (msg: string) => {
     void utils.trip.getTripRequests.invalidate();

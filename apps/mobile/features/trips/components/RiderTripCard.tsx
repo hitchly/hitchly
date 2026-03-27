@@ -1,4 +1,4 @@
-import { shortenAddress } from "@hitchly/utils";
+import { formatTripDateTime, shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
@@ -81,15 +81,7 @@ export function RiderTripCard({
 
       <View style={styles.cardFooter}>
         <Text variant="caption" color={colors.textSecondary}>
-          {departureDate
-            ? `${departureDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })} at ${departureDate.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`
-            : "Time TBD"}
+          {departureDate ? formatTripDateTime(departureDate) : "Time TBD"}
         </Text>
         <Text variant="caption" color={colors.textSecondary}>
           {/* Default to Driver ID or placeholder if name isn't joined yet */}
