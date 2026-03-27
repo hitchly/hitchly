@@ -423,7 +423,6 @@ export const tripRouter = router({
               : null,
           }));
         } catch (error: unknown) {
-          // eslint-disable-next-line no-console
           console.error("Failed to fetch trip requests:", error);
           return [];
         }
@@ -467,7 +466,6 @@ export const tripRouter = router({
             .where(eq(users.id, trip.driverId));
           return driverRow ?? null;
         } catch (error: unknown) {
-          // eslint-disable-next-line no-console
           console.error("Failed to fetch trip driver:", error);
           return null;
         }
@@ -674,7 +672,6 @@ export const tripRouter = router({
 
         for (const req of acceptedRequests) {
           cancelPaymentHold(req.id).catch((err) => {
-            // eslint-disable-next-line no-console
             console.error("Failed to cancel payment hold:", err);
           });
         }
@@ -1682,7 +1679,6 @@ export const tripRouter = router({
           );
 
           if (!updateResult.success) {
-            // eslint-disable-next-line no-console
             console.error(
               `Failed to update payment for request ${existingRequest.id}: ${updateResult.error ?? "Unknown error"}`
             );
@@ -1822,7 +1818,6 @@ export const tripRouter = router({
 
         // Release payment hold
         cancelPaymentHold(input.requestId).catch((err) => {
-          // eslint-disable-next-line no-console
           console.error("Failed to cancel payment hold:", err);
         });
       }
