@@ -54,7 +54,7 @@ function AppContent() {
       router.replace("/(app)");
     }
 
-    SplashScreen.hide();
+    void SplashScreen.hideAsync();
   }, [session, isPending, segments, router]);
 
   return (

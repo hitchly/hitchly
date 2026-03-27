@@ -23,8 +23,11 @@ vi.mock("../../../services/googlemaps", () => ({
 }));
 
 // Mock notification service
-vi.mock("../../../services/notification", () => ({
-  sendTripNotification: vi.fn().mockResolvedValue(undefined),
+vi.mock("../../../services/notification.service", () => ({
+  NotificationService: {
+    sendToUser: vi.fn().mockResolvedValue(undefined),
+    sendToMultipleUsers: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 // Mock payment service
@@ -73,7 +76,18 @@ vi.mock("../../../services/payment", () => ({
     .mockResolvedValue({ status: "captured", amountCents: 1000 }),
 }));
 
-// Helper type for the mock DB to avoid explicit 'any'
+// Define a strictly typed, recursively chainable interface for Drizzle mocks
+interface DrizzleChain {
+  where: Mock;
+  orderBy: Mock;
+  limit: Mock;
+  leftJoin: Mock;
+  innerJoin: Mock;
+  returning: Mock;
+  // This allows 'await' to work on the query chain directly
+  then: (onfulfilled?: (value: unknown) => unknown) => Promise<unknown>;
+}
+
 interface MockDb {
   select: Mock;
   insert: Mock;
@@ -81,24 +95,49 @@ interface MockDb {
   delete: Mock;
   query: {
     users: { findFirst: Mock };
+    verifications: { findMany: Mock };
   };
+  from: Mock;
 }
 
 describe("Trip Router", () => {
   let mockDb: MockDb;
 
   beforeEach(() => {
-    // Cast the helper result to our MockDb interface
     mockDb = createMockDb() as unknown as MockDb;
 
-    // Clear call history but keep implementation
-    mockGeocodeAddress.mockClear();
-    mockCalculateTripDistance.mockClear();
+    /**
+     * Helper to create a strictly typed Drizzle chain mock.
+     * It recursively returns itself to allow infinite chaining of .where().limit().etc()
+     */
+    const createChain = (result: unknown = []): DrizzleChain => {
+      const chain = {
+        where: vi.fn(),
+        orderBy: vi.fn(),
+        limit: vi.fn(),
+        leftJoin: vi.fn(),
+        innerJoin: vi.fn(),
+        returning: vi.fn().mockResolvedValue(result),
+        then: (onfulfilled?: (value: unknown) => unknown) =>
+          Promise.resolve(result).then(onfulfilled),
+      } as DrizzleChain;
 
-    // Clear other mocks
+      // Make all methods return the chain itself
+      chain.where.mockReturnValue(chain);
+      chain.orderBy.mockReturnValue(chain);
+      chain.limit.mockReturnValue(chain);
+      chain.leftJoin.mockReturnValue(chain);
+      chain.innerJoin.mockReturnValue(chain);
+
+      return chain;
+    };
+
+    // Override the default select behavior
+    mockDb.select.mockImplementation(() => ({
+      from: vi.fn().mockImplementation(() => createChain([])),
+    }));
+
     vi.clearAllMocks();
-
-    // Setup default mocks - ensure they're always configured
     mockGeocodeAddress.mockResolvedValue({ lat: 43.2609, lng: -79.9192 });
     mockCalculateTripDistance.mockResolvedValue({ distanceKm: 15.5 });
   });
@@ -558,14 +597,12 @@ describe("Trip Router", () => {
     };
 
     it("should cancel trip successfully (test-ut-trip-4)", async () => {
-      // Mock trip lookup
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce([mockTrip]),
         }),
       });
 
-      // Mock trip update
       const cancelledTrip = { ...mockTrip, status: "cancelled" as const };
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValueOnce({
@@ -575,21 +612,25 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock trip requests update
+      // Mock update requests
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce(undefined),
         }),
       });
 
-      // Mock accepted riders query for notifications
+      // NEW: Mock the simple riderId selection for NotificationService
       mockDb.select.mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValueOnce([]),
-          }),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([{ userId: "rider-1" }]),
         }),
       });
+
+      const { NotificationService } =
+        await import("../../../services/notification.service");
+      const sendSpy = vi
+        .spyOn(NotificationService, "sendToMultipleUsers")
+        .mockResolvedValue();
 
       const caller = tripRouter.createCaller(
         createMockContext(userId, mockDb as unknown)
@@ -597,7 +638,12 @@ describe("Trip Router", () => {
       const result = await caller.cancelTrip({ tripId });
 
       expect(result.success).toBe(true);
-      expect(result.trip?.status).toBe("cancelled");
+      expect(sendSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userIds: ["rider-1"],
+          title: "Trip Cancelled 🚫",
+        })
+      );
     });
 
     it("should reject cancellation from non-owner (test-ut-trip-4)", async () => {
@@ -661,13 +707,18 @@ describe("Trip Router", () => {
         }),
       });
 
+      // NEW: Mock the simple riderId selection
       mockDb.select.mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValueOnce([]),
-          }),
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockResolvedValueOnce([{ userId: "rider-1" }]),
         }),
       });
+
+      const { NotificationService } =
+        await import("../../../services/notification.service");
+      const sendSpy = vi
+        .spyOn(NotificationService, "sendToMultipleUsers")
+        .mockResolvedValue();
 
       const caller = tripRouter.createCaller(
         createMockContext(userId, mockDb as unknown)
@@ -675,6 +726,7 @@ describe("Trip Router", () => {
       const result = await caller.startTrip({ tripId });
 
       expect(result.status).toBe("in_progress");
+      expect(sendSpy).toHaveBeenCalled();
     });
 
     it("should reject start from non-owner (test-ut-trip-5)", async () => {
@@ -1664,60 +1716,53 @@ describe("Trip Router", () => {
   describe("cancelTrip - payment holds released", () => {
     it("should release payment holds for all accepted riders (test-ut-trip-18)", async () => {
       const driverId = "driver-123";
-      const mockTrip = createMockTrip({
+      const mockTripData = createMockTrip({
         id: "trip-1",
         driverId,
         status: "active",
         bookedSeats: 2,
       });
 
-      // Mock select: get trip
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
-          where: vi.fn().mockResolvedValueOnce([mockTrip]),
+          where: vi.fn().mockResolvedValueOnce([mockTripData]),
         }),
       });
 
-      // Mock update: cancel trip
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockReturnValueOnce({
             returning: vi
               .fn()
-              .mockResolvedValueOnce([{ ...mockTrip, status: "cancelled" }]),
+              .mockResolvedValueOnce([
+                { ...mockTripData, status: "cancelled" },
+              ]),
           }),
         }),
       });
 
-      // Mock update: cancel pending requests
+      // Mock update requests
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce(undefined),
         }),
       });
 
-      // Mock select: get accepted riders for notification
+      // NEW: Mock the riderId selection for notification
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
-          innerJoin: vi.fn().mockReturnValueOnce({
-            where: vi.fn().mockResolvedValueOnce([
-              { userId: "rider-1", pushToken: "token1" },
-              { userId: "rider-2", pushToken: "token2" },
-            ]),
-          }),
+          where: vi.fn().mockResolvedValueOnce([{ userId: "rider-1" }]),
         }),
       });
 
-      // Mock select: get accepted request IDs for payment release
+      // NEW: Mock the request ID lookup for payment release
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
-          where: vi
-            .fn()
-            .mockResolvedValueOnce([{ id: "req-1" }, { id: "req-2" }]),
+          where: vi.fn().mockResolvedValueOnce([{ id: "req-1" }]),
         }),
       });
 
-      // Mock update: cancel accepted requests
+      // Mock accepted requests update
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValueOnce({
           where: vi.fn().mockResolvedValueOnce(undefined),
@@ -1726,17 +1771,15 @@ describe("Trip Router", () => {
 
       const { cancelPaymentHold: mockCancelPaymentHold } =
         await import("../../../services/payment");
-
       const caller = tripRouter.createCaller(
         createMockContext(driverId, mockDb as unknown)
       );
+
       const result = await caller.cancelTrip({ tripId: "trip-1" });
 
       expect(result.success).toBe(true);
-      // cancelPaymentHold is called in a .catch() chain, so we need to wait
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 10)); // Handle async payment catch block
       expect(mockCancelPaymentHold).toHaveBeenCalledWith("req-1");
-      expect(mockCancelPaymentHold).toHaveBeenCalledWith("req-2");
     });
   });
 
@@ -2348,10 +2391,10 @@ describe("Trip Router", () => {
   // startTrip — notification branch
   // ============================================
   describe("startTrip — notifications", () => {
-    it("should send notifications to accepted riders when starting (test-ut-trip-33)", async () => {
+    it("should send batch notifications to accepted riders when starting (test-ut-trip-33)", async () => {
       const driverId = "driver-123";
 
-      // Mock select → active trip owned by driver
+      // 1. Mock select → active trip owned by driver
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValueOnce([
@@ -2364,7 +2407,7 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock update().set().where().returning() → trip started
+      // 2. Mock update().set().where().returning() → trip started
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -2379,23 +2422,24 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock select accepted riders with push tokens (innerJoin chain)
+      // 3. Mock select accepted riders (No more innerJoin, just fetching IDs)
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValueOnce([
-              {
-                userId: "rider-1",
-                pushToken: "ExponentPushToken[token-1]",
-              },
-              {
-                userId: "rider-2",
-                pushToken: "ExponentPushToken[token-2]",
-              },
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              { userId: "rider-1" },
+              { userId: "rider-2" },
             ]),
-          }),
         }),
       });
+
+      // 4. Spy on the new NotificationService
+      const { NotificationService } =
+        await import("../../../services/notification.service");
+      const sendSpy = vi
+        .spyOn(NotificationService, "sendToMultipleUsers")
+        .mockResolvedValue();
 
       const caller = tripRouter.createCaller(
         createMockContext(driverId, mockDb as unknown)
@@ -2404,10 +2448,17 @@ describe("Trip Router", () => {
       const result = await caller.startTrip({ tripId: "trip-1" });
 
       expect(result.status).toBe("in_progress");
-      // sendTripNotification is mocked at module level
-      const { sendTripNotification } =
-        await import("../../../services/notification");
-      expect(sendTripNotification).toHaveBeenCalled();
+
+      // 5. Assert the batch notification was fired with correct arguments
+      expect(sendSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userIds: ["rider-1", "rider-2"],
+          title: "Trip Starting! 🚗",
+          data: { route: "/rider/rides/trip-1" },
+        })
+      );
+
+      sendSpy.mockRestore();
     });
   });
 

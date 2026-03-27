@@ -1,5 +1,10 @@
-import { routes, tripRequests, users, verifications } from "@hitchly/db/schema";
-import { count, desc, gt, isNotNull } from "drizzle-orm";
+import {
+  pushTokens,
+  routes,
+  tripRequests,
+  verifications,
+} from "@hitchly/db/schema";
+import { count, desc, gt } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../../trpc";
@@ -28,30 +33,29 @@ export const infrastructureRouter = router({
     )
     .query(async ({ ctx }) => {
       // 1. Measure DB Latency
-      const start = performance.now();
-      // Use findFirst instead of raw SQL to keep types clean
+      const latencyStart = performance.now();
       await ctx.db.query.users.findFirst({ columns: { id: true } });
-      const dbLatency = Math.round(performance.now() - start);
+      const dbLatency = Math.round(performance.now() - latencyStart);
 
-      // 2. Mobile Installs
+      // 2. Mobile Installs (Counting unique active device tokens)
       const mobileStats = await ctx.db
         .select({ value: count() })
-        .from(users)
-        .where(isNotNull(users.pushToken));
+        .from(pushTokens);
 
       // 3. Cache Stats
       const routeStats = await ctx.db.select({ value: count() }).from(routes);
 
-      // 4. Quota Usage
+      // 4. Quota Usage (Current Month)
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
+
       const monthlyUsage = await ctx.db
         .select({ value: count() })
         .from(tripRequests)
         .where(gt(tripRequests.createdAt, startOfMonth));
 
-      // 5. System Logs
+      // 5. System Logs (Latest Verifications)
       const recentLogs = await ctx.db.query.verifications.findMany({
         orderBy: [desc(verifications.createdAt)],
         limit: 5,

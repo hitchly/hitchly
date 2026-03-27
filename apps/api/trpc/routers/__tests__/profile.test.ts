@@ -232,32 +232,6 @@ describe("Profile Router — Direct", () => {
   });
 
   // ============================================
-  // updatePushToken
-  // ============================================
-  describe("updatePushToken", () => {
-    it("should update push token successfully (test-ut-profile-7)", async () => {
-      const userId = "user-100";
-
-      directMockDb.update.mockReturnValueOnce({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValueOnce(undefined),
-        }),
-      });
-
-      const caller = profileRouter.createCaller(
-        createMockContext(userId, directMockDb as any)
-      );
-
-      const result = await caller.updatePushToken({
-        pushToken: "ExponentPushToken[new-token-value]",
-      });
-
-      expect(result).toEqual({ success: true });
-      expect(directMockDb.update).toHaveBeenCalled();
-    });
-  });
-
-  // ============================================
   // getBanStatus
   // ============================================
   describe("getBanStatus", () => {

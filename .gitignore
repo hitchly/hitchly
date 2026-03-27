@@ -303,3 +303,6 @@ coverage/
 **/.turbo
 # DS_Store
 *.DS_Store
+
+# Google Services
+**/firebase-service-account.json
