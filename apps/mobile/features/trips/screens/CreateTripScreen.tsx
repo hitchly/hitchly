@@ -14,6 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { McMaster } from "@/constants/location";
 import { useTheme } from "@/context/theme-context";
+import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import {
   useCreateTrip,
   type CreateTripFormData,
@@ -117,7 +118,7 @@ export function CreateTripScreen() {
       title="Post a Ride"
       visible={true}
       onClose={() => {
-        router.back();
+        safeLeaveCreateTripScreen(router);
       }}
     >
       <FormProvider {...methods}>

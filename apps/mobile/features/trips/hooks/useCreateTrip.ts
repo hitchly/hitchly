@@ -6,6 +6,7 @@ import { Alert } from "react-native";
 import * as z from "zod";
 
 import { McMaster } from "@/constants/location";
+import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import { trpc } from "@/lib/trpc";
 
 const TIME_WINDOW_MIN = 15;
@@ -103,7 +104,7 @@ export function useCreateTrip() {
     onSuccess: () => {
       void utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Trip posted!");
-      router.back();
+      safeLeaveCreateTripScreen(router);
     },
     onError: (err) => {
       Alert.alert("Error", err.message);
@@ -144,7 +145,7 @@ export function useCreateTrip() {
 
       await utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Recurring ride scheduled!");
-      router.back();
+      safeLeaveCreateTripScreen(router);
     } else {
       createTripMutation.mutate({
         origin: data.origin,
