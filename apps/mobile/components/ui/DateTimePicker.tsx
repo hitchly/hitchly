@@ -30,13 +30,52 @@ export function DateTimePicker({
   const [showIos, setShowIos] = useState(false);
 
   const formattedValue = useMemo(() => {
+    if (mode === "time") {
+      return value.toLocaleTimeString([], {
+        timeStyle: "short",
+      });
+    }
+    if (mode === "date") {
+      return value.toLocaleDateString([], {
+        dateStyle: "medium",
+      });
+    }
     return value.toLocaleString([], {
       dateStyle: "medium",
       timeStyle: "short",
     });
-  }, [value]);
+  }, [mode, value]);
 
   const showAndroidPicker = () => {
+    if (mode === "time") {
+      DateTimePickerAndroid.open({
+        value,
+        mode: "time",
+        is24Hour: true,
+        onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
+          if (event.type === "set" && selectedDate) {
+            onChange(selectedDate);
+          }
+        },
+      });
+      return;
+    }
+
+    if (mode === "date") {
+      DateTimePickerAndroid.open({
+        value,
+        mode: "date",
+        is24Hour: true,
+        minimumDate,
+        onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
+          if (event.type === "set" && selectedDate) {
+            onChange(selectedDate);
+          }
+        },
+      });
+      return;
+    }
+
     DateTimePickerAndroid.open({
       value,
       mode: "date",
@@ -46,20 +85,18 @@ export function DateTimePicker({
         if (event.type === "dismissed") return;
 
         if (event.type === "set" && selectedDate) {
-          if (mode === "datetime") {
-            DateTimePickerAndroid.open({
-              value: selectedDate,
-              mode: "time",
-              is24Hour: true,
-              onChange: (timeEvent: DateTimePickerEvent, finalDate?: Date) => {
-                if (timeEvent.type === "set" && finalDate) {
-                  onChange(finalDate);
-                }
-              },
-            });
-          } else {
-            onChange(selectedDate);
-          }
+          // At this point we already handled mode === "time" and mode === "date"
+          // so the remaining mode is "datetime".
+          DateTimePickerAndroid.open({
+            value: selectedDate,
+            mode: "time",
+            is24Hour: true,
+            onChange: (timeEvent: DateTimePickerEvent, finalDate?: Date) => {
+              if (timeEvent.type === "set" && finalDate) {
+                onChange(finalDate);
+              }
+            },
+          });
         }
       },
     });
@@ -104,7 +141,7 @@ export function DateTimePicker({
         ]}
       >
         <Ionicons
-          name="calendar-outline"
+          name={mode === "time" ? "time-outline" : "calendar-outline"}
           size={18}
           color={colors.textSecondary}
           style={styles.icon}

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { formatDate, shortenAddress } from "@hitchly/utils";
+import { formatDate, formatTripDateTime, shortenAddress } from "@hitchly/utils";
 import type { Href } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -145,7 +145,7 @@ export function DriverTripRequestsScreen() {
                       </Text>
                     </View>
                     <Text variant="caption" color={colors.textSecondary}>
-                      {formatDate(trip.departureTime)} •{" "}
+                      {formatTripDateTime(trip.departureTime)} •{" "}
                       {trip.maxSeats - trip.bookedSeats} seats available
                     </Text>
                     {request.dropoffLabel && (

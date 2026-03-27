@@ -58,6 +58,21 @@ export const formatDate = (date: Date | string): string => {
   });
 };
 
+export const formatTripDateTime = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const datePart = d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const timePart = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${datePart}, ${timePart}`;
+};
+
 /**
  * Formats a raw address object into a clean title/subtitle format.
  * Useful for search dropdowns or address displays.

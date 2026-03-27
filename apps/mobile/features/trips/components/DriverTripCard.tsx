@@ -1,14 +1,19 @@
-import { shortenAddress } from "@hitchly/utils";
+import { formatTripDateTime, shortenAddress } from "@hitchly/utils";
 import { StyleSheet, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
 import { useTheme } from "@/context/theme-context";
-import { formatWeeklyCommuteLabel } from "@/features/trips/utils/recurringTripLabels";
+import {
+  formatNextTripLine,
+  formatRecurringDaysLabel,
+} from "@/features/trips/utils/recurringTripLabels";
 import type { RouterOutputs } from "@/lib/trpc";
 
-type Trip = RouterOutputs["trip"]["getTrips"][number];
+type Trip = RouterOutputs["trip"]["getTrips"][number] & {
+  recurringDaysOfWeek?: number[] | null;
+};
 
 interface DriverTripCardProps {
   trip: Trip;
@@ -24,8 +29,12 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
   const departureDate = rawDate ? new Date(rawDate) : null;
   const availableSeats = trip.maxSeats - trip.bookedSeats;
   const isRecurring = Boolean(trip.recurringScheduleId);
-  const recurringMeta = isRecurring
-    ? formatWeeklyCommuteLabel(trip.departureTime)
+  const showRecurringMeta = isRecurring && trip.status !== "completed";
+  const recurringSubtitle = showRecurringMeta
+    ? formatRecurringDaysLabel(trip.recurringDaysOfWeek)
+    : null;
+  const nextTripLine = showRecurringMeta
+    ? formatNextTripLine(trip.departureTime)
     : null;
 
   return (
@@ -59,22 +68,18 @@ export function DriverTripCard({ trip, onPress }: DriverTripCardProps) {
         <View style={styles.footerLeft}>
           <Text variant="caption" color={colors.textSecondary}>
             {departureDate
-              ? `${departureDate.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })} at ${departureDate.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}`
+              ? showRecurringMeta
+                ? (nextTripLine ?? formatTripDateTime(departureDate))
+                : formatTripDateTime(departureDate)
               : "Time TBD"}
           </Text>
-          {recurringMeta && (
+          {recurringSubtitle && (
             <Text
               variant="caption"
               color={colors.textSecondary}
               style={styles.recurringSubtitle}
             >
-              🔁 {recurringMeta.subtitle}
+              🔁 {recurringSubtitle}
             </Text>
           )}
         </View>

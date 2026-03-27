@@ -6,7 +6,7 @@ import {
   users,
 } from "@hitchly/db/schema";
 import { TRPCError } from "@trpc/server";
-import { and, eq, gte, gt, isNull, lte, ne, or } from "drizzle-orm";
+import { and, eq, gte, gt, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { geocodeAddress } from "../../services/googlemaps";
@@ -379,9 +379,22 @@ export const recurringScheduleRouter = router({
       z.object({
         recurringScheduleId: z.string(),
         after: z.coerce.date(),
+        targetWeekday: z.number().int().min(0).max(6).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
+      const whereConditions = [
+        eq(trips.recurringScheduleId, input.recurringScheduleId),
+        gt(trips.departureTime, input.after),
+        ne(trips.status, "cancelled"),
+      ];
+
+      if (input.targetWeekday !== undefined) {
+        whereConditions.push(
+          sql`extract(dow from (${trips.departureTime} AT TIME ZONE 'America/Toronto')) = ${input.targetWeekday}`
+        );
+      }
+
       const [nextTrip] = await ctx.db
         .select({
           id: trips.id,
@@ -390,13 +403,7 @@ export const recurringScheduleRouter = router({
           destination: trips.destination,
         })
         .from(trips)
-        .where(
-          and(
-            eq(trips.recurringScheduleId, input.recurringScheduleId),
-            gt(trips.departureTime, input.after),
-            ne(trips.status, "cancelled")
-          )
-        )
+        .where(and(...whereConditions))
         .orderBy(trips.departureTime)
         .limit(1);
 

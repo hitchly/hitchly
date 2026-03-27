@@ -14,6 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { McMaster } from "@/constants/location";
 import { useTheme } from "@/context/theme-context";
+import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import {
   useCreateTrip,
   type CreateTripFormData,
@@ -117,7 +118,7 @@ export function CreateTripScreen() {
       title="Post a Ride"
       visible={true}
       onClose={() => {
-        router.back();
+        safeLeaveCreateTripScreen(router);
       }}
     >
       <FormProvider {...methods}>
@@ -175,26 +176,9 @@ export function CreateTripScreen() {
             />
           </FormSection>
 
-          <FormSection title="LOGISTICS">
-            <ControlledDateTimePicker<CreateTripFormData>
-              name="departureTime"
-              label="DEPARTURE TIME"
-              minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
-            />
-
-            <View style={styles.stepperContainer}>
-              <ControlledNumericStepper<CreateTripFormData>
-                name="maxSeats"
-                label="AVAILABLE SEATS"
-                min={1}
-                max={6}
-              />
-            </View>
-          </FormSection>
-
           <FormSection
             title="REPEAT"
-            description="Set this ride to repeat on selected weekdays."
+            description="Toggle recurring to repeat weekly on the selected departure day/time."
           >
             <Controller
               control={methods.control}
@@ -216,57 +200,25 @@ export function CreateTripScreen() {
                 />
               )}
             />
-
-            {isRecurring ? (
-              <Controller
-                control={methods.control}
-                name="daysOfWeek"
-                render={({ field: { value = [], onChange } }) => {
-                  const days = [
-                    { label: "S", index: 0 },
-                    { label: "M", index: 1 },
-                    { label: "T", index: 2 },
-                    { label: "W", index: 3 },
-                    { label: "T", index: 4 },
-                    { label: "F", index: 5 },
-                    { label: "S", index: 6 },
-                  ];
-
-                  const toggleDay = (idx: number) => {
-                    if (value.includes(idx)) {
-                      onChange(value.filter((d: number) => d !== idx));
-                    } else {
-                      onChange([...value, idx].sort());
-                    }
-                  };
-
-                  return (
-                    <View style={styles.weekdayRow}>
-                      {days.map((day) => {
-                        const selected = value.includes(day.index);
-                        return (
-                          <Text
-                            key={day.index}
-                            variant="captionSemibold"
-                            style={[
-                              styles.weekdayPill,
-                              selected && {
-                                backgroundColor: colors.primary,
-                                color: colors.surface,
-                              },
-                            ]}
-                            onPress={() => toggleDay(day.index)}
-                          >
-                            {day.label}
-                          </Text>
-                        );
-                      })}
-                    </View>
-                  );
-                }}
-              />
-            ) : null}
           </FormSection>
+
+          <View>
+            <ControlledDateTimePicker<CreateTripFormData>
+              name="departureTime"
+              label="DEPARTURE"
+              mode="datetime"
+              minimumDate={new Date(Date.now() + 15 * 60 * 1000)}
+            />
+
+            <View style={styles.stepperContainer}>
+              <ControlledNumericStepper<CreateTripFormData>
+                name="maxSeats"
+                label="AVAILABLE SEATS"
+                min={1}
+                max={6}
+              />
+            </View>
+          </View>
 
           <View style={styles.footer}>
             <SubmitButton
@@ -335,18 +287,5 @@ const styles = StyleSheet.create({
   disclaimer: {
     paddingHorizontal: 20,
     lineHeight: 16,
-  },
-  weekdayRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    gap: 8,
-  },
-  weekdayPill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    textAlign: "center",
-    overflow: "hidden",
   },
 });

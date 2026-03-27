@@ -6,6 +6,8 @@ import { Alert } from "react-native";
 import * as z from "zod";
 
 import { McMaster } from "@/constants/location";
+import { getWeekdayInToronto } from "@/features/trips/utils/timezoneWeekday";
+import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import { trpc } from "@/lib/trpc";
 
 const TIME_WINDOW_MIN = 15;
@@ -103,7 +105,7 @@ export function useCreateTrip() {
     onSuccess: () => {
       void utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Trip posted!");
-      router.back();
+      safeLeaveCreateTripScreen(router);
     },
     onError: (err) => {
       Alert.alert("Error", err.message);
@@ -126,13 +128,16 @@ export function useCreateTrip() {
   const onSubmit = async (raw: CreateTripFormInput) => {
     const data: CreateTripFormData = createTripSchema.parse(raw);
 
-    if (data.isRecurring && data.daysOfWeek.length > 0) {
+    if (data.isRecurring) {
+      const inferredWeekday =
+        getWeekdayInToronto(data.departureTime) ?? data.departureTime.getDay();
       const schedule = await createScheduleMutation.mutateAsync({
         origin: data.origin,
         destination: data.destination,
         departureTime: data.departureTime,
         maxSeats: data.maxSeats,
-        daysOfWeek: data.daysOfWeek,
+        daysOfWeek: [inferredWeekday],
+        effectiveFrom: data.departureTime,
       });
 
       if (schedule?.id) {
@@ -142,9 +147,10 @@ export function useCreateTrip() {
         });
       }
 
+      await utils.recurringSchedule.listMine.invalidate();
       await utils.trip.getTrips.invalidate();
       Alert.alert("Success", "Recurring ride scheduled!");
-      router.back();
+      safeLeaveCreateTripScreen(router);
     } else {
       createTripMutation.mutate({
         origin: data.origin,

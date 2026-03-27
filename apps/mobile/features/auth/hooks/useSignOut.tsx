@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert } from "react-native";
@@ -44,9 +45,25 @@ export function useSignOut() {
       // 4. Destroy the authentication session
       await authClient.signOut();
 
-      // 5. Purge local client state
+      // 5. Purge local client state and role cache
       queryClient.clear();
       await utils.invalidate();
+
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const roleKeys = keys.filter((key) =>
+          key.startsWith("@hitchly_user_role")
+        );
+        if (roleKeys.length > 0) {
+          await AsyncStorage.multiRemove(roleKeys);
+        }
+      } catch (roleError) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "Failed to clear cached role keys on sign out:",
+          roleError
+        );
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Logout error:", error);

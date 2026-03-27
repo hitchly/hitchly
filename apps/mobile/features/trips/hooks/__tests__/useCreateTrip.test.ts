@@ -12,6 +12,7 @@ type MutationMock = {
 
 const {
   invalidate,
+  invalidateListMine,
   createTripMutation,
   createScheduleMutation,
   generateNextTripForScheduleMutation,
@@ -24,6 +25,7 @@ const {
 
   return {
     invalidate: vi.fn(),
+    invalidateListMine: vi.fn(),
     createTripMutation: makeMutation(),
     createScheduleMutation: makeMutation(),
     generateNextTripForScheduleMutation: makeMutation(),
@@ -35,6 +37,7 @@ vi.mock("@/lib/trpc", () => {
     trpc: {
       useUtils: () => ({
         trip: { getTrips: { invalidate } },
+        recurringSchedule: { listMine: { invalidate: invalidateListMine } },
       }),
       profile: {
         getMe: {
@@ -63,6 +66,7 @@ vi.mock("@/lib/trpc", () => {
 describe("useCreateTrip (recurring)", () => {
   beforeEach(() => {
     invalidate.mockClear();
+    invalidateListMine.mockClear();
     createTripMutation.mutate.mockClear();
     createScheduleMutation.mutateAsync.mockClear();
     generateNextTripForScheduleMutation.mutateAsync.mockClear();
@@ -103,17 +107,14 @@ describe("useCreateTrip (recurring)", () => {
     });
 
     const { result } = renderHook(() => useCreateTrip());
+    const departureTime = new Date(Date.now() + 60 * 60 * 1000);
 
     await act(async () => {
       result.current.methods.setValue("origin", "A");
       result.current.methods.setValue("destination", "B");
       result.current.methods.setValue("maxSeats", 3);
-      result.current.methods.setValue(
-        "departureTime",
-        new Date(Date.now() + 60 * 60 * 1000)
-      );
+      result.current.methods.setValue("departureTime", departureTime);
       result.current.methods.setValue("isRecurring", true);
-      result.current.methods.setValue("daysOfWeek", [1, 3, 5]);
     });
 
     await act(async () => {
@@ -125,7 +126,9 @@ describe("useCreateTrip (recurring)", () => {
         origin: "A",
         destination: "B",
         maxSeats: 3,
-        daysOfWeek: [1, 3, 5],
+        departureTime,
+        effectiveFrom: departureTime,
+        daysOfWeek: [expect.any(Number)],
       })
     );
     expect(
