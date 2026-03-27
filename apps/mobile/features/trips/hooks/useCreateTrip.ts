@@ -6,9 +6,9 @@ import { Alert } from "react-native";
 import * as z from "zod";
 
 import { McMaster } from "@/constants/location";
+import { getWeekdayInToronto } from "@/features/trips/utils/timezoneWeekday";
 import { safeLeaveCreateTripScreen } from "@/lib/safeNavigate";
 import { trpc } from "@/lib/trpc";
-import { getWeekdayInToronto } from "@/features/trips/utils/timezoneWeekday";
 
 const TIME_WINDOW_MIN = 15;
 

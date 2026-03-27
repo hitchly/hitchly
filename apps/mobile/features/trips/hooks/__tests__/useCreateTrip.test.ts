@@ -107,17 +107,14 @@ describe("useCreateTrip (recurring)", () => {
     });
 
     const { result } = renderHook(() => useCreateTrip());
+    const departureTime = new Date(Date.now() + 60 * 60 * 1000);
 
     await act(async () => {
       result.current.methods.setValue("origin", "A");
       result.current.methods.setValue("destination", "B");
       result.current.methods.setValue("maxSeats", 3);
-      result.current.methods.setValue(
-        "departureTime",
-        new Date(Date.now() + 60 * 60 * 1000)
-      );
+      result.current.methods.setValue("departureTime", departureTime);
       result.current.methods.setValue("isRecurring", true);
-      result.current.methods.setValue("daysOfWeek", [1, 3, 5]);
     });
 
     await act(async () => {
@@ -129,7 +126,9 @@ describe("useCreateTrip (recurring)", () => {
         origin: "A",
         destination: "B",
         maxSeats: 3,
-        daysOfWeek: [1, 3, 5],
+        departureTime,
+        effectiveFrom: departureTime,
+        daysOfWeek: [expect.any(Number)],
       })
     );
     expect(

@@ -136,16 +136,16 @@ export function useDriverTrips() {
               new Date(a.departureTime).getTime() -
               new Date(b.departureTime).getTime()
           );
-        if (upcoming.length > 0) return upcoming[0]!;
+        if (upcoming.length > 0) return upcoming[0] ?? null;
 
         const latestPast = [...group].sort(
           (a, b) =>
             new Date(b.departureTime).getTime() -
             new Date(a.departureTime).getTime()
         );
-        return latestPast[0]!;
+        return latestPast[0] ?? null;
       })
-      .filter(Boolean);
+      .filter((trip): trip is NonNullable<typeof trip> => Boolean(trip));
 
     return [
       ...oneTimeTrips,

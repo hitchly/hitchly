@@ -85,20 +85,18 @@ export function DateTimePicker({
         if (event.type === "dismissed") return;
 
         if (event.type === "set" && selectedDate) {
-          if (mode === "datetime") {
-            DateTimePickerAndroid.open({
-              value: selectedDate,
-              mode: "time",
-              is24Hour: true,
-              onChange: (timeEvent: DateTimePickerEvent, finalDate?: Date) => {
-                if (timeEvent.type === "set" && finalDate) {
-                  onChange(finalDate);
-                }
-              },
-            });
-          } else {
-            onChange(selectedDate);
-          }
+          // At this point we already handled mode === "time" and mode === "date"
+          // so the remaining mode is "datetime".
+          DateTimePickerAndroid.open({
+            value: selectedDate,
+            mode: "time",
+            is24Hour: true,
+            onChange: (timeEvent: DateTimePickerEvent, finalDate?: Date) => {
+              if (timeEvent.type === "set" && finalDate) {
+                onChange(finalDate);
+              }
+            },
+          });
         }
       },
     });

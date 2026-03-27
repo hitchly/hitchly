@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
-import { Alert } from "react-native";
 import {
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,

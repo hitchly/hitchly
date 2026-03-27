@@ -47,7 +47,7 @@ export const formatNextTripLine = (
     minute: "2-digit",
   });
 
-  return `Next trip is ${weekday}, ${month} ${day}${getOrdinalSuffix(day)} at ${time}`;
+  return `Next trip is ${weekday}, ${month} ${String(day)}${getOrdinalSuffix(day)} at ${time}`;
 };
 
 export const formatWeeklyCommuteLabel = (
