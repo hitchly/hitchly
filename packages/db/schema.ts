@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
   uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 // --- ENUMS ---
@@ -29,7 +30,6 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  pushToken: text("push_token"), // Expo push notification token
   isVerifiedDriver: boolean("is_verified_driver").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -178,7 +178,7 @@ export const userLocations = pgTable("user_locations", {
 
 // --- RELATIONS ---
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   profile: one(profiles, {
     fields: [users.id],
     references: [profiles.userId],
@@ -191,6 +191,7 @@ export const usersRelations = relations(users, ({ one }) => ({
     fields: [users.id],
     references: [vehicles.userId],
   }),
+  pushTokens: many(pushTokens),
 }));
 
 // Trip status enum - unified from both rides and trips
@@ -502,3 +503,20 @@ export const tips = pgTable("tips", {
   stripePaymentIntentId: text("stripe_payment_intent_id").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const pushTokens = pgTable("push_tokens", {
+  token: varchar("token", { length: 255 }).primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
+});
+
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [pushTokens.userId],
+    references: [users.id],
+  }),
+}));

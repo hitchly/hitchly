@@ -2348,10 +2348,10 @@ describe("Trip Router", () => {
   // startTrip — notification branch
   // ============================================
   describe("startTrip — notifications", () => {
-    it("should send notifications to accepted riders when starting (test-ut-trip-33)", async () => {
+    it("should send batch notifications to accepted riders when starting (test-ut-trip-33)", async () => {
       const driverId = "driver-123";
 
-      // Mock select → active trip owned by driver
+      // 1. Mock select → active trip owned by driver
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValueOnce([
@@ -2364,7 +2364,7 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock update().set().where().returning() → trip started
+      // 2. Mock update().set().where().returning() → trip started
       mockDb.update.mockReturnValueOnce({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -2379,23 +2379,24 @@ describe("Trip Router", () => {
         }),
       });
 
-      // Mock select accepted riders with push tokens (innerJoin chain)
+      // 3. Mock select accepted riders (No more innerJoin, just fetching IDs)
       mockDb.select.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValueOnce([
-              {
-                userId: "rider-1",
-                pushToken: "ExponentPushToken[token-1]",
-              },
-              {
-                userId: "rider-2",
-                pushToken: "ExponentPushToken[token-2]",
-              },
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([
+              { userId: "rider-1" },
+              { userId: "rider-2" },
             ]),
-          }),
         }),
       });
+
+      // 4. Spy on the new NotificationService
+      const { NotificationService } =
+        await import("../../../services/notification.service");
+      const sendSpy = vi
+        .spyOn(NotificationService, "sendToMultipleUsers")
+        .mockResolvedValue();
 
       const caller = tripRouter.createCaller(
         createMockContext(driverId, mockDb as unknown)
@@ -2404,10 +2405,17 @@ describe("Trip Router", () => {
       const result = await caller.startTrip({ tripId: "trip-1" });
 
       expect(result.status).toBe("in_progress");
-      // sendTripNotification is mocked at module level
-      const { sendTripNotification } =
-        await import("../../../services/notification");
-      expect(sendTripNotification).toHaveBeenCalled();
+
+      // 5. Assert the batch notification was fired with correct arguments
+      expect(sendSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userIds: ["rider-1", "rider-2"],
+          title: "Trip Starting! 🚗",
+          data: { route: "/rider/rides/trip-1" },
+        })
+      );
+
+      sendSpy.mockRestore();
     });
   });
 

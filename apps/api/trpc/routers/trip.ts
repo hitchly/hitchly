@@ -19,7 +19,7 @@ import {
   calculateTripDistance,
   geocodeAddress,
 } from "../../services/googlemaps";
-import { sendTripNotification } from "../../services/notification";
+import { NotificationService } from "../../services/notification.service";
 import {
   calculateFare,
   cancelPaymentHold,
@@ -107,12 +107,12 @@ function validateTripInput(tripData: {
 
   if (tripData.departureTime < minDepartureTime) {
     throw new Error(
-      `Departure time must be at least ${TIME_WINDOW_MIN} minutes in the future`
+      `Departure time must be at least ${String(TIME_WINDOW_MIN)} minutes in the future`
     );
   }
 
   if (tripData.maxSeats < 1 || tripData.maxSeats > MAX_SEATS) {
-    throw new Error(`Max seats must be between 1 and ${MAX_SEATS}`);
+    throw new Error(`Max seats must be between 1 and ${String(MAX_SEATS)}`);
   }
 }
 
@@ -423,6 +423,7 @@ export const tripRouter = router({
               : null,
           }));
         } catch (error: unknown) {
+          // eslint-disable-next-line no-console
           console.error("Failed to fetch trip requests:", error);
           return [];
         }
@@ -466,6 +467,7 @@ export const tripRouter = router({
             .where(eq(users.id, trip.driverId));
           return driverRow ?? null;
         } catch (error: unknown) {
+          // eslint-disable-next-line no-console
           console.error("Failed to fetch trip driver:", error);
           return null;
         }
@@ -640,9 +642,8 @@ export const tripRouter = router({
 
       // Send push notification to all accepted riders
       const acceptedRiders = await ctx.db
-        .select({ userId: tripRequests.riderId, pushToken: users.pushToken })
+        .select({ userId: tripRequests.riderId })
         .from(tripRequests)
-        .innerJoin(users, eq(tripRequests.riderId, users.id))
         .where(
           and(
             eq(tripRequests.tripId, input.tripId),
@@ -650,14 +651,14 @@ export const tripRouter = router({
           )
         );
 
-      if (acceptedRiders.length > 0) {
-        sendTripNotification(
-          acceptedRiders,
-          "Trip Cancelled",
-          `Your trip from ${trip.origin} to ${trip.destination} has been cancelled by the driver.`,
-          { tripId: input.tripId, action: "cancelled" }
-        ).catch((err) => {
-          console.error("Failed to send cancel notification:", err);
+      const riderIds = acceptedRiders.map((r) => r.userId);
+
+      if (riderIds.length > 0) {
+        void NotificationService.sendToMultipleUsers({
+          userIds: riderIds,
+          title: "Trip Cancelled 🚫",
+          body: `Your trip from ${trip.origin} to ${trip.destination} was cancelled by the driver.`,
+          data: { route: "/rider/trips" },
         });
 
         // Release payment holds for all accepted riders
@@ -673,6 +674,7 @@ export const tripRouter = router({
 
         for (const req of acceptedRequests) {
           cancelPaymentHold(req.id).catch((err) => {
+            // eslint-disable-next-line no-console
             console.error("Failed to cancel payment hold:", err);
           });
         }
@@ -735,9 +737,8 @@ export const tripRouter = router({
 
       // Send push notification to all accepted riders that trip is starting
       const acceptedRiders = await ctx.db
-        .select({ userId: tripRequests.riderId, pushToken: users.pushToken })
+        .select({ userId: tripRequests.riderId })
         .from(tripRequests)
-        .innerJoin(users, eq(tripRequests.riderId, users.id))
         .where(
           and(
             eq(tripRequests.tripId, input.tripId),
@@ -745,14 +746,14 @@ export const tripRouter = router({
           )
         );
 
-      if (acceptedRiders.length > 0) {
-        sendTripNotification(
-          acceptedRiders,
-          "Trip Starting",
-          "Your driver is on the way! Get ready for pickup.",
-          { tripId: input.tripId, action: "started" }
-        ).catch((err) => {
-          console.error("Failed to send start notification:", err);
+      const riderIds = acceptedRiders.map((r) => r.userId);
+
+      if (riderIds.length > 0) {
+        void NotificationService.sendToMultipleUsers({
+          userIds: riderIds,
+          title: "Trip Starting! 🚗",
+          body: "Your driver is on the way! Get ready for pickup.",
+          data: { route: `/rider/rides/${input.tripId}` },
         });
       }
 
@@ -1012,6 +1013,7 @@ export const tripRouter = router({
           }
         }
       }
+
       const completedRequests = await ctx.db
         .select()
         .from(tripRequests)
@@ -1021,31 +1023,19 @@ export const tripRouter = router({
             eq(tripRequests.status, "completed")
           )
         );
+
       const summary = await calculateTripSummary(ctx, input.tripId);
 
       // Send push notification to all completed riders
       if (completedRequests.length > 0) {
         const riderIds = completedRequests.map((r) => r.riderId);
-        const ridersWithTokens = await ctx.db
-          .select({ userId: users.id, pushToken: users.pushToken })
-          .from(users)
-          .where(
-            sql`${users.id} IN (${sql.join(
-              riderIds.map((id) => sql`${id}`),
-              sql`, `
-            )})`
-          );
 
-        if (ridersWithTokens.length > 0) {
-          sendTripNotification(
-            ridersWithTokens,
-            "Trip Completed",
-            `Your trip from ${trip.origin} to ${trip.destination} is complete. Thanks for riding with Hitchly!`,
-            { tripId: input.tripId, action: "completed", summary }
-          ).catch((err) => {
-            console.error("Failed to send complete notification:", err);
-          });
-        }
+        void NotificationService.sendToMultipleUsers({
+          userIds: riderIds,
+          title: "Trip Completed ✅",
+          body: `Your trip from ${trip.origin} to ${trip.destination} is complete. Thanks for riding!`,
+          data: { route: `/rider/rides/${input.tripId}` },
+        });
       }
 
       return {
@@ -1062,8 +1052,8 @@ export const tripRouter = router({
         comment: z.string().max(1000).optional(),
       })
     )
-    .mutation(async () => {
-      // Placeholder only (no DB tables yet)
+    .mutation(() => {
+      // TODO: Fix placeholder only (no DB tables yet)
       return { success: true };
     }),
 
@@ -1126,7 +1116,7 @@ export const tripRouter = router({
       if (!result.success) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: result.error || "Failed to process tip",
+          message: result.error ?? "Failed to process tip",
         });
       }
 
@@ -1386,6 +1376,13 @@ export const tripRouter = router({
         })
         .returning();
 
+      void NotificationService.sendToUser({
+        userId: trip.driverId,
+        title: "New Ride Request! 🚙",
+        body: "A rider has requested to join your trip.",
+        data: { route: `/driver/trips/${input.tripId}` },
+      });
+
       return request;
     }),
 
@@ -1620,7 +1617,7 @@ export const tripRouter = router({
         if (!paymentResult.success) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `Payment failed: ${paymentResult.error}`,
+            message: `Payment failed: ${paymentResult.error ?? "Unable to charge rider's payment method"}`,
           });
         }
       }
@@ -1685,12 +1682,20 @@ export const tripRouter = router({
           );
 
           if (!updateResult.success) {
+            // eslint-disable-next-line no-console
             console.error(
-              `Failed to update payment for request ${existingRequest.id}: ${updateResult.error}`
+              `Failed to update payment for request ${existingRequest.id}: ${updateResult.error ?? "Unknown error"}`
             );
           }
         }
       }
+
+      void NotificationService.sendToUser({
+        userId: request.request.riderId,
+        title: "Ride Accepted! 🎉",
+        body: "Your driver has accepted your request. Have a great trip!",
+        data: { route: `/rider/rides/${request.trip.id}` },
+      });
 
       return acceptedRequest;
     }),
@@ -1743,6 +1748,13 @@ export const tripRouter = router({
         })
         .where(eq(tripRequests.id, input.requestId))
         .returning();
+
+      void NotificationService.sendToUser({
+        userId: request.request.riderId,
+        title: "Ride Declined 😔",
+        body: "Your driver couldn't accept the ride. Tap here to find another trip.",
+        data: { route: "/rider/trips" },
+      });
 
       return rejectedRequest;
     }),
@@ -1810,6 +1822,7 @@ export const tripRouter = router({
 
         // Release payment hold
         cancelPaymentHold(input.requestId).catch((err) => {
+          // eslint-disable-next-line no-console
           console.error("Failed to cancel payment hold:", err);
         });
       }
@@ -1882,11 +1895,11 @@ export const tripRouter = router({
         sql`${trips.maxSeats} - ${trips.bookedSeats} >= 1`, // Only trips with available seats
       ];
 
-      if (input?.startDate) {
+      if (input.startDate) {
         conditions.push(gte(trips.departureTime, input.startDate));
       }
 
-      if (input?.endDate) {
+      if (input.endDate) {
         conditions.push(lte(trips.departureTime, input.endDate));
       }
 

@@ -4,11 +4,15 @@ import { View } from "react-native";
 
 import { useUserRole } from "@/context/role-context";
 import { DriverVerificationGuard } from "@/features/identity/components/DriverVerificationGuard";
+import { usePushNotifications } from "@/features/notifications/hooks/usePushNotifications";
 import { ActiveTripBanner } from "@/features/trips/components/ActiveTripBanner";
 import { useActiveTripMonitor } from "@/features/trips/hooks/useActiveTripMonitor";
+import { authClient } from "@/lib/auth-client";
 
 function AppLayoutContent() {
-  // These hooks should always be available since RoleProvider wraps this component
+  const { data: session } = authClient.useSession();
+  usePushNotifications(session?.user.id);
+
   const { isLoading: isRoleLoading } = useUserRole();
   const { activeTripId, currentRoleLabel, isActive, isRecurring } =
     useActiveTripMonitor();

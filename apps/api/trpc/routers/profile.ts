@@ -231,20 +231,6 @@ export const profileRouter = router({
   }),
 
   /**
-   * updatePushToken()
-   * Updates the user's Expo push notification token.
-   */
-  updatePushToken: protectedProcedure
-    .input(z.object({ pushToken: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(users)
-        .set({ pushToken: input.pushToken })
-        .where(eq(users.id, ctx.userId));
-      return { success: true };
-    }),
-
-  /**
    * getBanStatus()
    * Returns the user's ban status.
    * TODO: Add banned and banReason fields to users schema

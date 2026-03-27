@@ -33,6 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: "com.hitchly.mobile",
+    googleServicesFile: "./google-services.json",
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: "#F5F7FA",
@@ -81,16 +82,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         isIosBackgroundLocationEnabled: true,
       },
     ],
-    [
-      "expo-notifications",
-      {
-        mode: "production",
-      },
-    ],
+    ["expo-notifications"],
   ],
 
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+
+  extra: {
+    ...config.extra,
+    eas: {
+      projectId: "33009271-f266-498c-a30c-57bdaf2ffaef",
+    },
   },
 });
