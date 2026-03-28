@@ -7,6 +7,12 @@ import { admin, emailOTP } from "better-auth/plugins";
 
 import { emailClient } from "../lib/email";
 
+/** Extra allowed browser origins (e.g. Vercel admin). Comma-separated in BETTER_AUTH_TRUSTED_ORIGINS. */
+const extraTrustedOrigins =
+  process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) ?? [];
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   plugins: [
@@ -47,7 +53,11 @@ export const auth = betterAuth({
     "exp://",
     "hitchly://",
     "http://localhost:3000",
+    "http://localhost:4000",
     "https://hitchly.onrender.com",
+    // Production admin (also set BETTER_AUTH_TRUSTED_ORIGINS on Render for previews / extra domains)
+    "https://hitchly.vercel.app",
+    ...extraTrustedOrigins,
   ],
 
   advanced: {
