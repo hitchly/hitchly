@@ -62,8 +62,11 @@ export const auth = betterAuth({
 
   advanced: {
     defaultCookieAttributes: {
+      // Admin (e.g. Vercel) and API (e.g. Render) are different sites. With SameSite=Lax,
+      // the session cookie is not sent on credentialed fetch/XHR from the admin origin
+      // to the API, so useSession() never sees a session. "none" + Secure fixes that.
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     },
   },
 
