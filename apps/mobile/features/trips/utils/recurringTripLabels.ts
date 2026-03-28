@@ -2,6 +2,9 @@ export const isTripRecurring = (trip: {
   recurringScheduleId?: string | null;
 }) => Boolean(trip.recurringScheduleId);
 
+/** Aligns with API recurring schedules (`schedule_timezone`) and mobile weekday helpers. */
+const TRIP_DISPLAY_TIMEZONE = "America/Toronto";
+
 const SHORT_WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const getOrdinalSuffix = (day: number) => {
@@ -39,10 +42,15 @@ export const formatNextTripLine = (
     departureTime instanceof Date ? departureTime : new Date(departureTime);
   if (Number.isNaN(date.getTime())) return null;
 
-  const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
-  const month = date.toLocaleDateString("en-US", { month: "long" });
-  const day = date.getDate();
+  const tz = { timeZone: TRIP_DISPLAY_TIMEZONE };
+  const weekday = date.toLocaleDateString("en-US", { ...tz, weekday: "long" });
+  const month = date.toLocaleDateString("en-US", { ...tz, month: "long" });
+  const day = Number.parseInt(
+    new Intl.DateTimeFormat("en-US", { ...tz, day: "numeric" }).format(date),
+    10
+  );
   const time = date.toLocaleTimeString("en-US", {
+    ...tz,
     hour: "numeric",
     minute: "2-digit",
   });
@@ -58,7 +66,10 @@ export const formatWeeklyCommuteLabel = (
     departureTime instanceof Date ? departureTime : new Date(departureTime);
   if (Number.isNaN(date.getTime())) return null;
 
-  const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
+  const weekday = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: TRIP_DISPLAY_TIMEZONE,
+  });
   return {
     title: "Weekly commute",
     subtitle: `Occurs every ${weekday}`,

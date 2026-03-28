@@ -18,7 +18,8 @@
     "seed:trips": "tsx scripts/seed-test-trips.ts",
     "seed:test": "tsx scripts/seed-test-data.ts",
     "verify:dev": "tsx scripts/verify-dev-accounts.ts",
-    "migrate:rides-to-trips": "tsx scripts/migrate-rides-to-trips.ts"
+    "migrate:rides-to-trips": "tsx scripts/migrate-rides-to-trips.ts",
+    "repair:recurring-minutes": "tsx scripts/repair-recurring-departure-minutes.ts"
   },
   "tsup": {
     "entry": [
@@ -42,9 +43,9 @@
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@hitchly/db": "workspace:*",
     "@hitchly/emails": "workspace:*",
-    "@hitchly/utils": "workspace:*",
     "@hitchly/eslint-config": "workspace:*",
     "@hitchly/tsconfig": "workspace:*",
+    "@hitchly/utils": "workspace:*",
     "@hono/node-server": "^1.19.9",
     "@hono/trpc-server": "^0.4.2",
     "@trpc/client": "^11.7.1",
@@ -53,11 +54,13 @@
     "cors": "^2.8.5",
     "expo-server-sdk": "^3.10.0",
     "hono": "^4.11.4",
+    "luxon": "^3.7.2",
     "stripe": "^20.3.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^24.10.0",
     "@types/supertest": "^6.0.3",
     "dotenv": "^17.2.3",

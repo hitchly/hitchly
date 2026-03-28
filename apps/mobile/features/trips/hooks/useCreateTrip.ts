@@ -134,10 +134,10 @@ export function useCreateTrip() {
       const schedule = await createScheduleMutation.mutateAsync({
         origin: data.origin,
         destination: data.destination,
-        departureTime: data.departureTime,
+        departureTime: data.departureTime.toISOString(),
         maxSeats: data.maxSeats,
         daysOfWeek: [inferredWeekday],
-        effectiveFrom: data.departureTime,
+        effectiveFrom: data.departureTime.toISOString(),
       });
 
       if (schedule?.id) {
@@ -155,7 +155,7 @@ export function useCreateTrip() {
       createTripMutation.mutate({
         origin: data.origin,
         destination: data.destination,
-        departureTime: data.departureTime,
+        departureTime: data.departureTime.toISOString(),
         maxSeats: data.maxSeats,
       });
     }

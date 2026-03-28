@@ -32,10 +32,12 @@ describe("recurringTripLabels", () => {
     expect(formatRecurringDaysLabel([])).toBeNull();
   });
 
-  it("formats next trip line with weekday and ordinal day", () => {
-    const line = formatNextTripLine(new Date("2025-03-27T01:23:00Z"));
+  it("formats next trip line with weekday and ordinal day in Toronto", () => {
+    // April 11, 2025 11:20 PM EDT → April 12, 2025 03:20 UTC
+    const line = formatNextTripLine(new Date("2025-04-12T03:20:00.000Z"));
     expect(line).toContain("Next trip is");
-    expect(line).toContain("March");
+    expect(line).toContain("Friday");
+    expect(line).toContain("April");
     expect(line).toMatch(/\b\d{1,2}(st|nd|rd|th)\b/i);
   });
 });
