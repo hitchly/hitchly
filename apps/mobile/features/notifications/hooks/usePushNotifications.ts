@@ -43,10 +43,11 @@ export function usePushNotifications(userId?: string): PushNotificationState {
       return;
     }
 
-    // Dynamic load: static import throws on Expo Go Android (SDK 53+).
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional require to avoid loading native module when disabled
+    /* Dynamic load: static import throws on Expo Go Android (SDK 53+). */
+    /* eslint-disable @typescript-eslint/no-require-imports -- must not statically import expo-notifications here */
     const Notifications =
       require("expo-notifications") as ExpoNotificationsModule;
+    /* eslint-enable @typescript-eslint/no-require-imports */
 
     if (!notificationHandlerConfigured) {
       Notifications.setNotificationHandler({
