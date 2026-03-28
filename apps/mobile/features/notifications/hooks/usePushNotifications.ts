@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import * as Device from "expo-device";
-import type { Notification, NotificationResponse } from "expo-notifications";
+import type * as ExpoNotifications from "expo-notifications";
 import { router, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
@@ -12,13 +12,11 @@ import { trpc } from "@/lib/trpc";
 const isExpoGoAndroidPushDisabled = (): boolean =>
   isExpoGo() && Platform.OS === "android";
 
-// Dynamic `require` only when not Expo Go Android; `import()` type is the only ergonomic module shape.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- module shape for require() result
-type ExpoNotificationsModule = typeof import("expo-notifications");
+type ExpoNotificationsModule = typeof ExpoNotifications;
 
 export interface PushNotificationState {
   expoPushToken: string | null;
-  notification: Notification | null;
+  notification: ExpoNotifications.Notification | null;
   error: Error | null;
 }
 
@@ -26,7 +24,8 @@ let notificationHandlerConfigured = false;
 
 export function usePushNotifications(userId?: string): PushNotificationState {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notification | null>(null);
+  const [notification, setNotification] =
+    useState<ExpoNotifications.Notification | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   const notificationListener = useRef<{ remove: () => void } | null>(null);
@@ -44,7 +43,8 @@ export function usePushNotifications(userId?: string): PushNotificationState {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // Dynamic load: static import throws on Expo Go Android (SDK 53+).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional require to avoid loading native module when disabled
     const Notifications =
       require("expo-notifications") as ExpoNotificationsModule;
 
@@ -75,7 +75,9 @@ export function usePushNotifications(userId?: string): PushNotificationState {
         }
       });
 
-    const handleNotificationInteraction = (response: NotificationResponse) => {
+    const handleNotificationInteraction = (
+      response: ExpoNotifications.NotificationResponse
+    ) => {
       const data = response.notification.request.content.data;
       const path = data.route ?? data.url;
 

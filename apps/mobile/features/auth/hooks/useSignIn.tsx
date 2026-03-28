@@ -61,6 +61,7 @@ export const useSignIn = () => {
       );
     } catch (err) {
       // Wrong password / server validation uses onError above; this path is usually network/parse/client throws.
+      // eslint-disable-next-line no-console -- surface unexpected throws in dev/CI logs
       console.error("Sign-in threw:", err);
       Alert.alert("Login Failed", "An unexpected error occurred.");
     } finally {
