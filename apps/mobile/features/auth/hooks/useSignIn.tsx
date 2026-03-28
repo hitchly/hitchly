@@ -59,7 +59,9 @@ export const useSignIn = () => {
           },
         }
       );
-    } catch {
+    } catch (err) {
+      // Wrong password / server validation uses onError above; this path is usually network/parse/client throws.
+      console.error("Sign-in threw:", err);
       Alert.alert("Login Failed", "An unexpected error occurred.");
     } finally {
       setLoading(false);

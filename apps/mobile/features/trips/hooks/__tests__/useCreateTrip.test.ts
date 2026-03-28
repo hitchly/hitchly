@@ -74,15 +74,13 @@ describe("useCreateTrip (recurring)", () => {
 
   it("submits non-recurring trip via trip.createTrip", async () => {
     const { result } = renderHook(() => useCreateTrip());
+    const departureTime = new Date(Date.now() + 60 * 60 * 1000);
 
     await act(async () => {
       result.current.methods.setValue("origin", "A");
       result.current.methods.setValue("destination", "B");
       result.current.methods.setValue("maxSeats", 2);
-      result.current.methods.setValue(
-        "departureTime",
-        new Date(Date.now() + 60 * 60 * 1000)
-      );
+      result.current.methods.setValue("departureTime", departureTime);
     });
 
     await act(async () => {
@@ -94,6 +92,7 @@ describe("useCreateTrip (recurring)", () => {
         origin: "A",
         destination: "B",
         maxSeats: 2,
+        departureTime: departureTime.toISOString(),
       })
     );
     expect(createScheduleMutation.mutateAsync).not.toHaveBeenCalled();
@@ -126,8 +125,8 @@ describe("useCreateTrip (recurring)", () => {
         origin: "A",
         destination: "B",
         maxSeats: 3,
-        departureTime,
-        effectiveFrom: departureTime,
+        departureTime: departureTime.toISOString(),
+        effectiveFrom: departureTime.toISOString(),
         daysOfWeek: [expect.any(Number)],
       })
     );

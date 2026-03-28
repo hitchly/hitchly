@@ -235,7 +235,7 @@ export const trips = pgTable("trips", {
   destLat: doublePrecision("dest_lat"),
   destLng: doublePrecision("dest_lng"),
 
-  departureTime: timestamp("departure_time").notNull(),
+  departureTime: timestamp("departure_time", { withTimezone: true }).notNull(),
   maxSeats: integer("max_seats").notNull(),
   bookedSeats: integer("booked_seats").default(0).notNull(),
 
@@ -284,9 +284,9 @@ export const recurringTripSchedules = pgTable("recurring_trip_schedules", {
 
   maxSeats: integer("max_seats").notNull(),
 
-  // Active window
-  effectiveFrom: timestamp("effective_from").notNull(),
-  effectiveTo: timestamp("effective_to"),
+  // Active window (timestamptz so instants round-trip correctly from Node/pg)
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+  effectiveTo: timestamp("effective_to", { withTimezone: true }),
   isActive: boolean("is_active").default(true).notNull(),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
