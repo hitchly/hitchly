@@ -9,64 +9,21 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, gte, gt, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import {
+  findNextEnabledDepartureTime,
+  getDepartureMinutesInTimezone,
+  listDepartureTimesInWindow,
+  parseDepartureInstant,
+  startOfDayInTimezone,
+} from "../../lib/recurring-schedule-time";
 import { geocodeAddress } from "../../services/googlemaps";
 import { router, protectedProcedure } from "../trpc";
 
 const APP_TIMEZONE = "America/Toronto";
 
-const buildDepartureTimeForDay = (day: Date, departureMinutes: number) => {
-  const hours = Math.floor(departureMinutes / 60);
-  const minutes = departureMinutes % 60;
-  const departureTime = new Date(day);
-  departureTime.setHours(hours, minutes, 0, 0);
-  return departureTime;
-};
-
-const isScheduleEnabledForDay = (
-  schedule: typeof recurringTripSchedules.$inferSelect,
-  day: Date
-) => {
-  const dayOfWeek = day.getDay(); // 0-6
-  return (
-    (dayOfWeek === 0 && schedule.sunday) ||
-    (dayOfWeek === 1 && schedule.monday) ||
-    (dayOfWeek === 2 && schedule.tuesday) ||
-    (dayOfWeek === 3 && schedule.wednesday) ||
-    (dayOfWeek === 4 && schedule.thursday) ||
-    (dayOfWeek === 5 && schedule.friday) ||
-    (dayOfWeek === 6 && schedule.saturday)
-  );
-};
-
-const findNextEnabledDay = (
-  schedule: typeof recurringTripSchedules.$inferSelect,
-  after: Date,
-  daysAhead = 60
-) => {
-  // search from next minute onward (inclusive of same-day future time)
-  const start = new Date(after);
-  for (let i = 0; i <= daysAhead; i++) {
-    const day = new Date(start);
-    day.setDate(day.getDate() + i);
-    day.setHours(0, 0, 0, 0);
-
-    if (!isScheduleEnabledForDay(schedule, day)) continue;
-    const departureTime = buildDepartureTimeForDay(
-      day,
-      schedule.departureMinutes
-    );
-    // effectiveFrom/effectiveTo are timestamps; compare against the actual occurrence time
-    // (not midnight of the day) so "today" isn't accidentally skipped.
-    if (departureTime < schedule.effectiveFrom) continue;
-    if (schedule.effectiveTo && departureTime > schedule.effectiveTo) continue;
-    if (departureTime <= after) continue;
-    return departureTime;
-  }
-  return null;
-};
-
-// Helper to get minutes from midnight in APP_TIMEZONE, ensuring TIME_WINDOW_MIN
+// Helper: minutes from midnight in schedule timezone, ensuring TIME_WINDOW_MIN
 function validateScheduleTime(departureTime: Date) {
+  const instant = parseDepartureInstant(departureTime);
   const now = new Date();
   // Users pick times at minute precision; align the "15 minutes ahead" rule
   // to minute granularity to avoid surprising rejections due to seconds/ms.
@@ -74,27 +31,35 @@ function validateScheduleTime(departureTime: Date) {
   minDepartureTime.setSeconds(0, 0);
   minDepartureTime.setMinutes(minDepartureTime.getMinutes() + TIME_WINDOW_MIN);
 
-  if (departureTime < minDepartureTime) {
+  if (instant < minDepartureTime) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: `Departure time must be at least ${String(TIME_WINDOW_MIN)} minutes in the future`,
     });
   }
 
-  return departureTime.getHours() * 60 + departureTime.getMinutes();
+  return getDepartureMinutesInTimezone(instant, APP_TIMEZONE);
 }
 
 const createScheduleInputSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
-  // Use a full Date from client; we only keep the time-of-day and treat the date as effectiveFrom
-  departureTime: z.coerce.date(),
+  // ISO string (preferred) or Date from client — unambiguous instant
+  departureTime: z
+    .union([z.string(), z.number(), z.date()])
+    .transform((v) => parseDepartureInstant(v)),
   maxSeats: z.number().int().min(1).max(MAX_SEATS),
   daysOfWeek: z
     .array(z.number().int().min(0).max(6))
     .min(1, "Select at least one day"),
-  effectiveFrom: z.coerce.date().optional(), // defaults to today on server
-  effectiveTo: z.coerce.date().optional(),
+  effectiveFrom: z
+    .union([z.string(), z.number(), z.date()])
+    .transform((v) => parseDepartureInstant(v))
+    .optional(), // defaults to today on server
+  effectiveTo: z
+    .union([z.string(), z.number(), z.date()])
+    .transform((v) => parseDepartureInstant(v))
+    .optional(),
 });
 
 const updateScheduleInputSchema = createScheduleInputSchema
@@ -104,7 +69,10 @@ const updateScheduleInputSchema = createScheduleInputSchema
     id: z.string(),
     origin: z.string().min(1).optional(),
     destination: z.string().min(1).optional(),
-    departureTime: z.coerce.date().optional(),
+    departureTime: z
+      .union([z.string(), z.number(), z.date()])
+      .transform((v) => parseDepartureInstant(v))
+      .optional(),
   });
 
 export const recurringScheduleRouter = router({
@@ -157,10 +125,11 @@ export const recurringScheduleRouter = router({
 
       const now = new Date();
       const effectiveFromRaw = input.effectiveFrom ?? now;
-      // Default to "today" (date-level) instead of "this exact instant" so the
-      // first occurrence can still be later today.
-      const effectiveFrom = new Date(effectiveFromRaw);
-      effectiveFrom.setHours(0, 0, 0, 0);
+      // Start of calendar day in schedule TZ (not server local midnight).
+      const effectiveFrom = startOfDayInTimezone(
+        effectiveFromRaw,
+        APP_TIMEZONE
+      );
 
       const departureMinutes = validateScheduleTime(input.departureTime);
 
@@ -236,7 +205,12 @@ export const recurringScheduleRouter = router({
         return { created: false, trip: null };
       }
 
-      const nextDepartureTime = findNextEnabledDay(schedule, input.after, 60);
+      const nextDepartureTime = findNextEnabledDepartureTime(
+        schedule,
+        input.after,
+        schedule.scheduleTimezone,
+        60
+      );
       if (!nextDepartureTime) {
         return { created: false, trip: null };
       }
@@ -317,23 +291,18 @@ export const recurringScheduleRouter = router({
       const createdTrips: { id: string }[] = [];
 
       for (const schedule of typedSchedules) {
-        for (let i = 0; i <= daysAhead; i++) {
-          const day = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-          if (!isScheduleEnabledForDay(schedule, day)) continue;
+        const minDepartureTime = new Date(
+          now.getTime() + TIME_WINDOW_MIN * 60 * 1000
+        );
+        const departureCandidates = listDepartureTimesInWindow(
+          schedule,
+          now,
+          schedule.scheduleTimezone,
+          daysAhead,
+          minDepartureTime
+        );
 
-          const departureTime = buildDepartureTimeForDay(
-            day,
-            schedule.departureMinutes
-          );
-          if (departureTime < schedule.effectiveFrom) continue;
-          if (schedule.effectiveTo && departureTime > schedule.effectiveTo)
-            continue;
-
-          const minDepartureTime = new Date(
-            now.getTime() + TIME_WINDOW_MIN * 60 * 1000
-          );
-          if (departureTime < minDepartureTime) continue;
-
+        for (const departureTime of departureCandidates) {
           const existing = await ctx.db
             .select({ id: trips.id })
             .from(trips)
@@ -440,7 +409,12 @@ export const recurringScheduleRouter = router({
         updates.maxSeats = input.maxSeats;
       }
 
-      if (input.effectiveFrom) updates.effectiveFrom = input.effectiveFrom;
+      if (input.effectiveFrom) {
+        updates.effectiveFrom = startOfDayInTimezone(
+          input.effectiveFrom,
+          existing.scheduleTimezone
+        );
+      }
       if (input.effectiveTo) updates.effectiveTo = input.effectiveTo;
 
       if (input.daysOfWeek) {
@@ -454,8 +428,10 @@ export const recurringScheduleRouter = router({
       }
 
       if (input.departureTime) {
-        const dep = input.departureTime;
-        updates.departureMinutes = dep.getHours() * 60 + dep.getMinutes();
+        updates.departureMinutes = getDepartureMinutesInTimezone(
+          input.departureTime,
+          existing.scheduleTimezone
+        );
       }
 
       if (input.origin || input.destination) {

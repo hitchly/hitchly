@@ -15,6 +15,10 @@ import { and, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  findNextEnabledDepartureTime,
+  parseDepartureInstant,
+} from "../../lib/recurring-schedule-time";
+import {
   calculateTripDistance,
   geocodeAddress,
 } from "../../services/googlemaps";
@@ -67,58 +71,13 @@ const MCMASTER_DROPOFF_OPTIONS: CampusDropoffOption[] = [
   },
 ];
 
-const buildDepartureTimeForDay = (day: Date, departureMinutes: number) => {
-  const hours = Math.floor(departureMinutes / 60);
-  const minutes = departureMinutes % 60;
-  const dt = new Date(day);
-  dt.setHours(hours, minutes, 0, 0);
-  return dt;
-};
-
-const isScheduleEnabledForDay = (
-  schedule: typeof recurringTripSchedules.$inferSelect,
-  day: Date
-) => {
-  const dayOfWeek = day.getDay();
-  return (
-    (dayOfWeek === 0 && schedule.sunday) ||
-    (dayOfWeek === 1 && schedule.monday) ||
-    (dayOfWeek === 2 && schedule.tuesday) ||
-    (dayOfWeek === 3 && schedule.wednesday) ||
-    (dayOfWeek === 4 && schedule.thursday) ||
-    (dayOfWeek === 5 && schedule.friday) ||
-    (dayOfWeek === 6 && schedule.saturday)
-  );
-};
-
-const findNextEnabledDepartureTime = (
-  schedule: typeof recurringTripSchedules.$inferSelect,
-  after: Date,
-  daysAhead = 60
-) => {
-  const start = new Date(after);
-  for (let i = 0; i <= daysAhead; i++) {
-    const day = new Date(start);
-    day.setDate(day.getDate() + i);
-    day.setHours(0, 0, 0, 0);
-    if (!isScheduleEnabledForDay(schedule, day)) continue;
-    if (day < schedule.effectiveFrom) continue;
-    if (schedule.effectiveTo && day > schedule.effectiveTo) continue;
-    const departureTime = buildDepartureTimeForDay(
-      day,
-      schedule.departureMinutes
-    );
-    if (departureTime <= after) continue;
-    return departureTime;
-  }
-  return null;
-};
-
 // Zod schemas for validation
 const createTripInputSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
-  departureTime: z.coerce.date(),
+  departureTime: z
+    .union([z.string(), z.number(), z.date()])
+    .transform((v) => parseDepartureInstant(v)),
   maxSeats: z.number().int().min(1).max(MAX_SEATS),
 });
 
@@ -1009,6 +968,7 @@ export const tripRouter = router({
           const nextDepartureTime = findNextEnabledDepartureTime(
             schedule,
             trip.departureTime,
+            schedule.scheduleTimezone,
             60
           );
 

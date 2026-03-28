@@ -1,41 +1,35 @@
 import Constants from "expo-constants";
 import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
+import type * as ExpoNotifications from "expo-notifications";
 import { router, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 
+import { isExpoGo } from "@/lib/stripe-utils";
 import { trpc } from "@/lib/trpc";
+
+/** SDK 53+: remote push was removed from Expo Go on Android; importing the module throws. */
+const isExpoGoAndroidPushDisabled = (): boolean =>
+  isExpoGo() && Platform.OS === "android";
+
+type ExpoNotificationsModule = typeof ExpoNotifications;
 
 export interface PushNotificationState {
   expoPushToken: string | null;
-  notification: Notifications.Notification | null;
+  notification: ExpoNotifications.Notification | null;
   error: Error | null;
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: () =>
-    Promise.resolve({
-      shouldShowBanner: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowList: true,
-    }),
-});
+let notificationHandlerConfigured = false;
 
-/**
- * Custom hook to manage push notification registration, syncing, and deep linking.
- */
 export function usePushNotifications(userId?: string): PushNotificationState {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] =
-    useState<Notifications.Notification | null>(null);
+    useState<ExpoNotifications.Notification | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  const notificationListener = useRef<Notifications.EventSubscription | null>(
-    null
-  );
-  const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const notificationListener = useRef<{ remove: () => void } | null>(null);
+  const responseListener = useRef<{ remove: () => void } | null>(null);
 
   const { mutate: syncToken } = trpc.notifications.syncPushToken.useMutation({
     onError: (err) => {
@@ -45,10 +39,32 @@ export function usePushNotifications(userId?: string): PushNotificationState {
   });
 
   useEffect(() => {
+    if (isExpoGoAndroidPushDisabled()) {
+      return;
+    }
+
+    /* Dynamic load: static import throws on Expo Go Android (SDK 53+). */
+    /* eslint-disable @typescript-eslint/no-require-imports -- must not statically import expo-notifications here */
+    const Notifications =
+      require("expo-notifications") as ExpoNotificationsModule;
+    /* eslint-enable @typescript-eslint/no-require-imports */
+
+    if (!notificationHandlerConfigured) {
+      Notifications.setNotificationHandler({
+        handleNotification: () =>
+          Promise.resolve({
+            shouldShowBanner: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+            shouldShowList: true,
+          }),
+      });
+      notificationHandlerConfigured = true;
+    }
+
     let isMounted = true;
 
-    // 1. Register for push notifications (Async - needs the isMounted check)
-    registerForPushNotificationsAsync()
+    registerForPushNotificationsAsync(Notifications)
       .then((token) => {
         if (isMounted && token) {
           setExpoPushToken(token);
@@ -61,7 +77,7 @@ export function usePushNotifications(userId?: string): PushNotificationState {
       });
 
     const handleNotificationInteraction = (
-      response: Notifications.NotificationResponse
+      response: ExpoNotifications.NotificationResponse
     ) => {
       const data = response.notification.request.content.data;
       const path = data.route ?? data.url;
@@ -73,20 +89,17 @@ export function usePushNotifications(userId?: string): PushNotificationState {
       }
     };
 
-    // 2. Handle taps when the app is completely KILLED (Cold Start)
     const lastResponse = Notifications.getLastNotificationResponse();
 
     if (lastResponse) {
       handleNotificationInteraction(lastResponse);
     }
 
-    // 3. Handle receiving a notification while the app is FOREGROUNDED
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notif) => {
         setNotification(notif);
       });
 
-    // 4. Handle taps when the app is in the BACKGROUND or FOREGROUND
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         handleNotificationInteraction(response);
@@ -99,7 +112,6 @@ export function usePushNotifications(userId?: string): PushNotificationState {
     };
   }, []);
 
-  // Sync token to Postgres whenever the user or token changes
   useEffect(() => {
     if (userId && expoPushToken) {
       syncToken({ token: expoPushToken });
@@ -109,7 +121,9 @@ export function usePushNotifications(userId?: string): PushNotificationState {
   return { expoPushToken, notification, error };
 }
 
-async function registerForPushNotificationsAsync(): Promise<string | null> {
+async function registerForPushNotificationsAsync(
+  Notifications: ExpoNotificationsModule
+): Promise<string | null> {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("hitchly-default", {
       name: "Hitchly Alerts",

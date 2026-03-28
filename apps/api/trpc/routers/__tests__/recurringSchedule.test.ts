@@ -5,10 +5,13 @@ import {
 } from "@hitchly/db/schema";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
+import { getDepartureMinutesInTimezone } from "../../../lib/recurring-schedule-time";
 import { createMockTrip, createMockUser } from "../../../lib/tests/fixtures";
 import { createMockContext } from "../../../lib/tests/mockContext";
 import { createMockDb } from "../../../lib/tests/mockDb";
 import { recurringScheduleRouter } from "../recurringSchedule";
+
+const TORONTO = "America/Toronto";
 
 // Hoisted mocks for google maps
 const { mockGeocodeAddress } = vi.hoisted(() => ({
@@ -66,9 +69,10 @@ describe("recurringScheduleRouter", () => {
         origin: baseInput.origin,
         destination: baseInput.destination,
         maxSeats: baseInput.maxSeats,
-        departureMinutes:
-          baseInput.departureTime.getHours() * 60 +
-          baseInput.departureTime.getMinutes(),
+        departureMinutes: getDepartureMinutesInTimezone(
+          baseInput.departureTime,
+          TORONTO
+        ),
         sunday: false,
         monday: true,
         tuesday: false,
