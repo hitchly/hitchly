@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import DashboardLayoutView from "@/app/dashboard/layout-view";
-import { authClient } from "@/lib/auth/client";
+import { DashboardAuthShell } from "@/app/dashboard/dashboard-auth-shell";
 
 export const metadata: Metadata = {
   title: {
@@ -15,22 +12,6 @@ export const metadata: Metadata = {
     "Monitor live throughput, manage users, and audit safety reports.",
 };
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const { data: sessionData } = await authClient.getSession({
-    fetchOptions: {
-      headers: await headers(),
-    },
-  });
-
-  if (!sessionData) {
-    return redirect("/sign-in");
-  }
-
-  return (
-    <DashboardLayoutView session={sessionData}>{children}</DashboardLayoutView>
-  );
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+  return <DashboardAuthShell>{children}</DashboardAuthShell>;
 }

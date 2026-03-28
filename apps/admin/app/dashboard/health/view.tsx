@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Database,
+  Loader2,
   Smartphone,
   Zap,
 } from "lucide-react";
@@ -53,14 +54,25 @@ interface KPI {
 }
 
 interface HealthViewProps {
-  initialData: RouterOutputs["admin"]["infra"]["metrics"];
+  initialData?: RouterOutputs["admin"]["infra"]["metrics"];
 }
 
 const HealthView = ({ initialData }: HealthViewProps) => {
-  const { data } = trpc.admin.infra.metrics.useQuery(undefined, {
-    initialData,
+  const { data, isPending } = trpc.admin.infra.metrics.useQuery(undefined, {
+    ...(initialData !== undefined ? { initialData } : {}),
     refetchInterval: 5000,
   });
+
+  if (isPending || data === undefined) {
+    return (
+      <div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+          Loading health metrics
+        </p>
+      </div>
+    );
+  }
 
   const { kpis: stats, quota, logs } = data;
 

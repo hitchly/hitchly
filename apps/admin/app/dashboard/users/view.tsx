@@ -141,12 +141,12 @@ const UserActions = ({ user }: { user: UserData }) => {
 };
 
 interface UsersViewProps {
-  initialData: MetricsData;
+  initialData?: MetricsData;
 }
 
 const UsersView = ({ initialData }: UsersViewProps) => {
   const [data] = trpc.admin.users.metrics.useSuspenseQuery(undefined, {
-    initialData,
+    ...(initialData !== undefined ? { initialData } : {}),
     refetchInterval: 10000,
   });
 
