@@ -83,22 +83,4 @@ export const identityRouter = router({
         });
       }
     }),
-
-  bypassDriverVerificationForTesting: protectedProcedure.mutation(
-    async ({ ctx }) => {
-      if (!isStripeTestMode()) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Not available in production.",
-        });
-      }
-
-      await db
-        .update(users)
-        .set({ isVerifiedDriver: true })
-        .where(eq(users.id, ctx.userId));
-
-      return { ok: true };
-    }
-  ),
 });

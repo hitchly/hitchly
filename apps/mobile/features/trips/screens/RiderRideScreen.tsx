@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -21,7 +21,6 @@ export function RiderRideScreen() {
   const {
     isLoading,
     tripMissing,
-    isTestUser,
     isAccepted,
     isOnTrip,
     isCompleted,
@@ -390,41 +389,6 @@ export function RiderRideScreen() {
             </FormSection>
           </View>
         )}
-
-        {!isCompleted && isTestUser && (
-          <View style={styles.devSection}>
-            <FormSection title="DEVELOPER SANDBOX">
-              <Card style={styles.devCard}>
-                {isAccepted && pickupConfirmed && (
-                  <Button
-                    title="Mock Driver Pickup"
-                    variant="danger"
-                    icon="car-outline"
-                    onPress={() => {
-                      Alert.alert(
-                        "Simulate",
-                        "This action is pending backend test implementation."
-                      );
-                    }}
-                  />
-                )}
-                {isOnTrip && (
-                  <Button
-                    title="Mock Driver Drop Off"
-                    variant="danger"
-                    icon="exit-outline"
-                    onPress={() => {
-                      Alert.alert(
-                        "Simulate",
-                        "This action is pending backend test implementation."
-                      );
-                    }}
-                  />
-                )}
-              </Card>
-            </FormSection>
-          </View>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -494,6 +458,4 @@ const styles = StyleSheet.create({
   safetySection: { marginTop: 8 },
   safetyRow: { flexDirection: "row", gap: 12 },
   safetyBtn: { flex: 1 },
-  devSection: { marginTop: 16 },
-  devCard: { padding: 16, gap: 12 },
 });

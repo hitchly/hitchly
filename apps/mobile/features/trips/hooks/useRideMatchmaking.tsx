@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
 import type { RideMatch } from "@/components/swipe";
-import { isTestAccount } from "@/lib/test-accounts";
 import { trpc } from "@/lib/trpc";
 
 const MCMASTER_COORDS = { lat: 43.2609, lng: -79.9192 };
@@ -32,14 +31,12 @@ export function useRideMatchmaking() {
 
   const { data: userProfile, isLoading: profileLoading } =
     trpc.profile.getMe.useQuery();
-  const isTestUser = isTestAccount(userProfile?.email);
 
   const [desiredArrivalTime, setDesiredArrivalTime] = useState(
     getDefaultArrivalTime
   );
   const [desiredDate, setDesiredDate] = useState<Date | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [includeDummyMatches, setIncludeDummyMatches] = useState(false);
   const [selectedDropoffId, setSelectedDropoffId] = useState<string | null>(
     null
   );
@@ -125,13 +122,12 @@ export function useRideMatchmaking() {
       desiredDate: desiredDate ?? new Date(),
       maxOccupancy: 1,
       preference: "costPriority",
-      includeDummyMatches,
+      includeDummyMatches: false,
     };
   }, [
     userProfile,
     desiredArrivalTime,
     desiredDate,
-    includeDummyMatches,
     direction,
     selectedDropoffId,
   ]);
@@ -244,7 +240,6 @@ export function useRideMatchmaking() {
   const resetSearch = async () => {
     setHasSearched(false);
     setDesiredDate(null);
-    setIncludeDummyMatches(false);
     setSelectedDropoffId(null);
     setSwipedCardIds(new Set());
     await AsyncStorage.removeItem("swipedCardIds");
@@ -253,7 +248,6 @@ export function useRideMatchmaking() {
   return {
     userProfile,
     profileLoading,
-    isTestUser,
     searchParams,
     hasSearched,
     setHasSearched,
@@ -265,8 +259,6 @@ export function useRideMatchmaking() {
       setDesiredArrivalTime,
       desiredDate,
       setDesiredDate,
-      includeDummyMatches,
-      setIncludeDummyMatches,
       selectedDropoffId,
       setSelectedDropoffId,
       direction,
