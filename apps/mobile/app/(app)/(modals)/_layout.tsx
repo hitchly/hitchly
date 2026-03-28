@@ -15,7 +15,7 @@ export default function ModalsLayout() {
       <Stack.Screen
         name="review/[id]"
         options={{
-          title: "Review Details",
+          headerShown: false,
         }}
       />
       <Stack.Screen
