@@ -8,7 +8,6 @@ import { Alert } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 import { openStopNavigation } from "@/lib/navigation";
-import { isTestAccount } from "@/lib/test-accounts";
 import { trpc } from "@/lib/trpc";
 
 const LOCATION_POLL_INTERVAL_MS = 5000;
@@ -104,9 +103,6 @@ export function useRideTrip(tripId: string) {
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user.id;
   const utils = trpc.useUtils();
-
-  const { data: userProfile } = trpc.profile.getMe.useQuery();
-  const isTestUser = isTestAccount(userProfile?.email);
 
   const {
     data: trip,
@@ -435,7 +431,6 @@ export function useRideTrip(tripId: string) {
     tripMissing: !isLoading && (!trip || !userRequest),
     trip,
     userRequest,
-    isTestUser,
     isAccepted,
     isOnTrip,
     isCompleted,

@@ -19,7 +19,6 @@ export function RiderHomeScreen() {
   const {
     userProfile,
     profileLoading,
-    isTestUser,
     searchParams,
     hasSearched,
     setHasSearched,
@@ -91,15 +90,12 @@ export function RiderHomeScreen() {
       >
         <RideSearchForm
           userAddress={userProfile?.profile.defaultAddress}
-          isTestUser={isTestUser}
           direction={formState.direction}
           setDirection={formState.setDirection}
           desiredDate={formState.desiredDate}
           setDesiredDate={formState.setDesiredDate}
           desiredArrivalTime={formState.desiredArrivalTime}
           setDesiredArrivalTime={formState.setDesiredArrivalTime}
-          includeDummyMatches={formState.includeDummyMatches}
-          setIncludeDummyMatches={formState.setIncludeDummyMatches}
           selectedDropoffId={formState.selectedDropoffId}
           setSelectedDropoffId={formState.setSelectedDropoffId}
           onSearch={() => {

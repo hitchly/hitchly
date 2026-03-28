@@ -1,14 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { MCMASTER_DROPOFF_OPTIONS } from "@hitchly/utils";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
@@ -32,9 +25,6 @@ interface RideSearchFormProps {
   setDesiredDate: (date: Date) => void;
   desiredArrivalTime: string;
   setDesiredArrivalTime: (time: string) => void;
-  isTestUser: boolean;
-  includeDummyMatches: boolean;
-  setIncludeDummyMatches: (val: boolean) => void;
   selectedDropoffId: string | null;
   setSelectedDropoffId: (id: string | null) => void;
   onSearch: () => void;
@@ -48,9 +38,6 @@ export function RideSearchForm({
   setDesiredDate,
   desiredArrivalTime,
   setDesiredArrivalTime,
-  isTestUser,
-  includeDummyMatches,
-  setIncludeDummyMatches,
   selectedDropoffId,
   setSelectedDropoffId,
   onSearch,
@@ -297,20 +284,6 @@ export function RideSearchForm({
           </View>
         </View>
       </Modal>
-
-      {isTestUser && (
-        <FormSection title="DEVELOPER OPTIONS">
-          <Card style={styles.devCard}>
-            <Text variant="bodySemibold">Include Test Matches</Text>
-            <Switch
-              value={includeDummyMatches}
-              onValueChange={setIncludeDummyMatches}
-              trackColor={{ false: colors.border, true: colors.text }}
-              thumbColor={colors.background}
-            />
-          </Card>
-        </FormSection>
-      )}
     </ScrollView>
   );
 }
@@ -332,12 +305,6 @@ const styles = StyleSheet.create({
   line: { width: 1, flex: 1, marginVertical: 4 },
   locationContainer: { flex: 1, gap: 24 },
   locationItem: { gap: 4 },
-  devCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
   dropoffBlock: { marginTop: 20, marginBottom: 4, gap: 6 },
   dropoffSelect: {
     flexDirection: "row",
