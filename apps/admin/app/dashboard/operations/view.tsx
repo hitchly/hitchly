@@ -95,12 +95,12 @@ const HotspotItem = ({
 };
 
 interface OperationsViewProps {
-  initialData: MetricsData;
+  initialData?: MetricsData;
 }
 
 const OperationsView = ({ initialData }: OperationsViewProps) => {
   const [data] = trpc.admin.ops.metrics.useSuspenseQuery(undefined, {
-    initialData,
+    ...(initialData !== undefined ? { initialData } : {}),
     refetchInterval: 5000,
   });
 

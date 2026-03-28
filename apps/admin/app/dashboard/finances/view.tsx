@@ -76,12 +76,12 @@ const PayoutStatus = ({ status }: { status: Payout["status"] }) => {
 };
 
 interface FinancesViewProps {
-  initialData: MetricsData;
+  initialData?: MetricsData;
 }
 
 const FinancesView = ({ initialData }: FinancesViewProps) => {
   const [data] = trpc.admin.finances.metrics.useSuspenseQuery(undefined, {
-    initialData,
+    ...(initialData !== undefined ? { initialData } : {}),
     refetchInterval: 10000,
   });
 

@@ -142,12 +142,12 @@ const IncidentActions = ({ incident }: { incident: IncidentReport }) => {
 };
 
 interface SafetyViewProps {
-  initialData: MetricsData;
+  initialData?: MetricsData;
 }
 
 const SafetyView = ({ initialData }: SafetyViewProps) => {
   const [data] = trpc.admin.safety.metrics.useSuspenseQuery(undefined, {
-    initialData,
+    ...(initialData !== undefined ? { initialData } : {}),
     refetchInterval: 5000,
   });
 
