@@ -1,0 +1,14 @@
+# Ignore EVERYTHING by default
+/*
+
+# Then "un-ignore" only what the build needs
+!/apps/mobile/
+!/package.json
+!/pnpm-lock.yaml
+!/pnpm-workspace.yaml
+
+# Explicitly re-ignore the heavy stuff inside mobile
+/apps/mobile/node_modules/
+/apps/mobile/android/
+/apps/mobile/ios/
+/apps/mobile/.expo/

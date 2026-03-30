@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/ios-light.png",
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
+  newArchEnabled: false,
 
   ios: {
     supportsTablet: true,
@@ -33,8 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: "com.hitchly.mobile",
-    googleServicesFile: "./google-services.json",
-    versionCode: 1,
+    googleServicesFile: "google-services.json",
     adaptiveIcon: {
       backgroundColor: "#F5F7FA",
       foregroundImage: "./assets/images/adaptive-icon.png",
