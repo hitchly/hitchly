@@ -7,6 +7,7 @@ import { identityRouter } from "./identity";
 import { locationRouter } from "./location";
 import { matchmakingRouter } from "./matchmaking";
 import { notificationsRouter } from "./notifications";
+import { onboardingRouter } from "./onboarding";
 import { paymentRouter } from "./payment";
 import { profileRouter } from "./profile";
 import { recurringScheduleRouter } from "./recurringSchedule";
@@ -26,6 +27,7 @@ export const appRouter = router({
   identity: identityRouter,
   recurringSchedule: recurringScheduleRouter,
   notifications: notificationsRouter,
+  onboarding: onboardingRouter,
 });
 
 export type AppRouter = typeof appRouter;

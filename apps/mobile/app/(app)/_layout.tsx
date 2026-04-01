@@ -3,7 +3,6 @@ import { Component, type ReactNode } from "react";
 import { View } from "react-native";
 
 import { useUserRole } from "@/context/role-context";
-import { DriverVerificationGuard } from "@/features/identity/components/DriverVerificationGuard";
 import { usePushNotifications } from "@/features/notifications/hooks/usePushNotifications";
 import { ActiveTripBanner } from "@/features/trips/components/ActiveTripBanner";
 import { useActiveTripMonitor } from "@/features/trips/hooks/useActiveTripMonitor";
@@ -18,19 +17,17 @@ function AppLayoutContent() {
     useActiveTripMonitor();
 
   return (
-    <DriverVerificationGuard>
-      <View style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }} />
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }} />
 
-        {!isRoleLoading && isActive && activeTripId && (
-          <ActiveTripBanner
-            tripId={activeTripId}
-            roleLabel={currentRoleLabel}
-            isRecurring={isRecurring}
-          />
-        )}
-      </View>
-    </DriverVerificationGuard>
+      {!isRoleLoading && isActive && activeTripId && (
+        <ActiveTripBanner
+          tripId={activeTripId}
+          roleLabel={currentRoleLabel}
+          isRecurring={isRecurring}
+        />
+      )}
+    </View>
   );
 }
 
