@@ -1,0 +1,60 @@
+\section{Task Scenarios}
+\label{sec:task_scenarios}
+
+Each scenario below maps to goals in Section~\ref{sec:goals}. Update wording to match the exact labels and navigation in the build under test. Success criteria should be \textbf{binary} or scored with explicit rules for partial credit if used.
+
+\subsection{Scenario UT-1: First-time access and verification}
+
+\begin{itemize}
+  \item \textbf{Context:} You are a new McMaster student who has just installed Hitchly.
+  \item \textbf{Task:} Create an account with a McMaster-affiliated email, complete any verification step required, and reach the main home or dashboard screen.
+  \item \textbf{Success criteria:} Account created; email verification completed (or flow correctly attempted per test account setup); lands on post-auth home without moderator rescue beyond one standard hint.
+\end{itemize}
+
+\subsection{Scenario UT-2: Rider---find or request a ride}
+
+\begin{itemize}
+  \item \textbf{Context:} You need to get to campus for a class on a typical weekday.
+  \item \textbf{Task:} Use the app to search for or request a ride matching your need (origin, destination, time window as prompted by the moderator).
+  \item \textbf{Success criteria:} Participant submits or selects a ride request (or equivalent primary action) and can state what happens next; no critical misunderstanding of cost or commitment if shown.
+\end{itemize}
+
+\subsection{Scenario UT-3: Driver---offer a ride}
+
+\begin{itemize}
+  \item \textbf{Context:} You drive to campus and want to share seats.
+  \item \textbf{Task:} Create or publish a ride offer with the details the moderator specifies (route endpoints, time, seats).
+  \item \textbf{Success criteria:} Ride offer visible to participant as ``posted'' or equivalent; required fields completed without persistent validation errors.
+\end{itemize}
+
+\subsection{Scenario UT-4: Matching or trip follow-up}
+
+\begin{itemize}
+  \item \textbf{Context:} A compatible ride or match is available (moderator may set state in advance).
+  \item \textbf{Task:} Accept, decline, or confirm the match/trip as appropriate to the prototype state.
+  \item \textbf{Success criteria:} Participant completes the intended state transition or explains blockage clearly; note any UI ambiguity.
+\end{itemize}
+
+\subsection{Scenario UT-5: Profile or settings (optional)}
+
+\begin{itemize}
+  \item \textbf{Task:} Update a non-sensitive profile field or locate notification/payment settings.
+  \item \textbf{Success criteria:} Participant finds the correct area within a time threshold (set in Section~\ref{sec:metrics}) or documents failure.
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Task scenario summary (fill task times and assist counts after sessions).}
+  \label{tab:task_summary}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{ID} & \textbf{Focus} & \textbf{Notes}\\
+    \midrule
+    UT-1 & Onboarding / verification & \\
+    UT-2 & Rider journey & \\
+    UT-3 & Driver journey & \\
+    UT-4 & Match / trip state & \\
+    UT-5 & Profile / settings & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
