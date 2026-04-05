@@ -6,9 +6,12 @@ on:
   pull_request:
     branches: ["main"]
 
+# Do not cancel in-progress runs: docs PRs trigger buildtex, which auto-pushes PDFs and
+# re-fires pull_request. Cancelling the previous CI run often kills long LaTeX matrix jobs
+# before the final "CI" job posts a status → branch protection stuck on "Expected".
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   detect-changes:
