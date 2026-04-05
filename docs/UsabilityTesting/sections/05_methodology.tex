@@ -3,34 +3,41 @@
 
 \subsection{Study Design}
 
-Usability testing uses \textbf{moderated task-based sessions}. Each participant works through a fixed set of scenarios (Section~\ref{sec:task_scenarios}) on a prepared device or the participant's device, in a consistent build (e.g., Expo development client or release candidate). The moderator explains the purpose, obtains consent, and encourages a \textbf{think-aloud} protocol unless a participant finds it distracting (note the exception in session notes).
+Evaluation followed the \textbf{task scenarios} in Section~\ref{sec:task_scenarios} using \textbf{moderated, think-aloud style walkthroughs}. Due to course timeline constraints, sessions used \textbf{simulated personas} (team-assigned roles and scripted reactions) rather than external recruitment. Section~\ref{sec:results} reports \textbf{illustrative aggregates} ($N=10$) consistent with those walkthroughs; they demonstrate the reporting format and plausible friction points but \textbf{do not constitute a live human-subjects study} or statistically validated benchmark.
 
 \subsection{Participants}
 
 \begin{itemize}
-  \item \textbf{Inclusion:} McMaster students, staff, or faculty (or individuals who match the intended domain, e.g., test accounts with \texttt{@mcmaster.ca}) who are willing to sign consent and have not developed the feature under test.
-  \item \textbf{Sample size:} Target a minimum number of sessions (e.g., 5--8) consistent with course guidance; record actual $N$ in Section~\ref{sec:results}.
-  \item \textbf{Roles:} Mix riders and drivers where possible, or assign persona per session and document role in the participant log.
+  \item \textbf{Simulated sample:} $N=10$ notional participants (personas P1--P10), each mapped to rider- or driver-oriented task subsets as in Section~\ref{sec:results}.
+  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2), four emphasized \textbf{driver} tasks (UT-3); all personas walked through UT-1, UT-4, and UT-5 where applicable.
+  \item \textbf{Scope:} \textbf{UT-2R} (recurring rides) was \textbf{out of scope} for this evaluation; drivers used \textbf{ONE-TIME} only in UT-3.
 \end{itemize}
 
 \subsection{Environment and Materials}
 
 \begin{itemize}
-  \item Device: iOS and/or Android; screen recording if permitted by consent.
-  \item Network: Stable connection; document if testing against staging or local API.
-  \item Test data: Pre-seeded accounts or anonymized personas; reset state between sessions as needed.
-  \item \textbf{Ethics:} Brief verbal or written consent covering recording, data handling, and voluntary withdrawal. Store notes and recordings per course or institutional policy.
+  \item \textbf{Devices:} Two \textbf{Android} phones running the Hitchly Expo client against the same backend.
+  \item \textbf{API and database:} Application traffic went to the \textbf{Render}-hosted API; persistent data used \textbf{Neon} (PostgreSQL).
+  \item \textbf{Network:} Stable Wi-Fi; same \texttt{EXPO\_PUBLIC\_API\_URL} for both devices (see \path{apps/mobile/lib/trpc.ts}).
+  \item \textbf{State reset between scenarios/personas:} Test \textbf{accounts were deleted} and flows restarted \textbf{from fresh registration} so trips, requests, and matches did not carry over spuriously.
+  \item \textbf{Ethics note:} No external participants were recorded; simulated quotes in Section~\ref{sec:results} are \textbf{paraphrased narrative examples} from team walkthroughs, not verbatim recordings.
 \end{itemize}
+
+\subsubsection{Trip flows (configuration used)}
+
+\noindent\textbf{Recurring rides (UT-2R):} Not evaluated; documented only for future reference in Section~\ref{sec:task_scenarios}.
+
+\noindent\textbf{Accounts:} New \texttt{@mcmaster.ca} test accounts created per reset; email verification exercised as in UT-1; home address set before UT-2/UT-3 when testing posting or search.
 
 \subsection{Session Outline}
 
 \begin{enumerate}
-  \item Welcome and consent (5 min).
-  \item Background questionnaire (Appendix~\ref{sec:appendix}, optional short form).
-  \item Task scenarios in a fixed order for comparability, or counterbalanced order across participants (document order).
-  \item Post-task and post-session questions (Section~\ref{sec:questions_surveys}).
-  \item SUS or equivalent survey (Appendix~\ref{sec:appendix}).
-  \item Debrief and thanks.
+  \item Briefing and simulated consent script (Appendix~\ref{sec:appendix}).
+  \item Optional background questionnaire (not all personas recorded).
+  \item Fixed order: UT-1 $\rightarrow$ UT-2 or UT-3 (by persona) $\rightarrow$ UT-4 $\rightarrow$ UT-5.
+  \item Post-task prompts from Section~\ref{sec:questions_surveys} (ease rating captured per task).
+  \item SUS-style ratings assigned per persona for aggregation (Appendix~\ref{sec:appendix}).
+  \item Team debrief and log update before account deletion / next persona.
 \end{enumerate}
 
 \subsection{Data Recording}

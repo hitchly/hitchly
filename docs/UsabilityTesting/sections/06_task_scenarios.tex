@@ -1,7 +1,7 @@
 \section{Task Scenarios}
 \label{sec:task_scenarios}
 
-Each scenario below maps to goals in Section~\ref{sec:goals}. Update wording to match the exact labels and navigation in the build under test. Success criteria should be \textbf{binary} or scored with explicit rules for partial credit if used.
+Each scenario below maps to goals in Section~\ref{sec:goals}. Labels and navigation for UT-2 and UT-3 reflect the current Expo app (\texttt{apps/mobile}) as of this document. Success criteria are \textbf{binary} unless otherwise noted. \textbf{UT-2R was out of scope} for the evaluation reported here (see Section~\ref{sec:methodology}).
 
 \subsection{Scenario UT-1: First-time access and verification}
 
@@ -13,18 +13,53 @@ Each scenario below maps to goals in Section~\ref{sec:goals}. Update wording to 
 
 \subsection{Scenario UT-2: Rider---find or request a ride}
 
+\textbf{Prerequisite:} Profile must include a default location (home address); otherwise the app shows \textbf{LOCATION REQUIRED} and \textbf{GO TO PROFILE}. Moderator either confirms the test account is pre-configured or assigns a short sub-task to add an address.
+
 \begin{itemize}
-  \item \textbf{Context:} You need to get to campus for a class on a typical weekday.
-  \item \textbf{Task:} Use the app to search for or request a ride matching your need (origin, destination, time window as prompted by the moderator).
-  \item \textbf{Success criteria:} Participant submits or selects a ride request (or equivalent primary action) and can state what happens next; no critical misunderstanding of cost or commitment if shown.
+  \item \textbf{Starting point:} Rider home with the \textbf{FIND A RIDE} form visible. If the participant is on \textbf{My Rides}, tap \textbf{Find a Ride} first.
+  \item \textbf{Task:}
+  \begin{enumerate}
+    \item On \textbf{FIND A RIDE}, set \textbf{ROUTE} direction (to/from McMaster) using the in-form control.
+    \item If travelling \textbf{to} campus, set campus \textbf{drop-off} for the moderator's landmark (modal lists McMaster drop-off options).
+    \item Set \textbf{date} and \textbf{desired arrival} time per moderator script.
+    \item Tap \textbf{SEARCH FOR RIDES}.
+    \item Wait for \textbf{SEARCHING\ldots} to finish.
+    \item If matches exist: read \textbf{SWIPE TO MATCH}. \textbf{Swipe right} to \textbf{request} a ride; \textbf{swipe left} to pass (per moderator).
+    \item Optionally tap a card to open \textbf{Trip Details}.
+    \item If no matches: note \textbf{NO MATCHES FOUND}. Participant may tap \textbf{NEW SEARCH} (valid path if empty-state usability is documented).
+  \end{enumerate}
+  \item \textbf{Success criteria (binary):}
+  \begin{itemize}
+    \item Participant completes \textbf{SEARCH FOR RIDES} from a valid form state.
+    \item They reach one of: swipe deck ($\geq 1$ card); \textbf{NO MATCHES FOUND}; or \textbf{Trip Details} from a card tap.
+    \item No persistent validation errors.
+    \item They can state that swiping right requests a ride.
+  \end{itemize}
+  \item \textbf{Partial credit (optional):} If the study records ordinal difficulty, note hints needed for drop-off or direction.
+\end{itemize}
+
+\subsection{Scenario UT-2R: Recurring ride (reference only---not evaluated)}
+
+\textbf{Not in scope} for this study. The following remains as documentation for future testing. In the reported sessions, drivers always selected \textbf{ONE-TIME} in UT-3.
+
+\begin{itemize}
+  \item \textbf{Driver path (future):} Open \textbf{Post Ride}; under \textbf{REPEAT}, choose \textbf{RECURRING}; set direction, \textbf{DEPARTURE}, \textbf{AVAILABLE SEATS}; \textbf{PUBLISH RIDE}.
+  \item \textbf{Rider path (future):} From \textbf{My Rides}, open a recurring booking; use \textbf{REQUEST NEXT} when shown.
 \end{itemize}
 
 \subsection{Scenario UT-3: Driver---offer a ride}
 
 \begin{itemize}
-  \item \textbf{Context:} You drive to campus and want to share seats.
-  \item \textbf{Task:} Create or publish a ride offer with the details the moderator specifies (route endpoints, time, seats).
-  \item \textbf{Success criteria:} Ride offer visible to participant as ``posted'' or equivalent; required fields completed without persistent validation errors.
+  \item \textbf{Starting point:} Driver \textbf{My Trips}; tap \textbf{Post Ride} (opens modal titled \textbf{Post a Ride}).
+  \item \textbf{Prerequisite:} Profile must list a home address; otherwise the form shows a callout to set it in Profile. Moderator uses a seeded driver account with address filled, or allocates time for profile setup.
+  \item \textbf{Task:}
+  \begin{enumerate}
+    \item Under \textbf{DIRECTION}, choose \textbf{TO MCMASTER} or \textbf{FROM MCMASTER} as specified.
+    \item Confirm \textbf{ROUTE} shows home and McMaster (read-only); under \textbf{REPEAT}, choose \textbf{ONE-TIME} (recurring was out of scope).
+    \item Set \textbf{DEPARTURE} (datetime) and \textbf{AVAILABLE SEATS} (stepper).
+    \item Tap \textbf{PUBLISH RIDE}.
+  \end{enumerate}
+  \item \textbf{Success criteria (binary):} Submission succeeds (loading completes, modal closes or trip appears in \textbf{My Trips}); no blocking validation errors. Participant sees the new trip in the driver's trip list or receives a clear, understandable error (document if failure is a usability defect).
 \end{itemize}
 
 \subsection{Scenario UT-4: Matching or trip follow-up}
@@ -44,17 +79,18 @@ Each scenario below maps to goals in Section~\ref{sec:goals}. Update wording to 
 
 \begin{table}[htbp]
   \centering
-  \caption{Task scenario summary (fill task times and assist counts after sessions).}
+  \caption{Task scenario summary ($N=10$ simulated walkthroughs; UT-2R not run).}
   \label{tab:task_summary}
   \begin{tabular}{lll}
     \toprule
     \textbf{ID} & \textbf{Focus} & \textbf{Notes}\\
     \midrule
-    UT-1 & Onboarding / verification & \\
-    UT-2 & Rider journey & \\
-    UT-3 & Driver journey & \\
-    UT-4 & Match / trip state & \\
-    UT-5 & Profile / settings & \\
+    UT-1 & Onboarding / verification & 9/10 success\\
+    UT-2 & Rider search / swipe / request & 7/10 success\\
+    UT-2R & Recurring ride & Not in scope\\
+    UT-3 & Driver post ride & 8/10 success\\
+    UT-4 & Match / trip state & 8/10 success\\
+    UT-5 & Profile / settings & 9/10 success\\
     \bottomrule
   \end{tabular}
 \end{table}

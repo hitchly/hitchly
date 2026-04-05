@@ -6,16 +6,9 @@ Split of **remaining work** after the document scaffold. Everyone should read **
 
 ## Swesan (Trip module, recurring trips)
 
-**Owns**
+**Done in repo (baseline):** UT-2, UT-3, and optional **UT-2R** in [`sections/06_task_scenarios.tex`](sections/06_task_scenarios.tex) use current in-app labels (\textbf{FIND A RIDE}, \textbf{SEARCH FOR RIDES}, \textbf{Post a Ride}, \textbf{PUBLISH RIDE}, etc.). [`05_methodology.tex`](sections/05_methodology.tex) includes a **Trip and recurring flows (configuration)** checklist. [`09_results.tex`](sections/09_results.tex) has **Trip-related tasks** bullets; [`10_discussion_and_recommendations.tex`](sections/10_discussion_and_recommendations.tex) has a **Trip recommendations** table shell.
 
-- **[`sections/06_task_scenarios.tex`](sections/06_task_scenarios.tex)** — **UT-2 (rider)** and **UT-3 (driver):** rewrite steps and success criteria so they match **real screen labels, navigation, and API behaviour** (create trip, request ride, recurring schedule if you test it). Add a **UT-recurring** bullet or sub-scenario if recurring trips are in scope for the study.
-- **[`sections/05_methodology.tex`](sections/05_methodology.tex)** — **Environment and materials:** specify the **build** (Expo channel / commit), **backend URL** (local vs staging), and how trip state is **reset** between participants.
-- **[`sections/09_results.tex`](sections/09_results.tex)** — After sessions: tables and narrative for **UT-2, UT-3** (success rate, time on task, assists) plus **trip-related** qualitative notes.
-- **[`sections/10_discussion_and_recommendations.tex`](sections/10_discussion_and_recommendations.tex)** — Rows in the recommendations table for **trip / ride / recurring** UX issues (link evidence: task ID, quote, metric).
-
-**Also**
-
-- One **internal pilot** run-through focused on trip flows; note blockers for the team chat.
+**Status (latest):** Section 5 documents **two Android phones**, **Render** API, **Neon** database, **account deletion** reset, **UT-2R out of scope**, and **$N=10$ simulated** walkthroughs. Sections 9--10 contain **illustrative** metrics and quotes (not external human-subject data). If the course requires real participants later, replace simulated blocks with authentic logs and adjust the methodology disclaimer.
 
 ---
 

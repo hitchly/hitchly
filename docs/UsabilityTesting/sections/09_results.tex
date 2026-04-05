@@ -1,32 +1,125 @@
 \section{Results}
 \label{sec:results}
 
-\textit{This section is completed after usability sessions are conducted.}
+\subsection{Limitations of reported data}
+
+Aggregates below are \textbf{illustrative}: ten \textbf{simulated persona walkthroughs} on two Android devices (Section~\ref{sec:methodology}). Metrics, times, and quotations are \textbf{constructed for course reporting} to reflect plausible usability issues observed during structured team runs---not a sample of independent external users.
 
 \subsection{Participant Summary}
 
 \begin{itemize}
-  \item Number of participants $N$: \textit{(record after sessions).}
-  \item Role mix (riders / drivers / both): \textit{(record after sessions).}
-  \item Build or version tested: \textit{(record after sessions).}
+  \item \textbf{Notional sample size:} $N=10$ personas (P1--P10).
+  \item \textbf{Role mix:} Six personas prioritized \textbf{rider} flows (UT-2); four prioritized \textbf{driver} flows (UT-3); all completed UT-1, UT-4, and UT-5 where applicable.
+  \item \textbf{Environment:} Two \textbf{Android} phones; API on \textbf{Render}; database on \textbf{Neon}; state reset by \textbf{deleting accounts} and re-onboarding between personas.
+  \item \textbf{Out of scope:} \textbf{UT-2R} (recurring) was not executed.
 \end{itemize}
 
 \subsection{Quantitative Summary}
 
-Insert tables for:
+\begin{table}[htbp]
+  \centering
+  \caption{Task success ($N=10$ simulated sessions).}
+  \label{tab:success_rates}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Task ID} & \textbf{Successes} & \textbf{Rate (\%)}\\
+    \midrule
+    UT-1 & 9/10 & 90\\
+    UT-2 & 7/10 & 70\\
+    UT-3 & 8/10 & 80\\
+    UT-4 & 8/10 & 80\\
+    UT-5 & 9/10 & 90\\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-\begin{itemize}
-  \item Task success rates per UT-$n$.
-  \item Time on task (median, IQR) per task.
-  \item Assist counts or weighted error scores.
-  \item Mean SUS score $\pm$ SD; distribution if helpful.
-  \item Post-task ease ratings (mean per task).
-\end{itemize}
+\begin{table}[htbp]
+  \centering
+  \caption{Time on task, seconds (median and IQR).}
+  \label{tab:times}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Task ID} & \textbf{Median} & \textbf{IQR}\\
+    \midrule
+    UT-1 & 95 & 72--128\\
+    UT-2 & 152 & 118--198\\
+    UT-3 & 88 & 71--112\\
+    UT-4 & 74 & 58--96\\
+    UT-5 & 42 & 33--58\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Moderator assists (minimal hint vs.\ substantive help) across 10 personas.}
+  \label{tab:assists}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Assist type} & \textbf{Count} & \textbf{Per persona (mean)}\\
+    \midrule
+    Minimal hint & 14 & 1.4\\
+    Substantive help & 3 & 0.3\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{SUS scores (illustrative per-persona ratings, 0--100 scale).}
+  \label{tab:sus}
+  \begin{tabular}{lcccccccccc}
+    \toprule
+    P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10\\
+    \midrule
+    64 & 70 & 68 & 76 & 82 & 71 & 73 & 69 & 75 & 78\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.75em}
+  \noindent Mean $= 72.6$; standard deviation $= 5.4$; min $= 64$; max $= 82$.
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Post-task ease (1 = very difficult, 7 = very easy), mean across personas.}
+  \label{tab:ease}
+  \begin{tabular}{lc}
+    \toprule
+    \textbf{After task} & \textbf{Mean ease}\\
+    \midrule
+    UT-1 & 5.9\\
+    UT-2 & 5.1\\
+    UT-3 & 5.6\\
+    UT-4 & 5.7\\
+    UT-5 & 6.0\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Trip-related tasks (UT-2, UT-3)}
+\label{sec:results_trips}
+
+\textbf{UT-2 (rider search / swipe):} Seven of ten personas completed without substantive help. Failure modes (simulated): two stalled on campus \textbf{drop-off} selection (unclear landmark naming); one exited to \textbf{NO MATCHES FOUND} and did not retry within the session timer. Median time from opening \textbf{FIND A RIDE} to tapping \textbf{SEARCH FOR RIDES}: 48~s (IQR 38--62~s). Median time from search results to first intentional swipe: 41~s.
+
+\textbf{UT-3 (driver post ride):} Eight of ten succeeded on first \textbf{PUBLISH RIDE} attempt. Two required a hint about the home-address prerequisite callout. Median time from \textbf{Post Ride} to successful publish: 72~s (IQR 59--94~s).
+
+\textbf{UT-2R:} Not evaluated (out of scope).
 
 \subsection{Qualitative Observations}
 
-Summarize recurring themes, representative quotes (anonymized), and critical incidents with severity counts.
+\textbf{Themes (illustrative):} (1) campus \textbf{drop-off} labels require cognitive mapping to real buildings; (2) \textbf{TO MCMASTER} / \textbf{FROM MCMASTER} is understood after one use but causes hesitation on first exposure; (3) swipe affordances are learnable once \textbf{SWIPE TO MATCH} is read; (4) driver \textbf{ONE-TIME} vs.\ recurring control was unused but visible---no confusion reported for this study.
+
+\textbf{Representative paraphrased reactions (simulated, not verbatim recordings):}
+\begin{itemize}
+  \item ``I see a long list of drop-off names---I am not sure which one is closest to my class.'' (UT-2)
+  \item ``I thought TO MCMASTER meant something about my ride direction, not my commute intent---took a second to trust it.'' (UT-2)
+  \item ``After the address warning, Publish Ride was straightforward.'' (UT-3)
+  \item ``Swipe right to request makes sense after I read the footer text.'' (UT-2)
+\end{itemize}
+
+\textbf{Critical incidents (counts, illustrative):} three \textbf{major} tied to UT-2 drop-off/modal navigation; eight \textbf{minor} (wording, back navigation, empty match state).
 
 \subsection{Screenshots or Figures}
 
-Include annotated screenshots or stills from recordings where they illustrate findings (with participant consent as applicable).
+No figures included: evaluation used internal walkthroughs without participant media release.

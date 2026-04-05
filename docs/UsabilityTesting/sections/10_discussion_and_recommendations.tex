@@ -1,16 +1,53 @@
 \section{Discussion and Recommendations}
 \label{sec:discussion}
 
-\textit{This section is completed after results are analyzed.}
-
 \subsection{Interpretation}
 
-Relate findings to the goals in Section~\ref{sec:goals}. Discuss trade-offs (e.g., verification friction vs.\ trust). Note limitations (sample size, prototype fidelity, test environment).
+Illustrative results align with the goals in Section~\ref{sec:goals}: \textbf{onboarding} (UT-1) and \textbf{profile-adjacent} tasks (UT-5) scored highest ease; \textbf{rider discovery} (UT-2) showed the lowest success rate and longest times, mainly around \textbf{drop-off selection} and first-time \textbf{direction} semantics. \textbf{Driver posting} (UT-3) was generally efficient once the home-address prerequisite was satisfied, supporting the cost-sharing value proposition but surfacing \textbf{gating copy} as a friction point. \textbf{Matching follow-up} (UT-4) was moderate---consistent with dependency on prior trip state and match availability.
+
+\textbf{Trade-offs:} Tighter campus landmark fidelity (trust, clarity) increases choice complexity; swipe-based matching is engaging but demands clear onboarding for first-time users.
+
+\textbf{Limitations:} $N=10$ \textbf{simulated} personas; no external diversity; two Android devices only; \textbf{Render}/\textbf{Neon} latency not stress-tested; \textbf{UT-2R} omitted; quotes are \textbf{stylized} from team debriefs, not transcripts.
 
 \subsection{Recommendations}
 
-Prioritize actionable UI/UX or copy changes. Use a table with columns: \textbf{Issue}, \textbf{Evidence} (task ID, quote, metric), \textbf{Severity}, \textbf{Proposed change}, \textbf{Owner / status}.
+\subsubsection{General (all task areas)}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{X X c X X}
+    \toprule
+    \textbf{Issue} & \textbf{Evidence} & \textbf{Sev.} & \textbf{Proposed change} & \textbf{Status}\\
+    \midrule
+    Drop-off landmark discoverability & UT-2: 70\% success; ease 5.1; simulated quote on list length & Maj. & Add search/filter or map snippet for McMaster drop-offs; group by campus zone & Open\\
+    First-time direction semantics & UT-2: hesitation theme; assists on route & Min. & Short inline tooltip for TO/FROM McMaster & Open\\
+    Empty match recovery & UT-2: one persona did not retry NEW SEARCH & Min. & Prompt after empty state: suggested time adjustment & Open\\
+    Address prerequisite visibility & UT-3: 2/10 hints; UT-3 ease 5.6 & Min. & Link callout to one-tap Profile prefill when empty & Open\\
+    \bottomrule
+  \end{tabularx}
+  \caption{Cross-cutting usability recommendations (illustrative evidence).}
+  \label{tab:rec_general}
+\end{table}
+
+\subsubsection{Trip, search, and post-ride (Swesan)}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{X X c X X}
+    \toprule
+    \textbf{Issue} & \textbf{Evidence} & \textbf{Sev.} & \textbf{Proposed change} & \textbf{Status}\\
+    \midrule
+    Search-to-swipe latency perception & UT-2 median 152~s total; SEARCHING state & Min. & Skeleton or progress text on match fetch & Open\\
+    Publish confirmation feedback & UT-3: 8/10 first-try success & Min. & Stronger success toast + auto-return to My Trips & Open\\
+    Recurring not tested & UT-2R out of scope & --- & Schedule UT-2R in a future study with real users & Planned\\
+    \bottomrule
+  \end{tabularx}
+  \caption{Trip-related recommendations (UT-2, UT-3).}
+  \label{tab:rec_trips}
+\end{table}
 
 \subsection{Traceability}
 
-Link high-priority recommendations to SRS requirements or GitHub issues as appropriate for the capstone project.
+High-priority items map to SRS usability and clarity goals (low-friction flows, understandable trip and match actions). Link specific issues to GitHub tickets when implemented (e.g.\ drop-off UX, empty-state copy, profile shortcut from post-ride callout).
