@@ -71,6 +71,7 @@
   October 10th & Sarim Zia & Completed Project section (P.1 - P.7)\\
   October 10th & Hamzah Rawasia & Added sections S.1, S.2, S.5\\
   October 10th & All & Added Reflections, Finalized Document\\
+  April 2nd & Burhanuddin Kharodawala & Updated the document with TA/peer feedback\\
   
   \bottomrule
   \end{tabularx}
@@ -85,7 +86,7 @@
 \subsection{(G.1) Context and Overall Objectives}
 \label{sec:goals1}
 
-Commuting to McMaster University presents significant financial and environmental challenges. Students, staff, and faculty spend between 150 and 250 dollars monthly on fuel, parking, or transit, which places an economic burden on them. At the same time, single-occupancy vehicles contribute to 36 percent of greenhouse gas emissions for Canadian universities, harming both local air quality and broader sustainability goals. Existing ridesharing solutions such as Facebook Marketplace, Kijiji, or Poparide do not provide sufficient verification or security, leaving users at risk of riding with unaffiliated strangers. The objective of Hitchly is to provide a safe, affordable, and reliable ridesharing platform tailored for the McMaster community. By verifying users through McMaster email accounts, Hitchly ensures trust, reduces costs, supports sustainability, and helps the university meet its long-term community and environmental goals. 
+Commuting to McMaster University presents significant financial and environmental challenges. Students, staff, and faculty spend between 150 and 250 dollars monthly on fuel, parking, or transit, which places an economic burden on them [Kebirungi, 2024]. At the same time, single-occupancy vehicles contribute to 36 percent of greenhouse gas emissions for Canadian universities, harming both local air quality and broader sustainability goals [Chanda and So, 2025]. Existing ridesharing solutions such as Facebook Marketplace, Kijiji, or Poparide do not provide sufficient verification or security, leaving users at risk of riding with unaffiliated strangers. The objective of Hitchly is to provide a safe, affordable, and reliable ridesharing platform tailored for the McMaster community. By verifying users through McMaster email accounts, Hitchly ensures trust, reduces costs, supports sustainability, and helps the university meet its long-term community and environmental goals. 
 
 \subsection{(G.2) Current Situation}
 \label{sec:goals2}
@@ -101,7 +102,7 @@ The pilot delivers clear, stakeholder-visible outcomes. Riders should see more a
 \begin{figure}[htbp]
   \centering
   % path is relative to the .tex file; create docs/SRS/images/ and put your file there
-  \includegraphics[width=0.95\textwidth]{goal_model.png}
+  \includegraphics[width=1.0\textwidth]{goal_model.png}
   \caption{Hitchly Goal Modelling Diagram.}
   \label{fig:ride-matching}
 \end{figure}
@@ -293,23 +294,41 @@ Benefits from fewer cars on the road, reduced emissions, and improved air qualit
     \label{fig:domain-model}
 \end{figure}
 
-\subsection{(E.2) Components}
+\subsection{(E.2) Symbolic Constants}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{|l|c|X|}
+\hline
+\textbf{Constant} & \textbf{Value} & \textbf{Meaning} \\ \hline
+\texttt{C\_MATCH\_MAX\_SEC} & 10 & The maximum time it takes to match riders with drivers. \\ \hline
+\texttt{C\_CONFIRMATION\_MAX\_SEC} & 5 & The maximum time it takes to send confirmation messages in seconds. \\ \hline
+\texttt{C\_PROFILE\_LOAD\_SEC} & 2 & The maximum time it takes to load profile screen data in seconds. \\ \hline
+\texttt{C\_PAYMENT\_PROCESS\_SEC} & 10 & The maximum time it takes to complete payment processing in seconds. \\ \hline
+\texttt{C\_AUDIT\_RETENTION\_YEARS} & 1 & The minimum retention period in years for verification audit logs. \\ \hline
+\end{tabularx}
+\end{center}
+These constants are justified and enforceable through the fit criteria defined in Section (S.5.1), using percentile-based performance measurements under representative load.
+
+
+\subsection{(E.3) Components}
 \begin{enumerate}
 \item \textbf{MFA (Multi-Factored Authentication) Services:} The application will be interacting with components that will allow the application to verify users with their McMaster University emails with SMS/Phone verification. This is to ensure reliability and user trust.
 \item \textbf{Payments Interface (i.e, Credit Cards, PayPal, Apple Pay etc.):} The application will also interact with a payment interface to allow for a smooth and streamlined payment process with Stripe. 
 \item \textbf{Location API:} Google Maps will be used in several components of the application. This API will be used for location tracking, distance calculations, and for routing.
 \end{enumerate}
 
-\subsection{(E.3) Constraints}
+\subsection{(E.4) Constraints}
 These are a few limitations and restrictions coming from the environment onto the system: 
 \begin{enumerate}
 \item \textbf{Usage Constraint:} The project is currently limited and available to the McMaster community only. This would only include users that are currently students, staff members, or faculty members of the university. This application is currently limited to the Android and IOS operation systems. They will be compatible with any device with this operating system.
-\item \textbf{Regulatory Constraint:} The project is constrained to comply with the PIPEDA laws and standards. This ensures that the user's data is handled carefully and with significant attention to maintaining data integrity and security. Each driver must have a Candian issued G2/G license, and the vehicle must be registered and insured. Each driver must comply with Ontario traffic rules and regulations. They must also not exceed the maximum passenger limit for their vehicle.
+\item \textbf{Regulatory Constraint:} The project is constrained to comply with the PIPEDA laws and standards [Government of Canada, 2000]. This ensures that the user's data is handled carefully and with significant attention to maintaining data integrity and security. Each driver must have a Candian issued G2/G license, and the vehicle must be registered and insured. Each driver must comply with Ontario traffic rules and regulations [Government of Ontario, 1990]. They must also not exceed the maximum passenger limit for their vehicle.
+\item \textbf{Coding Standards:} Any developement made for this project must follow a strict TypeScript standard, enforced with ESLint rules and Prettier formatting checks in the CI/CD checks during branch merges. [typescript-eslint, 2024] [Prettier, 2024]. This ensures good quality code, and maintainability of the codebase. 
+\item \textbf{Payment Security Standards:} Any developement related to payment must allign with the PCI DSS requirements, as that data must not be stored directly in the application [PCI SSC, 2024].
+\item \textbf{Accessibility Constraint:} All UI whithin the application must also satisfy WCAG 2.2 Level AA accessibility requirements. This ensures the accessibility of the application [W3C, 2023].
 \item \textbf{Technical Constraints and Limitations:} A limitation of the Google Maps API is that it will be limited to providing minimal data for locations in rural areas. All functionalities in the applications must be completed in a limited time. For instance, the processing time for payments must be minimal. 
 \end{enumerate}
 
-
-\subsection{(E.4) Assumptions}
+\subsection{(E.5) Assumptions}
 There are a few important assumptions that will be made to simplify the system. These will be assumed to be held, however, are not explicit constraints in the system.  
 \begin{enumerate}
 \item \textbf{User Behavior:} All users of the rideshare application will not intentionally cause any harm to each other during a trip. They will not misbehave or litter in the car. This is an important assumption as it ensures the safety of users and simplifies the process of carpooling.  
@@ -319,7 +338,7 @@ There are a few important assumptions that will be made to simplify the system. 
 \item \textbf{Technical Compatibility and Reliability:} All third-party applications and API are assumed to be reliable. For instance, the Maps API will provide accurate data for all users in the GTA region. The API's rate limits will not exceed the expected user load. They are also assumed to have minimal downtime. 
 \end{enumerate}
 
-\subsection{(E.5) Effects}
+\subsection{(E.6) Effects}
 Effects of the application include:
 \begin{enumerate}
 \item \textbf{Improved Sustainability and Reduced Traffic Congestion:} The system will positively affect the environment by lowering the GHG emissions caused by vehicles of individuals commuting to and from McMaster University. Secondly, as a result of carpooling, there will be a reduction in the use of single-occupancy vehicles which will cause a reduction in traffic congestion on roads and highways. 
@@ -328,7 +347,7 @@ Effects of the application include:
 \item \textbf{Increased Savings:} There can be an overall increase in the amount each commuter saves as a result of shifting to carpooling from other modes of transportation. Carpooling enables users to divide and share their cost, resulting in leaving them with more money in hand. 
 \end{enumerate}
 
-\subsection{(E.6) Invariants}
+\subsection{(E.7) Invariants}
 \begin{itemize}
 \item Regular traffic will continue to move in Hamilton and surrounding areas where riders and drivers live. There can be traffic congestion on the roads due to car crashes and unusual weather conditions. There will also be times when an emergency vehicle may be on the roads occasionally, causing traffic congestion. These conditions will be present and will not change after the implementation of the application.  
 \item The city of Hamilton will have and maintain their city infrastructure. There will be traffic lights, roads highways, pedestrian sidewalks, that will function normally.  The traffic rules and signs will be followed and maintained regardless of the implantation of the application. 
@@ -373,84 +392,87 @@ It interfaces with the scheduling system to ensure rides can be matched, whether
 \textbf{Matchmaking engine} \\
 \noindent Functional Requirements:
 \begin{enumerate}
-  \item Route and Schedule matching: The system shall compare driver routes and passenger locations to provide optimal ride matches.
-  \item Availability Updates: The engine shall update available rides in real time as users create, edit, or cancel rides.
-  \item Preference filtering: The engine shall allow users to filter matches by preferences, such as gender, music, vehicle type, etc.
-  \item Multi-passenger support: The system shall allow for multiple passengers to match to the same driver, based on driver preference and vehicle capacity.
+  \item \textbf{F211} Route and Schedule matching: The system shall compare driver routes and passenger locations to provide optimal ride matches.
+  \item \textbf{F212} Availability Updates: The engine shall update available rides in real time as users create, edit, or cancel rides.
+  \item \textbf{F213} Preference filtering: The engine shall allow users to filter matches by preferences, such as gender, music, vehicle type, etc.
+  \item \textbf{F214} Multi-passenger support: The system shall allow for multiple passengers to match to the same driver, based on driver preference and vehicle capacity.
+  \item \textbf{F215} No-match handling: If the system fails to find a ride match, the systems clearly displays that no matches have been found and provides alternate matches with nearby options.
 \end{enumerate}
 Non-functional requirements:
 \begin{enumerate}
-  \item Matching performance: The engine shall generate ride matches within 10 seconds of a request.
-  \item Location security: The engine shall ensure that user’s information used for matchmaking is not accessible outside of the development environment.
+  \item \textbf{NF211} Matching performance: The engine shall generate ride matches within \texttt{C\_MATCH\_LATENCY\_SEC} seconds of a request.
+  \item \textbf{NF212} Location security: The engine shall ensure that user’s information used for matchmaking is not accessible outside of the development environment.
 \end{enumerate}
 \vspace{1em}
 \noindent \textbf{Scheduling and Booking Manager} \\ 
 Functional Requirements:
 \begin{enumerate}
-  \item Ride scheduling: Users shall be able to schedule rides in advance based on the results of the matchmaking engine.
-  \item Booking confirmation: The system shall generate confirmations for bookings in the applications, and notify passenger(s) and the driver.
-  \item Cancellation and Rescheduling: Users shall be able to cancel or reschedule rides within the specified timeframe and rules.
-  \item Reminder notifications: The system shall send reminders to all passengers and the driver before any scheduled rides.
+  \item \textbf{F221} Ride scheduling: Users shall be able to schedule rides in advance based on the results of the matchmaking engine.
+  \item \textbf{F222} Booking confirmation: The system shall generate confirmations for bookings in the applications, and notify passenger(s) and the driver.
+  \item \textbf{F223} Cancellation and Rescheduling: Users shall be able to cancel or reschedule rides within the specified timeframe and rules.
+  \item \textbf{F224} Reminder notifications: The system shall send reminders to all passengers and the driver before any scheduled rides.
 \end{enumerate} 
 Non-functional requirements:
 \begin{enumerate}
-  \item Data Integrity: All booking data shall be securely stored and updated as required.
-  \item Confirmation speed: Booking confirmations and changes shall be finalized and delivered to users within 5 seconds.
+  \item \textbf{NF221} Data Integrity: All booking data shall be securely stored and updated as required.
+  \item \textbf{NF222} Confirmation speed: Booking confirmations and changes shall be finalized and delivered to users within \texttt{C\_CONFIRMATION\_LATENCY\_SEC} seconds.
 \end{enumerate}
 \vspace{1em}
 \noindent \textbf{Safety and Verification Module} \\
 Functional Requirements:
 \begin{enumerate}
-  \item User Identity Verification: The system shall validate users through university email authentication in order to use the application.
-  \item Driver Verification: The system shall store and verify driver license and vehicle registration information.
-  \item Ride Check-in: The system shall prompt passengers and drivers to check in at the start and end of the ride.
-  \item Safety check: The system shall keep track of any misconduct reported by users or any strikes on a user’s account.
+  \item \textbf{F231} User Identity Verification: The system shall validate users through university email authentication in order to use the application.
+  \item \textbf{F232} Driver Verification: The system shall store and verify driver license and vehicle registration information.
+  \item \textbf{F233} Ride Check-in: The system shall prompt passengers and drivers to check in at the start and end of the ride.
+  \item \textbf{F234} Safety check: The system shall keep track of any misconduct reported by users or any strikes on a user’s account.
 \end{enumerate}
 Non-functional Requirements:
 \begin{enumerate}
-  \item Data Security: Data used for verification shall be encrypted to ensure security.
-  \item Auditability: The system shall maintain a log of all verification actions for at least 1 year.
+  \item \textbf{NF231} Data Security: Data used for verification shall be encrypted to ensure security.
+  \item \textbf{NF232} Auditability: The system shall maintain a log of all verification actions for at least 1 year.
 \end{enumerate}
 \vspace{1em}
 \noindent \textbf{Payment and Cost Sharing System} \\
 Functional Requirements:
 \begin{enumerate}
-  \item Fare Calculation: The system shall automatically calculate the costs for the ride for each passenger based on distance, number of passengers, parking costs, etc.
-  \item Secure Transactions: The system shall support payment in the form of credit card, debit card, and other mobile wallet payment methods.
-  \item Hold on Funds: The system shall put funds on hold until after a ride has been completed, in order to deal with cancellations or refunds.
-  \item Expense Summaries: The system shall provide ride expense summaries and earnings reports for drivers.
+  \item \textbf{F241} Fare Calculation: The system shall automatically calculate the costs for the ride for each passenger based on distance, number of passengers, parking costs, etc.
+  \item \textbf{F242} Secure Transactions: The system shall support payment in the form of credit card, debit card, and other mobile wallet payment methods.
+  \item \textbf{F243} Hold on Funds: The system shall put funds on hold until after a ride has been completed, in order to deal with cancellations or refunds.
+  \item \textbf{F244} Expense Summaries: The system shall provide ride expense summaries and earnings reports for drivers.
 \end{enumerate}
 Non-functional Requirements:
 \begin{enumerate}
-  \item Transaction Security: Payments must be processed following security standards.
-  \item Processing Speed: Transactions shall complete within 10 seconds of initiation.
+  \item \textbf{NF241} Transaction Security: Payments must be processed following security standards.
+  \item \textbf{NF242} Processing Speed: Transactions shall complete within \texttt{C\_PAYMENT\_PROCESS\_SEC} seconds of initiation.
 \end{enumerate}
 \vspace{1em}
 \noindent \textbf{User Profile Manager} \\
 Functional Requirements:
 \begin{enumerate}
-  \item Profile Creation: The system shall allow users to create profiles when signing up, including personal details and ride preferences.
-  \item Profile Updates: The system shall allow users to update their profile information at any time.
-  \item Ride History: The system shall store and display ride history and ratings for drivers and passengers.
-  \item View Profiles: The system shall allow users to view profiles of other users when matched with them.
+  \item \textbf{F251} Profile Creation: The system shall allow users to create profiles when signing up, including personal details and ride preferences.
+  \item \textbf{F252} Profile Updates: The system shall allow users to update their profile information at any time.
+  \item \textbf{F253} Ride History: The system shall store and display ride history and ratings for drivers and passengers.
+  \item \textbf{F254} View Profiles: The system shall allow users to view profiles of other users when matched with them.
+  \item \textbf{F255} User-initiated account deletion: The system shall allow users to request deletion of their account and personal profile data using in-app settings.
+  \item \textbf{F256} Deactivation on affiliation loss: The system shall automatically deactivate a user's account if they are no longer affiliated with McMaster. This would prevent them from using Hitchly services until they are re-verified.
 \end{enumerate}
 Non-functional Requirements:
 \begin{enumerate}
-  \item Privacy: Any personal information used when signing up shall not be visible to other users.
-  \item Performance: Profile data shall load within 2 seconds.
+  \item \textbf{NF251} Privacy: Any personal information used when signing up shall not be visible to other users.
+  \item \textbf{NF252} Performance: Profile data shall load within \texttt{C\_PROFILE\_LOAD\_SEC} seconds.
 \end{enumerate}
 
 \noindent \textbf{Rating and Reputation System} \\
 Functional Requirements:
 \begin{enumerate}
-  \item Ride Ratings: The system shall allow users to rate each other after each ride.
-  \item Issue Reporting: The system shall allow users to report any issues or misconduct that occurs during a ride.
-  \item Minimum Reputation Thresholds: The system shall enforce a minimum rating for certain actions (e.g: Offering rides, hosting multiple passengers, joining scheduled rides, etc.).
-  \item Positive Reinforcement: The system shall reward users who consistently obtain high ratings by giving out badges, titles, and more.
+  \item \textbf{F261} Ride Ratings: The system shall allow users to rate each other after each ride.
+  \item \textbf{F262} Issue Reporting: The system shall allow users to report any issues or misconduct that occurs during a ride.
+  \item \textbf{F263} Minimum Reputation Thresholds: The system shall enforce a minimum rating for certain actions (e.g: Offering rides, hosting multiple passengers, joining scheduled rides, etc.).
+  \item \textbf{F264} Positive Reinforcement: The system shall reward users who consistently obtain high ratings by giving out badges, titles, and more.
 \end{enumerate}
 Non-functional Requirements:
 \begin{enumerate}
-  \item Rating Integrity: The system shall detect and flag fradulent and spam reviews. 
+  \item \textbf{NF261} Rating Integrity: The system shall detect and flag fradulent and spam reviews. 
 \end{enumerate}
 
 
@@ -634,18 +656,20 @@ NF212 & Location Security & Must Have & It is essential that the user’s locati
   F252 & Profile Updates & Must Have & Important for accuracy of information and preferences. \\ \hline
   F253 & Ride History & Should Have & Builds trust and data availability but does not directly improve functionality. \\ \hline
   F254 & View Profiles & Should Have & Important for user safety and trust when booking rides. \\ \hline
+  F255 & User-initiated Account Deletion & Must Have & Essential for user privacy and data control. \\ \hline
+  F256 & Deactivation on Affiliation Loss & Must Have & Ensures McMaster affiliation requirements to maintain reliability and trust.\\ \hline
   NF251 & Privacy & Must Have & Protecting personal information is necessary for user confidence. \\ \hline
   NF252 & Performance & Nice to Have & Users will want fast navigation through information. \\ \hline
   \end{tabularx}
 \end{center}
   \vspace{2em}
-
+% reflect the requirement ID to the functional non functional requirements in the previous section. For instance, F251 is the requirement ID for Profile Creation, F252 is the requirement ID for Profile Updates, and so on.
   \noindent \textbf{Priority Table for Rating and Reputation System}
   \vspace{0.5em}
   \begin{center}
   \small
   \begin{tabularx}{\textwidth}{|l|X|c|Y|}
-  \hline
+  \hline 
   \textbf{Requirement ID} & \textbf{Requirement Name} & \textbf{Priority Level} & \textbf{Reasoning} \\ \hline
   F261 & Ride Ratings & Must Have & Critical component of the rating system. \\ \hline
   F262 & Issue Reporting & Must Have & Important for evaluating and ensuring the safety of all users. \\ \hline
@@ -698,7 +722,7 @@ Verification and validation (V\&V) ensure Hitchly meets stakeholder expectations
 \subsubsection{(S.6.3) System Testing} % S.6.3
 \begin{itemize}
     \item Hitchly runs on iOS and Android devices without critical crashes.
-    \item UI components are accessible (WCAG AA compliance).
+  \item UI components are accessible (WCAG 2.2 Level AA compliance) [W3C, 2023].
     \item Notification services deliver timely alerts for matches and trip updates.
 \end{itemize}
 
@@ -715,9 +739,9 @@ Verification and validation (V\&V) ensure Hitchly meets stakeholder expectations
 
 \subsubsection{(S.6.5) Static Analysis and Code Quality} % S.6.5
 \begin{itemize}
-    \item ESLint and Prettier pass on all commits.
+  \item ESLint and Prettier pass on all commits, ensuring consistent coding standards amongst the team [typescript-eslint, 2024] [Prettier, 2024].
     \item TypeScript compiler passes with no errors.
-    \item Code coverage of unit tests $>$ 70\%.
+  \item Payment integration follows PCI DSS requirements [PCI SSC, 2024].
 \end{itemize}
 
 \subsubsection{(S.6.6) Acceptance Criteria Summary} % S.6.6
@@ -801,7 +825,7 @@ The following imposed technical choices will apply:
 
 The project development will be divided into multiple sprints, each focusing on specific objectives and deliverables. This sprint-based approach ensures iterative progress and early testing of key functionalities.
 
-\textbf{Sprint 1: Project Foundations (October)}
+\textbf{Sprint 1: Project Foundations (October 1--31, 2025)}
 \begin{itemize}
     \item Finalize the technology stack for the application.
     \item Set up the development environment and ensure the mobile application environment runs on all developers’ hardware.
@@ -809,7 +833,7 @@ The project development will be divided into multiple sprints, each focusing on 
     \item Design the initial database architecture for how information will be stored.
 \end{itemize}
 
-\textbf{Sprint 2: Create MVP (November)}
+\textbf{Sprint 2: Create MVP (November 1--30, 2025)}
 \begin{itemize}
     \item \textbf{Epic 1:} Implement fundamental features of the carpool application. \\
     \textit{As a user, I want to be able to connect with another user who has a similar schedule and a relevant commute route.}
@@ -821,7 +845,7 @@ The project development will be divided into multiple sprints, each focusing on 
     The proposed Sprint 2 focuses on foundational features crucial for delivering a functional beta version of the application. The epics in this sprint implement Hitchly’s core functionality — carpool matching and basic payment — allowing for an initial user testing phase to validate the core system logic.
 \end{itemize}
 
-\textbf{Sprint 3: Core System Expansion (December)}
+\textbf{Sprint 3: Core System Expansion (December 1--31, 2025)}
 \begin{itemize}
     \item \textbf{Epic 3:} Add user verification. \\
     \textit{As a user, I want to ensure all application users are verified through their university email.}
@@ -836,7 +860,7 @@ The project development will be divided into multiple sprints, each focusing on 
     \textit{As a user, I want drivers and passengers to be prompted to check in at the start and end of each ride.}
 \end{itemize}
 
-\textbf{Sprint 4: Profile Addition (January)}
+\textbf{Sprint 4: Profile Addition (January 1--31, 2026)}
 \begin{itemize}
     \item \textbf{Epic 7:} Add profile system. \\
     \textit{As a user, I want to create a personal profile to store my details and ride preferences.}
@@ -851,7 +875,7 @@ The project development will be divided into multiple sprints, each focusing on 
     \textit{As a user, I want to rate and review other users that I carpool with.}
 \end{itemize}
 
-\textbf{Sprint 5: Final Feature Additions (February)}
+\textbf{Sprint 5: Final Feature Additions (February 1--28, 2026)}
 \begin{itemize}
     \item \textbf{Epic 11:} Add ride scheduling. \\
     \textit{As a user, I want to schedule my ride in advance.}
@@ -866,7 +890,7 @@ The project development will be divided into multiple sprints, each focusing on 
     \textit{As a user, I want the review system to influence user trust scores and matching priority.}
 \end{itemize}
 
-\textbf{Sprint 6: Testing and Finalization (March – April)}
+\textbf{Sprint 6: Testing and Finalization (March 1--April 10, 2026)}
 \begin{itemize}
     \item Conduct unit, integration, and system-wide testing across all modules to ensure stability and reliability.
     \item Optimize application performance and fix any remaining bugs identified during testing.
@@ -911,6 +935,22 @@ Some of the risks present during development are listed below:
 
     \item \textbf{Lack of User Trust with Data:} Some users may hesitate to trust a student-developed application with their personal and payment information. This lack of trust could negatively affect user adoption and engagement. A mitigation strategy for this risk is to integrate reliable third-party payment APIs, such as Stripe, to handle transactions securely. Additionally, maintaining transparency with users about which API services and security measures are implemented will help build trust and confidence in the system.
 \end{itemize}
+
+\subsection{(P.6) Likely and Unlikely Changes}
+\textbf{Likely to change}
+\begin{itemize}
+  \item Parameters and weights associated with those in F211/F213 are likely to change after usability testing and feedback.
+  \item No current favorite "driver/rider" selection in F215/F225 but it is likely to evolve based on rider feedback.
+  \item Cost calculation used in F241 may change as fuel/parking conditions accross cities change. 
+\end{itemize}
+
+\textbf{Unlikely to change}
+\begin{itemize}
+  \item Verification through the McMaster email (F231, F256) is unlikely to change for the scope of this capstone.
+  \item Privacy standards and code quality standards previously mentioned in the document (NF231, NF232, NF251) are unlikely to change due to regulatory constraints.
+  \item Accessibility standards (WCAG 2.2 AA) and payment-security standards whithin the code (PCI DSS) are unlikely to change due to regulatory requirements.
+\end{itemize}
+
 
 \subsection{(P.7) Requirements Process and Report}
 The requirements process will involve interaction with direct stakeholders identified in Section G.7.  
@@ -1070,5 +1110,7 @@ For collaboration and motivation, two approaches are: (1) actively communicating
 \end{enumerate}
 
 \bibliographystyle{plainnat}
+\nocite{Kebirungi2024,ChandaAndSo2025,PIPEDA2000,OntarioHTA1990,TSLintStandard2024,PrettierStandard2024,PCIDSS401,WCAG22}
+\bibliography{../../refs/References}
 
 \end{document}
