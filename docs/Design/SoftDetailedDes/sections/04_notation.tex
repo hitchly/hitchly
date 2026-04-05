@@ -11,17 +11,17 @@ The following table summarizes the primitive data types used by \progname.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
-\noindent 
-\begin{tabular}{l l p{5.5cm}} 
-\toprule 
-\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
+\noindent
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\
 \midrule
 character & char & a single symbol or digit\\
 integer & $\mathbb{Z}$ & a number without a fractional component in $(-\infty, \infty)$ \\
 natural number & $\mathbb{N}$ & a number without a fractional component in $[1, \infty)$ \\
 real & $\mathbb{R}$ & any number in $(-\infty, \infty)$\\
 \bottomrule
-\end{tabular} 
+\end{tabularx}
 \end{center}
 
 \noindent
@@ -48,7 +48,7 @@ The following enumerated and composite types are used throughout the specificati
     \item \textbf{TripRecord} = (tripId: $\mathbb{N}$, driverId: $\mathbb{N}$, origin: Location, destination: Location, departureTime: $\mathbb{R}$, availableSeats: $\mathbb{N}$, status: TripStatus) --- Complete trip information
     \item \textbf{TripList} = seq of TripRecord --- Sequence of trip records
     \item \textbf{TripData} = (origin: Location, destination: Location, departureTime: $\mathbb{R}$, availableSeats: $\mathbb{N}$) --- Trip creation input
-    \item \textbf{UpdatedFields} = (origin?: Location, destination?: Location, departureTime?: $\mathbb{R}$, availableSeats?: $\mathbb{N}$) --- Optional trip update fields (all fields optional)
+    \item \textbf{UpdatedFields} --- Partial trip update input: each of origin (Location), destination (Location), departureTime ($\mathbb{R}$), and availableSeats ($\mathbb{N}$) may be present or omitted independently.
     \item \textbf{UpdatedTripRecord} = TripRecord --- Updated trip record (same structure as TripRecord)
     \item \textbf{ScheduleRecord} = (scheduleId: $\mathbb{N}$, userId: $\mathbb{N}$, daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Recurring schedule definition
     \item \textbf{ScheduleList} = seq of ScheduleRecord --- Sequence of schedule records
