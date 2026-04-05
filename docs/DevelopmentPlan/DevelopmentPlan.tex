@@ -26,7 +26,7 @@ September 19th & Swesan Pathmanathan & Added content to Appendix: Reflection and
 September 20th & Aidan Froggatt & Completed sections 9, 10, 11\\
 September 21st & Sarim Zia & Completed sections 1, 2, 3, 4\\
 September 21st & Hamzah Rawasia & Added sections 5, 6, 7, 8\\
-September 22nd & All & Finalized Document\\
+April 1st, 2025 & Burhanuddin Kharodawala & Feedback Implementation\\
 
 \bottomrule
 \end{tabularx}
@@ -53,11 +53,11 @@ See LICENSE file in root of repository. It can be accessed at this
 
 The team will meet multiple times a week. The meetings will consist of atleast
 one meeting with the TA on Wednesdays, a weekly team review meeting, and any 
-further meetings as needed. The meetings will primarly be virtual through a Discorc
+further meetings as needed. The meetings will primarly be virtual through a Discord
 meeting, however the team may occasionally meet in-person.
 Meeting Structure:
 \begin{enumerate}
-  \item The team will select a chair for the meeting to take meeting minutes. (This positiion will be on a rotational basis) 
+  \item The team will select a chair for the meeting to take meeting minutes. (This position will be on a rotational basis) 
   \item Each member will take turns discussing tasks they accomplished throughout the week alongside any outstanding tasks.
   \item Team members will discuss any challenges/hurdles they are facing.
   \item Team will assign tasks for each member for the following week.
@@ -100,11 +100,23 @@ This approach to team member roles helps balance shared learning with the need f
         estimated carbon footprint reduction, etc.
 \end{itemize} 
 
+\subsection*{Cross-Cutting Responsibilities and Overlap} 
+
+The above roles will have specific members assigned to them beased on their personal expertise. However, the roles below would require multiple members to contribute to them. 
+\begin{itemize}
+  \item {\bf Development:} All members will contribute to the developement of the application in some capacity. For instance, a member that is not the testing lead, still needs to write unit tests for their modules. 
+  \item {\bf Documentation:} All members must contribute to the doumentation of the project in some capacity. For instance, some members may chose to contribute to the design document while others may contribute to the V\&V report.
+  \item {\bf Code/Documentation Reviews:} While the reviewer may take the initiative to review code and documentation, however, all members are expected to review the pull requests of their teammates. This will allow for multiple prespectives which can help improve the quality of the work. 
+\end{itemize}
+
+
 \section{Workflow Plan}
 
-{\bf Git:} The main branch in the repository is where code and documentation that has been reviewed and approved will be stored. Team members will create branches for any given task while working
-on a deliverable to keep work organized and separated.  The branches that are created will have a descriptive name that mentions the task for clarity. Once the changes have been made on a branch, 
-a pull request will be made explaning the changes, and the change must be reviewed by the team member who is the Reviewer at the time at the bare minimum. Once reviewed, if it is approved then the changes will be merged into the main branch. \\
+{\bf Git:} The contributors of the project can follow these steps. First each team member will first clone the repository. They can do it either through the command line or the GUI. The main branch in the repository is where code and documentation that has been reviewed and approved will be stored. 
+Team members will create branches for any given task while working
+on a deliverable to keep work organized and separated. That brach will have a naming convention and standard format to ensure consistency. The branches that are created will have a descriptive name that mentions the task for clarity. Once the changes have been made on a branch, 
+a pull request will be made explaning the changes. That request must have an assigned reviewer, and the change must be reviewed by that team member. There will be a review process in place to ensure that all changes are thoroughly checked before being merged into the main branch. 
+This would include checking the code or documentation for any potential issues or conflicts. \\
 
 \noindent {\bf Issues:} For each deliverable, the team will break it down into individual tasks, which will then have a corresponding issue created for them on Github, which will be assigned to the team member who will complete the task.
 Each issue will be given a label based on what it is for (e.g: documentation), and a Type label to further clarify its purpose (e.g: Task, Bug, Feature). 
@@ -113,6 +125,7 @@ be committed on Git and will be linked to the corresponding issue. Each issue wi
 
 \noindent {\bf CI/CD:} We will use Github Actions to set up a CI/CD pipeline for our project. This helps ensire that every team member's code integrates smoothly. Actions that will be included will be
 automated generation of documentation from the source code, running unit tests, and code style checks. These must pass in order for a Pull Request to be merged.
+
 \section{Project Decomposition and Scheduling}
 
 The team will be using Github projects as a central tool for organizing tasks, tracking progress, and scheduling work throughout the capstone project. As mentioned in Section 7,
@@ -282,6 +295,17 @@ The project will be built as a \textbf{cross-platform mobile application} for iO
     \end{itemize}
 \end{itemize}
 
+There are some tools that may have limitations and we might have to consider alternative solutions for them.
+  First off, React native with expo limits access to fine grained functionalities like location tracking, push notifications, etc. 
+  It can be mitigated by instead using the android and iOS emulators. This would allow us to have more control over the app and its functionalities.
+  Secondly, with tRPC we tend to see a tight coupling between the frontend and backend of the application. 
+  Some implementations from the backend may affect the frontend in this case. 
+  To adapt to this we can ensure that we have a strict modular design and extra checks in 
+  the CI/CD pipeline to ensure that those changes made to the backend pass the standards. 
+  Lastly, using the google API for maps and location tracking 
+  may have some limitations on the number of API requests based on the free plan. If
+  that happens, we can consider using the McMaster google server credits to ensure
+  that we have enough API requests to support our users.
 
 \section{Coding Standard}
 
@@ -328,6 +352,9 @@ These standards ensure the codebase is \textbf{professional, maintainable, and s
   \item \textbf{Why is it important to create a development plan prior to starting the project?} \\ 
   Creating a development plan is important because it establishes structure, expectations, and direction for the team before work begins. It ensures that roles, responsibilities, communication methods, and goals are clearly defined, which reduces confusion later in the project. It also helps identify risks early and provides a roadmap that keeps the team accountable and aligned.
   \item \textbf{In your opinion, what are the advantages and disadvantages of using CI/CD?} \\ 
+  Burhanuddin:\\
+  CI/CD can be very helpful for ensuring all code changes are well maintained in terms of code quality. Moreover, it can help ensure that the pushed code matches with the coding standards. Lastly, it acts as a automatic safety net for the project. It runs automatic tests to ensure that all pushed code is fully functional and meets the team standards. 
+  Aidan:\\
   The main advantages of CI/CD are faster development cycles, early detection of bugs, and consistent integration of code, which reduces the likelihood of major conflicts at later stages. It also enforces good coding practices and increases overall software reliability. However, disadvantages include the setup time and learning curve required, especially for a student project, as well as the overhead of maintaining pipelines and infrastructure when the team may already be managing heavy coursework.
   \item \textbf{What disagreements did your group have in this deliverable, if any, and how did you resolve them?} \\ 
   Not in this deliverable in particular, but earlier we had a disagreement regarding the proposal idea for our capstone project. After debating with facts and reasoning, we collectively concluded that pursuing the rideshare project would be the most impactful and feasible direction for our team.
