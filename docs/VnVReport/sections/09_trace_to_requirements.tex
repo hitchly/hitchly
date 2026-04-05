@@ -11,11 +11,12 @@ test-FR1-2 & Invalid Verification & $\times$ & & & & \\
 \hline
 test-FR2-1 & Driver Profile Verification & & $\times$ & & & \\
 test-FR2-2 & Profile Update & & $\times$ & & & \\
+test-FR2-3 & Recurring schedule router (unit) & & $\times$ & & & \\
 \hline
-test-FR3-1 & Successful Ride Match & & $\times$ & $\times$ & & \\
+test-FR3-1 & Successful Ride Match & & & $\times$ & & \\
 test-FR3-2 & No Match Found & & & $\times$ & & \\
 test-FR3-3 & User Rejection & & & $\times$ & & \\
-\hline  
+\hline
 test-FR4-1 & Cost Estimate Calculation & & & & $\times$ & \\
 test-FR4-2 & Cost Estimate Update & & & & $\times$ & \\
 \hline
@@ -25,20 +26,29 @@ test-FR5-3 & Report in Admin Dashboard & & & & & $\times$ \\
 \hline
 
 \end{tabular}
-\caption{\bf Non-Functional Requirements Traceability}
+\caption{Functional requirements traceability (FR1--FR5 per SRS G.4). test-FR2-3 covers recurring/schedule backend logic (\texttt{recurringSchedule} router unit tests).}
 \end{table}
+
 \begin{table}[H]
 \centering
-\begin{tabular}{|c|c|c|c|}
+\small
+\begin{tabular}{|c|l|c|c|c|c|c|}
 \hline
-Test ID & Description & R1 & U1 \\
+Test ID & Description & NFR-1 & NFR-2 & NFR-3 & NFR-4 & NFR-5 \\
 \hline
-test-R1-1 & Repeatability Check & $\times$ & \\
-test-R1-2 & Stress Test & $\times$ & \\
+test-R1-1 & Repeatability Check & $\times$ & & & & \\
+test-R1-2 & Stress Test & $\times$ & & & & $\times$ \\
 \hline
-test-U1-1 & First-Time User Scenario & & $\times$ \\
-test-U1-2 & Interface Clarity & & $\times$ \\
+test-U1-1 & First-Time User Scenario & & $\times$ & & & \\
+test-U1-2 & Interface Clarity & & $\times$ & & & \\
+\hline
+test-P1-1 & Nominal Match Request Latency & & & $\times$ & & \\
+\hline
+test-S1-1 & Transport and Configuration Review & & & & $\times$ & \\
+test-S1-2 & Auth and Payment Integration (mocked) & & & & $\times$ & \\
+\hline
+test-C1-1 & Moderate Concurrent Match Requests & & & & & $\times$ \\
 \hline
 \end{tabular}
-\caption{\bf Non-Functional Requirements Traceability}
+\caption{Non-functional requirements traceability (NFR-1 reliability, NFR-2 usability, NFR-3 performance, NFR-4 security, NFR-5 scalability; aligned with VnV Plan Section~3.2).}
 \end{table}
