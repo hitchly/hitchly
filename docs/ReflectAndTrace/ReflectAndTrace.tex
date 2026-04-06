@@ -16,14 +16,6 @@
 
 \maketitle
 
-\plt{Reflection is an important component of getting the full benefits from a
-learning experience.  Besides the intrinsic benefits of reflection, this
-document will be used to help the TAs grade how well your team responded to
-feedback.  Therefore, traceability between Revision 0 and Revision 1 is and
-important part of the reflection exercise.  In addition, several CEAB (Canadian
-Engineering Accreditation Board) Learning Outcomes (LOs) will be assessed based
-on your reflections.}
-
 \section{Changes in Response to Feedback}
 
 The subsections below document \textbf{capstone peer-review} feedback from GitHub issues. For each item we state the source, a concise summary of the issue, our response (what changed), and traceability links. The main pull request bundling MIS, VnV Plan, VnV Report, and related CI workflow updates is \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}; its description lists \texttt{Closes} for issues \#165, \#167, \#168, \#169, \#244, and \#245 so those issues close when the PR merges to \texttt{main}.
@@ -345,13 +337,17 @@ Deviations were mostly environmental or iterative rather than abandoning the pla
 \end{itemize}
 
 \section{Ethics and Equity (LO18)}
+\label{sec:lo18_ethics}
 
-\plt{Describe how your team applied the principle of equity and universal design
-to ensure equitable treatment of all stakeholders.}
+\noindent Hitchly sits between several stakeholder groups: riders and drivers who share cost and risk on real trips, admins who must respond to safety and quality issues, the McMaster students and staff we intend as users for this campus-focused pilot, and the wider campus-area community affected by congestion and emissions. The app uses McMaster email verification and is meant for the McMaster community by design, it remains a student capstone project, and McMaster University does not operate or oversee the platform. Ethical design still required us to treat those groups fairly under the same rules, collect only proportionate data, and give people clear paths to trust and recourse, not optimizing for one role at the hidden expense of another.
+\\
+We enforced a common access rule through McMaster-affiliated email verification so eligibility is transparent and uniform for intended users in the pilot community, rather than an unclear manual gate. That choice supports trust between strangers and aligns riders and drivers on the same community boundary, as discussed in Section~\ref{sec:lo12_design_decisions} and the verification-email iteration in Section~\ref{sec:design_iteration_lo11}. For payments, we followed Canadian privacy expectations and PCI practice by keeping card data out of our database and delegating card handling to Stripe, which reduces the security burden on users who are not payment experts. For safety and fairness after a trip, we implemented reporting and related flows (see the Safety \& Reporting module in the design documentation) and separated administration into a dedicated web portal so privileged oversight is not a hidden mode inside consumer apps---consistent with Section~\ref{sec:design_iteration_lo11}. Together, those measures address power imbalance: riders and drivers get documented channels while operators have dedicated tooling for escalation.
+\\
+The SRS commits the product to WCAG 2.2 Level AA for the in-app UI, we treated that as a design constraint during implementation and review, while recognizing that a full independent accessibility audit was beyond our capstone scope. We validated workflows with real users, not only internal assumptions with moderated usability sessions (ten participants, task success and timing, and SUS scoring summarized in Section~1 and the usability report under \path{docs/UsabilityTesting/}) surfaced friction we then addressed in an interface pass. We also shipped role-specific first-use tutorials (Section~2, Extras) so first-time riders and drivers receive in-product guidance instead of inferring every primary action from a cold start, supporting learnability and reducing dependence on prior smartphone-app literacy.
+\\
+The pilot remains English-first and McMaster-scoped (institutional email and campus-focused use cases, not a general-public launch). Broader language support and opening to a wider population would need additional equity review. Verification depth is lighter than a commercial rideshare platform. For accessibility, we aimed to meet the documented standard in shipped screens but did not commission a third-party WCAG certification, a production roadmap would include deeper assistive-technology testing and continuous checks as the UI evolves.
 
 \section{Reflection on Capstone}
-
-\plt{This question focuses on what you learned during the course of the capstone project.}
 
 Burhan: \\
 I personally learned a lot from this capstone project.
@@ -361,12 +357,16 @@ in multiple areas and languages, such as TypeScript, React Native, and Expo.
 I have also learned a lot about time management and effective team work during times of challenges and strict deadlines.
 Overall, I am very content with the learning experience I had during this project.
 \\
-
 Sarim: \\
 Capstone allowed me to use class material we learned in a practical way. 
 I learned how to write an SRS document, design software architecture, and implement a mobile application.
 I also learned how to work effectively in a team, manage my time, and communicate with my teammates.
- I am proud of the work we did on this project and the skills I gained from it.
+I am proud of the work we did on this project and the skills I gained from it.
+\\
+Hamzah: \\
+During the capstone project, I was able to apply the concepts and theories I learned throughout my degree to a real-world project. 
+It was a great learning experience being able to take owenership if a project from start to finish. This includes the documentation, individual features which we developed, and how to effectively collaborate to make our project integrate and work as a whole.
+I believe I gained valuable experience in software development and project management, especially with mobile development which I had limited experience with prior to this project, and I truly think this will help me in my future career.
 \\
 
 
@@ -386,8 +386,6 @@ Here are some of the courses that were relevant to this project:
 
 \subsection{Knowledge/Skills Outside of Courses}
 
-\plt{What skills/knowledge did you need to acquire for your capstone project
-that was outside of the courses you took?}
 This project was heavily docused on mobile development. While the 3A04 course helped us prepare for designing a strong srchitecture, the laugnuges and frameworks we used for the mobile app were not covered in our courses.
 We had to learn React Native and Expo on our own to be able to build the mobile app for our project.
 We also had to learn about third-party services such as Stripe for payment processing, Google Maps for location and routing, and Brevo for transactional email, which were not covered in our courses but were essential for implementing key features of our app.
