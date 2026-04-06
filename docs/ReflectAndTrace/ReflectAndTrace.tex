@@ -64,7 +64,7 @@ We have carefully considered and assessed all of the feedback and carefully inte
 % low.} 
 
 \subsection{ProblemStatementAndGoals and DevelopmentPlan}
-The following items addresses \textbf{ProblemStatementAndGoals} and \textbf{DevelopmentPlan} feedback from \textbf{TA and peer reviewers} (GitHub issues). We accepted the feedback and updated \texttt{docs/ProblemStatementAndGoals/} (source \texttt{.tex} and rebuilt \texttt{ProblemStatementAndGoals.pdf}) and \texttt{docs/DevelopmentPlan/} (source \texttt{.tex} and rebuilt \texttt{DevelopmentPlan.pdf}); revision history in the Problem Statement and Goals documents the ~April 1st updates.
+The following items addresses \textbf{ProblemStatementAndGoals} and \textbf{DevelopmentPlan} feedback from \textbf{TA and peer reviewers} (GitHub issues). We accepted the feedback and updated \path{docs/ProblemStatementAndGoals/} (source \texttt{.tex} and rebuilt \path{ProblemStatementAndGoals.pdf}) and \path{docs/DevelopmentPlan/} (source \texttt{.tex} and rebuilt \path{DevelopmentPlan.pdf}); revision history in the Problem Statement and Goals documents the ~April 1st updates.
 \begin{description}
   \item[\textbf{\#258} --- Overlapping goals, stakeholder description, and justification.]
   \textit{Source:} TA and peer review (GitHub issue). \\
@@ -80,7 +80,7 @@ The following items addresses \textbf{ProblemStatementAndGoals} and \textbf{Deve
 \end{description}
 
 \subsection{SRS and Hazard Analysis}
-The following items address \textbf{SRS} and \textbf{Hazard Analysis} feedback from \textbf{TA, peer reviews and user feedback} (GitHub issues). We accepted the feedback and updated \texttt{docs/SRS/SRS_meyer} (source \texttt{.tex} and rebuilt \texttt{SRS_meyer.pdf}) and \texttt{docs/HazardAnalysis/HazardAnalysis.tex} (source \texttt{.tex} and rebuilt \texttt{HazardAnalysis.pdf}); revision history in the SRS and Hazard Analysis documents the April 1st update.
+The following items address \textbf{SRS} and \textbf{Hazard Analysis} feedback from \textbf{TA, peer reviews and user feedback} (GitHub issues). We accepted the feedback and updated \path{docs/SRS/SRS_meyer} (source \texttt{.tex} and rebuilt \path{SRS_meyer.pdf}) and \path{docs/HazardAnalysis/HazardAnalysis.tex} (source \texttt{.tex} and rebuilt \path{HazardAnalysis.pdf}); revision history in the SRS and Hazard Analysis documents the April 1st update.
 \begin{description}
   \item[\textbf{\#254} --- Overlapping requirements, missing sections, unclear goals and justifications.]
   \textit{Source:} TA, peer reviews and user feedback (GitHub issue). \\
@@ -166,7 +166,7 @@ We added a lightweight, role-specific tutorial that appears when a user enters t
 
 \subsection{Deployment-driven changes (verification email)}
 
-McMaster email verification is a central component of user trust and safety. We initially sent OTP mail over SMTP. After deploying the API to Render, SMTP proved unreliable in that environment (connection and deliverability issues typical of hosted platforms without a dedicated mail relay). We replaced direct SMTP with Brevo's REST API: \path{packages/emails/client.ts} posts to Brevo's transactional endpoint, and \path{apps/api/lib/email.ts} wires the client using \texttt{BREVO\_API\_KEY}. The reason for the design change is operational, since verification emails must send consistently in production without fighting the host's network constraints.
+McMaster email verification is a central component of user trust and safety. We initially sent OTP mail over SMTP. After deploying the API to Render, SMTP proved unreliable in that environment (connection and deliverability issues typical of hosted platforms without a dedicated mail relay). We replaced direct SMTP with Brevo's REST API: \path{packages/emails/client.ts} posts to Brevo's transactional endpoint, and \path{apps/api/lib/email.ts} wires the client using \texttt{BREVO\textunderscore API\textunderscore KEY}. The reason for the design change is operational, since verification emails must send consistently in production without fighting the host's network constraints.
 
 \subsection{Admin experience and security posture}
 
