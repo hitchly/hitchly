@@ -76,8 +76,6 @@ The Verification and Validation plan's main objectives are as follows:
     \item \textbf{Features Validation:} Validate the implemented features to ensure they provide a smooth and comfortable user experience. 
     \item \textbf{Confidence in Stakeholders:} Build confidence among the stakeholders by providing proof of validation for all software requirements for the project.  
     \item \textbf{Validate Components:} This plan aims to verify and confirm the proper implementation and integration of critical components like the matching algorithm, cost calculator, and payment interface. 
-    \item \textbf{Large Scale Concurrent Testing:}
-    \item \textbf{Comprehensive Data Testing:}
 \end{itemize}
 The out of scope objectives are as follows:
 \begin{itemize}
@@ -112,41 +110,25 @@ This section discusses the team's plan for verification and validation of proces
 
 \subsection{Verification and Validation Team}
 
-\textbf{Dr. Spencer Smith:}
+\subsubsection*{Advisors}
+\textbf{Dr. Spencer Smith \& Lucas Dutton:} Advisors and primary documentation reviewers. Provide guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle.
+
+\subsubsection*{General Developer Responsibilities}
+All developers (Sarim, Aidan, Swesan, Hamzah, and Burhanuddin) share the following core responsibilities:
 \begin{itemize}
-    \item Advisor and primary documentation reviewer. Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle.
+    \item Reviewing team members' pull requests to suggest improvements and/or fixes to code and documentation.
+    \item Ensuring the smooth integration of reviewed features into the main codebase.
+    \item Conducting internal beta testing throughout the development phase.
 \end{itemize}
 
-\textbf{Lucas Dutton:}
+\paragraph{Specific Testing Focus Areas}
 \begin{itemize}
-    \item Advisor and primary documentation reviewer. Provides guidance for project direction, documentation structure, and technical feedback throughout the software development lifecycle.
+    \item \textbf{Sarim Zia:} Lead public beta testing to collect and review all relevant external feedback.
+    \item \textbf{Aidan Froggatt:} Oversee code integration pipelines by creating and enforcing CI/CD rulesets.
+    \item \textbf{Swesan Pathmanathan:} Focus emphasis on testing user interface responsiveness and usability.
+    \item \textbf{Hamzah Rawasia:} Focus emphasis on functional feature validation and matching logic correctness.
+    \item \textbf{Burhanuddin Kharodawala:} Focus emphasis on non-functional feature validation (security, performance).
 \end{itemize}
-
-\textbf{Sarim Zia:}
-\begin{itemize}
-    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Lead internal beta testing throughout the development phase and lead public beta testing to collect and review all relevant feedback.
-\end{itemize}
-
-\textbf{Aidan Froggatt:}
-\begin{itemize}
-    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Oversee smooth integration of reviewed features through creating rulesets. Conduct internal beta testing throughout the development phase.
-\end{itemize}
-
-\textbf{Swesan Pathmanathan:}
-\begin{itemize}
-    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on user interface responsiveness.
-\end{itemize}
-
-\textbf{Hamzah Rawasia:}
-\begin{itemize}
-    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on functional feature validation.
-\end{itemize}
-
-\textbf{Burhanuddin Kharodawala:}
-\begin{itemize}
-    \item Responsible for reviewing team members’ pull requests to suggest improvements and/or fixes to code and documentation. Ensure smooth integration of reviewed features. Conduct internal beta testing throughout the development phase and focus emphasis on non-functional feature validation.
-\end{itemize}
-
 \subsection{SRS Verification}
 
 We want to ensure that the SRS document is complete, accurate, and consistent, which will be verified using the following approaches: \\
@@ -427,6 +409,21 @@ How test will be performed: Submit a report for a user and observe the admin das
 
 \end{enumerate}
 
+\subsubsection{Area of Testing 6 - Availability Updates}
+
+Purpose: Ensure trip availability and seat counts update dynamically when requests are accepted or cancelled.  
+Covers: FR-6 (Availability Updates) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 - Seat Count Decrement}\\
+Control: Automatic\\
+Initial State: A trip exists with 3 available seats.\\
+Input: A rider request is accepted by the driver.\\
+Expected Output: The trip's available seats instantly update to 2 across the system database and UI.\\
+Test Case Derivation: Based on the requirement to maintain accurate capacity limits.\\
+How test will be performed: Automated integration test (Vitest) simulating an accepted request and querying the updated trip record.\\
+\end{enumerate}
+
 \subsection{Tests for Nonfunctional Requirements}
 
 Objective: Evaluate system quality beyond correctness: reliability, usability, performance, security, and scalability.  
@@ -534,6 +531,21 @@ Expected Result: As defined for 3.2.1-2; informs upper-bound behaviour.\\
 How test will be performed: Same tooling as 3.2.1-2; linked for scalability assessment.\\
 \end{enumerate}
 
+\subsubsection{Area of Testing 6 - Location Security}
+
+Purpose: Ensure sensitive location data (exact GPS coordinates) is not leaked to unauthorized users.  
+Covers: NFR-6 (Location Security) from Section 1.4 (G.4).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 - Coordinate Masking Inspection}\\
+Control: Manual / Static Inspection\\
+Initial State: API documentation and backend codebase are available.\\
+Input: Network payload for unconfirmed match candidate fetching.\\
+Expected Output: Responses contain only approximate distances or masked coordinates, not exact longitude/latitude pairs.\\
+Test Case Derivation: Derived from privacy and security constraints regarding user location data.\\
+How test will be performed: \textbf{Procedure:} 1. Two developers conduct a manual Code Review session of the API serialization logic. 2. A network inspector (e.g., Postman or browser dev tools) is used to intercept the payload and manually verify the absence of exact coordinates before a match is confirmed.\\
+\end{enumerate}
+
 \subsection{Traceability Between Test Cases and Requirements}
 
 \begin{table}[H]
@@ -547,15 +559,16 @@ FR-2 & Profile \& Scheduling Input & 3.1.3-1, 3.1.3-2; recurring/schedule logic 
 FR-3 & Ride Matching & 3.1.2-1, 3.1.2-2, 3.1.2-3 \\ \hline
 FR-4 & Cost Estimate & 3.1.4-1, 3.1.4-2 \\ \hline
 FR-5 & Ratings \& Reviews / Reporting & 3.1.5-1, 3.1.5-2, 3.1.5-3 \\ \hline
+FR-6 & Availability Updates & 3.1.6-1 \\ \hline
 NFR-1 & Reliability (Matching Correctness) & 3.2.1-1, 3.2.1-2 \\ \hline
 NFR-2 & Usability (Low-Friction Flows) & 3.2.2-1, 3.2.2-2 \\ \hline
 NFR-3 & Performance (Response Time) & 3.2.3-1 \\ \hline
 NFR-4 & Security (Data \& Transactions) & 3.2.4-1, 3.2.4-2 \\ \hline
 NFR-5 & Scalability / Capacity & 3.2.5-1, 3.2.5-2 (see also 3.2.1-2) \\ \hline
+NFR-6 & Location Security & 3.2.6-1 \\ \hline
 \end{tabular}
 \caption{Traceability between system test areas and requirements (Section 1.4 G.4).}
 \end{table}
-
 
 
 \section{Unit Test Description}
