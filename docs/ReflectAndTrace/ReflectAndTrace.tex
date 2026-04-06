@@ -121,37 +121,104 @@ The following items address \textbf{Verification and Validation Plan} and \textb
 
 \section{Extras}
 
-\plt{Summarize the extras that were tackled by this project.  Extras
-can include usability testing, code walkthroughs, user documentation, formal
-proof, GenderMag personas, Design Thinking, etc.  Extras should have already
-been approved by the course instructor as included in your problem statement.}
+The team completed two extras that were included in the scope of the project: a \textbf{usability testing report} for Hitchly and an \textbf{in-app first-use guide} so new users see information about core features when they first open the app after sign-in.
+
+\subsection{Usability testing report}
+
+We produced a standalone usability testing document under \path{docs/UsabilityTesting/}. It describes goals, methodology, task scenarios for ten moderated sessions, moderator questions and surveys (including SUS), quantitative metrics (task success, time on task, assists), and results with recommendations. Task design aligns with the functional evaluation areas in the Verification and Validation report so usability findings can be read alongside formal requirement testing. This extra closes the loop between whether the implementation behaves correctly and whether real users can complete the main jobs without unnecessary friction.
+
+\subsection{In-app first-use guide (tutorial)}
+
+We added a lightweight, role-specific tutorial that appears when a user enters the main app as a \textbf{rider} or \textbf{driver} for the first time (until they finish or skip it). Content is delivered as a swipeable carousel of short slides covering welcome messaging and how to use primary navigation and key actions for that role. Completion is stored per user (rider vs.\ driver tutorial flags) via the backend so the guide does not repeat every launch. Implementation lives under \path{apps/mobile/features/onboarding/} (e.g.\ \path{views/RiderTutorial.tsx}, \path{views/DriverTutorial.tsx}, shared \path{components/Carousel.tsx}, and \path{hooks/useTutorialState.ts}), with the tutorial mounted from the rider and driver app layouts. Together with the written usability report, this in-product guidance supports learnability and reduces reliance on external documentation for first-time use.
 
 \section{Design Iteration (LO11 (PrototypeIterate))}
+\label{sec:design_iteration_lo11}
 
-For documentation, the Rev$\,\rightarrow\,$Rev1-style iteration on MIS and VnV artifacts followed the course peer-review workflow: feedback was opened as GitHub issues, we grouped related doc edits into a single pull request (\href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}) for coherent review, and we kept revision-history rows and section-level traceability so PDFs remain auditable. We intentionally deferred closing issues until merge (per team workflow) so status stays tied to the PR and \texttt{main}.
+\subsection{Deployment-driven changes (verification email)}
 
-\plt{Explain how you arrived at your final design and implementation.  How did
-the design evolve from the first version to the final version?} 
+McMaster email verification is a central component of user trust and safety. We initially sent OTP mail over SMTP. After deploying the API to Render, SMTP proved unreliable in that environment (connection and deliverability issues typical of hosted platforms without a dedicated mail relay). We replaced direct SMTP with Brevo's REST API: \path{packages/emails/client.ts} posts to Brevo's transactional endpoint, and \path{apps/api/lib/email.ts} wires the client using \texttt{BREVO\_API\_KEY}. The reason for the design change is operational, since verification emails must send consistently in production without fighting the host's network constraints.
 
-\plt{Don't just say what you changed, say why you changed it.  The needs of the
-client should be part of the explanation.  For example, if you made changes in
-response to usability testing, explain what the testing found and what changes
-it led to.}
+\subsection{Admin experience and security posture}
+
+Early thinking placed admin capabilities inside the mobile app for privileged accounts. That approach risked shipping a hidden surface inside a consumer binary and limited what operators could see. The final design moves administration to a standalone web portal (\path{apps/admin}) backed by dedicated admin server modules (\path{apps/api/trpc/routers/admin/}), with dashboard areas for users, safety, operations, health, finances, and related views. The reason for the change is the richer operational insight (activity, logs, infrastructure-style summaries as implemented) and alignment with common practice, where administration is not a secret mode in the rider/driver app.
+
+\subsection{Live rides: location and Google Maps}
+
+Static match-time estimates were not enough once trips run in the real world. We expanded Google Maps--backed behaviour on the server for distance and ETAs during active trips. The \path{location} router adds \texttt{getTripDriverLiveLocation} (\path{apps/api/trpc/routers/location.ts}), returning the driver's live coordinates, distance/ETA toward pickup or drop-off depending on request status. The rider experience was updated under \path{apps/mobile/features/trips/} so live driver location, freshness, and external maps are visible during a ride. Mobile platform configuration (\path{apps/mobile/app.config.ts}) was adjusted for location permission copy and background behaviour so in-trip tracking matches store policies. Together, this addresses the client need for transparency while a ride is underway, not only at booking time.
+
+\subsection{Mobile configuration in TypeScript}
+
+We moved mobile app configuration from a JSON manifest to a typed module (\path{apps/mobile/app.config.ts}). That change was driven by iteration, as permissions, icons, and Google service wiring grew, a typed config reduced silent mistakes and made updates easier to review alongside code changes.
+
+\subsection{Iteration from usability findings}
+
+Formal usability testing is documented under \path{docs/UsabilityTesting/}. Sessions highlighted friction around campus drop-off choice, first-time to/from campus wording, cost visibility on match cards, and discovery of review and report entry points---see results and recommendation tables in that report. In response we carried a post-study interface pass to align visual patterns with familiar rideshare products where appropriate, tighten colour consistency, and improve labels and hierarchy on flows that had caused hesitation. We also shipped the in-app rider/driver tutorials summarized in Section~2 (Extras) of this document so first-time users get in-product guidance instead of inferring every primary action from a cold start. Those changes complement fixes tracked from the usability tables.
 
 \section{Design Decisions (LO12)}
+\label{sec:lo12_design_decisions}
 
-\plt{Reflect and justify your design decisions.  How did limitations,
- assumptions, and constraints influence your decisions?  Discuss each of these
- separately.}
+This section covers \textbf{constraints}, \textbf{assumptions}, and \textbf{limitations}, then summarizes how those factors justify the main architectural and product choices. 
+\subsection{Constraints}
+
+\noindent\textbf{Community and platform scope.} Hitchly is scoped to the McMaster community with email-domain verification, and to modern iOS and Android clients. That constraint drove a mobile-first product with server-enforced affiliation checks rather than an open web signup.
+
+\noindent\textbf{Privacy and payments.} Canadian privacy expectations (e.g.\ PIPEDA, as reflected in the SRS) and card-data rules (PCI DSS) pushed us toward minimal sensitive storage and payment flows that delegate card handling to Stripe instead of persisting raw payment credentials in our database.
+
+\noindent\textbf{Engineering standards.} The SRS calls for TypeScript with linting and formatting enforced in CI. That constraint reinforced a typed codebase end to end and predictable review gates, which mattered for a multi-contributor capstone schedule.
+
+\noindent\textbf{Time, team size, and hosting.} A fixed academic term and small team constrained how much custom infrastructure we could own. Deploying the API on a managed host (e.g.\ Render) with a managed PostgreSQL provider (e.g.\ Neon) traded operational control for reliability and speed of iteration. In practice, that hosting model also constrained outbound email, as direct SMTP was unreliable from the deployment environment, which motivated the move to a transactional email API as mentioned in the previous section.
+
+\subsection{Assumptions}
+
+\noindent\textbf{User conduct and honesty.} We assume users act in good faith during trips and that a McMaster-affiliated email (plus driver-license capture for drivers) is an acceptable affiliation signal for a campus pilot, not a substitute for commercial background screening.
+
+\noindent\textbf{Legal compliance by drivers.} We assume drivers meet Ontario licensing, insurance, and vehicle rules as stated in the SRS narrative; the app prompts and records verification artifacts but does not replace government or insurer checks.
+
+\noindent\textbf{Technical environment.} We assume participants run a current Expo build, stable network access, and that third-party services (maps, email, payments) remain available. We also assume campus and urban travel dominates, so Maps-backed distance, routing, and landmark-style drop-offs remain usable, and rural edge cases are weaker.
+
+\noindent\textbf{Operations.} We assume few trusted operators use admin tooling, which supports a separate admin surface with role-appropriate access rather than embedding admin features in consumer apps.
+
+\noindent These assumptions justified lighter onboarding than a commercial rideshare platform while still documenting trust and safety paths (reports, reviews, admin visibility).
+
+\subsection{Limitations}
+
+\noindent\textbf{Verification depth.} We do not run institutional background checks or insurance verification beyond license upload and email proof, and risk remains with users and institutional policy, as noted in the SRS limitations.
+
+\noindent\textbf{Dependence on third parties.} Maps, email, hosting, and payment providers introduce cost, quota, and outage risk, and behaviour degrades if an API is throttled or unavailable.
+
+\noindent\textbf{Quality and coverage.} Automated and manual testing are substantial but not exhaustive under course time pressure, and the primary UI language is English unless otherwise specified in the product.
+
+\subsection{Principal architectural and product choices}
+
+\noindent Given the constraints above, we adopted: tRPC with shared types across mobile, API, and admin to reduce contract drift in a small team; a pnpm monorepo with Turbo so shared packages (database access, email client, config) stay in one repository; PostgreSQL for relational integrity on users, trips, and matches; and a standalone admin web application separate from rider/driver clients for security, clearer roles, and richer operational views. These choices follow from the need for maintainability, type safety, and clear trust boundaries rather than from novelty for its own sake.
 
 \section{Economic Considerations (LO23)}
+\label{sec:lo23_economic}
 
-\plt{Is there a market for your product? What would be involved in marketing your 
-product? What is your estimate of the cost to produce a version that you could 
-sell?  What would you charge for your product?  How many units would you have to 
-sell to make money? If your product isn't something that would be sold, like an 
-open source project, how would you go about attracting users?  How many potential 
-users currently exist?}
+\noindent Hitchly is software service mobile application aimed at a bounded campus market.
+\subsection{Market need}
+
+\noindent There is a plausible niche market among McMaster-affiliated commuters, which consists of riders who want lower-cost trips than solo driving, public transit, or occasional rideshare apps such as Uber or Lyft, and drivers who want to defray parking, fuel, and wear on recurring routes. A campus-scoped network can emphasize trust (shared institution) and repeat patterns (to/from campus) in ways that differ from general-purpose rideshare for ad-hoc city travel.
+
+\subsection{Marketing and adoption}
+
+\noindent Hitchly would be marketed through channels that already reach commuters: student unions and clubs, faculty and staff associations, sustainability and transportation offices, residence orientation, digital signage, and partnerships with a few high-commute programs as a pilot cohort. The message combines cost sharing with verified McMaster affiliation (email-domain verification). User acquisition is organic and institutional through downloads, verified sign-ups, and completed trips measure traction.
+
+\subsection{Cost to build and run}
+
+\noindent One-time / sunk cost is primarily engineering time to reach a pilot-ready mobile client, API, payments, and operations tooling (capstone-scale effort). Ongoing operating cost scales with usage and includes managed API and database hosting (e.g.\ Render and Neon-style Postgres), transactional email (e.g.\ Brevo), Google Maps usage (distance, directions, and in-trip location workflows), Stripe processing and Connect-related fees, mobile store accounts, and domain/DNS. Exact monthly cost depends on trip volume, API call patterns, and chosen service tiers. The team would budget using provider dashboards once traffic is non-trivial.
+
+\subsection{Pricing and revenue model}
+
+\noindent Riders and drivers obtain a fare estimate derived from trip distance and time, and the implementation records a platform fee as a percentage of the charged amount. The deployed configuration applies a 15\% platform fee, with the remainder intended for the driver after Stripe processing. Alternatives for a broader rollout include a university-paid deployment (no per-trip fee for users), a lower take rate for a pilot, or a subscription for verified power users, but the current model favours usage-based revenue tied to completed trips.
+
+\subsection{Illustrative break-even framing}
+
+\noindent Because Hitchly is not sold as discrete units, ``how many units to make money'' maps to how much trip volume (or institutional funding) covers monthly OPEX. Illustrative only suppose combined hosting, email, maps, and fixed third-party overhead were on the order of a few hundred Canadian dollars per month at pilot scale, and suppose an average completed trip produced roughly \$1.50 in platform revenue after Stripe (15\% of a modest \$10 trip, ignoring Stripe's own fee in this sketch). Then on the order of 200--400 completed trips per month would approach that overhead band. This is not a forecast, only a check that revenue is volume-driven and sensitive to Maps and payment fees. A formal business plan would replace these round numbers with measured usage and provider invoices.
+
+\subsection{Potential user base}
+
+\noindent McMaster's public institutional reporting places total student headcount in the mid-30,000s in recent years, with additional faculty and staff. Not everyone commutes by car or needs rideshare, so the addressable subset is smaller, commuters, occasional riders, and drivers with spare seats, but the ceiling for a McMaster-only product is still in the tens of thousands of affiliated people. Growth beyond that would require a different product scope (multi-campus or public launch), which is outside the current scope and focus of the project.
 
 \section{Reflection on Project Management (LO24)}
 
