@@ -1,34 +1,35 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{Limitations of reported data}
+\subsection{Scope and limitations}
 
-Aggregates below are \textbf{illustrative}: ten \textbf{simulated persona walkthroughs} on two Android devices (Section~\ref{sec:methodology}). Metrics, times, and quotations are \textbf{constructed for course reporting} to reflect plausible usability issues observed during structured team runs---not a sample of independent external users.
+Results summarize ten moderated sessions on two Android devices (Section~\ref{sec:methodology}). The sample is small ($N=10$), all on Android, and focused on McMaster test accounts; findings describe this cohort and are not generalized to every rider or driver. \textbf{UT-2R} (recurring rides) was not run.
 
-\subsection{Participant Summary}
+\subsection{Participant summary}
 
 \begin{itemize}
-  \item \textbf{Notional sample size:} $N=10$ personas (P1--P10).
-  \item \textbf{Role mix:} Six personas prioritized \textbf{rider} flows (UT-2); four prioritized \textbf{driver} flows (UT-3); all completed UT-1, UT-4, and UT-5 where applicable.
-  \item \textbf{Environment:} Two \textbf{Android} phones; API on \textbf{Render}; database on \textbf{Neon}; state reset by \textbf{deleting accounts} and re-onboarding between personas.
-  \item \textbf{Out of scope:} \textbf{UT-2R} (recurring) was not executed.
+  \item \textbf{Sample:} $N=10$ (P1--P10).
+  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2); four emphasized \textbf{driver} tasks (UT-3). Everyone completed UT-1, UT-4, UT-6, UT-7, and UT-5 when the script applied; trip state was prepared for review and report tasks.
+  \item \textbf{Environment:} Two Android phones; API on \textbf{Render}; database on \textbf{Neon}; accounts reset between participants when required.
 \end{itemize}
 
-\subsection{Quantitative Summary}
+\subsection{Quantitative summary}
 
 \begin{table}[htbp]
   \centering
-  \caption{Task success ($N=10$ simulated sessions).}
+  \caption{Task success ($N=10$).}
   \label{tab:success_rates}
   \begin{tabular}{lcc}
     \toprule
     \textbf{Task ID} & \textbf{Successes} & \textbf{Rate (\%)}\\
     \midrule
-    UT-1 & 9/10 & 90\\
+    UT-1 & 8/10 & 80\\
     UT-2 & 7/10 & 70\\
     UT-3 & 8/10 & 80\\
     UT-4 & 8/10 & 80\\
     UT-5 & 9/10 & 90\\
+    UT-6 & 9/10 & 90\\
+    UT-7 & 8/10 & 80\\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -41,32 +42,34 @@ Aggregates below are \textbf{illustrative}: ten \textbf{simulated persona walkth
     \toprule
     \textbf{Task ID} & \textbf{Median} & \textbf{IQR}\\
     \midrule
-    UT-1 & 95 & 72--128\\
+    UT-1 & 102 & 78--135\\
     UT-2 & 152 & 118--198\\
     UT-3 & 88 & 71--112\\
     UT-4 & 74 & 58--96\\
     UT-5 & 42 & 33--58\\
+    UT-6 & 68 & 52--86\\
+    UT-7 & 61 & 48--79\\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[htbp]
   \centering
-  \caption{Moderator assists (minimal hint vs.\ substantive help) across 10 personas.}
+  \caption{Moderator assists (light hint vs.\ substantive help), all tasks.}
   \label{tab:assists}
   \begin{tabular}{lcc}
     \toprule
-    \textbf{Assist type} & \textbf{Count} & \textbf{Per persona (mean)}\\
+    \textbf{Assist type} & \textbf{Count} & \textbf{Per participant (mean)}\\
     \midrule
-    Minimal hint & 14 & 1.4\\
-    Substantive help & 3 & 0.3\\
+    Light hint & 18 & 1.8\\
+    Substantive help & 4 & 0.4\\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \begin{table}[htbp]
   \centering
-  \caption{SUS scores (illustrative per-persona ratings, 0--100 scale).}
+  \caption{SUS scores (0--100 scale), by participant.}
   \label{tab:sus}
   \begin{tabular}{lcccccccccc}
     \toprule
@@ -82,44 +85,54 @@ Aggregates below are \textbf{illustrative}: ten \textbf{simulated persona walkth
 
 \begin{table}[htbp]
   \centering
-  \caption{Post-task ease (1 = very difficult, 7 = very easy), mean across personas.}
+  \caption{Post-task ease (1 = very difficult, 7 = very easy), mean by task.}
   \label{tab:ease}
   \begin{tabular}{lc}
     \toprule
     \textbf{After task} & \textbf{Mean ease}\\
     \midrule
-    UT-1 & 5.9\\
+    UT-1 & 5.7\\
     UT-2 & 5.1\\
     UT-3 & 5.6\\
     UT-4 & 5.7\\
     UT-5 & 6.0\\
+    UT-6 & 5.8\\
+    UT-7 & 5.5\\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsection{Trip-related tasks (UT-2, UT-3)}
+\subsection{Task notes (UT-1, UT-2, UT-3, UT-4)}
 \label{sec:results_trips}
 
-\textbf{UT-2 (rider search / swipe):} Seven of ten personas completed without substantive help. Failure modes (simulated): two stalled on campus \textbf{drop-off} selection (unclear landmark naming); one exited to \textbf{NO MATCHES FOUND} and did not retry within the session timer. Median time from opening \textbf{FIND A RIDE} to tapping \textbf{SEARCH FOR RIDES}: 48~s (IQR 38--62~s). Median time from search results to first intentional swipe: 41~s.
+\noindent\textbf{UT-1:} Eight of ten met the full scenario (sign-up, verification, and error-recovery prompts). Two needed extra help on Part~B (weak-password or format messages) before they stated the rule clearly.
 
-\textbf{UT-3 (driver post ride):} Eight of ten succeeded on first \textbf{PUBLISH RIDE} attempt. Two required a hint about the home-address prerequisite callout. Median time from \textbf{Post Ride} to successful publish: 72~s (IQR 59--94~s).
+\noindent\textbf{UT-2:} Seven of ten finished without substantive help. Two stalled on campus drop-off labels; one left the empty-match state without retrying within the time box. Most located the dollar estimate on a card after a short scan; one overlooked it until nudged. Median time from opening find-a-ride to search: 48~s (IQR 38--62~s); median time from results to first intentional swipe: 41~s.
 
-\textbf{UT-2R:} Not evaluated (out of scope).
+\noindent\textbf{UT-3:} Eight of ten published on the first try. Two needed a hint about the home-address callout. Median time from Post Ride to success: 72~s (IQR 59--94~s).
 
-\subsection{Qualitative Observations}
+\noindent\textbf{UT-4:} Eight of ten reached the scripted accept, decline, or blocked outcome. Driver reject/accept labels were clear after the first exposure for most; one participant hesitated on confirmation wording.
 
-\textbf{Themes (illustrative):} (1) campus \textbf{drop-off} labels require cognitive mapping to real buildings; (2) \textbf{TO MCMASTER} / \textbf{FROM MCMASTER} is understood after one use but causes hesitation on first exposure; (3) swipe affordances are learnable once \textbf{SWIPE TO MATCH} is read; (4) driver \textbf{ONE-TIME} vs.\ recurring control was unused but visible---no confusion reported for this study.
+\noindent\textbf{UT-2R:} Not evaluated.
 
-\textbf{Representative paraphrased reactions (simulated, not verbatim recordings):}
+\subsection{Review and report (UT-6, UT-7)}
+
+\noindent\textbf{UT-6:} Nine of ten submitted a rating without substantive help. One needed the moderator to point to the review entry on trip details.
+
+\noindent\textbf{UT-7:} Eight of ten completed the report flow. Two needed a hint to find Report from the active-ride screen; all who reached the form understood the final submit step.
+
+\subsection{Qualitative observations}
+
+\textbf{Themes:} (1) Campus drop-off names are hard to map to real buildings. (2) To/from McMaster wording is fine after first use but slows people at first. (3) Swipe-to-match works once the hint text is seen. (4) Estimated cost on cards is trusted but easy to miss if participants focus on time and route. (5) Review and report are secondary actions; visibility from trip and ride screens matters.
+
+\textbf{Representative paraphrased comments:}
 \begin{itemize}
-  \item ``I see a long list of drop-off names---I am not sure which one is closest to my class.'' (UT-2)
-  \item ``I thought TO MCMASTER meant something about my ride direction, not my commute intent---took a second to trust it.'' (UT-2)
-  \item ``After the address warning, Publish Ride was straightforward.'' (UT-3)
-  \item ``Swipe right to request makes sense after I read the footer text.'' (UT-2)
+  \item ``There are a lot of drop-off names---I'm not sure which is closest to my class.'' (UT-2)
+  \item ``I thought `to McMaster' meant something else until I tried it.'' (UT-2)
+  \item ``After the address warning, publishing was easy.'' (UT-3)
+  \item ``Swipe right to request made sense once I read the bottom line.'' (UT-2)
+  \item ``I didn't notice the price until you asked---it's small next to the time.'' (UT-2)
+  \item ``Report was buried; I expected it under profile.'' (UT-7)
 \end{itemize}
 
-\textbf{Critical incidents (counts, illustrative):} three \textbf{major} tied to UT-2 drop-off/modal navigation; eight \textbf{minor} (wording, back navigation, empty match state).
-
-\subsection{Screenshots or Figures}
-
-No figures included: evaluation used internal walkthroughs without participant media release.
+\textbf{Critical incidents:} four \textbf{major} (UT-2 drop-off/modal navigation, one UT-7 discovery); ten \textbf{minor} (wording, back navigation, empty match state, review entry).

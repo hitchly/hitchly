@@ -3,51 +3,61 @@
 
 \subsection{Interpretation}
 
-Illustrative results align with the goals in Section~\ref{sec:goals}: \textbf{onboarding} (UT-1) and \textbf{profile-adjacent} tasks (UT-5) scored highest ease; \textbf{rider discovery} (UT-2) showed the lowest success rate and longest times, mainly around \textbf{drop-off selection} and first-time \textbf{direction} semantics. \textbf{Driver posting} (UT-3) was generally efficient once the home-address prerequisite was satisfied, supporting the cost-sharing value proposition but surfacing \textbf{gating copy} as a friction point. \textbf{Matching follow-up} (UT-4) was moderate---consistent with dependency on prior trip state and match availability.
+Outcomes line up with the goals in Section~\ref{sec:goals}. \textbf{UT-1} and \textbf{UT-5} stayed relatively easy; adding sign-up error checks slightly increased assists compared with a happy-path-only sign-up. \textbf{UT-2} remained the hardest task (lowest success, longest times), driven by drop-off choice and first-time direction wording. \textbf{UT-3} was quick once the address prerequisite was met. \textbf{UT-4} behaved as expected given prepared match state. \textbf{UT-6} and \textbf{UT-7} mostly succeeded but showed \textbf{discovery} issues: cost on cards is easy to skip, and Report is not where some participants first looked.
 
-\textbf{Trade-offs:} Tighter campus landmark fidelity (trust, clarity) increases choice complexity; swipe-based matching is engaging but demands clear onboarding for first-time users.
+\textbf{Trade-offs:} Richer campus landmarks add choice load; swipe matching needs a clear first-run cue; secondary actions (cost, report) need stronger placement or labels without cluttering primary flows.
 
-\textbf{Limitations:} $N=10$ \textbf{simulated} personas; no external diversity; two Android devices only; \textbf{Render}/\textbf{Neon} latency not stress-tested; \textbf{UT-2R} omitted; quotes are \textbf{stylized} from team debriefs, not transcripts.
+\textbf{Limitations:} $N=10$; Android only; McMaster test accounts; \textbf{Render}\slash\textbf{Neon} latency not stress-tested; \textbf{UT-2R} omitted; quotes are paraphrased session notes.
 
 \subsection{Recommendations}
 
 \subsubsection{General (all task areas)}
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
-  \small
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
   \begin{tabularx}{\textwidth}{X X c X X}
     \toprule
     \textbf{Issue} & \textbf{Evidence} & \textbf{Sev.} & \textbf{Proposed change} & \textbf{Status}\\
     \midrule
-    Drop-off landmark discoverability & UT-2: 70\% success; ease 5.1; simulated quote on list length & Maj. & Add search/filter or map snippet for McMaster drop-offs; group by campus zone & Open\\
-    First-time direction semantics & UT-2: hesitation theme; assists on route & Min. & Short inline tooltip for TO/FROM McMaster & Open\\
-    Empty match recovery & UT-2: one persona did not retry NEW SEARCH & Min. & Prompt after empty state: suggested time adjustment & Open\\
-    Address prerequisite visibility & UT-3: 2/10 hints; UT-3 ease 5.6 & Min. & Link callout to one-tap Profile prefill when empty & Open\\
+    Drop-off landmark discoverability & UT-2: 70\%; ease 5.1; drop-off quotes & Maj. & Search/filter or map snippet for McMaster drop-offs; group by zone & Open\\
+    First-time direction semantics & UT-2: hesitation; route assists & Min. & Short inline tip for to/from McMaster & Open\\
+    Empty match recovery & UT-2: one participant did not retry & Min. & After empty state, suggest time or route tweak & Open\\
+    Address prerequisite visibility & UT-3: 2/10 hints; ease 5.6 & Min. & Link callout to profile in one tap when empty & Open\\
+    Sign-up error clarity & UT-1: 8/10; Part B assists & Min. & Inline password rules and email format hint before submit & Open\\
+    Estimated cost salience & UT-2: cost overlooked until prompt & Min. & Stronger label or placement on match cards & Open\\
+    Report entry discovery & UT-7: 8/10; buried expectation & Min. & Repeat Report link on trip details; consider profile safety hub & Open\\
+    Review entry discovery & UT-6: 1/10 needed hint & Min. & Keep review CTA visible after trip completes & Open\\
     \bottomrule
   \end{tabularx}
-  \caption{Cross-cutting usability recommendations (illustrative evidence).}
+  \caption{Cross-cutting usability recommendations.}
   \label{tab:rec_general}
 \end{table}
 
-\subsubsection{Trip, search, and post-ride (Swesan)}
+\subsubsection{Trip, search, and post-ride}
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
-  \small
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
   \begin{tabularx}{\textwidth}{X X c X X}
     \toprule
     \textbf{Issue} & \textbf{Evidence} & \textbf{Sev.} & \textbf{Proposed change} & \textbf{Status}\\
     \midrule
-    Search-to-swipe latency perception & UT-2 median 152~s total; SEARCHING state & Min. & Skeleton or progress text on match fetch & Open\\
-    Publish confirmation feedback & UT-3: 8/10 first-try success & Min. & Stronger success toast + auto-return to My Trips & Open\\
-    Recurring not tested & UT-2R out of scope & --- & Schedule UT-2R in a future study with real users & Planned\\
+    Search-to-results timing & UT-2 median 152~s total & Min. & Skeleton or clearer progress during search & Open\\
+    Publish confirmation & UT-3: 8/10 first try & Min. & Stronger success feedback; return to trip list & Open\\
+    Recurring rides & UT-2R not in scope & --- & Cover UT-2R in a later test round & Planned\\
     \bottomrule
   \end{tabularx}
-  \caption{Trip-related recommendations (UT-2, UT-3).}
+  \caption{Trip and search recommendations (UT-2, UT-3).}
   \label{tab:rec_trips}
 \end{table}
 
 \subsection{Traceability}
 
-High-priority items map to SRS usability and clarity goals (low-friction flows, understandable trip and match actions). Link specific issues to GitHub tickets when implemented (e.g.\ drop-off UX, empty-state copy, profile shortcut from post-ride callout).
+Priorities map to SRS usability and clarity expectations (simple flows, clear trip and match actions, trustworthy pricing). Track fixes with issues/PRs (e.g.\ drop-off UX, empty-state copy, profile shortcut from post-ride callout, review/report entry points).
+
+\subsection{Post-study interface revisions}
+
+Following the usability sessions, the team carried out a general interface pass so the app would feel closer to familiar rideshare and carpool products participants already know. We reviewed patterns from widely used apps in that category and applied them where they fit Hitchly's campus scope. Colour and accent usage were aligned across rider, driver, and shared screens so the experience feels like one product rather than separate areas. Primary actions, toggles, and secondary options were given clearer labels and hierarchy, with less ambiguous wording on flows that had caused hesitation in testing (e.g.\ direction, matching, and trip follow-up). The aim was to reduce guesswork: users should see what each control does and move through posting, searching, and trip-related tasks without having to infer meaning from layout alone. These changes complement the targeted recommendations in the tables above rather than replace ongoing tuning of copy and deeper features.

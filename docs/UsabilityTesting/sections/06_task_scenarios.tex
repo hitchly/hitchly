@@ -1,96 +1,134 @@
 \section{Task Scenarios}
 \label{sec:task_scenarios}
 
-Each scenario below maps to goals in Section~\ref{sec:goals}. Labels and navigation for UT-2 and UT-3 reflect the current Expo app (\texttt{apps/mobile}) as of this document. Success criteria are \textbf{binary} unless otherwise noted. \textbf{UT-2R was out of scope} for the evaluation reported here (see Section~\ref{sec:methodology}).
+Each scenario supports the goals in Section~\ref{sec:goals} and traces to the functional evaluation areas in the Verification and Validation report (\texttt{docs/VnVReport}). Navigation details match the Expo app in \texttt{apps/mobile} as of this document. Success criteria are \textbf{binary} unless noted. \textbf{UT-2R} (recurring rides) was not part of this study; drivers used one-time rides only in UT-3.
 
-\subsection{Scenario UT-1: First-time access and verification}
+\subsection{Mapping to VnV functional areas}
+
+Table~\ref{tab:vnv_ut_map} links each task to the VnV report areas (admin-only checks, such as reports in an admin dashboard, are out of scope for end-user tasks).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Task scenarios mapped to VnV functional evaluation areas.}
+  \label{tab:vnv_ut_map}
+  \begin{tabularx}{\textwidth}{l l X}
+    \toprule
+    \textbf{VnV area} & \textbf{Task ID(s)} & \textbf{Covered in usability testing}\\
+    \midrule
+    1 -- User verification & UT-1 & Sign-up, email verification, and clear handling of invalid or incomplete inputs.\\
+    2 -- User profile & UT-5 & Updating profile fields; address and role as needed for other tasks.\\
+    3 -- Ride matching & UT-2, UT-3, UT-4 & Search and proposals; posting a ride; accept, decline, no match, or blocked states.\\
+    4 -- Cost estimation & UT-2, UT-4 & Reading the estimated share on a match card; optional moderator-prepared state if pricing updates when another rider joins.\\
+    5 -- Review and reporting & UT-6, UT-7 & Submitting a rating after a trip; submitting a report through the in-app safety flow.\\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Scenario UT-1: Sign-up, verification, and input errors (Area 1)}
+
+\textbf{Part A --- successful path}
 
 \begin{itemize}
-  \item \textbf{Context:} You are a new McMaster student who has just installed Hitchly.
-  \item \textbf{Task:} Create an account with a McMaster-affiliated email, complete any verification step required, and reach the main home or dashboard screen.
-  \item \textbf{Success criteria:} Account created; email verification completed (or flow correctly attempted per test account setup); lands on post-auth home without moderator rescue beyond one standard hint.
+  \item \textbf{Context:} New McMaster student; Hitchly just installed.
+  \item \textbf{Task:} Create an account with a McMaster-affiliated email, complete verification as required, and reach the main screen after sign-in.
+  \item \textbf{Success:} Account created; verification step completed (or correctly attempted for the test account); participant reaches the post-auth home with at most one standard hint from the moderator.
 \end{itemize}
 
-\subsection{Scenario UT-2: Rider---find or request a ride}
-
-\textbf{Prerequisite:} Profile must include a default location (home address); otherwise the app shows \textbf{LOCATION REQUIRED} and \textbf{GO TO PROFILE}. Moderator either confirms the test account is pre-configured or assigns a short sub-task to add an address.
+\textbf{Part B --- invalid or incomplete inputs}
 
 \begin{itemize}
-  \item \textbf{Starting point:} Rider home with the \textbf{FIND A RIDE} form visible. If the participant is on \textbf{My Rides}, tap \textbf{Find a Ride} first.
+  \item \textbf{Task:} With moderator guidance, try at least one invalid case: wrong email format, password below the app's rules, or (for driver test accounts) attempting driver registration without a required license upload if the flow asks for it. Correct inputs until errors clear or the participant explains the message.
+  \item \textbf{Success:} The app shows understandable errors for bad input; the participant recovers without repeated moderator help beyond one hint. Judge clarity and recovery, not server-side test-case IDs.
+\end{itemize}
+
+\subsection{Scenario UT-2: Rider --- search, cost, pass, and request (Areas 3 and 4)}
+
+\textbf{Prerequisite:} Home address on profile. If missing, the app prompts to open profile; moderator confirms a seeded account or allows a short address sub-task.
+
+\begin{itemize}
+  \item \textbf{Start:} Rider home; open find-a-ride if needed (e.g.\ from ``My Rides'').
   \item \textbf{Task:}
   \begin{enumerate}
-    \item On \textbf{FIND A RIDE}, set \textbf{ROUTE} direction (to/from McMaster) using the in-form control.
-    \item If travelling \textbf{to} campus, set campus \textbf{drop-off} for the moderator's landmark (modal lists McMaster drop-off options).
-    \item Set \textbf{date} and \textbf{desired arrival} time per moderator script.
-    \item Tap \textbf{SEARCH FOR RIDES}.
-    \item Wait for \textbf{SEARCHING\ldots} to finish.
-    \item If matches exist: read \textbf{SWIPE TO MATCH}. \textbf{Swipe right} to \textbf{request} a ride; \textbf{swipe left} to pass (per moderator).
-    \item Optionally tap a card to open \textbf{Trip Details}.
-    \item If no matches: note \textbf{NO MATCHES FOUND}. Participant may tap \textbf{NEW SEARCH} (valid path if empty-state usability is documented).
+    \item Set route direction (to or from McMaster), date, and arrival time per moderator script.
+    \item If travelling to campus, pick the moderator's drop-off from the campus list.
+    \item Run search and wait until results load.
+    \item On at least one match card, find and say aloud the \textbf{estimated cost} (dollar amount).
+    \item If two or more cards appear: swipe left on one card to pass, then swipe right on another to request. If only one card: swipe left to pass, then use new search or note empty deck per script.
+    \item If there are no matches, read the empty state (e.g.\ no matches found) and optionally start a new search.
+    \item Optional: open trip details from a card tap.
   \end{enumerate}
-  \item \textbf{Success criteria (binary):}
-  \begin{itemize}
-    \item Participant completes \textbf{SEARCH FOR RIDES} from a valid form state.
-    \item They reach one of: swipe deck ($\geq 1$ card); \textbf{NO MATCHES FOUND}; or \textbf{Trip Details} from a card tap.
-    \item No persistent validation errors.
-    \item They can state that swiping right requests a ride.
-  \end{itemize}
-  \item \textbf{Partial credit (optional):} If the study records ordinal difficulty, note hints needed for drop-off or direction.
+  \item \textbf{Success:} Search runs from a valid form; participant reaches a swipe deck, trip details, or the no-match state without stuck validation; they correctly describe swipe-right as requesting a ride and report the cost they saw (or honestly say no cost was visible).
+  \item \textbf{Cost update (Area 4, optional):} If the moderator prepared a ride where the estimate changes after another rider joins, ask the participant to compare before and after. Otherwise only the on-card estimate in this task is required.
 \end{itemize}
 
-\subsection{Scenario UT-2R: Recurring ride (reference only---not evaluated)}
+\subsection{Scenario UT-2R: Recurring ride (reference only)}
 
-\textbf{Not in scope} for this study. The following remains as documentation for future testing. In the reported sessions, drivers always selected \textbf{ONE-TIME} in UT-3.
+\textbf{Not in scope.} Documented for future runs. In this study, drivers chose a one-time ride in UT-3.
 
 \begin{itemize}
-  \item \textbf{Driver path (future):} Open \textbf{Post Ride}; under \textbf{REPEAT}, choose \textbf{RECURRING}; set direction, \textbf{DEPARTURE}, \textbf{AVAILABLE SEATS}; \textbf{PUBLISH RIDE}.
-  \item \textbf{Rider path (future):} From \textbf{My Rides}, open a recurring booking; use \textbf{REQUEST NEXT} when shown.
+  \item \textbf{Driver (future):} Post Ride $\rightarrow$ recurring $\rightarrow$ set direction, departure, seats $\rightarrow$ publish.
+  \item \textbf{Rider (future):} From My Rides on a recurring booking, use request-next when shown.
 \end{itemize}
 
-\subsection{Scenario UT-3: Driver---offer a ride}
+\subsection{Scenario UT-3: Driver --- post a ride (Area 3)}
 
 \begin{itemize}
-  \item \textbf{Starting point:} Driver \textbf{My Trips}; tap \textbf{Post Ride} (opens modal titled \textbf{Post a Ride}).
-  \item \textbf{Prerequisite:} Profile must list a home address; otherwise the form shows a callout to set it in Profile. Moderator uses a seeded driver account with address filled, or allocates time for profile setup.
-  \item \textbf{Task:}
-  \begin{enumerate}
-    \item Under \textbf{DIRECTION}, choose \textbf{TO MCMASTER} or \textbf{FROM MCMASTER} as specified.
-    \item Confirm \textbf{ROUTE} shows home and McMaster (read-only); under \textbf{REPEAT}, choose \textbf{ONE-TIME} (recurring was out of scope).
-    \item Set \textbf{DEPARTURE} (datetime) and \textbf{AVAILABLE SEATS} (stepper).
-    \item Tap \textbf{PUBLISH RIDE}.
-  \end{enumerate}
-  \item \textbf{Success criteria (binary):} Submission succeeds (loading completes, modal closes or trip appears in \textbf{My Trips}); no blocking validation errors. Participant sees the new trip in the driver's trip list or receives a clear, understandable error (document if failure is a usability defect).
+  \item \textbf{Start:} Driver trips list; open Post Ride (post-a-ride modal).
+  \item \textbf{Prerequisite:} Home address on profile; moderator uses a seeded account or allows profile setup time.
+  \item \textbf{Task:} Choose direction (to or from McMaster); keep repeat on \textbf{one-time}; set departure and seats; publish.
+  \item \textbf{Success:} Publish completes (modal closes or trip appears in the list) without blocking errors, or the participant gets a clear error that the moderator logs as a defect.
 \end{itemize}
 
-\subsection{Scenario UT-4: Matching or trip follow-up}
+\subsection{Scenario UT-4: Accept, decline, or blocked match (Area 3; Area 4 if cost shown)}
+
+Moderator sets state so the participant has a pending match, request, or trip action.
 
 \begin{itemize}
-  \item \textbf{Context:} A compatible ride or match is available (moderator may set state in advance).
-  \item \textbf{Task:} Accept, decline, or confirm the match/trip as appropriate to the prototype state.
-  \item \textbf{Success criteria:} Participant completes the intended state transition or explains blockage clearly; note any UI ambiguity.
+  \item \textbf{Rider path (examples):} Confirm or cancel a request; open a matched trip; respond to prompts that accept or end the match. If the UI shows a cost or status change, note whether it is clear.
+  \item \textbf{Driver path (examples):} Open pending requests for a trip; \textbf{accept} one rider or \textbf{reject} one when the script asks; confirm the UI reflects the choice (e.g.\ confirmed vs.\ rejected).
+  \item \textbf{No match / blocked:} If the script uses a dead-end state, success is correctly describing the message and next step.
+  \item \textbf{Success:} The participant reaches the intended state (accepted, declined, cancelled, or no match) or clearly explains why the screen blocked them; moderator notes any ambiguity.
 \end{itemize}
 
-\subsection{Scenario UT-5: Profile or settings (optional)}
+\subsection{Scenario UT-5: Profile update (Area 2)}
 
 \begin{itemize}
-  \item \textbf{Task:} Update a non-sensitive profile field or locate notification/payment settings.
-  \item \textbf{Success criteria:} Participant finds the correct area within a time threshold (set in Section~\ref{sec:metrics}) or documents failure.
+  \item \textbf{Task:} Change a non-sensitive field (for example phone or display name) and save. If time allows, locate notification or payment-related settings and report whether they exist and where.
+  \item \textbf{Success:} Update saves as expected, or failure is documented; settings located within the time threshold in Section~\ref{sec:metrics} or participant explains why they stopped.
+\end{itemize}
+
+\subsection{Scenario UT-6: Review after a trip (Area 5)}
+
+\begin{itemize}
+  \item \textbf{Prerequisite:} Moderator places the account on a completed or review-eligible trip (same build as production test data).
+  \item \textbf{Task:} Open the review flow for that trip, set rating(s), and submit.
+  \item \textbf{Success:} Submission completes with success feedback (or the participant describes a blocking issue for the log).
+\end{itemize}
+
+\subsection{Scenario UT-7: Safety report (Area 5)}
+
+\begin{itemize}
+  \item \textbf{Prerequisite:} Active or completed trip context where Report is available (rider ride screen, driver drive screen, or trip details per moderator script).
+  \item \textbf{Task:} Open Report (safety flow), complete the steps the moderator specifies for the test environment, and submit.
+  \item \textbf{Success:} Report submits with confirmation, or the participant describes a clear blocker.
 \end{itemize}
 
 \begin{table}[htbp]
   \centering
-  \caption{Task scenario summary ($N=10$ simulated walkthroughs; UT-2R not run).}
+  \caption{Task scenario summary (UT-2R not run; quantitative outcomes in Section~\ref{sec:results}).}
   \label{tab:task_summary}
   \begin{tabular}{lll}
     \toprule
     \textbf{ID} & \textbf{Focus} & \textbf{Notes}\\
     \midrule
-    UT-1 & Onboarding / verification & 9/10 success\\
-    UT-2 & Rider search / swipe / request & 7/10 success\\
+    UT-1 & Verification and input errors & Areas 1\\
+    UT-2 & Rider search, cost, pass/request & Areas 3, 4\\
     UT-2R & Recurring ride & Not in scope\\
-    UT-3 & Driver post ride & 8/10 success\\
-    UT-4 & Match / trip state & 8/10 success\\
-    UT-5 & Profile / settings & 9/10 success\\
+    UT-3 & Driver post ride & Area 3\\
+    UT-4 & Match accept / decline / blocked & Areas 3, 4\\
+    UT-5 & Profile update & Area 2\\
+    UT-6 & Post-trip review & Area 5\\
+    UT-7 & In-app report & Area 5\\
     \bottomrule
   \end{tabular}
 \end{table}

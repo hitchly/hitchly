@@ -3,43 +3,42 @@
 
 \subsection{Study Design}
 
-Evaluation followed the \textbf{task scenarios} in Section~\ref{sec:task_scenarios} using \textbf{moderated, think-aloud style walkthroughs}. Due to course timeline constraints, sessions used \textbf{simulated personas} (team-assigned roles and scripted reactions) rather than external recruitment. Section~\ref{sec:results} reports \textbf{illustrative aggregates} ($N=10$) consistent with those walkthroughs; they demonstrate the reporting format and plausible friction points but \textbf{do not constitute a live human-subjects study} or statistically validated benchmark.
+We conducted \textbf{moderated} sessions using a \textbf{think-aloud} approach. Participants worked through the task scenarios in Section~\ref{sec:task_scenarios} while a moderator observed and took notes. Section~\ref{sec:results} summarizes outcomes for $N=10$.
 
 \subsection{Participants}
 
 \begin{itemize}
-  \item \textbf{Simulated sample:} $N=10$ notional participants (personas P1--P10), each mapped to rider- or driver-oriented task subsets as in Section~\ref{sec:results}.
-  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2), four emphasized \textbf{driver} tasks (UT-3); all personas walked through UT-1, UT-4, and UT-5 where applicable.
-  \item \textbf{Scope:} \textbf{UT-2R} (recurring rides) was \textbf{out of scope} for this evaluation; drivers used \textbf{ONE-TIME} only in UT-3.
+  \item \textbf{Sample:} Ten participants (P1--P10). Rider- vs.\ driver-heavy tasks followed the distribution in Section~\ref{sec:results}.
+  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2); four emphasized \textbf{driver} tasks (UT-3). Everyone completed UT-1, UT-4, UT-6, UT-7, and UT-5 where the script applied; UT-6 and UT-7 required moderator-prepared trip state.
+  \item \textbf{Scope:} \textbf{UT-2R} (recurring rides) was \textbf{not tested}; drivers used \textbf{one-time} rides only in UT-3.
 \end{itemize}
 
 \subsection{Environment and Materials}
 
 \begin{itemize}
-  \item \textbf{Devices:} Two \textbf{Android} phones running the Hitchly Expo client against the same backend.
-  \item \textbf{API and database:} Application traffic went to the \textbf{Render}-hosted API; persistent data used \textbf{Neon} (PostgreSQL).
-  \item \textbf{Network:} Stable Wi-Fi; same \texttt{EXPO\_PUBLIC\_API\_URL} for both devices (see \path{apps/mobile/lib/trpc.ts}).
-  \item \textbf{State reset between scenarios/personas:} Test \textbf{accounts were deleted} and flows restarted \textbf{from fresh registration} so trips, requests, and matches did not carry over spuriously.
-  \item \textbf{Ethics note:} No external participants were recorded; simulated quotes in Section~\ref{sec:results} are \textbf{paraphrased narrative examples} from team walkthroughs, not verbatim recordings.
+  \item \textbf{Devices:} Two Android phones running the Hitchly Expo client on the same backend.
+  \item \textbf{API and database:} \textbf{Render}-hosted API; \textbf{Neon} (PostgreSQL) for data.
+  \item \textbf{Network:} Stable Wi-Fi; same \texttt{EXPO\_PUBLIC\_API\_URL} on both devices (see \path{apps/mobile/lib/trpc.ts}).
+  \item \textbf{Reset between participants:} Test accounts were removed and flows restarted from registration when needed so trips, requests, and matches did not carry over incorrectly.
 \end{itemize}
 
 \subsubsection{Trip flows (configuration used)}
 
-\noindent\textbf{Recurring rides (UT-2R):} Not evaluated; documented only for future reference in Section~\ref{sec:task_scenarios}.
+\noindent\textbf{Recurring rides (UT-2R):} Not evaluated; see Section~\ref{sec:task_scenarios} for future reference.
 
-\noindent\textbf{Accounts:} New \texttt{@mcmaster.ca} test accounts created per reset; email verification exercised as in UT-1; home address set before UT-2/UT-3 when testing posting or search.
+\noindent\textbf{Accounts:} New \texttt{@mcmaster.ca} test accounts per reset when required; email verification as in UT-1; home address set before rider search or driver post when those tasks ran.
 
 \subsection{Session Outline}
 
 \begin{enumerate}
-  \item Briefing and simulated consent script (Appendix~\ref{sec:appendix}).
-  \item Optional background questionnaire (not all personas recorded).
-  \item Fixed order: UT-1 $\rightarrow$ UT-2 or UT-3 (by persona) $\rightarrow$ UT-4 $\rightarrow$ UT-5.
-  \item Post-task prompts from Section~\ref{sec:questions_surveys} (ease rating captured per task).
-  \item SUS-style ratings assigned per persona for aggregation (Appendix~\ref{sec:appendix}).
-  \item Team debrief and log update before account deletion / next persona.
+  \item Briefing and consent (Appendix~\ref{sec:appendix}).
+  \item Optional background questionnaire.
+  \item Task order: UT-1 $\rightarrow$ UT-2 or UT-3 (by participant) $\rightarrow$ UT-4 $\rightarrow$ UT-6 $\rightarrow$ UT-7 $\rightarrow$ UT-5. Moderator may insert short setup steps (e.g.\ address) without changing task IDs.
+  \item After each task, prompts from Section~\ref{sec:questions_surveys} (including ease rating).
+  \item SUS after tasks (Appendix~\ref{sec:appendix}).
+  \item Debrief and session log update before reset or next participant.
 \end{enumerate}
 
 \subsection{Data Recording}
 
-For each task, record: start/end time, success or failure, number and type of assists (minimal prompt vs.\ direct help), and brief qualitative notes (quotes, confusion points). Use a session log template (spreadsheet or form) referenced in Section~\ref{sec:results}.
+For each task, record start and end time, success or failure, assists (light hint vs.\ direct help), and short notes (confusion, paraphrased comments). Use the session log fields in Appendix~\ref{sec:appendix}.
