@@ -305,27 +305,44 @@ This section covers \textbf{constraints}, \textbf{assumptions}, and \textbf{limi
 \noindent McMaster's public institutional reporting places total student headcount in the mid-30,000s in recent years, with additional faculty and staff. Not everyone commutes by car or needs rideshare, so the addressable subset is smaller, commuters, occasional riders, and drivers with spare seats, but the ceiling for a McMaster-only product is still in the tens of thousands of affiliated people. Growth beyond that would require a different product scope (multi-campus or public launch), which is outside the current scope and focus of the project.
 
 \section{Reflection on Project Management (LO24)}
-
-\plt{This question focuses on processes and tools used for project management.}
+\label{sec:lo24_project_management}
 
 \subsection{How Does Your Project Management Compare to Your Development Plan}
 
-\plt{Did you follow your Development plan, with respect to the team meeting plan, 
-team communication plan, team member roles and workflow plan.  Did you use the 
-technology you planned on using?}
+The Development Plan (\path{docs/DevelopmentPlan/DevelopmentPlan.tex}) committed to frequent meetings (including TA sessions on Wednesdays), a weekly team review, Discord as the primary real-time channel, GitHub for code and task tracking (Issues and Project boards), complementary use of Microsoft Teams and Outlook for files and formal contact, named functional leads (meeting chair, reviewer, testing, UI/UX, data) with cross-cutting development and documentation, and a Git workflow of feature branches, pull requests with reviewers, and merge to \texttt{main} after review.
+
+In practice we largely followed that structure. We held regular standing team meetings on Discord, used GitHub Issues and pull requests for deliverables (including documentation feedback traced in Section~1 of this report), and relied on GitHub Actions for continuous integration (type-check, lint, format-check, build, tests, and LaTeX checks where applicable). Roles stayed flexible, leads provided direction, but every member contributed to development, tests, and docs as the plan intended. We used the technology stack described in the plan and README: a pnpm/Turbo monorepo, Expo (React Native) for the mobile app, tRPC for the API, PostgreSQL with Drizzle, Stripe and related services where needed, and GitHub for version control and CI---consistent with the plan's emphasis on TypeScript, testing, and automated checks before merge.
+
+Deviations were mostly environmental or iterative rather than abandoning the plan. Hosting and email details evolved (e.g.\ production API deployment and transactional email via a REST provider, as noted in Section~\ref{sec:design_iteration_lo11}), and the admin experience moved to a separate web app for operational clarity. Those choices do not contradict the Development Plan's workflow or tooling principles, they refined where some services run while keeping the same collaboration and quality gates.
 
 \subsection{What Went Well?}
 
-\plt{What went well for your project management in terms of processes and 
-technology?}
+\begin{itemize}
+  \item \textbf{Issue-driven traceability.} Feedback from TAs and peers was captured in GitHub issues and addressed in linked pull requests, which made accountability and rubric alignment easier than ad hoc chat alone.
+  \item \textbf{Pull requests and CI.} Required checks before merging caught integration and style problems early and gave reviewers a single place to discuss changes.
+  \item \textbf{Discord + GitHub.} Discord worked well for quick coordination and meeting logistics, and GitHub remained the central source for tasks and code history.
+  \item \textbf{Shared reviews.} Multiple teammates reviewed PRs, not only a single ``reviewer'' role, which improved quality and shared context.
+  \item \textbf{Project board and milestones.} Using GitHub Projects helped group work by deadline and status when the team kept it updated.
+\end{itemize}
 
 \subsection{What Went Wrong?}
 
-\plt{What went wrong in terms of processes and technology?}
+\begin{itemize}
+  \item \textbf{Deadline clustering.} We sometimes concentrated work too close to deliverable deadlines, which increased stress and reduced buffer for unexpected integration or CI issues.
+  \item \textbf{Issue hygiene.} We could have created and triaged issues earlier and more consistently so the repository and board always reflected upcoming work at a glance.
+  \item \textbf{Inconsistent meeting agendas.} During heavy documentation or demo weeks, meeting agendas occasionally were reduced to quick status-only updates with less time for meaningful discussion than the Development Plan's ideal structure.
+  \item \textbf{Process vs.\ course load.} Competing coursework sometimes delayed reviews or board updates despite the team's intentions.
+\end{itemize}
 
 \subsection{What Would you Do Differently Next Time?}
 
-\plt{What will you do differently for your next project?}
+\begin{itemize}
+  \item \textbf{Earlier breakdown of milestones.} Decompose each course deadline into issues two weeks ahead, with explicit ``integration'' tasks before the final merge.
+  \item \textbf{Smaller, more frequent PRs.} Prefer narrow scopes and shorter-lived branches to reduce review load and merge conflicts near the end of a deliverable.
+  \item \textbf{Definition of Done.} Agree per issue on reviewer, tests, and doc updates before marking work complete, so nothing ships with implicit assumptions.
+  \item \textbf{Backup owners.} Name a secondary assignee for critical path items to reduce single points of failure during high stress periods.
+  \item \textbf{Standing integration slot.} Reserve a set amount of time dedicated to merging and fixing CI on \texttt{main}, not only feature work.
+\end{itemize}
 
 \section{Ethics and Equity (LO18)}
 
