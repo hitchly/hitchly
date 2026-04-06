@@ -53,28 +53,6 @@ Only the leaf modules are included.
   \item \textbf{Type of Module:} Behaviour-Hiding Module.
 \end{itemize}
 
-\subsubsection*{M4: Matching Module}
-\begin{itemize}
-  \item \textbf{Secrets:} Compatibility scoring algorithm, parameter weighting, and ranking strategy.
-  \item \textbf{Services:} Computes compatibility between entities and returns ordered results.
-  \item \textbf{Frontend UI:} Match presentation interface (card stack or list view).
-  \item \textbf{API Logic:} Matchmaking service and algorithm implementation.
-  \item \textbf{Database Models:} Match result entity, interaction entity (swipes/decisions).
-  \item \textbf{Implemented By:} Server-side algorithm engine + heuristics library.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
-\end{itemize}
-
-\subsubsection*{M5: Scheduling Module}
-\begin{itemize}
-  \item \textbf{Secrets:} Recurring event generation logic and temporal parsing rules.
-  \item \textbf{Services:} Generates and manages recurring or single-instance schedule entries.
-  \item \textbf{Frontend UI:} Scheduling interface (time picker, recurrence settings).
-  \item \textbf{API Logic:} Schedule parser and generation service.
-  \item \textbf{Database Models:} Schedule entity.
-  \item \textbf{Implemented By:} Server-side scheduling engine.
-  \item \textbf{Type of Module:} Behaviour-Hiding Module.
-\end{itemize}
-
 \subsubsection*{M6: Notification Module}
 \begin{itemize}
   \item \textbf{Secrets:} Delivery mechanism details and asynchronous event queue handling.
@@ -88,8 +66,8 @@ Only the leaf modules are included.
 
 \subsubsection*{M7: Rating \& Feedback Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Reputation scoring formula and feedback aggregation logic.
-  \item \textbf{Services:} Collects and processes user ratings and textual reviews.
+  \item \textbf{Secrets:} Reputation scoring formula and post-ride feedback aggregation logic.
+  \item \textbf{Services:} Collects and processes user-to-user star ratings and textual reviews strictly for calculating rider/driver reliability scores.
   \item \textbf{Frontend UI:} Feedback submission screen.
   \item \textbf{API Logic:} Rating controller.
   \item \textbf{Database Models:} Rating entity (linked to match context).
@@ -99,8 +77,8 @@ Only the leaf modules are included.
 
 \subsubsection*{M8: Safety \& Reporting Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Incident flagging thresholds and administrative escalation workflow.
-  \item \textbf{Services:} Captures safety reports and triggers review processes.
+  \item \textbf{Secrets:} Incident data collection formatting and automated severity-flagging thresholds.
+  \item \textbf{Services:} Captures user-submitted safety reports and severe incident tickets, securely storing them for future administrative review. (This module does not handle the review or banning process).
   \item \textbf{Frontend UI:} Report submission interface, safety resource view.
   \item \textbf{API Logic:} Report handling service.
   \item \textbf{Database Models:} Incident report entity.
@@ -121,8 +99,8 @@ Only the leaf modules are included.
 
 \subsubsection*{M10: Admin \& Moderation Module}
 \begin{itemize}
-  \item \textbf{Secrets:} Moderation policies, ban thresholds, and privileged access control.
-  \item \textbf{Services:} Provides administrative oversight, user management, and system analytics.
+  \item \textbf{Secrets:} Moderation enforcement policies, user ban execution logic, and platform-wide analytics aggregation.
+  \item \textbf{Services:} Provides administrative oversight by retrieving data collected by the Safety module, executing user bans, managing role permissions, and generating system-wide analytics.
   \item \textbf{Frontend UI:} Administrative dashboard (optional).
   \item \textbf{API Logic:} Admin controller.
   \item \textbf{Database Models:} Audit logs, restriction lists.
@@ -134,6 +112,28 @@ Only the leaf modules are included.
 % SOFTWARE-DECISION MODULES
 % ---------------------------------------------------------
 \subsection*{Software-Decision Modules}
+
+\subsubsection*{M4: Matching Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Compatibility scoring algorithm, parameter weighting, and ranking strategy.
+  \item \textbf{Services:} Computes compatibility between entities and returns ordered results.
+  \item \textbf{Frontend UI:} Match presentation interface (card stack or list view).
+  \item \textbf{API Logic:} Matchmaking service and algorithm implementation.
+  \item \textbf{Database Models:} Match result entity, interaction entity (swipes/decisions).
+  \item \textbf{Implemented By:} Server-side algorithm engine + heuristics library.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
+
+\subsubsection*{M5: Scheduling Module}
+\begin{itemize}
+  \item \textbf{Secrets:} Recurring event generation logic and temporal parsing rules.
+  \item \textbf{Services:} Generates and manages recurring or single-instance schedule entries.
+  \item \textbf{Frontend UI:} Scheduling interface (time picker, recurrence settings).
+  \item \textbf{API Logic:} Schedule parser and generation service.
+  \item \textbf{Database Models:} Schedule entity.
+  \item \textbf{Implemented By:} Server-side scheduling engine.
+  \item \textbf{Type of Module:} Software-Decision Module.
+\end{itemize}
 
 \subsubsection*{M11: Pricing Module}
 \begin{itemize}

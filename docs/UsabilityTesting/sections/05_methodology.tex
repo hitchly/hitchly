@@ -1,0 +1,44 @@
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Study Design}
+
+We conducted \textbf{moderated} sessions using a \textbf{think-aloud} approach. Participants worked through the task scenarios in Section~\ref{sec:task_scenarios} while a moderator observed and took notes. Section~\ref{sec:results} summarizes outcomes for $N=10$.
+
+\subsection{Participants}
+
+\begin{itemize}
+  \item \textbf{Sample:} Ten participants (P1--P10). Rider- vs.\ driver-heavy tasks followed the distribution in Section~\ref{sec:results}.
+  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2); four emphasized \textbf{driver} tasks (UT-3). Everyone completed UT-1, UT-4, UT-6, UT-7, and UT-5 where the script applied; UT-6 and UT-7 required moderator-prepared trip state.
+  \item \textbf{Scope:} \textbf{UT-2R} (recurring rides) was \textbf{not tested}; drivers used \textbf{one-time} rides only in UT-3.
+\end{itemize}
+
+\subsection{Environment and Materials}
+
+\begin{itemize}
+  \item \textbf{Devices:} Two Android phones running the Hitchly Expo client on the same backend.
+  \item \textbf{API and database:} \textbf{Render}-hosted API; \textbf{Neon} (PostgreSQL) for data.
+  \item \textbf{Network:} Stable Wi-Fi; same \texttt{EXPO\_PUBLIC\_API\_URL} on both devices (see \path{apps/mobile/lib/trpc.ts}).
+  \item \textbf{Reset between participants:} Test accounts were removed and flows restarted from registration when needed so trips, requests, and matches did not carry over incorrectly.
+\end{itemize}
+
+\subsubsection{Trip flows (configuration used)}
+
+\noindent\textbf{Recurring rides (UT-2R):} Not evaluated; see Section~\ref{sec:task_scenarios} for future reference.
+
+\noindent\textbf{Accounts:} New \texttt{@mcmaster.ca} test accounts per reset when required; email verification as in UT-1; home address set before rider search or driver post when those tasks ran.
+
+\subsection{Session Outline}
+
+\begin{enumerate}
+  \item Briefing and consent (Appendix~\ref{sec:appendix}).
+  \item Optional background questionnaire.
+  \item Task order: UT-1 $\rightarrow$ UT-2 or UT-3 (by participant) $\rightarrow$ UT-4 $\rightarrow$ UT-6 $\rightarrow$ UT-7 $\rightarrow$ UT-5. Moderator may insert short setup steps (e.g.\ address) without changing task IDs.
+  \item After each task, prompts from Section~\ref{sec:questions_surveys} (including ease rating).
+  \item SUS after tasks (Appendix~\ref{sec:appendix}).
+  \item Debrief and session log update before reset or next participant.
+\end{enumerate}
+
+\subsection{Data Recording}
+
+For each task, record start and end time, success or failure, assists (light hint vs.\ direct help), and short notes (confusion, paraphrased comments). Use the session log fields in Appendix~\ref{sec:appendix}.
