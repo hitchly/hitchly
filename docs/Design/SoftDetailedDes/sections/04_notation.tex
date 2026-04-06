@@ -52,10 +52,18 @@ The following enumerated and composite types are used throughout the specificati
     \item \textbf{UpdatedTripRecord} = TripRecord --- Updated trip record (same structure as TripRecord)
     \item \textbf{ScheduleRecord} = (scheduleId: $\mathbb{N}$, userId: $\mathbb{N}$, daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Recurring schedule definition
     \item \textbf{ScheduleList} = seq of ScheduleRecord --- Sequence of schedule records
-    \item \textbf{scheduleData} = (daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Schedule creation input
+    \item \textbf{ScheduleData} = (daysOfWeek: seq of Day, time: $\mathbb{R}$, origin: Location, destination: Location, isRecurring: bool) --- Schedule creation input
+    \item \textbf{RequestData} = (pickup: Location, dropoff: Location, time: $\mathbb{R}$, seatsNeeded: $\mathbb{N}$) --- Ride request input
     \item \textbf{MatchRecord} = (matchId: $\mathbb{N}$, riderId: $\mathbb{N}$, driverId: $\mathbb{N}$, tripId: $\mathbb{N}$, score: $\mathbb{R}$, timestamp: $\mathbb{R}$) --- Match result with compatibility score
     \item \textbf{RankedMatchList} = seq of MatchRecord --- Sequence of match records ordered by score (descending)
     \item \textbf{SwipeRecord} = (swipeId: $\mathbb{N}$, userId: $\mathbb{N}$, targetId: $\mathbb{N}$, swipeType: SwipeType, timestamp: $\mathbb{R}$) --- User swipe action record
     \item \textbf{MatchSummary} = (mutualMatches: seq of MatchRecord, pendingSwipes: seq of SwipeRecord) --- Complete match status for a user
+    \item \textbf{RatingData} = (tripId: $\mathbb{N}$, score: $\mathbb{R}$, comment: string) --- Rating submission input
+    \item \textbf{RatingRecord} = (ratingId: $\mathbb{N}$, reviewerId: $\mathbb{N}$, revieweeId: $\mathbb{N}$, tripId: $\mathbb{N}$, score: $\mathbb{R}$, comment: string, timestamp: $\mathbb{R}$) --- Complete rating information
+    \item \textbf{RatingList} = seq of RatingRecord --- Sequence of rating records
+    \item \textbf{ReportData} = (reportedUserId: $\mathbb{N}$, tripId: $\mathbb{N}$, reason: string, description: string) --- Incident report input
+    \item \textbf{ReportRecord} = (reportId: $\mathbb{N}$, reporterId: $\mathbb{N}$, reportedUserId: $\mathbb{N}$, tripId: $\mathbb{N}$, reason: string, description: string, status: string, timestamp: $\mathbb{R}$) --- Complete incident report
+    \item \textbf{ReportList} = seq of ReportRecord --- Sequence of report records
+    \item \textbf{PaymentRecord} = (paymentId: $\mathbb{N}$, userId: $\mathbb{N}$, tripId: $\mathbb{N}$, amount: $\mathbb{R}$, status: string, timestamp: $\mathbb{R}$) --- Transaction record
     \item \textbf{Confirmation} = bool --- Operation success confirmation
 \end{itemize}

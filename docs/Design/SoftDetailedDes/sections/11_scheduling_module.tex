@@ -50,8 +50,8 @@ Tables:
 
 \paragraph{Exported Constants}
 \begin{itemize}
-    \item \texttt{MAX\_RECURRING\_YEARS = 1}
-    \item \texttt{VALID\_DAYS = [Mon..Sun]}
+    \item \texttt{MAX\_RECURRING\_YEARS} = 1 --- Maximum duration in years to generate future instances.
+    \item \texttt{VALID\_DAYS} = \{Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\}
 \end{itemize}
 
 \paragraph{Exported Access Programs}
@@ -63,10 +63,10 @@ Tables:
 \toprule
 Name & In & Out & Exceptions \\
 \midrule
-\texttt{createSchedule} & scheduleData & ScheduleRecord & ValidationError \\
-\texttt{getUserSchedules} & userId & ScheduleList & NotFoundError \\
-\texttt{cancelSchedule} & scheduleId & Confirmation & UnauthorizedError \\
-\texttt{generateFutureTrips} & scheduleId & TripList & AlgorithmError \\
+\texttt{createSchedule} & userId: $\mathbb{N}$, data: ScheduleData & ScheduleRecord & ValidationError \\
+\texttt{getUserSchedules} & userId: $\mathbb{N}$ & ScheduleList & NotFoundError \\
+\texttt{cancelSchedule} & userId: $\mathbb{N}$, scheduleId: $\mathbb{N}$ & Confirmation & NotFoundError, UnauthorizedError \\
+\texttt{generateFutureTrips} & scheduleId: $\mathbb{N}$ & TripList & AlgorithmError \\
 \bottomrule
 \end{tabular}
 }
@@ -77,79 +77,63 @@ Name & In & Out & Exceptions \\
 
 \paragraph{State Variables}
 \begin{itemize}
-    \item \texttt{userSchedules}
-    \item \texttt{activeRules}
+    \item \texttt{Schedules}: Map of ($\mathbb{N} \rightarrow$ ScheduleRecord) --- The collection of all schedule definitions indexed by \texttt{scheduleId}.
+    \item \texttt{ActiveRules}: Map of ($\mathbb{N} \rightarrow$ string) --- The collection of parsed recurrence rules (e.g., cron strings) indexed by \texttt{scheduleId}.
 \end{itemize}
 
 \paragraph{Environment Variables}
 \begin{itemize}
-    \item System scheduler
-    \item Device timezone
-    \item Database connection
+    \item System clock and device timezone for temporal calculation and validation.
+    \item Persistence layer connection (Database).
 \end{itemize}
 
 \paragraph{Assumptions}
 \begin{itemize}
-    \item Users must be verified before scheduling
-    \item Database schema is correctly migrated
+    \item The user is authenticated, and their \texttt{userId} is verified by the Authentication Module prior to invocation.
+    \item The database schema is fully migrated and accessible.
 \end{itemize}
 
 \paragraph{Access Routine Semantics}
 
-\texttt{createSchedule}:
+\texttt{createSchedule}(userId, data):
+\begin{itemize}
+    \item \textbf{transition:} Generates a unique \texttt{id}. Formats \texttt{newSchedule} combining \texttt{id}, \texttt{userId}, and \texttt{data}. Updates state: 
+    \begin{itemize}
+        \item $\texttt{Schedules[id]} := \texttt{newSchedule}$
+        \item $\texttt{ActiveRules[id]} := \texttt{parseRecurrenceRule(data)}$
+    \end{itemize}
+    \item \textbf{output:} Returns \texttt{Schedules[id]}.
+    \item \textbf{exception:} \texttt{ValidationError} if \texttt{data.isRecurring = true} $\land$ \texttt{data.daysOfWeek} $= \emptyset$, or if \texttt{data.time} is in the past relative to the system clock.
+\end{itemize}
+
+\texttt{getUserSchedules}(userId):
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns the sequence $\{s \in \texttt{Schedules} \mid s.\text{userId} = \text{userId}\}$.
+    \item \textbf{exception:} \texttt{NotFoundError} if the resulting sequence is empty.
+\end{itemize}
+
+\texttt{cancelSchedule}(userId, scheduleId):
+\begin{itemize}
+    \item \textbf{transition:} Removes \texttt{scheduleId} from \texttt{Schedules} and \texttt{ActiveRules}. Notifies dependent database constraints to cascade status changes.
+    \item \textbf{output:} Returns \texttt{true} upon successful cancellation.
+    \item \textbf{exception:} \texttt{NotFoundError} if $\texttt{scheduleId} \notin \texttt{Schedules}$. \texttt{UnauthorizedError} if $\texttt{Schedules[scheduleId].userId} \neq \text{userId}$.
+\end{itemize}
+
+\texttt{generateFutureTrips}(scheduleId):
 \begin{itemize}
     \item \textbf{transition:} 
     \begin{itemize}
-        \item Creates new schedule record from scheduleData input
-        \item $\text{userSchedules} := \text{userSchedules} \cup \{\text{newSchedule}\}$
-        \item $\text{activeRules} := \text{activeRules} \cup \{\text{parseRecurrenceRule}(\text{newSchedule})\}$
-        \item Inserts schedule into database
+        \item Retrieves rule $r = \texttt{ActiveRules[scheduleId]}$.
+        \item Uses \texttt{nextOccurrence} to compute dates.
+        \item Generates \texttt{TripRecord} entries via the Trip Module up to \texttt{MAX\_RECURRING\_YEARS}.
     \end{itemize}
-    \item \textbf{output:} Returns schedule record from $\text{userSchedules}$.
-    \item \textbf{exception:} ValidationError if schedule data invalid (invalid days, past time, etc.).
-\end{itemize}
-
-\texttt{getUserSchedules}:
-\begin{itemize}
-    \item \textbf{transition:} None (read-only operation).
-    \item \textbf{output:} Returns filtered subset of $\text{userSchedules}$ for the given userId.
-    \item \textbf{exception:} NotFoundError if no schedules exist for userId ($\text{userSchedules} = \emptyset$ for given userId).
-\end{itemize}
-
-\texttt{cancelSchedule}:
-\begin{itemize}
-    \item \textbf{transition:} 
-    \begin{itemize}
-        \item Locates schedule in $\text{userSchedules}$ by scheduleId
-        \item $\text{userSchedules} := \text{userSchedules} \setminus \{\text{canceledSchedule}\}$
-        \item Removes corresponding rule from $\text{activeRules}$
-        \item Updates database to mark schedule as canceled
-    \end{itemize}
-    \item \textbf{output:} Returns confirmation of cancellation.
-    \item \textbf{exception:} UnauthorizedError if user lacks permission (schedule not in $\text{userSchedules}$ for current user).
-\end{itemize}
-
-\texttt{generateFutureTrips}:
-\begin{itemize}
-    \item \textbf{transition:} 
-    \begin{itemize}
-        \item Locates schedule in $\text{userSchedules}$ by scheduleId
-        \item Retrieves corresponding recurrence rule from $\text{activeRules}$
-        \item Uses $\text{nextOccurrence}$ to compute future trip dates based on active rule
-        \item Generates trip entries for each future occurrence (up to MAX\_RECURRING\_YEARS)
-        \item Creates trip entries via Trip Module's \texttt{createTrip} procedure
-    \end{itemize}
-    \item \textbf{output:} Returns list of generated TripRecord entries.
-    \item \textbf{exception:} AlgorithmError if recurrence rule parsing fails or schedule not found in $\text{activeRules}$.
+    \item \textbf{output:} Returns the generated sequence of \texttt{TripRecord} entities.
+    \item \textbf{exception:} \texttt{AlgorithmError} if $\texttt{scheduleId} \notin \texttt{ActiveRules}$ or if the string rule fails to parse into valid future dates.
 \end{itemize}
 
 \paragraph{Local Functions}
 \begin{itemize}
-    \item \texttt{parseRecurrenceRule}
-    \item \texttt{nextOccurrence}
+    \item \texttt{parseRecurrenceRule(data: ScheduleData): string} --- Converts schedule days and time into a cron-formatted string or scheduling equivalent.
+    \item \texttt{nextOccurrence(rule: string, after: $\mathbb{R}$): $\mathbb{R}$} --- Computes the next valid Unix timestamp given a recurrence rule and a baseline timestamp.
 \end{itemize}
-
-
-% ============================================================
-% 6.6 Notification Module
-% ============================================================

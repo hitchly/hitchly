@@ -52,9 +52,9 @@ Backend procedures manage dispatch and retrieval:
 \toprule
 Name & In & Out & Exceptions \\
 \midrule
-\texttt{sendNotification} & userId, message & Confirmation & DeliveryError \\
-\texttt{getNotifications} & userId & NotificationList & NotFoundError \\
-\texttt{markAsRead} & notificationId & Confirmation & UnauthorizedError \\
+\texttt{sendNotification} & userId: $\mathbb{N}$, message: string & Confirmation & DeliveryError \\
+\texttt{getNotifications} & userId: $\mathbb{N}$ & NotificationList & NotFoundError \\
+\texttt{markAsRead} & userId: $\mathbb{N}$, notificationId: $\mathbb{N}$ & Confirmation & NotFoundError, UnauthorizedError \\
 \bottomrule
 \end{tabular}
 }
@@ -64,22 +64,53 @@ Name & In & Out & Exceptions \\
 
 \paragraph{State Variables}
 \begin{itemize}
-    \item \texttt{queuedNotifications}
-    \item \texttt{readStatus}
+    \item \texttt{Notifications}: Map of ($\mathbb{N} \rightarrow$ NotificationRecord) --- The collection of all generated system notifications indexed by \texttt{notificationId}.
+    \item \texttt{PushTokens}: Map of ($\mathbb{N} \rightarrow$ string) --- The collection of active Expo push tokens indexed by \texttt{userId}.
 \end{itemize}
 
 \paragraph{Environment Variables}
 \begin{itemize}
-    \item Expo Push Service
+    \item External Expo Push API service for outbound message delivery.
+    \item Persistence layer connection (Database) to store notification history.
+\end{itemize}
+
+\paragraph{Assumptions}
+\begin{itemize}
+    \item The user has granted operating system-level permissions to receive push notifications on their device.
+    \item The external Expo Push API is available and responsive.
+    \item The \texttt{userId} passed to the access programs is authenticated.
+\end{itemize}
+
+\paragraph{Access Routine Semantics}
+
+\texttt{sendNotification}(userId, message):
+\begin{itemize}
+    \item \textbf{transition:} 
+    \begin{itemize}
+        \item Generates a unique \texttt{id}. Creates a new \texttt{NotificationRecord} and sets $\texttt{Notifications[id]} := \text{new record}$.
+        \item Retrieves the user's push token from \texttt{PushTokens[userId]}.
+        \item Dispatches the message payload to the Expo Push API via the \texttt{enqueueNotification} local function.
+    \end{itemize}
+    \item \textbf{output:} Returns \texttt{true} if the notification is successfully generated and queued for delivery.
+    \item \textbf{exception:} \texttt{DeliveryError} if the user does not have a registered push token in \texttt{PushTokens}, or if the external Expo Push service rejects the payload.
+\end{itemize}
+
+\texttt{getNotifications}(userId):
+\begin{itemize}
+    \item \textbf{transition:} None.
+    \item \textbf{output:} Returns the sequence $\{n \in \texttt{Notifications} \mid n.\text{userId} = \text{userId}\}$ sorted by timestamp descending.
+    \item \textbf{exception:} \texttt{NotFoundError} if the resulting sequence is empty.
+\end{itemize}
+
+\texttt{markAsRead}(userId, notificationId):
+\begin{itemize}
+    \item \textbf{transition:} Updates the read status of the specified notification: $\texttt{Notifications[notificationId].isRead} := \text{true}$.
+    \item \textbf{output:} Returns \texttt{true} upon successful status update.
+    \item \textbf{exception:} \texttt{NotFoundError} if $\texttt{notificationId} \notin \texttt{Notifications}$. \texttt{UnauthorizedError} if $\texttt{Notifications[notificationId].userId} \neq \text{userId}$.
 \end{itemize}
 
 \paragraph{Local Functions}
 \begin{itemize}
-    \item \texttt{formatNotificationPayload}
-    \item \texttt{enqueueNotification}
+    \item \texttt{formatNotificationPayload(message: string, token: string): JSON} --- Constructs the strictly formatted JSON payload required by the Expo Push API endpoint.
+    \item \texttt{enqueueNotification(payload: JSON): bool} --- Appends the formatted payload to the asynchronous delivery queue and initiates the network request.
 \end{itemize}
-
-
-% ============================================================
-% 6.7 Rating & Feedback Module
-% ============================================================

@@ -1,5 +1,6 @@
 \section{Timeline}
-The following timeline details our implementation for Rev 0. Each task is broken down to the module level. Each tasks has roles and responsibilities defined along with estimated development duration.
+The following timeline details our implementation for Rev 0. Each task is broken down to the module level. Each task has roles and responsibilities defined along with estimated development duration.
+
 \begin{table}[h!]
   \centering
   \caption{Phase 1}
@@ -27,19 +28,19 @@ The following timeline details our implementation for Rev 0. Each task is broken
   \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
   \hline
 
-  Develop login, registration, and session flows & M1 & Weeks 11--12 & Aidan \\
+  Develop login, registration, and session flows & M1 & Done & Aidan \\
   \hline
 
-  Build user profile screens and preferences interface & M2 & Weeks 11--12 & Swesan \\
+  Build user profile screens and preferences interface & M2 & Done & Swesan \\
   \hline
 
-  Create upload, settings, and account management pages & M2 & Weeks 11--12 & Burhan \\
+  Create upload, settings, and account management pages & M2 & Done & Burhan \\
   \hline
 
-  Build navigation, layouts, and key frontend components & M2 & Weeks 12-13 & Hamzah \\
+  Build navigation, layouts, and key frontend components & M2 & Done & Hamzah \\
   \hline
 
-  Integrate basic user-to-database connections for profile initialization & M12 & Weeks 12--13 & Sarim \\
+  Integrate basic user-to-database connections for profile initialization & M12 & Done & Sarim \\
   \hline
   \end{tabularx}
 \end{table}
@@ -53,35 +54,35 @@ The following timeline details our implementation for Rev 0. Each task is broken
   \hline
 
   Implement matching algorithm and rider-driver compatibility logic 
-  & M4 & Weeks 13-14 & Sarim, Hamzah \\
+  & M4 & Done & Sarim, Hamzah \\
   \hline
 
   Build Routing \& Trip creation (origin, destination, seat count) 
-  & M3 & Weeks 13-14 & Burhan \\
+  & M3 & Done & Burhan \\
   \hline
 
   Implement Scheduling module (recurring rides, time windows) 
-  & M5 & Weeks 13-14 & Aidan \\
+  & M5 & Done & Aidan \\
   \hline
 
   Integrate Payment \& Cost estimation (distance, time, pricing model) 
-  & M9 & Weeks 13-14 & Swesan \\
+  & M9 & Done & Swesan \\
   \hline
 
   Build Pricing module (fare calculations, dynamic pricing rules) 
-  & M11 & Weeks 13-14 & Swesan \\
+  & M11 & Done & Swesan \\
   \hline
 
   Add Rating \& Feedback system for both riders and drivers 
-  & M7 & Weeks 13-14 & Sarim \\
+  & M7 & Done & Sarim \\
   \hline
 
   Implement Admin \& Moderation tools (flagging, dispute handling) 
-  & M10 & Weeks 13-14 & Burhan, Aidan \\
+  & M10 & Done & Burhan, Aidan \\
   \hline
 
   Build Notification module (push/in-app updates for trips) 
-  & M6 & Weeks 13-14 & Hamzah \\
+  & M6 & Done & Hamzah \\
   \hline
 
   \end{tabularx}
@@ -89,26 +90,38 @@ The following timeline details our implementation for Rev 0. Each task is broken
 
 \begin{table}[h!]
   \centering
-  \caption{Phase 4: Safety, Database Integration}
+  \caption{Phase 4: Safety, Database Integration, and Unit Testing}
   \begin{tabularx}{\textwidth}{|X|c|c|c|}
   \hline
   \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
   \hline
 
   Implement Safety \& Reporting module (incident reports, flagging) 
-  & M8 & Weeks 14--15 & Burhan \\
+  & M8 & Done & Burhan \\
   \hline
 
   Complete full Database Module integration across all features 
-  & M12 & Weeks 14--15 & Aidan, Sarim \\
+  & M12 & Done & Aidan, Sarim \\
   \hline
 
-  Perform end-to-end testing of all ride flows 
-  & M1--M12 & Weeks 14--15 & All \\
+  Unit testing for Matching \& Rating modules
+  & M4, M7 & Done & Sarim \\
+  \hline
+  
+  Unit testing for Auth \& Scheduling modules
+  & M1, M5 & Done & Aidan \\
   \hline
 
-  Optimize performance, resolve bugs, and finalize UI polish 
-  & M1--M12 & Weeks 14--15 & All \\
+  Unit testing for Routing \& Safety modules
+  & M3, M8 & Done & Burhan \\
+  \hline
+
+  Unit testing for Payment \& Pricing modules
+  & M9, M11 & Done & Swesan \\
+  \hline
+
+  Unit testing for Notification module \& Core UI Components
+  & M2, M6 & Done & Hamzah \\
   \hline
 
   \end{tabularx}
@@ -116,30 +129,42 @@ The following timeline details our implementation for Rev 0. Each task is broken
 
 \begin{table}[h!]
   \centering
-  \caption{Phase 5: Testing, and Finalization}
+  \caption{Phase 5: Integration Testing and Finalization}
   \begin{tabularx}{\textwidth}{|X|c|c|c|}
   \hline
   \textbf{Task} & \textbf{Module(s)} & \textbf{Status} & \textbf{Responsible} \\
   \hline
 
   Module Testing \& Bug Fixing for Safety  
-  & M8 & Weeks 15--16 & Burhan \\
+  & M8 & Done & Burhan \\
   \hline
 
-  Perform integration testing for Database Module 
-  & M12 & Weeks 15--16 & Aidan, Sarim \\
+  Integration testing: Database operations across all modules
+  & M12 & Done & Aidan, Sarim \\
   \hline
 
-  Perform integration testing for frontend and backend
-  & M1--M12 & Weeks 15--17 & All \\
+  Integration testing: Trip creation to Matching algorithm flow
+  & M3, M4 & Done & Sarim, Burhan \\
+  \hline
+
+  Integration testing: Notifications \& Scheduling triggers
+  & M5, M6 & Done & Aidan, Hamzah \\
+  \hline
+
+  Integration testing: Payment processing \& Pricing UI feedback
+  & M9, M11 & Done & Swesan \\
   \hline
 
   Perform regression testing and Finalize UI/UX 
-  & M1--M12 & Weeks 15--17 & All \\
+  & M2 & Done & Hamzah, Swesan \\
   \hline
 
-  Prepare release build, documentation, and deployment setup 
-  & M1--M12 & Weeks 18-19 & All \\
+  Prepare release build, deployment setup, and CI/CD pipelines
+  & System & Done & Aidan \\
+  \hline
+  
+  Final Design Documentation \& Traceability review
+  & System & Done & Sarim, Burhan \\
   \hline
 
   \end{tabularx}
@@ -148,7 +173,7 @@ The following timeline details our implementation for Rev 0. Each task is broken
 
 \clearpage
 
-\bibliographystyle {plainnat}
+\bibliographystyle{plainnat}
 \bibliography{../../../refs/References}
 
 \newpage{}
