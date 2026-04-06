@@ -28,42 +28,82 @@ on your reflections.}
 
 The subsections below document \textbf{capstone peer-review} feedback from GitHub issues. For each item we state the source, a concise summary of the issue, our response (what changed), and traceability links. The main pull request bundling MIS, VnV Plan, VnV Report, and related CI workflow updates is \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}; its description lists \texttt{Closes} for issues \#165, \#167, \#168, \#169, \#244, and \#245 so those issues close when the PR merges to \texttt{main}.
 
-\plt{Summarize the changes made over the course of the project in response to
-feedback from TAs, the instructor, teammates, other teams, the project
-supervisor (if present), and from user testers.}
+Throughout the course of the capstone project, we have recieved feedback
+from TAs, the instructor, teammates, other teams, the project supervisor (if present), and from user testers.  
+We have carefully considered and assessed all of the feedback and carefully integrated them all into our project
 
-\plt{For those teams with an external supervisor, please highlight how the feedback 
-from the supervisor shaped your project.  In particular, you should highlight the 
-supervisor's response to your Rev 0 demonstration to them.}
+\tabel{Traceability of Feedback and Changes}{
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Issue} & \textbf{Adressed in PR} & \textbf{Document} & \textbf{Feedback By} & \textbf{Summary of Issue} \\
+    \midrule
+    \textbf{https://github.com/hitchly/hitchly/issues/258} & \textbf{https://github.com/hitchly/hitchly/pull/333} & Problem Statement \& Goals & TA/Peer Review & See descriptions in the text for TA feedback. Peer Review feedback included removing overlapping goals, fixing stakeholder description and providing more detailed justification. \\
+    \bottomrule
+  \end{tabularx}
+}
 
-\plt{Version control can make the summary relatively easy, if you used issues
-and meaningful commits.  If you feedback is in an issue, and you responded in
-the issue tracker, you can point to the issue as part of explaining your
-changes.  If addressing the issue required changes to code or documentation, you
-can point to the specific commit that made the changes.  Although the links are
-helpful for the details, you should include a label for each item of feedback so
-that the reader has an idea of what each item is about without the need to click
-on everything to find out.}
+% \plt{For those teams with an external supervisor, please highlight how the feedback 
+% from the supervisor shaped your project.  In particular, you should highlight the 
+% supervisor's response to your Rev 0 demonstration to them.}
 
-\plt{If you were not organized with your commits, traceability between feedback
-and commits will not be feasible to capture after the fact.  You will instead
-need to spend time writing down a summary of the changes made in response to
-each item of feedback.}
+% \plt{Version control can make the summary relatively easy, if you used issues
+% and meaningful commits.  If you feedback is in an issue, and you responded in
+% the issue tracker, you can point to the issue as part of explaining your
+% changes.  If addressing the issue required changes to code or documentation, you
+% can point to the specific commit that made the changes.  Although the links are
+% helpful for the details, you should include a label for each item of feedback so
+% that the reader has an idea of what each item is about without the need to click
+% on everything to find out.}
 
-\plt{You should address EVERY item of feedback.  A table or itemized list is
-recommended.  You should record every item of feedback, along with the source of
-that feedback and the change you made in response to that feedback.  The
-response can be a change to your documentation, code, or development process.
-The response can also be the reason why no changes were made in response to the
-feedback.  To make this information manageable, you will record the feedback and
-response separately for each deliverable in the sections that follow.}
+% \plt{If you were not organized with your commits, traceability between feedback
+% and commits will not be feasible to capture after the fact.  You will instead
+% need to spend time writing down a summary of the changes made in response to
+% each item of feedback.}
 
-\plt{If the feedback is general or incomplete, the TA (or instructor) will not
-be able to grade your response to feedback.  In that case your grade on this
-document, and likely the Revision 1 versions of the other documents will be
-low.} 
+% \plt{You should address EVERY item of feedback.  A table or itemized list is
+% recommended.  You should record every item of feedback, along with the source of
+% that feedback and the change you made in response to that feedback.  The
+% response can be a change to your documentation, code, or development process.
+% The response can also be the reason why no changes were made in response to the
+% feedback.  To make this information manageable, you will record the feedback and
+% response separately for each deliverable in the sections that follow.}
+
+% \plt{If the feedback is general or incomplete, the TA (or instructor) will not
+% be able to grade your response to feedback.  In that case your grade on this
+% document, and likely the Revision 1 versions of the other documents will be
+% low.} 
+
+\subsection{ProblemStatementAndGoals and DevelopmentPlan}
+The following items addresses \textbf{ProblemStatementAndGoals} and \textbf{DevelopmentPlan} feedback from \textbf{TA and peer reviewers} (GitHub issues). We accepted the feedback and updated \texttt{docs/ProblemStatementAndGoals/} (source \texttt{.tex} and rebuilt \texttt{ProblemStatementAndGoals.pdf}) and \texttt{docs/DevelopmentPlan/} (source \texttt{.tex} and rebuilt \texttt{DevelopmentPlan.pdf}); revision history in the Problem Statement and Goals documents the ~April 1st updates.
+\begin{description}
+  \item[\textbf{\#258} --- Overlapping goals, stakeholder description, and justification.]
+  \textit{Source:} TA and peer review (GitHub issue). \\
+  \textit{Summary of issue:} The goals had some overlap and needed clarification. Moreover, the stakeholder description was thin and could be more specific to the campus context. Lastly, the justification needed to be more detailed for some goals. Details are summarized in the issue's description. \\
+  \textit{Response:} We removed the overlapping goals, provided clear distinction between them and justified them by providing specific measurability metrics. Details are summarized in the issue's description. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/258}{\#258}; changes in \href{https://github.com/hitchly/hitchly/pull/333}{PR \#333} (\path{docs/ProblemStatementAndGoals/ProblemStatementAndGoals.tex}).
+
+\item[\textbf{\#258} --- Development plan schedule, CICD clarification.]
+  \textit{Source:} TA and peer review (GitHub issue). \\
+  \textit{Summary of issue:} The development plan schedule was unclear, and the CICD process needed more detail. Details are summarized in the issue's description. \\
+  \textit{Response:} We clarified the development plan schedule and provided more detailed information about the CICD process. Details are summarized in the issue's description. \\
+  \textit{Traceability:}  Issue \href{https://github.com/hitchly/hitchly/issues/258}{\#258}; changes in \href{https://github.com/hitchly/hitchly/pull/333}{PR \#333} (\path{docs/DevelopmentPlan/DevelopmentPlan.tex}).  
+\end{description}
 
 \subsection{SRS and Hazard Analysis}
+The following items address \textbf{SRS} and \textbf{Hazard Analysis} feedback from \textbf{TA, peer reviews and user feedback} (GitHub issues). We accepted the feedback and updated \texttt{docs/SRS/SRS_meyer} (source \texttt{.tex} and rebuilt \texttt{SRS_meyer.pdf}) and \texttt{docs/HazardAnalysis/HazardAnalysis.tex} (source \texttt{.tex} and rebuilt \texttt{HazardAnalysis.pdf}); revision history in the SRS and Hazard Analysis documents the April 1st update.
+\begin{description}
+  \item[\textbf{\#254} --- Overlapping requirements, missing sections, unclear goals and justifications.]
+  \textit{Source:} TA, peer reviews and user feedback (GitHub issue). \\
+  \textit{Summary of issue:} The SRS documents had overlapping requirements, missing sections, and unclear goals and justifications. Details are summarized in the issue's description.  Moreover, after usability testing, certain users suggested improvements in terms of adding new geolocation feature. This allows users to track their driver and navigate better.\\
+  \textit{Response:} We addressed the issues in the SRS document by revising the overlapping requirements and clarifying the goals and justifications. Details are summarized in the issue's description. Users feedback was also incorporated by adding features as functional requirements in the document.\\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/254}{\#254}; changes in \href{https://github.com/hitchly/hitchly/pull/334}{PR \#334} (\path{docs/SRS/SRS_meyer.tex}).
+
+  \item[\textbf{\#254} --- Identifying more complex risks.]
+\textit{Source:} TA, peer reviews (GitHub issue). \\
+\textit{Summary of issue:} The hazard analysis document was missing some complex risks that could arise from the use of the app. Details are summarized in the issue's description. Moreover, after usability testing, certain users suggested improvements in terms of adding new geolocation feature. This allows users to track their driver and navigate better.\\
+\textit{Response:} We added those suggested risks to the hazard analysis document and provided mitigation strategies for them. Details are summarized in the issue's description. Users feedback was also incorporated by adding features as functional requirements in the SRS document.\\
+\textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/254}{\#254}; changes in \href{https://github.com/hitchly/hitchly/pull/334}{PR \#334} (\path{docs/HazardAnalysis/HazardAnalysis.tex}).
+\end{description}
 
 \subsection{Design and Design Documentation}
 
@@ -252,13 +292,36 @@ to ensure equitable treatment of all stakeholders.}
 
 \plt{This question focuses on what you learned during the course of the capstone project.}
 
+Burhan: \\
+I personally learned a lot from this capstone project.
+First off, I entered this project without any experience in working on mobile developement. 
+This project has helped me significantly upskill myself by allowing me to expand my learning 
+in multiple areas and languages, such as TypeScript, React Native, and Expo.
+I have also learned a lot about time management and effective team work during times of challenges and strict deadlines.
+Overall, I am very content with the learning experience I had during this project.
+\\
+
+
 \subsection{Which Courses Were Relevant}
 
-\plt{Which of the courses you have taken were relevant for the capstone project?}
+% \plt{Which of the courses you have taken were relevant for the capstone project?}
+This project involved systems design, software architecture, software requirements engineering, software verification and validation, and software development.
+Here are some of the courses that were relevant to this project:
+\begin{itemize}
+    \item Software Requirements Engineering (SFWRENG 3RA3): This course helped us understand requirements engineering and prepare us to write the SRS document. 
+    \item Software Design and Architecture (SFWRENG 3A04): This course helped us with understanding software architechture and mobile developement. It also helped us prepare the design documentations for the project. 
+    \item Software Verification and Validation (SFWRENG 3S03): This was a comprehensive course on software testing and quality assurance. It helped us prepare the VnV plan and report for our project.
+    \item Databases (SFWRENG 3DB3): This course helped us build a foundation for understanding databases, which was essential in helping us build our database schema and run queries for our project.
+\end{itemize}
+
 
 \subsection{Knowledge/Skills Outside of Courses}
 
 \plt{What skills/knowledge did you need to acquire for your capstone project
 that was outside of the courses you took?}
+This project was heavily docused on mobile development. While the 3A04 course helped us prepare for designing a strong srchitecture, the laugnuges and frameworks we used for the mobile app were not covered in our courses.
+We had to learn React Native and Expo on our own to be able to build the mobile app for our project.
+We also had to learn about third-party services such as Stripe for payment processing, Google Maps for location and routing, and Brevo for transactional email, which were not covered in our courses but were essential for implementing key features of our app.
+Overall, we had to learn a bunch of new knowledge and skills related to mobile development and API integration to build this project. 
 
 \end{document}
