@@ -107,29 +107,29 @@ Through these integrations, the module forms the foundation of personalization a
 \noindent \texttt{getUserProfile(userId)}:
 \begin{itemize}
     \item \textbf{transition:} None.
-    \item \textbf{output:} Returns $Profiles[userId]$.
-    \item \textbf{exception:} \texttt{NotFound} if $userId \notin Profiles$.
+    \item \textbf{output:} Returns $\texttt{Profiles[userId]}$.
+    \item \textbf{exception:} \texttt{NotFoundError} if $\texttt{userId} \notin \texttt{Profiles}$.
 \end{itemize}
 
 \noindent \texttt{updateUserProfile(userId, data)}:
 \begin{itemize}
-    \item \textbf{transition:} $Profiles[userId] := Profiles[userId] \cup data$ (fields in $data$ overwrite existing).
-    \item \textbf{output:} Returns updated $Profiles[userId]$.
-    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ violates schema constraints.
+    \item \textbf{transition:} $\texttt{Profiles[userId]} := \texttt{Profiles[userId]} \cup \texttt{data}$ (fields in data overwrite existing).
+    \item \textbf{output:} Returns updated $\texttt{Profiles[userId]}$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $\texttt{validateProfileInput(data)} = \text{false}$.
 \end{itemize}
 
 \noindent \texttt{updatePreferences(userId, data)}:
 \begin{itemize}
-    \item \textbf{transition:} $Preferences[userId] := data$.
-    \item \textbf{output:} Returns $Preferences[userId]$.
-    \item \textbf{exception:} \texttt{ValidationFailed} if $data$ contains invalid preference options.
+    \item \textbf{transition:} $\texttt{Preferences[userId]} := \texttt{data}$.
+    \item \textbf{output:} Returns $\texttt{Preferences[userId]}$.
+    \item \textbf{exception:} \texttt{ValidationFailed} if $\texttt{validatePreferenceInput(data)} = \text{false}$.
 \end{itemize}
 
 \noindent \texttt{deleteUser(userId)}:
 \begin{itemize}
-    \item \textbf{transition:} Removes $userId$ from $Profiles$, $Preferences$, and $Vehicles$.
+    \item \textbf{transition:} Removes \texttt{userId} from \texttt{Profiles}, \texttt{Preferences}, and \texttt{Vehicles}.
     \item \textbf{output:} \texttt{true}.
-    \item \textbf{exception:} \texttt{Unauthorized} if the requestor does not have ownership or administrative privileges.
+    \item \textbf{exception:} \texttt{UnauthorizedError} if $\text{requestorId} \neq \texttt{userId} \land \text{requestorRole} \neq \text{admin}$.
 \end{itemize}
 
 \paragraph{Local Functions}
