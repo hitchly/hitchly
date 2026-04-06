@@ -1,4 +1,4 @@
-﻿\documentclass[12pt, titlepage]{article}
+\documentclass[12pt, titlepage]{article}
 
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -37,6 +37,7 @@ October 26th & Sarim Zia & Added Plan sections 2.1, 2.5, 2.7\\
 October 26th & Burhan Kharodawala & Added Sections 1 and 5\\
 October 27th & All & Added Reflections \\
 March 8th & Burhan Kharodawala & Incorporated Feedback For Requirements\\
+March 29th & Swesan Pathmanathan & Peer review: recording/pass-fail subsection; expanded \S3 structure; NFR performance, security, scalability (3.2.3--3.2.5); traceability table FR-2, FR-5, NFR-3--5 (issues \#165--\#169).\\
 
 \bottomrule
 \end{tabularx}
@@ -253,23 +254,45 @@ Purpose: Verify that Hitchly meets its defined functional and non-functional req
 
 Structure: 
 \begin{itemize}
-    \item Section 3.1 tests core functional requirements (verification and matching).
-    \item Section 3.2 tests key non-functional qualities (reliability and usability).
-    \item Section 3.3 maps each test to its source requirement for traceability.
+    \item Section 3.1 tests functional requirements: verification (3.1.1), matching (3.1.2), profile and scheduling input (3.1.3), cost estimation (3.1.4), and rating/reporting (3.1.5).
+    \item Section 3.2 tests non-functional qualities: reliability, usability, performance, security, and scalability/capacity.
+    \item Section 3.3 maps each test area to its source requirement for traceability.
 \end{itemize}
 
 Reference: Section 1.4 (G.4) \textit{Functionality Overview} defines the functional and non-functional requirements.
 
+\subsection*{Recording and Evaluation of Test Results}
+\addcontentsline{toc}{subsection}{Recording and Evaluation of Test Results}
+
+\textbf{Where results are stored:}
+\begin{itemize}
+    \item \textbf{Automated tests:} Vitest output in CI (GitHub Actions) and local runs; pass/fail per test file and assertion.
+    \item \textbf{Manual and survey-based tests:} Session logs or spreadsheets capturing task completion, time on task, and survey scores (e.g.\ SUS) referenced in the Verification and Validation Report.
+    \item \textbf{Load or timing experiments:} Exported metrics (latency, success counts) archived with the run configuration (date, commit SHA, environment).
+\end{itemize}
+
+\textbf{Pass/fail criteria:}
+\begin{itemize}
+    \item \textbf{Automated:} \textbf{Pass} if observed output matches the expected output stated in the test case; \textbf{Fail} otherwise. CI treats any failing test as a merge blocker for protected branches.
+    \item \textbf{Manual / usability:} \textbf{Pass} if predefined thresholds (e.g.\ $\geq 90\%$ completing a flow without help within a time bound) are met as recorded in the session log; \textbf{Fail} or \textbf{Partial} if documented with rationale.
+    \item \textbf{Inspection-based (security/heuristics):} \textbf{Pass} if no critical finding; \textbf{Fail} if a blocking issue is found; \textbf{Partial} if only minor issues are logged with follow-up issues.
+\end{itemize}
+
+\textbf{Defect handling:} Failed or partial outcomes are tracked via GitHub issues or explicit remarks in the VnV Report (actual vs.\ expected), so deviations are auditable.
+
 \subsection{Tests for Functional Requirements}
 
-Objective: Confirm correct operation of primary system functions—user verification and ride matching.
+Objective: Confirm correct operation of primary system functions across verification, matching, profile and schedule input, cost estimation, and rating/reporting.
 
-Justification: These address Hitchly’s two most critical risks trust and core value creation.
+Justification: These address trust, core matching value, profile data integrity, transparent pricing, and post-ride accountability.
 
 Sub-areas:
 \begin{itemize}
     \item 3.1.1 User Verification Tests
     \item 3.1.2 Ride Matching Tests
+    \item 3.1.3 Profile Input (and scheduling-related inputs)
+    \item 3.1.4 Cost Estimation Tests
+    \item 3.1.5 Rating and Reporting Tests
 \end{itemize}
 
 \subsubsection{Area of Testing 1 – User Verification}
@@ -406,13 +429,16 @@ How test will be performed: Submit a report for a user and observe the admin das
 
 \subsection{Tests for Nonfunctional Requirements}
 
-Objective: Evaluate system quality beyond correctness—reliability and usability.  
-Approach: Use performance measurement and user feedback methods rather than simple pass/fail criteria.
+Objective: Evaluate system quality beyond correctness: reliability, usability, performance, security, and scalability.  
+Approach: Combine automated measurement, load-oriented checks, dependency and configuration inspection, and user-feedback methods; pass/fail rules follow the \textit{Recording and Evaluation of Test Results} subsection at the beginning of this section.
 
 Sub-areas:
 \begin{itemize}
     \item 3.2.1 Reliability (Matching Correctness)
     \item 3.2.2 Usability (Low-Friction Flows)
+    \item 3.2.3 Performance (Response Time)
+    \item 3.2.4 Security (Data and Transactions)
+    \item 3.2.5 Scalability and Capacity
 \end{itemize}
 
 \subsubsection{Area of Testing 1 – Reliability (Matching Correctness)}
@@ -455,20 +481,79 @@ Expected Result: No ambiguous labels or layout clutter violations.\\
 How test will be performed: Walkthrough by UX reviewers using standard heuristics.\\
 \end{enumerate}
 
+\subsubsection{Area of Testing 3 – Performance (Response Time)}
+
+Purpose: Confirm that match discovery completes within acceptable latency under nominal conditions (aligned with SRS-style expectations for matching responsiveness).  
+Covers: NFR-3 (Performance).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 – Nominal Match Request Latency}\\
+Type: Automatic / Dynamic\\
+Initial State: Warm API with mocked or seeded users and trips.\\
+Input: Representative \texttt{findMatches} (or equivalent) request with typical parameters.\\
+Expected Result: Successful response with ranked results within 10 seconds (p95 over a small batch of runs, e.g.\ $\geq 20$ iterations in Vitest or scripted calls).\\
+How test will be performed: Automated timing around the matchmaking service layer (unit or integration tests); outliers logged.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 4 – Security (Data and Transactions)}
+
+Purpose: Reduce risk of mishandling personal, credential, and payment data by relying on established transport and provider patterns.  
+Covers: NFR-4 (Security).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 – Transport and Configuration Review}\\
+Type: Static Inspection\\
+Input: Deployment configuration (API base URL, mobile client settings).\\
+Expected Result: Production-oriented endpoints use HTTPS; secrets are not committed to the repository; environment variables documented.\\
+How test will be performed: Checklist review of \texttt{README}, Render/Vercel env configuration, and client \texttt{EXPO\_PUBLIC\_API\_URL} usage.\\[5pt]
+
+\item \textbf{Test Case 2 – Auth and Payment Integration Sanity}\\
+Type: Automatic / Dynamic (mocked providers)\\
+Initial State: Test Stripe and auth flows with sandbox or mocks.\\
+Input: Valid and invalid payment and session scenarios covered in router unit tests.\\
+Expected Result: Rejected invalid inputs; successful paths persist only intended records (per test assertions).\\
+How test will be performed: Vitest suites for \texttt{payment} and \texttt{identity} routers with mocked Stripe and database.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 5 – Scalability and Capacity}
+
+Purpose: Observe behaviour under elevated concurrency within capstone- feasible bounds.  
+Covers: NFR-5 (Scalability).
+
+\begin{enumerate}
+\item \textbf{Test Case 1 – Moderate Concurrent Match Requests}\\
+Type: Dynamic Load Test\\
+Input: Burst of concurrent match requests (e.g.\ 50 parallel clients or scripted threads) against a test deployment.\\
+Expected Result: $\geq 90\%$ requests complete without 5xx errors; median latency recorded.\\
+How test will be performed: Script or load tool against staging; results summarized in the VnV Report.\\[5pt]
+
+\item \textbf{Test Case 2 – Peak Stress (Reliability Cross-Check)}\\
+Type: Dynamic Performance Test\\
+Input: As in Section~3.2.1 (stress test).\\
+Expected Result: As defined for 3.2.1-2; informs upper-bound behaviour.\\
+How test will be performed: Same tooling as 3.2.1-2; linked for scalability assessment.\\
+\end{enumerate}
+
 \subsection{Traceability Between Test Cases and Requirements}
 
 \begin{table}[H]
 \centering
-\begin{tabular}{|l|l|l|}
+\small
+\begin{tabular}{|l|p{4.2cm}|p{5.8cm}|}
 \hline
-\textbf{Requirement ID} & \textbf{Requirement Description (from 1.4 G.4)} & \textbf{Test Case ID(s)} \\ \hline
+\textbf{Req.\ ID} & \textbf{Description (G.4)} & \textbf{System test ID(s) / notes} \\ \hline
 FR-1 & User Verification & 3.1.1-1, 3.1.1-2 \\ \hline
-FR-3 & Ride Matching & 3.1.2-1, 3.1.2-2 \\ \hline
-FR-4 & Cost Estimate & 3.1.2-1 \\ \hline
+FR-2 & Profile \& Scheduling Input & 3.1.3-1, 3.1.3-2; recurring/schedule logic additionally covered by unit tests in Section~5 (e.g.\ \texttt{recurringSchedule} router) \\ \hline
+FR-3 & Ride Matching & 3.1.2-1, 3.1.2-2, 3.1.2-3 \\ \hline
+FR-4 & Cost Estimate & 3.1.4-1, 3.1.4-2 \\ \hline
+FR-5 & Ratings \& Reviews / Reporting & 3.1.5-1, 3.1.5-2, 3.1.5-3 \\ \hline
 NFR-1 & Reliability (Matching Correctness) & 3.2.1-1, 3.2.1-2 \\ \hline
 NFR-2 & Usability (Low-Friction Flows) & 3.2.2-1, 3.2.2-2 \\ \hline
+NFR-3 & Performance (Response Time) & 3.2.3-1 \\ \hline
+NFR-4 & Security (Data \& Transactions) & 3.2.4-1, 3.2.4-2 \\ \hline
+NFR-5 & Scalability / Capacity & 3.2.5-1, 3.2.5-2 (see also 3.2.1-2) \\ \hline
 \end{tabular}
-\caption{Traceability between test cases and requirements as defined in Section 1.4 (G.4) Functionality Overview.}
+\caption{Traceability between system test areas and requirements (Section 1.4 G.4).}
 \end{table}
 
 

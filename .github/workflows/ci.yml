@@ -6,9 +6,12 @@ on:
   pull_request:
     branches: ["main"]
 
+# Do not cancel in-progress runs: docs PRs trigger buildtex, which auto-pushes PDFs and
+# re-fires pull_request. Cancelling the previous CI run often kills long LaTeX matrix jobs
+# before the final "CI" job posts a status → branch protection stuck on "Expected".
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   detect-changes:
@@ -34,53 +37,78 @@ jobs:
               - 'refs/**/*.bib'
 
   # --- CODE JOBS ---
-  # These will now ONLY run if code files changed
+  # Always emit a check result (success when skipped) so branch protection is not stuck
+  # "Waiting for status" when this PR only touches docs/LaTeX paths.
 
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no code changes
+        if: needs.detect-changes.outputs.code != 'true'
+        run: echo "No matching code paths; Type Check not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.code == 'true'
       - uses: ./.github/actions/setup
+        if: needs.detect-changes.outputs.code == 'true'
       - run: pnpm type-check
+        if: needs.detect-changes.outputs.code == 'true'
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no code changes
+        if: needs.detect-changes.outputs.code != 'true'
+        run: echo "No matching code paths; Lint not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.code == 'true'
       - uses: ./.github/actions/setup
+        if: needs.detect-changes.outputs.code == 'true'
       - run: pnpm lint
+        if: needs.detect-changes.outputs.code == 'true'
 
   format-check:
     name: Format Check
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no code changes
+        if: needs.detect-changes.outputs.code != 'true'
+        run: echo "No matching code paths; Format Check not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.code == 'true'
       - uses: ./.github/actions/setup
+        if: needs.detect-changes.outputs.code == 'true'
       - run: pnpm format:check || (echo "Run 'pnpm format' to fix." && exit 1)
+        if: needs.detect-changes.outputs.code == 'true'
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no code changes
+        if: needs.detect-changes.outputs.code != 'true'
+        run: echo "No matching code paths; Build not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.code == 'true'
       - uses: ./.github/actions/setup
+        if: needs.detect-changes.outputs.code == 'true'
       - run: pnpm build
+        if: needs.detect-changes.outputs.code == 'true'
 
   test:
     name: Test
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     env:
       DB_HOST: 127.0.0.1
       DB_PORT: 5432
@@ -102,28 +130,41 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
+      - name: Skip — no code changes
+        if: needs.detect-changes.outputs.code != 'true'
+        run: echo "No matching code paths; Test not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.code == 'true'
       - uses: ./.github/actions/setup
+        if: needs.detect-changes.outputs.code == 'true'
       - name: Push DB Schema
+        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm --filter api db:push
       - name: Test
+        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm test
 
   # --- LATEX JOBS ---
-  # These will now ONLY run if .tex files changed
+  # Always emit a check when LaTeX paths unchanged (see code jobs above).
 
   latex-lint:
     name: LaTeX Lint
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.latex == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no LaTeX changes
+        if: needs.detect-changes.outputs.latex != 'true'
+        run: echo "No matching LaTeX paths; LaTeX Lint not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.latex == 'true'
       - name: Install ChkTeX
+        if: needs.detect-changes.outputs.latex == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y chktex
       - name: Lint LaTeX files
+        if: needs.detect-changes.outputs.latex == 'true'
         run: |
           SKIP_FILES="Common.tex Comments.tex"
           ERROR_FOUND=0
@@ -141,14 +182,20 @@ jobs:
     name: LaTeX Format Check
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.latex == 'true'
+    if: always() && needs.detect-changes.result == 'success'
     steps:
+      - name: Skip — no LaTeX changes
+        if: needs.detect-changes.outputs.latex != 'true'
+        run: echo "No matching LaTeX paths; LaTeX Format Check not required."
       - uses: actions/checkout@v4
+        if: needs.detect-changes.outputs.latex == 'true'
       - name: Install LaTeX and latexindent
+        if: needs.detect-changes.outputs.latex == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-extra perl
       - name: Check LaTeX formatting
+        if: needs.detect-changes.outputs.latex == 'true'
         run: |
           SKIP_FILES="Common.tex Comments.tex"
           ERROR_FOUND=0
@@ -229,10 +276,14 @@ jobs:
     name: LaTeX Compilation Check
     runs-on: ubuntu-latest
     needs: [detect-changes, latex-compile]
-    if: (needs.detect-changes.outputs.latex == 'true') && always()
+    if: always() && needs.detect-changes.result == 'success'
     steps:
       - name: Check LaTeX compilation status
         run: |
+          if [ "${{ needs.detect-changes.outputs.latex }}" != "true" ]; then
+            echo "No LaTeX changes; compilation gate not required."
+            exit 0
+          fi
           if [ "${{ needs.latex-compile.result }}" != "success" ]; then
             echo "One or more LaTeX directories failed to compile"
             exit 1
@@ -256,8 +307,27 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
-            echo "❌ One or more jobs failed."
+          bad=0
+          check() {
+            r="$1"
+            name="$2"
+            case "$r" in
+              failure|cancelled)
+                echo "❌ $name result=$r"
+                bad=1
+                ;;
+            esac
+          }
+          check "${{ needs.type-check.result }}" type-check
+          check "${{ needs.lint.result }}" lint
+          check "${{ needs.format-check.result }}" format-check
+          check "${{ needs.build.result }}" build
+          check "${{ needs.test.result }}" test
+          check "${{ needs['latex-lint'].result }}" latex-lint
+          check "${{ needs['latex-format-check'].result }}" latex-format-check
+          check "${{ needs['latex-compile-check'].result }}" latex-compile-check
+          if [ "$bad" -ne 0 ]; then
+            echo "One or more required jobs failed or were cancelled."
             exit 1
           fi
           echo "✅ All checks passed."

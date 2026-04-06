@@ -40,6 +40,12 @@ export const users = pgTable("users", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  riderTutorialCompleted: boolean("rider_tutorial_completed")
+    .default(false)
+    .notNull(),
+  driverTutorialCompleted: boolean("driver_tutorial_completed")
+    .default(false)
+    .notNull(),
 });
 
 export const sessions = pgTable("sessions", {

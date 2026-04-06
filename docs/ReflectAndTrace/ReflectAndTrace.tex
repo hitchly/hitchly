@@ -26,6 +26,8 @@ on your reflections.}
 
 \section{Changes in Response to Feedback}
 
+The subsections below document \textbf{capstone peer-review} feedback from GitHub issues. For each item we state the source, a concise summary of the issue, our response (what changed), and traceability links. The main pull request bundling MIS, VnV Plan, VnV Report, and related CI workflow updates is \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}; its description lists \texttt{Closes} for issues \#165, \#167, \#168, \#169, \#244, and \#245 so those issues close when the PR merges to \texttt{main}.
+
 \plt{Summarize the changes made over the course of the project in response to
 feedback from TAs, the instructor, teammates, other teams, the project
 supervisor (if present), and from user testers.}
@@ -65,7 +67,57 @@ low.}
 
 \subsection{Design and Design Documentation}
 
+The following items address \textbf{Module Interface Specification (MIS)} feedback from \textbf{peer reviewers} (GitHub issues). We accepted the feedback and updated \texttt{docs/Design/SoftDetailedDes} (source \texttt{.tex} and rebuilt \texttt{MIS.pdf}); revision history in the MIS documents the March~29 update.
+
+\begin{description}
+  \item[\textbf{\#245} --- Notation (\S4) layout and type definitions.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The primitive-types table was narrow and hard to read; \texttt{UpdatedFields} used optional-field ``\texttt{?}'' style notation that did not match how partial updates are described elsewhere. \\
+  \textit{Response:} We expanded the primitive-types table to full text width using \texttt{tabularx}; we rewrote \texttt{UpdatedFields} in prose so each field may be present or omitted independently, without placeholder syntax. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/245}{\#245}; changes in \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/04_notation.tex}, \path{docs/Design/SoftDetailedDes/sections/01_revision_history.tex}).
+
+  \item[\textbf{\#244} --- Introduction link to the repository.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The MIS should point readers to the implementation repository; the PDF showed only ``can be found at'' because \verb|\href| was missing its visible-text argument. \\
+  \textit{Response:} We replaced the link with \verb|\url{https://github.com/hitchly/hitchly}| so the URL is both visible and clickable in the PDF. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/244}{\#244}; changes in \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/03_introduction.tex}, revision history).
+\end{description}
+
 \subsection{VnV Plan and Report}
+
+The following items address \textbf{Verification and Validation Plan} and \textbf{VnV Report} feedback from \textbf{peer reviewers}. We accepted the feedback and updated \texttt{docs/VnVPlan}, \texttt{docs/VnVReport}, and rebuilt the corresponding PDFs; revision-history rows record the March~29 peer-review pass.
+
+\begin{description}
+  \item[\textbf{\#169} --- Recording and evaluation of test results.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The plan did not clearly state where results are stored, how pass/fail is decided, or how defects are tracked. \\
+  \textit{Response:} We added an unnumbered subsection under System Tests (\S3) describing storage (CI, manual logs, metrics), pass/fail rules for automated, manual, and inspection-style tests, and defect handling, with a table-of-contents entry so numbered subsections stay aligned. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/169}{\#169}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
+
+  \item[\textbf{\#165} --- Non-functional system tests (performance, security, scalability).]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} System-level testing for NFRs beyond reliability and usability was thin or missing relative to SRS-style expectations. \\
+  \textit{Response:} In the VnV Plan we added \S3.2.3--3.2.5 (performance, security, scalability/capacity) with concrete test cases and tied the \S3 introduction to those areas. In the VnV Report we extended \S4 with matching evaluation areas and test cases (e.g.\ latency, transport/config review, mocked auth/payment, concurrent match load). \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/165}{\#165}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}, \path{docs/VnVReport/sections/04_nonfunctional_requirements.tex}, revision histories).
+
+  \item[\textbf{\#167} --- Traceability in the VnV Plan.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The plan's requirements-to-tests mapping needed to cover profile/scheduling (FR-2), ratings/reporting (FR-5), and NFR-3--NFR-5 alongside existing rows. \\
+  \textit{Response:} We expanded the \S3.3 traceability table with those requirement IDs, notes for recurring/schedule coverage, and pointers to the new NFR subsections. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/167}{\#167}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
+
+  \item[\textbf{\#168} --- VnV Report trace tables and NFR alignment.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} Functional vs.\ non-functional captions and matrices did not fully align with SRS G.4 wording; FR-2 recurring/schedule testing and NFR columns were incomplete. \\
+  \textit{Response:} We corrected \S9 captions, added a \texttt{test-FR2-3} row for recurring-schedule router coverage, and replaced the NFR table with an NFR-1--NFR-5 matrix consistent with the updated plan. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/168}{\#168}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/sections/09_trace_to_requirements.tex}, \path{docs/VnVReport/sections/01_revision_history.tex}).
+
+  \item[\textbf{Repository CI (supporting the same PR).}]
+  \textit{Source:} Internal team (merge friction on documentation PRs; not a numbered course issue). \\
+  \textit{Summary of issue:} Required GitHub checks stayed on ``Expected --- Waiting for status'' because path-filtered jobs were skipped and, separately, \texttt{cancel-in-progress} on Actions cancelled long LaTeX runs when \texttt{buildtex} auto-pushed PDFs to the PR branch. \\
+  \textit{Response:} We updated \path{.github/workflows/ci.yml} so named jobs always report success when paths do not match (no-op steps), fixed the aggregate \texttt{CI} job's result logic, and disabled \texttt{cancel-in-progress} for CI and \texttt{buildtex} to allow runs to finish. Those workflow edits were included on the peer-review PR branch so they reach \texttt{main} when \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} merges. \\
+  \textit{Traceability:} \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{.github/workflows/ci.yml}, \path{.github/workflows/buildtex.yml}).
+\end{description}
 
 \section{Extras}
 
@@ -75,6 +127,8 @@ proof, GenderMag personas, Design Thinking, etc.  Extras should have already
 been approved by the course instructor as included in your problem statement.}
 
 \section{Design Iteration (LO11 (PrototypeIterate))}
+
+For documentation, the Rev$\,\rightarrow\,$Rev1-style iteration on MIS and VnV artifacts followed the course peer-review workflow: feedback was opened as GitHub issues, we grouped related doc edits into a single pull request (\href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}) for coherent review, and we kept revision-history rows and section-level traceability so PDFs remain auditable. We intentionally deferred closing issues until merge (per team workflow) so status stays tied to the PR and \texttt{main}.
 
 \plt{Explain how you arrived at your final design and implementation.  How did
 the design evolve from the first version to the final version?} 

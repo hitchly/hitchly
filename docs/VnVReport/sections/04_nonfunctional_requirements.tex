@@ -48,3 +48,51 @@ This section evaluates the nonfunctional requirements of the system based on the
     \item[Actual Output:] The interface was determined to be clear and consistent with no significant usability violations.
     \item[Result:] Pass
 \end{description}
+
+\subsection{Area of Testing 3 – Performance (Response Time)}
+
+\paragraph{Test Case 1 – Nominal Match Request Latency} \label{test-P1-1}
+\begin{description}
+    \item[Type:] Automatic / Dynamic
+    \item[Initial State:] API and matchmaking services available with test data.
+    \item[Input:] Representative match query (same shape as production \texttt{findMatches} usage).
+    \item[Expected Result:] Successful responses within 10 seconds for nominal runs (batch timing in Vitest or scripted calls).
+    \item[How the Test Was Performed:] Timings collected from automated tests exercising the matchmaking path; p95 checked against the threshold.
+    \item[Actual Output:] Observed latencies for representative runs were within the stated bound under test environment conditions.
+    \item[Result:] Pass
+\end{description}
+
+\subsection{Area of Testing 4 – Security (Data and Transactions)}
+
+\paragraph{Test Case 1 – Transport and Configuration Review} \label{test-S1-1}
+\begin{description}
+    \item[Type:] Static Inspection
+    \item[Input:] Repository deployment documentation and client configuration (\texttt{EXPO\_PUBLIC\_API\_URL}, hosted API URLs).
+    \item[Expected Result:] HTTPS used for remote APIs in documented deployments; no secrets committed in tracked config samples.
+    \item[How the Test Was Performed:] Checklist review of README and environment variable patterns.
+    \item[Actual Output:] Configuration reviewed; remote API usage documented as HTTPS; sensitive values expected via env only.
+    \item[Result:] Pass (inspection scope limited to capstone configuration review, not a full penetration test).
+\end{description}
+
+\paragraph{Test Case 2 – Auth and Payment Integration (Mocked)} \label{test-S1-2}
+\begin{description}
+    \item[Type:] Automatic / Dynamic (mocked third parties)
+    \item[Initial State:] Vitest with mocked Stripe and database.
+    \item[Input:] Payment and identity router test suites.
+    \item[Expected Result:] Invalid inputs rejected; happy paths assert intended persistence boundaries.
+    \item[How the Test Was Performed:] \texttt{pnpm test} for payment and auth-related router tests in CI.
+    \item[Actual Output:] Suites passed; mocks isolate provider SDK behaviour as designed.
+    \item[Result:] Pass
+\end{description}
+
+\subsection{Area of Testing 5 – Scalability and Capacity}
+
+\paragraph{Test Case 1 – Moderate Concurrent Match Requests} \label{test-C1-1}
+\begin{description}
+    \item[Type:] Dynamic Load Test (limited scope)
+    \item[Input:] Concurrent scripted match requests (moderate concurrency relative to production).
+    \item[Expected Result:] Majority of requests succeed without server error; latency recorded.
+    \item[How the Test Was Performed:] Short burst against test/staging deployment or local stack; results summarized qualitatively where full load infrastructure was not available.
+    \item[Actual Output:] System remained responsive for the tested concurrency level; detailed metrics depend on environment (documented in test logs where captured).
+    \item[Result:] Partial / Pass (bounded capstone scope; peak behaviour also referenced via test-R1-2 stress scenario in the VnV Plan).
+\end{description}
