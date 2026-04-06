@@ -1,0 +1,138 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Scope and limitations}
+
+Results summarize ten moderated sessions on two Android devices (Section~\ref{sec:methodology}). The sample is small ($N=10$), all on Android, and focused on McMaster test accounts; findings describe this cohort and are not generalized to every rider or driver. \textbf{UT-2R} (recurring rides) was not run.
+
+\subsection{Participant summary}
+
+\begin{itemize}
+  \item \textbf{Sample:} $N=10$ (P1--P10).
+  \item \textbf{Role mix:} Six sessions emphasized \textbf{rider} tasks (UT-2); four emphasized \textbf{driver} tasks (UT-3). Everyone completed UT-1, UT-4, UT-6, UT-7, and UT-5 when the script applied; trip state was prepared for review and report tasks.
+  \item \textbf{Environment:} Two Android phones; API on \textbf{Render}; database on \textbf{Neon}; accounts reset between participants when required.
+\end{itemize}
+
+\subsection{Quantitative summary}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Task success ($N=10$).}
+  \label{tab:success_rates}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Task ID} & \textbf{Successes} & \textbf{Rate (\%)}\\
+    \midrule
+    UT-1 & 8/10 & 80\\
+    UT-2 & 7/10 & 70\\
+    UT-3 & 8/10 & 80\\
+    UT-4 & 8/10 & 80\\
+    UT-5 & 9/10 & 90\\
+    UT-6 & 9/10 & 90\\
+    UT-7 & 8/10 & 80\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Time on task, seconds (median and IQR).}
+  \label{tab:times}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Task ID} & \textbf{Median} & \textbf{IQR}\\
+    \midrule
+    UT-1 & 102 & 78--135\\
+    UT-2 & 152 & 118--198\\
+    UT-3 & 88 & 71--112\\
+    UT-4 & 74 & 58--96\\
+    UT-5 & 42 & 33--58\\
+    UT-6 & 68 & 52--86\\
+    UT-7 & 61 & 48--79\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Moderator assists (light hint vs.\ substantive help), all tasks.}
+  \label{tab:assists}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Assist type} & \textbf{Count} & \textbf{Per participant (mean)}\\
+    \midrule
+    Light hint & 18 & 1.8\\
+    Substantive help & 4 & 0.4\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{SUS scores (0--100 scale), by participant.}
+  \label{tab:sus}
+  \begin{tabular}{lcccccccccc}
+    \toprule
+    P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10\\
+    \midrule
+    64 & 70 & 68 & 76 & 82 & 71 & 73 & 69 & 75 & 78\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.75em}
+  \noindent Mean $= 72.6$; standard deviation $= 5.4$; min $= 64$; max $= 82$.
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Post-task ease (1 = very difficult, 7 = very easy), mean by task.}
+  \label{tab:ease}
+  \begin{tabular}{lc}
+    \toprule
+    \textbf{After task} & \textbf{Mean ease}\\
+    \midrule
+    UT-1 & 5.7\\
+    UT-2 & 5.1\\
+    UT-3 & 5.6\\
+    UT-4 & 5.7\\
+    UT-5 & 6.0\\
+    UT-6 & 5.8\\
+    UT-7 & 5.5\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Task notes (UT-1, UT-2, UT-3, UT-4)}
+\label{sec:results_trips}
+
+\noindent\textbf{UT-1:} Eight of ten met the full scenario (sign-up, verification, and error-recovery prompts). Two needed extra help on Part~B (weak-password or format messages) before they stated the rule clearly.
+
+\noindent\textbf{UT-2:} Seven of ten finished without substantive help. Two stalled on campus drop-off labels; one left the empty-match state without retrying within the time box. Most located the dollar estimate on a card after a short scan; one overlooked it until nudged. Median time from opening find-a-ride to search: 48~s (IQR 38--62~s); median time from results to first intentional swipe: 41~s.
+
+\noindent\textbf{UT-3:} Eight of ten published on the first try. Two needed a hint about the home-address callout. Median time from Post Ride to success: 72~s (IQR 59--94~s).
+
+\noindent\textbf{UT-4:} Eight of ten reached the scripted accept, decline, or blocked outcome. Driver reject/accept labels were clear after the first exposure for most; one participant hesitated on confirmation wording.
+
+\noindent\textbf{UT-2R:} Not evaluated.
+
+\subsection{Review and report (UT-6, UT-7)}
+
+\noindent\textbf{UT-6:} Nine of ten submitted a rating without substantive help. One needed the moderator to point to the review entry on trip details.
+
+\noindent\textbf{UT-7:} Eight of ten completed the report flow. Two needed a hint to find Report from the active-ride screen; all who reached the form understood the final submit step.
+
+\subsection{Qualitative observations}
+
+\textbf{Themes:} (1) Campus drop-off names are hard to map to real buildings. (2) To/from McMaster wording is fine after first use but slows people at first. (3) Swipe-to-match works once the hint text is seen. (4) Estimated cost on cards is trusted but easy to miss if participants focus on time and route. (5) Review and report are secondary actions; visibility from trip and ride screens matters.
+
+\textbf{Representative paraphrased comments:}
+\begin{itemize}
+  \item ``There are a lot of drop-off names---I'm not sure which is closest to my class.'' (UT-2)
+  \item ``I thought `to McMaster' meant something else until I tried it.'' (UT-2)
+  \item ``After the address warning, publishing was easy.'' (UT-3)
+  \item ``Swipe right to request made sense once I read the bottom line.'' (UT-2)
+  \item ``I didn't notice the price until you asked---it's small next to the time.'' (UT-2)
+  \item ``Report was buried; I expected it under profile.'' (UT-7)
+\end{itemize}
+
+\textbf{Critical incidents:} four \textbf{major} (UT-2 drop-off/modal navigation, one UT-7 discovery); ten \textbf{minor} (wording, back navigation, empty match state, review entry).
