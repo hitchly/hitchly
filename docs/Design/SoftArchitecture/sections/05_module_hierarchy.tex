@@ -14,15 +14,13 @@ so no direct hardware abstraction is required.
 
 \item[\textbf{5.2 Behaviour-Hiding Modules}]  
 These modules implement the user-visible behaviour of the application.  
-They hide workflow logic, API interactions, and data handling that support  
+They hide workflow logic, API interactions, and data handling that support 
 Hitchly’s core features.
 
 \begin{itemize}
   \item M1: Authentication \& Verification Module
   \item M2: User Profile Module
   \item M3: Route \& Trip Module
-  \item M4: Matching Module
-  \item M5: Scheduling Module
   \item M6: Notification Module
   \item M7: Rating \& Feedback Module
   \item M8: Safety \& Reporting Module
@@ -35,6 +33,8 @@ These modules encapsulate internal logic, algorithms,
 and implementation decisions not visible to users.
 
 \begin{itemize}
+  \item M4: Matching Module
+  \item M5: Scheduling Module
   \item M11: Pricing Module
   \item M12: Database Module
 \end{itemize}
@@ -49,19 +49,19 @@ and implementation decisions not visible to users.
 \midrule
 Hardware-Hiding Module & None\\
 \midrule
-\multirow{10}{0.3\textwidth}{Behaviour-Hiding Module}
+\multirow{8}{0.3\textwidth}{Behaviour-Hiding Module}
 & M1: Authentication \& Verification Module\\
 & M2: User Profile Module\\
 & M3: Route \& Trip Module\\
-& M4: Matching Module\\
-& M5: Scheduling Module\\
 & M6: Notification Module\\
 & M7: Rating \& Feedback Module\\
 & M8: Safety \& Reporting Module\\
 & M9: Payment \& Cost Estimation Module\\
 & M10: Admin \& Moderation Module\\
 \midrule
-\multirow{2}{0.3\textwidth}{Software-Decision Module}
+\multirow{4}{0.3\textwidth}{Software-Decision Module}
+& M4: Matching Module\\
+& M5: Scheduling Module\\
 & M11: Pricing Module\\
 & M12: Database Module\\
 \bottomrule
