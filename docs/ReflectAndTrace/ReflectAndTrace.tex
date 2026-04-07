@@ -16,182 +16,389 @@
 
 \maketitle
 
-\plt{Reflection is an important component of getting the full benefits from a
-learning experience.  Besides the intrinsic benefits of reflection, this
-document will be used to help the TAs grade how well your team responded to
-feedback.  Therefore, traceability between Revision 0 and Revision 1 is and
-important part of the reflection exercise.  In addition, several CEAB (Canadian
-Engineering Accreditation Board) Learning Outcomes (LOs) will be assessed based
-on your reflections.}
-
 \section{Changes in Response to Feedback}
 
 The subsections below document \textbf{capstone peer-review} feedback from GitHub issues. For each item we state the source, a concise summary of the issue, our response (what changed), and traceability links. The main pull request bundling MIS, VnV Plan, VnV Report, and related CI workflow updates is \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}; its description lists \texttt{Closes} for issues \#165, \#167, \#168, \#169, \#244, and \#245 so those issues close when the PR merges to \texttt{main}.
 
-\plt{Summarize the changes made over the course of the project in response to
-feedback from TAs, the instructor, teammates, other teams, the project
-supervisor (if present), and from user testers.}
+Throughout the course of the capstone project, we have recieved feedback
+from TAs, the instructor, teammates, other teams, the project supervisor (if present), and from user testers.  
+We have carefully considered and assessed all of the feedback and carefully integrated them all into our project
 
-\plt{For those teams with an external supervisor, please highlight how the feedback 
-from the supervisor shaped your project.  In particular, you should highlight the 
-supervisor's response to your Rev 0 demonstration to them.}
+% \plt{For those teams with an external supervisor, please highlight how the feedback 
+% from the supervisor shaped your project.  In particular, you should highlight the 
+% supervisor's response to your Rev 0 demonstration to them.}
 
-\plt{Version control can make the summary relatively easy, if you used issues
-and meaningful commits.  If you feedback is in an issue, and you responded in
-the issue tracker, you can point to the issue as part of explaining your
-changes.  If addressing the issue required changes to code or documentation, you
-can point to the specific commit that made the changes.  Although the links are
-helpful for the details, you should include a label for each item of feedback so
-that the reader has an idea of what each item is about without the need to click
-on everything to find out.}
+% \plt{Version control can make the summary relatively easy, if you used issues
+% and meaningful commits.  If you feedback is in an issue, and you responded in
+% the issue tracker, you can point to the issue as part of explaining your
+% changes.  If addressing the issue required changes to code or documentation, you
+% can point to the specific commit that made the changes.  Although the links are
+% helpful for the details, you should include a label for each item of feedback so
+% that the reader has an idea of what each item is about without the need to click
+% on everything to find out.}
 
-\plt{If you were not organized with your commits, traceability between feedback
-and commits will not be feasible to capture after the fact.  You will instead
-need to spend time writing down a summary of the changes made in response to
-each item of feedback.}
+% \plt{If you were not organized with your commits, traceability between feedback
+% and commits will not be feasible to capture after the fact.  You will instead
+% need to spend time writing down a summary of the changes made in response to
+% each item of feedback.}
 
-\plt{You should address EVERY item of feedback.  A table or itemized list is
-recommended.  You should record every item of feedback, along with the source of
-that feedback and the change you made in response to that feedback.  The
-response can be a change to your documentation, code, or development process.
-The response can also be the reason why no changes were made in response to the
-feedback.  To make this information manageable, you will record the feedback and
-response separately for each deliverable in the sections that follow.}
+% \plt{You should address EVERY item of feedback.  A table or itemized list is
+% recommended.  You should record every item of feedback, along with the source of
+% that feedback and the change you made in response to that feedback.  The
+% response can be a change to your documentation, code, or development process.
+% The response can also be the reason why no changes were made in response to the
+% feedback.  To make this information manageable, you will record the feedback and
+% response separately for each deliverable in the sections that follow.}
 
-\plt{If the feedback is general or incomplete, the TA (or instructor) will not
-be able to grade your response to feedback.  In that case your grade on this
-document, and likely the Revision 1 versions of the other documents will be
-low.} 
+% \plt{If the feedback is general or incomplete, the TA (or instructor) will not
+% be able to grade your response to feedback.  In that case your grade on this
+% document, and likely the Revision 1 versions of the other documents will be
+% low.} 
+
+\subsection{ProblemStatementAndGoals and DevelopmentPlan}
+The following items addresses \textbf{ProblemStatementAndGoals} and \textbf{DevelopmentPlan} feedback from \textbf{TA and peer reviewers} (GitHub issues). We accepted the feedback and updated \path{docs/ProblemStatementAndGoals/} (source \texttt{.tex} and rebuilt \path{ProblemStatementAndGoals.pdf}) and \path{docs/DevelopmentPlan/} (source \texttt{.tex} and rebuilt \path{DevelopmentPlan.pdf}); revision history in the Problem Statement and Goals documents the ~April 1st updates.
+\begin{description}
+  \item[\textbf{\#258} --- Overlapping goals, stakeholder description, and justification.]
+  \textit{Source:} TA and peer review (GitHub issue). \\
+  \textit{Summary of issue:} The goals had some overlap and needed clarification. Moreover, the stakeholder description was thin and could be more specific to the campus context. Lastly, the justification needed to be more detailed for some goals. Details are summarized in the issue's description. \\
+  \textit{Response:} We removed the overlapping goals, provided clear distinction between them and justified them by providing specific measurability metrics. Details are summarized in the issue's description. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/258}{\#258}; changes in \href{https://github.com/hitchly/hitchly/pull/333}{PR \#333} (\path{docs/ProblemStatementAndGoals/ProblemStatementAndGoals.tex}).
+
+\item[\textbf{\#258} --- Development plan schedule, CICD clarification.]
+  \textit{Source:} TA and peer review (GitHub issue). \\
+  \textit{Summary of issue:} The development plan schedule was unclear, and the CICD process needed more detail. Details are summarized in the issue's description. \\
+  \textit{Response:} We clarified the development plan schedule and provided more detailed information about the CICD process. Details are summarized in the issue's description. \\
+  \textit{Traceability:}  Issue \href{https://github.com/hitchly/hitchly/issues/258}{\#258}; changes in \href{https://github.com/hitchly/hitchly/pull/333}{PR \#333} (\path{docs/DevelopmentPlan/DevelopmentPlan.tex}).  
+\end{description}
 
 \subsection{SRS and Hazard Analysis}
+The following items address \textbf{SRS} and \textbf{Hazard Analysis} feedback from \textbf{TA, peer reviews and user feedback} (GitHub issues). We accepted the feedback and updated \path{docs/SRS/SRS_meyer} (source \texttt{.tex} and rebuilt \path{SRS_meyer.pdf}) and \path{docs/HazardAnalysis/HazardAnalysis.tex} (source \texttt{.tex} and rebuilt \path{HazardAnalysis.pdf}); revision history in the SRS and Hazard Analysis documents the April 1st update.
+\begin{description}
+  \item[\textbf{\#254} --- Overlapping requirements, missing sections, unclear goals and justifications.]
+  \textit{Source:} TA, peer reviews and user feedback (GitHub issue). \\
+  \textit{Summary of issue:} The SRS documents had overlapping requirements, missing sections, and unclear goals and justifications. Details are summarized in the issue's description.  Moreover, after usability testing, certain users suggested improvements in terms of adding new geolocation feature. This allows users to track their driver and navigate better.\\
+  \textit{Response:} We addressed the issues in the SRS document by revising the overlapping requirements and clarifying the goals and justifications. Details are summarized in the issue's description. Users feedback was also incorporated by adding features as functional requirements in the document.\\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/254}{\#254}; changes in \href{https://github.com/hitchly/hitchly/pull/334}{PR \#334} (\path{docs/SRS/SRS_meyer.tex}).
+
+  \item[\textbf{\#254} --- Identifying more complex risks.]
+\textit{Source:} TA, peer reviews (GitHub issue). \\
+\textit{Summary of issue:} The hazard analysis document was missing some complex risks that could arise from the use of the app. Details are summarized in the issue's description. Moreover, after usability testing, certain users suggested improvements in terms of adding new geolocation feature. This allows users to track their driver and navigate better.\\
+\textit{Response:} We added those suggested risks to the hazard analysis document and provided mitigation strategies for them. Details are summarized in the issue's description. Users feedback was also incorporated by adding features as functional requirements in the SRS document.\\
+\textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/254}{\#254}; changes in \href{https://github.com/hitchly/hitchly/pull/334}{PR \#334} (\path{docs/HazardAnalysis/HazardAnalysis.tex}).
+\end{description}
 
 \subsection{Design and Design Documentation}
 
-The following items address \textbf{Module Interface Specification (MIS)} feedback from \textbf{peer reviewers} (GitHub issues). We accepted the feedback and updated \texttt{docs/Design/SoftDetailedDes} (source \texttt{.tex} and rebuilt \texttt{MIS.pdf}); revision history in the MIS documents the March~29 update.
+The following items address \textbf{Module Interface Specification (MIS)} and \textbf{Module Guide (MG)} feedback from peer reviewers and the TA Rubric. We accepted the feedback and updated \texttt{docs/Design/SoftDetailedDes} and \texttt{docs/Design/SoftArchitecture}.
 
 \begin{description}
   \item[\textbf{\#245} --- Notation (\S4) layout and type definitions.]
   \textit{Source:} Peer review (GitHub issue). \\
-  \textit{Summary of issue:} The primitive-types table was narrow and hard to read; \texttt{UpdatedFields} used optional-field ``\texttt{?}'' style notation that did not match how partial updates are described elsewhere. \\
+  \textit{Summary of issue:} The primitive-types table was narrow and hard to read; \texttt{UpdatedFields} used optional-field "?" style notation that did not match how partial updates are described elsewhere. \\
   \textit{Response:} We expanded the primitive-types table to full text width using \texttt{tabularx}; we rewrote \texttt{UpdatedFields} in prose so each field may be present or omitted independently, without placeholder syntax. \\
-  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/245}{\#245}; changes in \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/04_notation.tex}, \path{docs/Design/SoftDetailedDes/sections/01_revision_history.tex}).
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/245}{\#245}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/04_notation.tex}).
 
   \item[\textbf{\#244} --- Introduction link to the repository.]
   \textit{Source:} Peer review (GitHub issue). \\
-  \textit{Summary of issue:} The MIS should point readers to the implementation repository; the PDF showed only ``can be found at'' because \verb|\href| was missing its visible-text argument. \\
-  \textit{Response:} We replaced the link with \verb|\url{https://github.com/hitchly/hitchly}| so the URL is both visible and clickable in the PDF. \\
-  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/244}{\#244}; changes in \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/03_introduction.tex}, revision history).
+  \textit{Summary of issue:} The MIS should point readers to the implementation repository; the PDF showed only "can be found at" because \texttt{\textbackslash href} was missing its visible-text argument. \\
+  \textit{Response:} We replaced the link with \texttt{\textbackslash url\{https://github.com/hitchly/hitchly\}} so the URL is both visible and clickable in the PDF. We also fixed a typo (Hitchtly to Hitchly). \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/244}{\#244}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/sections/03_introduction.tex}).
+
+  \item[\textbf{\#348} --- Vague Module Specifications and Exception Handling.]
+  \textit{Source:} TA Rubric Evaluation (GitHub issue). \\
+  \textit{Summary of issue:} The MIS lacked rigorous formal specifications. Exceptions were defined in vague terms, and some composite types were missing from the Notation section. The MG timeline lacked specific task assignments. \\
+  \textit{Response:} We formalized the MIS by defining all state/environment variables and access program syntax. We rewrote every exception to trigger based on strict logical conditions. We added missing types to the Notation section and updated the Timeline to assign specific developer names instead of "All." \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/348}{\#348}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/MIS.tex}, \path{docs/Design/SoftArchitecture/MG.tex}).
+
+  \item[\textbf{\#243} --- AC2 Traceability is Too Broad.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} Anticipated Change 2 (User Interface) was mapped to almost every module in the system, reducing the clarity of information hiding. \\
+  \textit{Response:} We restricted AC2 traceability in the MG to only the core UI-heavy modules (M2, M3, M4) to accurately reflect where UI changes would actually be isolated. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/243}{\#243}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftArchitecture/MG.tex}).
+
+  \item[\textbf{\#246} --- Clarify Overlapping Module Boundaries.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The responsibilities of M7 (Rating), M8 (Safety), and M10 (Admin) seemed to overlap heavily regarding reports and analytics. \\
+  \textit{Response:} We rewrote the ``Secrets'' and ``Services'' for these modules in the MIS to strictly separate their boundaries: user-to-user trust metrics (M7), raw incident data collection (M8), and platform-wide moderation/analytics (M10). \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/246}{\#246}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/Design/SoftDetailedDes/MIS.tex}).
 \end{description}
 
 \subsection{VnV Plan and Report}
 
-The following items address \textbf{Verification and Validation Plan} and \textbf{VnV Report} feedback from \textbf{peer reviewers}. We accepted the feedback and updated \texttt{docs/VnVPlan}, \texttt{docs/VnVReport}, and rebuilt the corresponding PDFs; revision-history rows record the March~29 peer-review pass.
+The following items address \textbf{Verification and Validation Plan} and \textbf{VnV Report} feedback from peer reviewers and the TA Rubric. We accepted the feedback and updated \texttt{docs/VnVPlan}, \texttt{docs/VnVReport}, and rebuilt the corresponding PDFs.
 
 \begin{description}
   \item[\textbf{\#169} --- Recording and evaluation of test results.]
   \textit{Source:} Peer review (GitHub issue). \\
   \textit{Summary of issue:} The plan did not clearly state where results are stored, how pass/fail is decided, or how defects are tracked. \\
-  \textit{Response:} We added an unnumbered subsection under System Tests (\S3) describing storage (CI, manual logs, metrics), pass/fail rules for automated, manual, and inspection-style tests, and defect handling, with a table-of-contents entry so numbered subsections stay aligned. \\
+  \textit{Response:} We added an unnumbered subsection under System Tests (\S3) describing storage, pass/fail rules for automated, manual, and inspection-style tests, and defect handling. \\
   \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/169}{\#169}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
 
   \item[\textbf{\#165} --- Non-functional system tests (performance, security, scalability).]
   \textit{Source:} Peer review (GitHub issue). \\
   \textit{Summary of issue:} System-level testing for NFRs beyond reliability and usability was thin or missing relative to SRS-style expectations. \\
-  \textit{Response:} In the VnV Plan we added \S3.2.3--3.2.5 (performance, security, scalability/capacity) with concrete test cases and tied the \S3 introduction to those areas. In the VnV Report we extended \S4 with matching evaluation areas and test cases (e.g.\ latency, transport/config review, mocked auth/payment, concurrent match load). \\
-  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/165}{\#165}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}, \path{docs/VnVReport/sections/04_nonfunctional_requirements.tex}, revision histories).
+  \textit{Response:} In the VnV Plan we added \S3.2.3--3.2.5 with concrete test cases. In the VnV Report we extended \S4 with matching evaluation areas and test cases. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/165}{\#165}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}, \path{docs/VnVReport/sections/04_nonfunctional_requirements.tex}).
 
   \item[\textbf{\#167} --- Traceability in the VnV Plan.]
   \textit{Source:} Peer review (GitHub issue). \\
   \textit{Summary of issue:} The plan's requirements-to-tests mapping needed to cover profile/scheduling (FR-2), ratings/reporting (FR-5), and NFR-3--NFR-5 alongside existing rows. \\
-  \textit{Response:} We expanded the \S3.3 traceability table with those requirement IDs, notes for recurring/schedule coverage, and pointers to the new NFR subsections. \\
+  \textit{Response:} We expanded the \S3.3 traceability table with those requirement IDs and pointers to the new NFR subsections. \\
   \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/167}{\#167}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
 
   \item[\textbf{\#168} --- VnV Report trace tables and NFR alignment.]
   \textit{Source:} Peer review (GitHub issue). \\
-  \textit{Summary of issue:} Functional vs.\ non-functional captions and matrices did not fully align with SRS G.4 wording; FR-2 recurring/schedule testing and NFR columns were incomplete. \\
-  \textit{Response:} We corrected \S9 captions, added a \texttt{test-FR2-3} row for recurring-schedule router coverage, and replaced the NFR table with an NFR-1--NFR-5 matrix consistent with the updated plan. \\
-  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/168}{\#168}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/sections/09_trace_to_requirements.tex}, \path{docs/VnVReport/sections/01_revision_history.tex}).
+  \textit{Summary of issue:} Functional vs.\ non-functional captions and matrices did not fully align with SRS G.4 wording. \\
+  \textit{Response:} We corrected \S9 captions, added a \texttt{test-FR2-3} row, and replaced the NFR table with an NFR-1--NFR-5 matrix consistent with the updated plan. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/168}{\#168}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/sections/09_trace_to_requirements.tex}).
 
-  \item[\textbf{Repository CI (supporting the same PR).}]
-  \textit{Source:} Internal team (merge friction on documentation PRs; not a numbered course issue). \\
-  \textit{Summary of issue:} Required GitHub checks stayed on ``Expected --- Waiting for status'' because path-filtered jobs were skipped and, separately, \texttt{cancel-in-progress} on Actions cancelled long LaTeX runs when \texttt{buildtex} auto-pushed PDFs to the PR branch. \\
-  \textit{Response:} We updated \path{.github/workflows/ci.yml} so named jobs always report success when paths do not match (no-op steps), fixed the aggregate \texttt{CI} job's result logic, and disabled \texttt{cancel-in-progress} for CI and \texttt{buildtex} to allow runs to finish. Those workflow edits were included on the peer-review PR branch so they reach \texttt{main} when \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} merges. \\
+  \item[\textbf{Repository CI} --- (supporting the same PR).]
+  \textit{Source:} Internal team (merge friction on documentation PRs). \\
+  \textit{Summary of issue:} Required GitHub checks stayed on ``Expected --- Waiting for status'' because path-filtered jobs were skipped and LaTeX runs cancelled incorrectly. \\
+  \textit{Response:} We updated \path{.github/workflows/ci.yml} so named jobs always report success when paths do not match, and disabled \texttt{cancel-in-progress} for CI and \texttt{buildtex}. \\
   \textit{Traceability:} \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{.github/workflows/ci.yml}, \path{.github/workflows/buildtex.yml}).
+
+  \item[\textbf{\#349 \& \#341} --- Duplicate Objectives and Incomplete System Test Coverage.]
+  \textit{Source:} TA Rubric Evaluation and Peer Review (GitHub issues). \\
+  \textit{Summary of issue:} The VnV Plan objectives were duplicated. Tests did not cover all SRS requirements (e.g., Availability Updates, Location Security) and lacked explicit static testing procedures. \\
+  \textit{Response:} We cleaned up Section 1.2, added test areas for FR-6 (Availability) and NFR-6 (Location Security), and detailed a static inspection code-review procedure for coordinate masking. \\
+  \textit{Traceability:} Issues \href{https://github.com/hitchly/hitchly/issues/349}{\#349} and \href{https://github.com/hitchly/hitchly/issues/341}{\#341}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
+
+  \item[\textbf{\#341} --- Redundant Team Member Roles.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} Team member roles in the VnV Plan were highly repetitive. \\
+  \textit{Response:} We factored out common responsibilities into a shared ``General Developer Responsibilities'' block and specified unique testing focus areas for each member. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/341}{\#341}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVPlan/VnVPlan.tex}).
+
+  \item[\textbf{\#342} --- Test Execution Clarity.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The VnV Report did not specify whether functional tests were performed manually or via automated scripts. \\
+  \textit{Response:} We added an explicit testing methodology statement to Section 3 of the VnV Report clarifying that functional requirements were validated manually via the Expo client. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/342}{\#342}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/VnVReport.tex}).
+
+  \item[\textbf{\#350 \& \#342} --- Vague Nonfunctional Results.]
+  \textit{Source:} TA Rubric Evaluation and Peer review (GitHub issues). \\
+  \textit{Summary of issue:} Nonfunctional test results used vague terms like ``most participants'' or ``same dataset,'' lacking compelling numeric evidence. \\
+  \textit{Response:} We updated Reliability testing to explicitly state the use of randomized datasets. We updated Usability results with hard metrics (10 participants, 90\% success rate, 102s median time, 72.6 SUS score) and linked to the Usability Report. \\
+  \textit{Traceability:} Issues \href{https://github.com/hitchly/hitchly/issues/350}{\#350} and \href{https://github.com/hitchly/hitchly/issues/342}{\#342}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/VnVReport.tex}).
+
+  \item[\textbf{\#342} --- Lack of Documented Bugs Found.]
+  \textit{Source:} Peer review (GitHub issues). \\
+  \textit{Summary of issue:} The VnV Report showed ``Pass'' for all tests but failed to document any defects found or changes made due to testing. \\
+  \textit{Response:} We added specific examples to Section 7 of the VnV Report, detailing a 0-seat capacity backend bug caught during unit testing, and UI/UX friction points discovered during manual usability testing. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/342}{\#342}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/VnVReport.tex}).
+
+  \item[\textbf{\#342} --- CI/CD Failure Handling.]
+  \textit{Source:} Peer review (GitHub issue). \\
+  \textit{Summary of issue:} The report omitted what happens when a continuous integration test fails. \\
+  \textit{Response:} We added a ``CI/CD Failure Handling'' section explaining that GitHub Actions strictly blocks pull requests from merging upon test failure. \\
+  \textit{Traceability:} Issue \href{https://github.com/hitchly/hitchly/issues/342}{\#342}; \href{https://github.com/hitchly/hitchly/pull/336}{PR \#336} (\path{docs/VnVReport/VnVReport.tex}).
 \end{description}
 
 \section{Extras}
 
-\plt{Summarize the extras that were tackled by this project.  Extras
-can include usability testing, code walkthroughs, user documentation, formal
-proof, GenderMag personas, Design Thinking, etc.  Extras should have already
-been approved by the course instructor as included in your problem statement.}
+The team completed two extras that were included in the scope of the project: a \textbf{usability testing report} for Hitchly and an \textbf{in-app first-use guide} so new users see information about core features when they first open the app after sign-in.
+
+\subsection{Usability testing report}
+
+We produced a standalone usability testing document under \path{docs/UsabilityTesting/}. It describes goals, methodology, task scenarios for ten moderated sessions, moderator questions and surveys (including SUS), quantitative metrics (task success, time on task, assists), and results with recommendations. Task design aligns with the functional evaluation areas in the Verification and Validation report so usability findings can be read alongside formal requirement testing. This extra closes the loop between whether the implementation behaves correctly and whether real users can complete the main jobs without unnecessary friction.
+
+\subsection{In-app first-use guide (tutorial)}
+
+We added a lightweight, role-specific tutorial that appears when a user enters the main app as a \textbf{rider} or \textbf{driver} for the first time (until they finish or skip it). Content is delivered as a swipeable carousel of short slides covering welcome messaging and how to use primary navigation and key actions for that role. Completion is stored per user (rider vs.\ driver tutorial flags) via the backend so the guide does not repeat every launch. Implementation lives under \path{apps/mobile/features/onboarding/} (e.g.\ \path{views/RiderTutorial.tsx}, \path{views/DriverTutorial.tsx}, shared \path{components/Carousel.tsx}, and \path{hooks/useTutorialState.ts}), with the tutorial mounted from the rider and driver app layouts. Together with the written usability report, this in-product guidance supports learnability and reduces reliance on external documentation for first-time use.
 
 \section{Design Iteration (LO11 (PrototypeIterate))}
+\label{sec:design_iteration_lo11}
 
-For documentation, the Rev$\,\rightarrow\,$Rev1-style iteration on MIS and VnV artifacts followed the course peer-review workflow: feedback was opened as GitHub issues, we grouped related doc edits into a single pull request (\href{https://github.com/hitchly/hitchly/pull/336}{PR \#336}) for coherent review, and we kept revision-history rows and section-level traceability so PDFs remain auditable. We intentionally deferred closing issues until merge (per team workflow) so status stays tied to the PR and \texttt{main}.
+\subsection{Deployment-driven changes (verification email)}
 
-\plt{Explain how you arrived at your final design and implementation.  How did
-the design evolve from the first version to the final version?} 
+McMaster email verification is a central component of user trust and safety. We initially sent OTP mail over SMTP. After deploying the API to Render, SMTP proved unreliable in that environment (connection and deliverability issues typical of hosted platforms without a dedicated mail relay). We replaced direct SMTP with Brevo's REST API: \path{packages/emails/client.ts} posts to Brevo's transactional endpoint, and \path{apps/api/lib/email.ts} wires the client using \texttt{BREVO\textunderscore API\textunderscore KEY}. The reason for the design change is operational, since verification emails must send consistently in production without fighting the host's network constraints.
 
-\plt{Don't just say what you changed, say why you changed it.  The needs of the
-client should be part of the explanation.  For example, if you made changes in
-response to usability testing, explain what the testing found and what changes
-it led to.}
+\subsection{Admin experience and security posture}
+
+Early thinking placed admin capabilities inside the mobile app for privileged accounts. That approach risked shipping a hidden surface inside a consumer binary and limited what operators could see. The final design moves administration to a standalone web portal (\path{apps/admin}) backed by dedicated admin server modules (\path{apps/api/trpc/routers/admin/}), with dashboard areas for users, safety, operations, health, finances, and related views. The reason for the change is the richer operational insight (activity, logs, infrastructure-style summaries as implemented) and alignment with common practice, where administration is not a secret mode in the rider/driver app.
+
+\subsection{Live rides: location and Google Maps}
+
+Static match-time estimates were not enough once trips run in the real world. We expanded Google Maps--backed behaviour on the server for distance and ETAs during active trips. The \path{location} router adds \texttt{getTripDriverLiveLocation} (\path{apps/api/trpc/routers/location.ts}), returning the driver's live coordinates, distance/ETA toward pickup or drop-off depending on request status. The rider experience was updated under \path{apps/mobile/features/trips/} so live driver location, freshness, and external maps are visible during a ride. Mobile platform configuration (\path{apps/mobile/app.config.ts}) was adjusted for location permission copy and background behaviour so in-trip tracking matches store policies. Together, this addresses the client need for transparency while a ride is underway, not only at booking time.
+
+\subsection{Mobile configuration in TypeScript}
+
+We moved mobile app configuration from a JSON manifest to a typed module (\path{apps/mobile/app.config.ts}). That change was driven by iteration, as permissions, icons, and Google service wiring grew, a typed config reduced silent mistakes and made updates easier to review alongside code changes.
+
+\subsection{Iteration from usability findings}
+
+Formal usability testing is documented under \path{docs/UsabilityTesting/}. Sessions highlighted friction around campus drop-off choice, first-time to/from campus wording, cost visibility on match cards, and discovery of review and report entry points---see results and recommendation tables in that report. In response we carried a post-study interface pass to align visual patterns with familiar rideshare products where appropriate, tighten colour consistency, and improve labels and hierarchy on flows that had caused hesitation. We also shipped the in-app rider/driver tutorials summarized in Section~2 (Extras) of this document so first-time users get in-product guidance instead of inferring every primary action from a cold start. Those changes complement fixes tracked from the usability tables.
 
 \section{Design Decisions (LO12)}
+\label{sec:lo12_design_decisions}
 
-\plt{Reflect and justify your design decisions.  How did limitations,
- assumptions, and constraints influence your decisions?  Discuss each of these
- separately.}
+This section covers \textbf{constraints}, \textbf{assumptions}, and \textbf{limitations}, then summarizes how those factors justify the main architectural and product choices. 
+\subsection{Constraints}
+
+\noindent\textbf{Community and platform scope.} Hitchly is scoped to the McMaster community with email-domain verification, and to modern iOS and Android clients. That constraint drove a mobile-first product with server-enforced affiliation checks rather than an open web signup.
+
+\noindent\textbf{Privacy and payments.} Canadian privacy expectations (e.g.\ PIPEDA, as reflected in the SRS) and card-data rules (PCI DSS) pushed us toward minimal sensitive storage and payment flows that delegate card handling to Stripe instead of persisting raw payment credentials in our database.
+
+\noindent\textbf{Engineering standards.} The SRS calls for TypeScript with linting and formatting enforced in CI. That constraint reinforced a typed codebase end to end and predictable review gates, which mattered for a multi-contributor capstone schedule.
+
+\noindent\textbf{Time, team size, and hosting.} A fixed academic term and small team constrained how much custom infrastructure we could own. Deploying the API on a managed host (e.g.\ Render) with a managed PostgreSQL provider (e.g.\ Neon) traded operational control for reliability and speed of iteration. In practice, that hosting model also constrained outbound email, as direct SMTP was unreliable from the deployment environment, which motivated the move to a transactional email API as mentioned in the previous section.
+
+\subsection{Assumptions}
+
+\noindent\textbf{User conduct and honesty.} We assume users act in good faith during trips and that a McMaster-affiliated email (plus driver-license capture for drivers) is an acceptable affiliation signal for a campus pilot, not a substitute for commercial background screening.
+
+\noindent\textbf{Legal compliance by drivers.} We assume drivers meet Ontario licensing, insurance, and vehicle rules as stated in the SRS narrative; the app prompts and records verification artifacts but does not replace government or insurer checks.
+
+\noindent\textbf{Technical environment.} We assume participants run a current Expo build, stable network access, and that third-party services (maps, email, payments) remain available. We also assume campus and urban travel dominates, so Maps-backed distance, routing, and landmark-style drop-offs remain usable, and rural edge cases are weaker.
+
+\noindent\textbf{Operations.} We assume few trusted operators use admin tooling, which supports a separate admin surface with role-appropriate access rather than embedding admin features in consumer apps.
+
+\noindent These assumptions justified lighter onboarding than a commercial rideshare platform while still documenting trust and safety paths (reports, reviews, admin visibility).
+
+\subsection{Limitations}
+
+\noindent\textbf{Verification depth.} We do not run institutional background checks or insurance verification beyond license upload and email proof, and risk remains with users and institutional policy, as noted in the SRS limitations.
+
+\noindent\textbf{Dependence on third parties.} Maps, email, hosting, and payment providers introduce cost, quota, and outage risk, and behaviour degrades if an API is throttled or unavailable.
+
+\noindent\textbf{Quality and coverage.} Automated and manual testing are substantial but not exhaustive under course time pressure, and the primary UI language is English unless otherwise specified in the product.
+
+\subsection{Principal architectural and product choices}
+
+\noindent Given the constraints above, we adopted: tRPC with shared types across mobile, API, and admin to reduce contract drift in a small team; a pnpm monorepo with Turbo so shared packages (database access, email client, config) stay in one repository; PostgreSQL for relational integrity on users, trips, and matches; and a standalone admin web application separate from rider/driver clients for security, clearer roles, and richer operational views. These choices follow from the need for maintainability, type safety, and clear trust boundaries rather than from novelty for its own sake.
 
 \section{Economic Considerations (LO23)}
+\label{sec:lo23_economic}
 
-\plt{Is there a market for your product? What would be involved in marketing your 
-product? What is your estimate of the cost to produce a version that you could 
-sell?  What would you charge for your product?  How many units would you have to 
-sell to make money? If your product isn't something that would be sold, like an 
-open source project, how would you go about attracting users?  How many potential 
-users currently exist?}
+\noindent Hitchly is software service mobile application aimed at a bounded campus market.
+\subsection{Market need}
+
+\noindent There is a plausible niche market among McMaster-affiliated commuters, which consists of riders who want lower-cost trips than solo driving, public transit, or occasional rideshare apps such as Uber or Lyft, and drivers who want to defray parking, fuel, and wear on recurring routes. A campus-scoped network can emphasize trust (shared institution) and repeat patterns (to/from campus) in ways that differ from general-purpose rideshare for ad-hoc city travel.
+
+\subsection{Marketing and adoption}
+
+\noindent Hitchly would be marketed through channels that already reach commuters: student unions and clubs, faculty and staff associations, sustainability and transportation offices, residence orientation, digital signage, and partnerships with a few high-commute programs as a pilot cohort. The message combines cost sharing with verified McMaster affiliation (email-domain verification). User acquisition is organic and institutional through downloads, verified sign-ups, and completed trips measure traction.
+
+\subsection{Cost to build and run}
+
+\noindent One-time / sunk cost is primarily engineering time to reach a pilot-ready mobile client, API, payments, and operations tooling (capstone-scale effort). Ongoing operating cost scales with usage and includes managed API and database hosting (e.g.\ Render and Neon-style Postgres), transactional email (e.g.\ Brevo), Google Maps usage (distance, directions, and in-trip location workflows), Stripe processing and Connect-related fees, mobile store accounts, and domain/DNS. Exact monthly cost depends on trip volume, API call patterns, and chosen service tiers. The team would budget using provider dashboards once traffic is non-trivial.
+
+\subsection{Pricing and revenue model}
+
+\noindent Riders and drivers obtain a fare estimate derived from trip distance and time, and the implementation records a platform fee as a percentage of the charged amount. The deployed configuration applies a 15\% platform fee, with the remainder intended for the driver after Stripe processing. Alternatives for a broader rollout include a university-paid deployment (no per-trip fee for users), a lower take rate for a pilot, or a subscription for verified power users, but the current model favours usage-based revenue tied to completed trips.
+
+\subsection{Illustrative break-even framing}
+
+\noindent Because Hitchly is not sold as discrete units, ``how many units to make money'' maps to how much trip volume (or institutional funding) covers monthly OPEX. Illustrative only suppose combined hosting, email, maps, and fixed third-party overhead were on the order of a few hundred Canadian dollars per month at pilot scale, and suppose an average completed trip produced roughly \$1.50 in platform revenue after Stripe (15\% of a modest \$10 trip, ignoring Stripe's own fee in this sketch). Then on the order of 200--400 completed trips per month would approach that overhead band. This is not a forecast, only a check that revenue is volume-driven and sensitive to Maps and payment fees. A formal business plan would replace these round numbers with measured usage and provider invoices.
+
+\subsection{Potential user base}
+
+\noindent McMaster's public institutional reporting places total student headcount in the mid-30,000s in recent years, with additional faculty and staff. Not everyone commutes by car or needs rideshare, so the addressable subset is smaller, commuters, occasional riders, and drivers with spare seats, but the ceiling for a McMaster-only product is still in the tens of thousands of affiliated people. Growth beyond that would require a different product scope (multi-campus or public launch), which is outside the current scope and focus of the project.
 
 \section{Reflection on Project Management (LO24)}
-
-\plt{This question focuses on processes and tools used for project management.}
+\label{sec:lo24_project_management}
 
 \subsection{How Does Your Project Management Compare to Your Development Plan}
 
-\plt{Did you follow your Development plan, with respect to the team meeting plan, 
-team communication plan, team member roles and workflow plan.  Did you use the 
-technology you planned on using?}
+The Development Plan (\path{docs/DevelopmentPlan/DevelopmentPlan.tex}) committed to frequent meetings (including TA sessions on Wednesdays), a weekly team review, Discord as the primary real-time channel, GitHub for code and task tracking (Issues and Project boards), complementary use of Microsoft Teams and Outlook for files and formal contact, named functional leads (meeting chair, reviewer, testing, UI/UX, data) with cross-cutting development and documentation, and a Git workflow of feature branches, pull requests with reviewers, and merge to \texttt{main} after review.
+
+In practice we largely followed that structure. We held regular standing team meetings on Discord, used GitHub Issues and pull requests for deliverables (including documentation feedback traced in Section~1 of this report), and relied on GitHub Actions for continuous integration (type-check, lint, format-check, build, tests, and LaTeX checks where applicable). Roles stayed flexible, leads provided direction, but every member contributed to development, tests, and docs as the plan intended. We used the technology stack described in the plan and README: a pnpm/Turbo monorepo, Expo (React Native) for the mobile app, tRPC for the API, PostgreSQL with Drizzle, Stripe and related services where needed, and GitHub for version control and CI---consistent with the plan's emphasis on TypeScript, testing, and automated checks before merge.
+
+Deviations were mostly environmental or iterative rather than abandoning the plan. Hosting and email details evolved (e.g.\ production API deployment and transactional email via a REST provider, as noted in Section~\ref{sec:design_iteration_lo11}), and the admin experience moved to a separate web app for operational clarity. Those choices do not contradict the Development Plan's workflow or tooling principles, they refined where some services run while keeping the same collaboration and quality gates.
 
 \subsection{What Went Well?}
 
-\plt{What went well for your project management in terms of processes and 
-technology?}
+\begin{itemize}
+  \item \textbf{Issue-driven traceability.} Feedback from TAs and peers was captured in GitHub issues and addressed in linked pull requests, which made accountability and rubric alignment easier than ad hoc chat alone.
+  \item \textbf{Pull requests and CI.} Required checks before merging caught integration and style problems early and gave reviewers a single place to discuss changes.
+  \item \textbf{Discord + GitHub.} Discord worked well for quick coordination and meeting logistics, and GitHub remained the central source for tasks and code history.
+  \item \textbf{Shared reviews.} Multiple teammates reviewed PRs, not only a single ``reviewer'' role, which improved quality and shared context.
+  \item \textbf{Project board and milestones.} Using GitHub Projects helped group work by deadline and status when the team kept it updated.
+\end{itemize}
 
 \subsection{What Went Wrong?}
 
-\plt{What went wrong in terms of processes and technology?}
+\begin{itemize}
+  \item \textbf{Deadline clustering.} We sometimes concentrated work too close to deliverable deadlines, which increased stress and reduced buffer for unexpected integration or CI issues.
+  \item \textbf{Issue hygiene.} We could have created and triaged issues earlier and more consistently so the repository and board always reflected upcoming work at a glance.
+  \item \textbf{Inconsistent meeting agendas.} During heavy documentation or demo weeks, meeting agendas occasionally were reduced to quick status-only updates with less time for meaningful discussion than the Development Plan's ideal structure.
+  \item \textbf{Process vs.\ course load.} Competing coursework sometimes delayed reviews or board updates despite the team's intentions.
+\end{itemize}
 
 \subsection{What Would you Do Differently Next Time?}
 
-\plt{What will you do differently for your next project?}
+\begin{itemize}
+  \item \textbf{Earlier breakdown of milestones.} Decompose each course deadline into issues two weeks ahead, with explicit ``integration'' tasks before the final merge.
+  \item \textbf{Smaller, more frequent PRs.} Prefer narrow scopes and shorter-lived branches to reduce review load and merge conflicts near the end of a deliverable.
+  \item \textbf{Definition of Done.} Agree per issue on reviewer, tests, and doc updates before marking work complete, so nothing ships with implicit assumptions.
+  \item \textbf{Backup owners.} Name a secondary assignee for critical path items to reduce single points of failure during high stress periods.
+  \item \textbf{Standing integration slot.} Reserve a set amount of time dedicated to merging and fixing CI on \texttt{main}, not only feature work.
+\end{itemize}
 
 \section{Ethics and Equity (LO18)}
+\label{sec:lo18_ethics}
 
-\plt{Describe how your team applied the principle of equity and universal design
-to ensure equitable treatment of all stakeholders.}
+\noindent Hitchly sits between several stakeholder groups: riders and drivers who share cost and risk on real trips, admins who must respond to safety and quality issues, the McMaster students and staff we intend as users for this campus-focused pilot, and the wider campus-area community affected by congestion and emissions. The app uses McMaster email verification and is meant for the McMaster community by design, it remains a student capstone project, and McMaster University does not operate or oversee the platform. Ethical design still required us to treat those groups fairly under the same rules, collect only proportionate data, and give people clear paths to trust and recourse, not optimizing for one role at the hidden expense of another.
+\\
+We enforced a common access rule through McMaster-affiliated email verification so eligibility is transparent and uniform for intended users in the pilot community, rather than an unclear manual gate. That choice supports trust between strangers and aligns riders and drivers on the same community boundary, as discussed in Section~\ref{sec:lo12_design_decisions} and the verification-email iteration in Section~\ref{sec:design_iteration_lo11}. For payments, we followed Canadian privacy expectations and PCI practice by keeping card data out of our database and delegating card handling to Stripe, which reduces the security burden on users who are not payment experts. For safety and fairness after a trip, we implemented reporting and related flows (see the Safety \& Reporting module in the design documentation) and separated administration into a dedicated web portal so privileged oversight is not a hidden mode inside consumer apps---consistent with Section~\ref{sec:design_iteration_lo11}. Together, those measures address power imbalance: riders and drivers get documented channels while operators have dedicated tooling for escalation.
+\\
+The SRS commits the product to WCAG 2.2 Level AA for the in-app UI, we treated that as a design constraint during implementation and review, while recognizing that a full independent accessibility audit was beyond our capstone scope. We validated workflows with real users, not only internal assumptions with moderated usability sessions (ten participants, task success and timing, and SUS scoring summarized in Section~1 and the usability report under \path{docs/UsabilityTesting/}) surfaced friction we then addressed in an interface pass. We also shipped role-specific first-use tutorials (Section~2, Extras) so first-time riders and drivers receive in-product guidance instead of inferring every primary action from a cold start, supporting learnability and reducing dependence on prior smartphone-app literacy.
+\\
+The pilot remains English-first and McMaster-scoped (institutional email and campus-focused use cases, not a general-public launch). Broader language support and opening to a wider population would need additional equity review. Verification depth is lighter than a commercial rideshare platform. For accessibility, we aimed to meet the documented standard in shipped screens but did not commission a third-party WCAG certification, a production roadmap would include deeper assistive-technology testing and continuous checks as the UI evolves.
 
 \section{Reflection on Capstone}
 
-\plt{This question focuses on what you learned during the course of the capstone project.}
+Burhan: \\
+I personally learned a lot from this capstone project.
+First off, I entered this project without any experience in working on mobile developement. 
+This project has helped me significantly upskill myself by allowing me to expand my learning 
+in multiple areas and languages, such as TypeScript, React Native, and Expo.
+I have also learned a lot about time management and effective team work during times of challenges and strict deadlines.
+Overall, I am very content with the learning experience I had during this project.
+\\
+Sarim: \\
+Capstone allowed me to use class material we learned in a practical way. 
+I learned how to write an SRS document, design software architecture, and implement a mobile application.
+I also learned how to work effectively in a team, manage my time, and communicate with my teammates.
+I am proud of the work we did on this project and the skills I gained from it.
+\\
+Hamzah: \\
+During the capstone project, I was able to apply the concepts and theories I learned throughout my degree to a real-world project. 
+It was a great learning experience being able to take owenership if a project from start to finish. This includes the documentation, individual features which we developed, and how to effectively collaborate to make our project integrate and work as a whole.
+I believe I gained valuable experience in software development and project management, especially with mobile development which I had limited experience with prior to this project, and I truly think this will help me in my future career.
+\\
+Aidan: \\
+My main takeaway from this capstone was learning how to manage the extensive documentation and planning required for a formal project.
+I learned how to draft detailed specifications, track our overall development process, and maintain strict records of our testing phases.
+It was a rigorous exercise in understanding how to keep a project thoroughly documented and organized from start to finish.
+\\
+Swesan: \\
+Through this capstone, one of the clearest lessons for me was the importance of taking initiative and providing direction. If you don't have someone to propose next steps or clarify priorities, work stalls and the team loses momentum even if everyone intends to contribute. \\
+I also learned how much alignment matters in practice. If we are not on the same page about goals, scope, and deadlines, it is very hard to get anywhere, because effort spreads in different directions instead of compounding on shared outcomes. \\
+Finally, I saw that ownership is a big part of making teamwork work. Being explicit about who owns each task or area keeps responsibilities from staying ambiguous, reduces duplicated effort and dropped work, and makes accountability and follow-through much clearer. Overall, these project-management lessons were as valuable to me as the technical side of the capstone, and I expect to apply them in future team settings.
+\\
+
+
 
 \subsection{Which Courses Were Relevant}
 
-\plt{Which of the courses you have taken were relevant for the capstone project?}
+% \plt{Which of the courses you have taken were relevant for the capstone project?}
+This project involved systems design, software architecture, software requirements engineering, software verification and validation, and software development.
+Here are some of the courses that were relevant to this project:
+\begin{itemize}
+    \item Software Requirements Engineering (SFWRENG 3RA3): This course helped us understand requirements engineering and prepare us to write the SRS document. 
+    \item Software Design and Architecture (SFWRENG 3A04): This course helped us with understanding software architechture and mobile developement. It also helped us prepare the design documentations for the project. 
+    \item Software Verification and Validation (SFWRENG 3S03): This was a comprehensive course on software testing and quality assurance. It helped us prepare the VnV plan and report for our project.
+    \item Databases (SFWRENG 3DB3): This course helped us build a foundation for understanding databases, which was essential in helping us build our database schema and run queries for our project.
+\end{itemize}
+
 
 \subsection{Knowledge/Skills Outside of Courses}
 
-\plt{What skills/knowledge did you need to acquire for your capstone project
-that was outside of the courses you took?}
+This project was heavily docused on mobile development. While the 3A04 course helped us prepare for designing a strong srchitecture, the laugnuges and frameworks we used for the mobile app were not covered in our courses.
+We had to learn React Native and Expo on our own to be able to build the mobile app for our project.
+We also had to learn about third-party services such as Stripe for payment processing, Google Maps for location and routing, and Brevo for transactional email, which were not covered in our courses but were essential for implementing key features of our app.
+Overall, we had to learn a bunch of new knowledge and skills related to mobile development and API integration to build this project.
 
 \end{document}
